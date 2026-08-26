@@ -488,7 +488,7 @@ ul,ol{list-style:none}
 @media (max-width:768px){
   .floating-cta{
     display:inline-flex;
-    position:fixed;right:16px;bottom:16px;z-index:200;
+    position:fixed;right:16px;bottom:32px;z-index:200;
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
   }
