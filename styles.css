@@ -488,7 +488,7 @@ ul,ol{list-style:none}
 @media (max-width:768px){
   .floating-cta{
     display:inline-flex;
-    position:fixed;right:16px;bottom:32px;z-index:200;
+    position:fixed;right:16px;bottom:48px;z-index:200;
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
   }
@@ -750,4 +750,11 @@ ul,ol{list-style:none}
     width:min(86%,420px);max-width:86%;height:auto;
     margin:14px auto 0;object-fit:contain;
   }
+}
+/* ---------- Trade hero: mobile-only baked image (≤768px) ---------- */
+.tphero__mobileimg{display:none}
+@media (max-width:768px){
+  .tphero{padding:0;min-height:0}
+  .tphero__inner,.tphero__bg2,.tphero__dash{display:none}
+  .tphero__mobileimg{display:block;width:100%;height:auto}
 }
