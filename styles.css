@@ -87,10 +87,12 @@ ul,ol{list-style:none}
 .nav__menu{display:flex;align-items:center;gap:clamp(20px,3vw,48px)}
 .nav__links{display:flex;align-items:center;gap:clamp(18px,2.2vw,44px)}
 .nav__links a{
-  font-size:clamp(14px,1.05vw,17px);font-weight:500;color:var(--navy);
+  font-size:clamp(14px,1.05vw,17px);font-weight:500;color:var(--ink);
   transition:color .15s;white-space:nowrap;
 }
 .nav__links a:hover{color:var(--blue)}
+.nav__links a.nav__signin{color:var(--blue)}
+.nav__links a.nav__signin:hover{color:var(--navy)}
 
 /* dropdown */
 .nav__dropdown{position:relative}
@@ -418,6 +420,7 @@ ul,ol{list-style:none}
 }
 .footer__menu a{color:var(--navy);font-size:15px;font-weight:500;transition:color .15s}
 .footer__menu a:hover{color:var(--blue)}
+.footer__menu a.footer__signin{color:var(--blue)}
 .footer__copy{font-family:var(--poppins);color:var(--gray);font-size:15px}
 
 /* ============================================================
@@ -488,9 +491,15 @@ ul,ol{list-style:none}
 @media (max-width:768px){
   .floating-cta{
     display:inline-flex;
-    position:fixed;right:16px;bottom:48px;z-index:200;
+    position:fixed;right:16px;z-index:200;
+    top:calc(76px + 10px);                       /* start: 10px below the header bar */
+    transition:top .5s cubic-bezier(.34,.01,.2,1);
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
+  }
+  .floating-cta.cta-down{                        /* on scroll: fall to bottom-right */
+    top:calc(100vh - 100px);
+    top:calc(100dvh - 100px);
   }
   .nav__cta{display:none}   /* remove the copy stuck in the hamburger */
 }
@@ -765,4 +774,27 @@ ul,ol{list-style:none}
   .tpfeat{background:#fff;padding:0;min-height:0}
   .tpfeat__inner{display:none}
   .tpfeat__mobileimg{display:block;width:100%;height:auto}
+}
+
+/* ---------- Feature highlight with animated (APNG) phone — electrical/hvac/gc ----------
+   web: default dark layout, taller phone slot for the tall call-detail frame
+   mobile: white background, stacked (phone on top, dark copy below) */
+.tpfeat--anim .tpfeat__phones{height:clamp(380px,42vw,580px)}
+.tpfeat--anim .tpfeat__phone-one{width:clamp(190px,18vw,280px)}
+@media (max-width:768px){
+  .tpfeat--anim{background:#fff;padding:clamp(30px,7vw,52px) var(--pad);min-height:0}
+  .tpfeat--anim .tpfeat__mobileimg{display:none}          /* these 3 use the live phone, not a baked image */
+  .tpfeat--anim .tpfeat__inner{
+    display:flex;flex-direction:column;align-items:center;
+    gap:clamp(18px,5vw,28px);min-height:0;
+  }
+  .tpfeat--anim .tpfeat__media{order:-1;width:100%}
+  .tpfeat--anim .tpfeat__phones{position:static;height:auto;display:flex;justify-content:center}
+  .tpfeat--anim .tpfeat__phone-one{
+    position:static;transform:none;left:auto;top:auto;
+    width:min(66%,290px);margin:0 auto;
+  }
+  .tpfeat--anim .tpfeat__copy{color:var(--navy);text-align:center}
+  .tpfeat--anim .tpfeat__title{color:var(--navy)}
+  .tpfeat--anim .tpfeat__sub{color:var(--gray)}
 }
