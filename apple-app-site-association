@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "A8RP6J7668.com.bolt.handoff.BoltDashboard",
+        "paths": ["/auth/magic", "/calls/*", "/customers/*", "/resume", "/billing", "/cancel"]
+      }
+    ]
+  }
+}
