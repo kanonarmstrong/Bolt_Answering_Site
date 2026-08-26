@@ -758,3 +758,11 @@ ul,ol{list-style:none}
   .tphero__inner,.tphero__bg2,.tphero__dash{display:none}
   .tphero__mobileimg{display:block;width:100%;height:auto}
 }
+
+/* ---------- Trade feature highlight: mobile-only baked image (≤768px) ---------- */
+.tpfeat__mobileimg{display:none}
+@media (max-width:768px){
+  .tpfeat{background:#fff;padding:0;min-height:0}
+  .tpfeat__inner{display:none}
+  .tpfeat__mobileimg{display:block;width:100%;height:auto}
+}
