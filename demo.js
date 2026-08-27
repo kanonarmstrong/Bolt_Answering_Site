@@ -19,6 +19,7 @@
     'you agree to (1) receive text messages and emails from Bolt Answering for (a) security verification ' +
     'and (b) marketing purposes and (2) automated phone calls from Bolt Answering’s virtual assistant ' +
     'at the number provided. Message frequency may vary. Standard Message, Voice, and Data Rates may apply. ' +
+    'Reply STOP to opt out. Reply HELP for help. ' +
     'In accordance with our ';
   var CONSENT_LINK = 'Privacy Policy';
   var CONSENT_B = ', we will not share mobile information with third parties for promotional or marketing purposes.';
@@ -133,7 +134,6 @@
   }
   function renderPhone(notice) {
     var phone = field('Phone number', 'demo-phone', '(555) 555-1212', 'tel', state.display);
-    var name = field('Your name', 'demo-name', 'John Doe', 'text', state.name);
     var biz = field('Business name', 'demo-business', 'John’s HVAC', 'text', state.business);
     var email = field('Email (optional)', 'demo-email', 'yourname@example.com', 'email', state.email);
 
@@ -154,22 +154,20 @@
     function clearErr(f) { f.err.style.display = 'none'; f.input.removeAttribute('aria-invalid'); }
 
     btn.addEventListener('click', function () {
-      [phone, name, biz, email].forEach(clearErr);
+      [phone, biz, email].forEach(clearErr);
       var ok = true;
       if (!validPhone(phone.input.value)) { showErr(phone, 'Enter a valid US phone number.'); ok = false; }
-      if (!name.input.value.trim()) { showErr(name, 'Enter your name.'); ok = false; }
       if (!biz.input.value.trim()) { showErr(biz, 'Enter your business name.'); ok = false; }
       if (!ok) return;
 
       state.display = fmtPhone(phone.input.value);
       state.phone = e164(phone.input.value);
-      state.name = name.input.value.trim();
       state.business = biz.input.value.trim();
       state.email = email.input.value.trim();
 
       busy(btn, 'Sending…');
       apiPost('/api/demo/otp/send', {
-        phone: state.phone, email: state.email, name: state.name,
+        phone: state.phone, email: state.email,
         businessName: state.business, consentText: CONSENT_TEXT
       }).then(function (r) {
         if (r.ok) return renderCode();
@@ -185,7 +183,7 @@
       heading('Have my assistant call me'),
       sub('We’ll send you a 6-digit one-time passcode before placing the call'),
       notice ? h('p', { class: 'demo-note', text: notice }) : null,
-      phone.wrap, name.wrap, biz.wrap, email.wrap,
+      phone.wrap, biz.wrap, email.wrap,
       btn, disclosure, helpLine()
     ]);
     setTimeout(function () { phone.input.focus(); }, 30);
@@ -273,7 +271,7 @@
   function doResend(btnEl) {
     busy(btnEl, 'Sending…'); btnEl.classList.add('busy');
     apiPost('/api/demo/otp/send', {
-      phone: state.phone, email: state.email, name: state.name,
+      phone: state.phone, email: state.email,
       businessName: state.business, consentText: CONSENT_TEXT
     }).then(function (r) {
       if (r.ok) return renderCode({ resendSecs: 60 });
