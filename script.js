@@ -75,3 +75,24 @@
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) play(); });
 })();
+
+// Tapping a link to the page you're already on scrolls to the top
+// (instead of a no-op or a reload).
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#') return; // pure-hash links: let the browser handle
+    var url;
+    try { url = new URL(a.href, location.href); } catch (err) { return; }
+    if (url.host !== location.host || url.pathname !== location.pathname) return; // different page
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (history.replaceState) history.replaceState(null, '', url.pathname); // drop any stale #hash
+    var menu = document.getElementById('navMenu');
+    var toggle = document.getElementById('navToggle');
+    if (menu) menu.classList.remove('open');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  });
+})();
