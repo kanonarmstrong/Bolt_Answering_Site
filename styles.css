@@ -53,12 +53,12 @@ ul,ol{list-style:none}
 }
 .btn--yellow{
   background:var(--yellow);color:var(--navy);
-  font-size:clamp(15px,1.4vw,22px);
-  padding:0 26px;height:40px;box-shadow:var(--shadow-btn);
+  font-size:clamp(13px,1.4vw,16px);
+  padding:0 20px;height:30px;box-shadow:var(--shadow-btn);
 }
 .btn--blue{
   background:var(--blue);color:var(--offwhite);
-  font-size:clamp(15px,1.4vw,22px);
+  font-size:clamp(15px,1.4vw,16px);
   padding:0 22px;height:49px;
 }
 .btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
@@ -87,12 +87,12 @@ ul,ol{list-style:none}
 .nav__menu{display:flex;align-items:center;gap:clamp(20px,3vw,48px)}
 .nav__links{display:flex;align-items:center;gap:clamp(18px,2.2vw,44px)}
 .nav__links a{
-  font-size:clamp(14px,1.05vw,17px);font-weight:500;color:var(--ink);
+  font-size:clamp(14px,1.05vw,17px);font-weight:500;color:var(--navy);
   transition:color .15s;white-space:nowrap;
 }
-.nav__links a:hover{color:var(--blue)}
+.nav__links a:hover{color:var(--gray)}
 .nav__links a.nav__signin{color:var(--blue)}
-.nav__links a.nav__signin:hover{color:var(--navy)}
+.nav__links a.nav__signin:hover{color:var(--blue)}
 
 /* dropdown */
 .nav__dropdown{position:relative}
@@ -419,8 +419,9 @@ ul,ol{list-style:none}
   display:flex;justify-content:center;flex-wrap:wrap;gap:12px 24px;margin-bottom:14px;
 }
 .footer__menu a{color:var(--navy);font-size:15px;font-weight:500;transition:color .15s}
-.footer__menu a:hover{color:var(--blue)}
+.footer__menu a:hover{color:var(--gray)}
 .footer__menu a.footer__signin{color:var(--blue)}
+.footer__menu a.footer__signin:hover{color:var(--blue)}
 .footer__copy{font-family:var(--poppins);color:var(--gray);font-size:15px}
 
 /* ============================================================
