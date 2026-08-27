@@ -59,3 +59,19 @@
   window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
 })();
+
+// Hero confetti video — nudge muted autoplay (some browsers/panes don't auto-start)
+(function () {
+  var v = document.querySelector('video.hero__video');
+  if (!v) return;
+  v.muted = true;
+  var play = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  if (document.readyState === 'complete') play();
+  else window.addEventListener('load', play);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) play(); });
+    }).observe(v);
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) play(); });
+})();
