@@ -798,3 +798,11 @@ ul,ol{list-style:none}
   .tpfeat--anim .tpfeat__title{color:var(--navy)}
   .tpfeat--anim .tpfeat__sub{color:var(--gray)}
 }
+
+/* ---------- Value message (capes): mobile-only baked image (≤768px) ---------- */
+.tpcapes__mobileimg{display:none}
+@media (max-width:768px){
+  .tpcapes{min-height:0}
+  .tpcapes__overlay,.tpcapes__inner,.tpcapes__phone{display:none}
+  .tpcapes__mobileimg{display:block;width:100%;height:auto}
+}
