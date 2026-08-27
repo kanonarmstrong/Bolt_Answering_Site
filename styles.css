@@ -120,7 +120,7 @@ ul,ol{list-style:none}
 }
 .nav__toggle span{width:26px;height:3px;background:var(--navy);border-radius:3px;transition:.25s}
 .nav__toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(8px) rotate(45deg)}
-.nav__toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
+.nav__toggle[aria-expanded="true"] span:nth-child(2){opacity:0;transform:scaleX(0)}
 .nav__toggle[aria-expanded="true"] span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
 
 /* ============================================================
@@ -296,7 +296,7 @@ ul,ol{list-style:none}
   font-size:clamp(24px,3.1vw,40px);
 }
 .signup__title .marker{
-  font-size:clamp(34px,4.8vw,70px);display:block;margin-top:.25em;line-height:.8;
+  font-size:clamp(30px,4.4vw,68px);display:inline;line-height:.9;
 }
 .signup__sub{
   color:#fff;font-size:clamp(17px,1.9vw,30px);line-height:1.3;
@@ -307,11 +307,11 @@ ul,ol{list-style:none}
 .steps{display:flex;flex-direction:column;gap:clamp(28px,3.4vw,48px);margin-top:8px}
 .step{
   display:grid;
-  grid-template-columns:auto minmax(0,1fr) minmax(0,auto);
-  align-items:center;gap:clamp(20px,3vw,44px);
+  grid-template-columns:clamp(56px,6vw,84px) minmax(0,1fr) clamp(160px,20vw,230px);
+  align-items:center;gap:clamp(18px,3vw,40px);
 }
 .step__num{
-  width:clamp(62px,6.4vw,104px);height:auto;flex-shrink:0;
+  width:clamp(50px,5.4vw,74px);height:auto;justify-self:center;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));
 }
 .step__body{color:#fff;min-width:0}
@@ -319,12 +319,10 @@ ul,ol{list-style:none}
   color:#fff;font-size:clamp(28px,3.4vw,50px);line-height:1;margin-bottom:14px;
 }
 .step__text{color:#e9e9e9;font-weight:600;font-size:clamp(17px,1.7vw,25px);line-height:1.2;max-width:640px}
-.step__media{justify-self:end;max-width:min(48vw,560px)}
-.step__media--row{display:flex;gap:clamp(14px,2vw,28px);flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.mock-wrap{position:relative;display:inline-block;line-height:0}
-.step__media>.mock-wrap{width:100%}
-.step__mock{display:block;width:100%;height:auto;position:relative;z-index:1}
-.step__media--row .step__mock{width:auto;height:clamp(46px,4.6vw,66px)}
+/* fixed media column + centered images => all mockups share one vertical column, centers aligned */
+.step__media{justify-self:stretch;display:flex;align-items:center;justify-content:center}
+.step__mock{display:block;width:auto;height:auto;max-width:100%;max-height:clamp(64px,7vw,104px);position:relative;z-index:1}
+.step__mock--phone{max-height:clamp(96px,11vw,150px)}
 /* scroll-driven hand-drawn reveal: a conic mask sweeps around the marker
    ellipse so the filled shape appears along its circular path */
 @property --sweep{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
@@ -466,12 +464,13 @@ ul,ol{list-style:none}
   .nav__cta{margin-top:16px;width:100%;height:52px}
 
   .hero__never{transform:rotate(-4deg)}
-  .step{grid-template-columns:auto 1fr;grid-template-areas:"num body" "media media";row-gap:20px}
-  .step__num{grid-area:num}
+  .step{grid-template-columns:auto 1fr;grid-template-areas:"num body" "media media";row-gap:16px}
+  .step__num{grid-area:num;width:clamp(48px,13vw,64px)}
   .step__body{grid-area:body}
-  .step__media{grid-area:media;justify-self:center;max-width:80%;margin-top:4px}
-  .step__media--row{justify-content:center}
-  .step__media--row .step__mock{max-height:45px}
+  /* mobile: mockups centered in a single column => vertically aligned */
+  .step__media{grid-area:media;justify-self:center;display:flex;justify-content:center;margin-top:8px}
+  .step__mock{max-height:clamp(80px,18vw,120px)}
+  .step__mock--phone{max-height:clamp(120px,28vw,180px)}
 
   .band__inner{flex-direction:column;align-items:flex-start}
 }
