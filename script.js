@@ -11,12 +11,16 @@
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
-  // Close menu when a real link is tapped (ignore the Trades dropdown trigger)
+  // Close menu when a real link is tapped (ignore the Trades dropdown trigger).
+  // Also collapse the Trades submenu so tapping any other link (Home, Support…)
+  // doesn't leave it expanded.
   menu.querySelectorAll('a').forEach(function (a) {
     a.addEventListener('click', function () {
       if (a.classList.contains('nav__dropdown-trigger')) return;
       menu.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
+      var dd = menu.querySelector('.nav__dropdown.open');
+      if (dd) dd.classList.remove('open');
     });
   });
 })();
@@ -94,5 +98,7 @@
     var toggle = document.getElementById('navToggle');
     if (menu) menu.classList.remove('open');
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    var dd = document.querySelector('.nav__dropdown.open');
+    if (dd) dd.classList.remove('open');
   });
 })();
