@@ -1,0 +1,129 @@
+/* ============================================================
+   Demo call flow — "Talk to your new assistant"
+   Overlay modal, injected by demo.js on every page.
+   Design: Figma nodes 2370:8688 / 8717 / 8769 / 8833 / 8877,
+   2367:8064 / 8106 / 8148 / 8190, 2380:9023.
+   ============================================================ */
+
+.demo-backdrop{
+  position:fixed;inset:0;z-index:1000;
+  display:none;align-items:flex-start;justify-content:center;
+  background:rgba(12,12,13,.45);
+  overflow-y:auto;padding:48px 16px;
+  -webkit-overflow-scrolling:touch;
+}
+.demo-backdrop.open{display:flex}
+body.demo-lock{overflow:hidden}
+
+.demo-card{
+  position:relative;width:100%;max-width:617px;margin:auto;
+  background:#fff;border:1px solid rgba(0,0,0,.18);border-radius:18px;
+  padding:38px 44px 30px;
+  box-shadow:0 24px 70px rgba(12,12,13,.28);
+}
+
+.demo-close{
+  position:absolute;top:12px;right:14px;
+  width:34px;height:34px;border:0;border-radius:8px;background:transparent;
+  cursor:pointer;color:var(--navy);display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.demo-close:hover{background:rgba(12,12,13,.06)}
+.demo-close svg{width:18px;height:18px;display:block}
+
+.demo-logo{display:block;height:28px;width:auto;margin:2px auto 18px}
+
+.demo-h{
+  font-family:var(--body,'Inter',sans-serif);
+  font-size:clamp(24px,3vw,32px);font-weight:600;line-height:1.3;
+  color:var(--navy);text-align:center;margin:0 0 8px;
+}
+.demo-sub{
+  font-size:15px;line-height:1.6;color:var(--gray);
+  text-align:center;margin:0 auto 22px;max-width:470px;
+}
+
+/* ---- form ---- */
+.demo-field{margin-bottom:14px}
+.demo-label{display:block;font-size:15px;font-weight:700;color:#707070;margin-bottom:6px}
+.demo-input{
+  width:100%;height:46px;box-sizing:border-box;
+  border:1px solid #dee2e6;border-radius:6px;padding:0 12px;
+  font-family:inherit;font-size:17px;color:var(--ink);background:#fff;
+}
+.demo-input::placeholder{color:#c0c0c0}
+.demo-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,127,253,.15)}
+.demo-input[aria-invalid="true"]{border-color:#d64545}
+
+.demo-btn{
+  width:100%;height:49px;box-sizing:border-box;border:0;border-radius:6px;
+  background:var(--blue);color:#fff;font-family:inherit;font-size:18px;font-weight:500;
+  cursor:pointer;margin-top:6px;transition:opacity .15s,background .15s;
+}
+.demo-btn:hover{background:#1f6fe6}
+.demo-btn:disabled{opacity:.55;cursor:not-allowed}
+.demo-btn--ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
+.demo-btn--ghost:hover{background:rgba(43,127,253,.06)}
+.demo-btn--yellow{background:var(--yellow);color:var(--navy)}
+.demo-btn--yellow:hover{background:#eab00c}
+
+.demo-spinner{
+  display:inline-block;width:16px;height:16px;vertical-align:-2px;margin-right:8px;
+  border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;
+  animation:demo-spin .7s linear infinite;
+}
+@keyframes demo-spin{to{transform:rotate(360deg)}}
+
+.demo-disclosure{font-size:11px;line-height:1.55;color:#787888;margin-top:14px}
+.demo-disclosure a{color:var(--blue);text-decoration:none}
+.demo-disclosure a:hover{text-decoration:underline}
+
+.demo-help{text-align:center;font-size:14px;color:rgba(33,37,41,.75);margin-top:22px}
+.demo-help a{color:var(--blue);text-decoration:none;cursor:pointer}
+.demo-help a:hover{text-decoration:underline}
+
+.demo-error{color:#d64545;font-size:13.5px;line-height:1.45;margin:4px 2px 0}
+.demo-note{color:var(--gray);font-size:13.5px;line-height:1.45;margin:4px 2px 10px;text-align:center}
+
+/* ---- passcode ---- */
+.demo-code{display:flex;gap:10px;justify-content:space-between;margin:10px 0 6px}
+.demo-code input{
+  width:100%;max-width:64px;height:58px;box-sizing:border-box;
+  border:1px solid #828282;border-radius:6px;background:#fff;
+  text-align:center;font-family:inherit;font-size:28px;color:var(--navy);
+  -moz-appearance:textfield;
+}
+.demo-code input::-webkit-outer-spin-button,
+.demo-code input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.demo-code input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,127,253,.15)}
+.demo-code.err input{border-color:#d64545}
+.demo-code input:disabled{background:#f5f6f7;color:var(--gray)}
+
+.demo-resend{text-align:center;margin-top:14px;font-size:14px;color:var(--gray)}
+.demo-resend button{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font:inherit;font-weight:600}
+.demo-resend button:disabled{color:var(--gray);cursor:default;font-weight:400}
+
+/* ---- success / status ---- */
+.demo-expect{background:#f9fbff;border:1px solid #eef2f9;border-radius:12px;padding:20px 22px;margin-top:20px;text-align:left}
+.demo-expect h4{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--navy)}
+.demo-expect ul{margin:0;padding-left:18px}
+.demo-expect li{font-size:14.5px;line-height:1.55;color:#3a3a45;margin-bottom:6px}
+.demo-expect li:last-child{margin-bottom:0}
+
+.demo-ring{
+  width:56px;height:56px;margin:4px auto 16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(43,127,253,.1);color:var(--blue);
+}
+.demo-ring svg{width:28px;height:28px}
+.demo-ring--ok{background:rgba(34,170,102,.12);color:#22aa66}
+
+/* ---- mobile ---- */
+@media (max-width:768px){
+  .demo-backdrop{padding:16px 10px;align-items:flex-start}
+  .demo-card{padding:26px 20px 22px;border-radius:14px}
+  .demo-h{font-size:24px}
+  .demo-code{gap:7px}
+  .demo-code input{height:50px;font-size:24px}
+  .demo-input{font-size:16px}
+}
