@@ -172,13 +172,6 @@ body.demo-lock{overflow:hidden}
 .demo-recap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
 
-/* ---- confetti background (mobile only, in-call + recap) — Figma 2442:1191 / 2441:811 ---- */
-.demo-confetti{display:none}
-.demo-card{z-index:1}
-.demo-backdrop.demo-confetti-on .demo-confetti{
-  display:block;position:fixed;inset:0;width:100%;height:100%;
-  object-fit:cover;pointer-events:none;z-index:0;
-}
 
 /* ---- assistant mascot icon + heading (phone entry 2387:9076) ---- */
 .demo-h--icon{display:flex;align-items:center;justify-content:center;gap:10px}
@@ -211,24 +204,24 @@ body.demo-lock{overflow:hidden}
   .demo-code{gap:7px}
   .demo-code input{height:50px;font-size:24px}
   .demo-input{font-size:16px}
-  .demo-logo{height:24px;margin:0 auto 12px}
-  .demo-recap-title{font-size:23px;margin:0 0 6px;letter-spacing:.3px}
-  .demo-recap-sub{font-size:14px;line-height:1.25;margin:0 auto 12px;max-width:300px}
-  .demo-transcript{max-height:188px;padding:12px 14px;margin:0 0 14px;border-radius:14px}
-  .demo-turn{gap:8px;margin-bottom:9px}
-  .demo-turn__text{font-size:13.5px;line-height:1.35}
-  .demo-nomore{display:block;margin:0 0 8px}
-  .demo-nomore__list{font-size:16px;text-align:center;line-height:1.15}
-  .demo-nomore__list p{margin:0 0 4px}
-  .demo-nomore__more{font-size:19px;margin-right:6px}
-  .demo-recap-value{font-size:14px;margin:0 auto 10px}
-  .demo-recap-cta{gap:5px}
-  .demo-recap-cta__arrows{display:flex;gap:4px}
-  .demo-mar--lu{width:28px}
-  .demo-mar--ll{width:26px}
-  .demo-mar--ru{width:20px;transform:rotate(-19.64deg) scaleY(-1)}
-  .demo-mar--rl{width:22px;transform:rotate(-19.64deg)}
-  .demo-recap-btn{max-width:210px;font-size:16px}
+  .demo-logo{height:26px;margin:0 auto 16px}
+  .demo-recap-title{font-size:22px;margin:0 0 14px;letter-spacing:0;line-height:1.05;white-space:nowrap}
+  .demo-recap-sub{font-size:16px;line-height:1.3;margin:0 auto 20px;max-width:320px}
+  .demo-transcript{max-height:246px;padding:16px;margin:0 0 24px;border-radius:16px}
+  .demo-turn{gap:9px;margin-bottom:12px}
+  .demo-turn__text{font-size:14.5px;line-height:1.4}
+  .demo-nomore{display:block;margin:0 0 16px}
+  .demo-nomore__list{font-size:18px;text-align:center;line-height:1.3}
+  .demo-nomore__list p{margin:0 0 7px}
+  .demo-nomore__more{font-size:23px;margin-right:8px}
+  .demo-recap-value{font-size:16px;margin:0 auto 16px}
+  .demo-recap-cta{gap:6px}
+  .demo-recap-cta__arrows{display:flex;gap:5px}
+  .demo-mar--lu{width:34px}
+  .demo-mar--ll{width:30px}
+  .demo-mar--ru{width:24px;transform:rotate(-19.64deg) scaleY(-1)}
+  .demo-mar--rl{width:26px;transform:rotate(-19.64deg)}
+  .demo-recap-btn{max-width:250px;font-size:17px}
   .demo-assist{width:44px;height:44px}
   .demo-incall__title{font-size:20px}
   .demo-incall__expect{font-size:24px}

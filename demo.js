@@ -99,13 +99,10 @@
   function mk(t) { return h('span', { class: 'demo-mk', text: t }); }
   // Confetti webp behind the card — MOBILE ONLY, plays on load of the in-call +
   // recap screens (Figma mobile nodes 2442:1191 / 2441:811).
-  function playConfetti() {
-    if (!confetti || !isMobile()) return;
-    confetti.src = '';
-    confetti.src = 'assets/demo-confetti.webp';
-    backdrop.classList.add('demo-confetti-on');
-  }
-  function stopConfetti() { if (backdrop) backdrop.classList.remove('demo-confetti-on'); }
+  // Confetti reverted (owner) — backdrop is the plain shaded overlay. Stubs kept
+  // as no-ops so existing call sites stay valid.
+  function playConfetti() {}
+  function stopConfetti() {}
   function build() {
     body = h('div', { class: 'demo-body' });
     var close = h('button', { class: 'demo-close', 'aria-label': 'Close', onClick: closeModal }, [
@@ -113,8 +110,7 @@
     ]);
     var logo = h('img', { class: 'demo-logo', src: 'assets/logo-wordmark.png', alt: 'Bolt' });
     card = h('div', { class: 'demo-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Talk to your new assistant' }, [close, logo, body]);
-    confetti = h('img', { class: 'demo-confetti', alt: '', 'aria-hidden': 'true' });
-    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(); } }, [confetti, card]);
+    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(); } }, [card]);
     document.body.appendChild(backdrop);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
   }
