@@ -164,6 +164,29 @@ body.demo-lock{overflow:hidden}
 .demo-recap-cta__arrows{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
 .demo-recap-cta__arrows img{width:40px;height:auto;display:block;opacity:.9}
 
+/* ---- assistant mascot icon + heading (phone entry 2387:9076) ---- */
+.demo-h--icon{display:flex;align-items:center;justify-content:center;gap:10px}
+.demo-assist{position:relative;display:inline-block;width:52px;height:52px;flex:0 0 auto;transform:rotate(15deg)}
+.demo-assist img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.demo-assist .demo-assist__g{inset:1.67%}
+
+/* ---- in-call (2370:8769) ---- */
+.demo-incall{position:relative}
+.demo-incall::before{content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05}
+.demo-incall>*{position:relative;z-index:1}
+.demo-incall__head{display:flex;align-items:center;gap:12px;margin:6px 0 26px}
+.demo-incall__head .demo-assist{transform:rotate(-12deg);margin-top:0}
+.demo-incall__title{font-size:clamp(20px,2.6vw,26px);line-height:1.25;color:var(--navy);margin:0;font-weight:400}
+.demo-incall__expect{font-family:'Permanent Marker',cursive;font-weight:400;font-size:28px;color:#0a0a0a;margin:0 0 14px;transform:rotate(-0.3deg)}
+.demo-incall__list{margin:0;padding-left:34px;color:#839393;font-size:20px;line-height:1.3;list-style:decimal}
+.demo-incall__list li{margin-bottom:10px}
+.demo-incall__list li:last-child{margin-bottom:0}
+
+/* ---- demo limit inline message (2370:8877) ---- */
+.demo-limitmsg{color:#d64545;font-size:14px;line-height:1.5;text-align:center;margin:2px 2px 8px}
+.demo-limitmsg__link{color:var(--blue);text-decoration:none;font-weight:600}
+.demo-limitmsg__link:hover{text-decoration:underline}
+
 /* ---- mobile ---- */
 @media (max-width:768px){
   .demo-backdrop{padding:16px 10px;align-items:flex-start}
@@ -177,4 +200,8 @@ body.demo-lock{overflow:hidden}
   .demo-nomore__list{font-size:19px}
   .demo-nomore__more{font-size:23px}
   .demo-recap-cta__arrows{display:none}
+  .demo-assist{width:44px;height:44px}
+  .demo-incall__title{font-size:20px}
+  .demo-incall__expect{font-size:24px}
+  .demo-incall__list{font-size:17px;padding-left:28px}
 }

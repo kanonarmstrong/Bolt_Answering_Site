@@ -120,6 +120,20 @@
   function setBody(nodes) { body.innerHTML = ''; nodes.forEach(function (n) { if (n) body.appendChild(n); }); }
   function heading(t) { return h('h2', { class: 'demo-h', text: t }); }
   function sub(t) { return h('p', { class: 'demo-sub', text: t }); }
+  // Assistant mascot icon (Figma 2434:586 / 2434:631) — two stacked SVG layers.
+  function assistIcon() {
+    return h('span', { class: 'demo-assist' }, [
+      h('img', { class: 'demo-assist__g', src: 'assets/demo-assist-group.svg', alt: '' }),
+      h('img', { class: 'demo-assist__l', src: 'assets/demo-assist-layer.svg', alt: '' })
+    ]);
+  }
+  // Heading with the mascot icon to its right (phone entry 2387:9076).
+  function headingIcon(t) {
+    return h('div', { class: 'demo-h demo-h--icon' }, [
+      h('span', { class: 'demo-h__txt', text: t }),
+      assistIcon()
+    ]);
+  }
   function helpLine() {
     return h('p', { class: 'demo-help' }, [
       'Need help? ',
@@ -135,7 +149,8 @@
     var err = h('div', { class: 'demo-error', id: id + '-err', style: 'display:none' });
     return { wrap: h('div', { class: 'demo-field' }, [h('label', { class: 'demo-label', for: id, text: label }), input, err]), input: input, err: err };
   }
-  function renderPhone(notice) {
+  function renderPhone(opts) {
+    opts = opts || {};
     var phone = field('Phone number', 'demo-phone', '(555) 555-1212', 'tel', state.display);
     var biz = field('Business name', 'demo-business', 'John’s HVAC', 'text', state.business);
     var email = field('Email (optional)', 'demo-email', 'yourname@example.com', 'email', state.email);
@@ -182,11 +197,16 @@
       });
     });
 
+    var limitMsg = opts.limit ? h('p', { class: 'demo-limitmsg' }, [
+      'You’ve reached your demo limit. ',
+      h('a', { class: 'demo-limitmsg__link', href: 'https://app.boltanswering.com/signup' }, ['Start a free trial today'])
+    ]) : null;
+
     setBody([
-      heading('Have my assistant call me'),
+      headingIcon('Have my assistant call me'),
       sub('We’ll send you a 6-digit one-time passcode before placing the call'),
-      notice ? h('p', { class: 'demo-note', text: notice }) : null,
       phone.wrap, biz.wrap, email.wrap,
+      limitMsg,
       btn, disclosure, helpLine()
     ]);
     setTimeout(function () { phone.input.focus(); }, 30);
@@ -328,21 +348,23 @@
     });
   }
 
-  // ---------- screen: in-call (call placed, ringing / in progress) ----------
+  // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
   function renderInCall() {
     clearResend();
     setBody([
-      h('div', { class: 'demo-ring demo-ring--ok' }, [svg('<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>')]),
-      heading('That worked. Calling you now…'),
-      h('div', { class: 'demo-expect' }, [
-        h('h4', { text: 'What to expect:' }),
-        h('ul', {}, [
-          h('li', { text: 'The assistant will introduce herself.' }),
-          h('li', { text: 'You describe any job — make something up.' }),
-          h('li', { text: 'She’ll try to find you an opening, or flag your urgent request to the tech. Easy.' })
+      h('div', { class: 'demo-incall' }, [
+        h('div', { class: 'demo-incall__head' }, [
+          assistIcon(),
+          h('p', { class: 'demo-incall__title', text: 'That worked! Calling you now...' })
+        ]),
+        h('p', { class: 'demo-incall__expect', text: 'What to expect:' }),
+        h('ol', { class: 'demo-incall__list' }, [
+          h('li', {}, ['The assistant will introduce herself']),
+          h('li', {}, ['You describe any job. Make something up.']),
+          h('li', {}, ['The assistant will try to find you an opening or just flag your urgent request to the tech.']),
+          h('li', {}, ['Easy'])
         ])
-      ]),
-      helpLine()
+      ])
     ]);
   }
 
@@ -470,22 +492,14 @@
     setBody([
       heading('Didn’t catch you that time. Let’s try again.'),
       sub('Make sure your phone isn’t blocking calls.'),
-      btn,
-      helpLine()
+      btn
     ]);
   }
 
-  // ---------- screen: demo limit reached ----------
+  // ---------- demo limit reached — inline on the phone form (Figma 2370:8877) ----------
   function renderLimit() {
     clearResend();
-    var btn = h('a', { class: 'demo-btn demo-btn--yellow', href: '#pricing', style: 'display:flex;align-items:center;justify-content:center;text-decoration:none' }, ['Start my free 14-day trial']);
-    btn.addEventListener('click', function () { closeModal(); });
-    setBody([
-      heading('You’ve reached your demo limit'),
-      sub('You’ve used all your demo calls for this number. Start a free trial to keep going.'),
-      btn,
-      helpLine()
-    ]);
+    renderPhone({ limit: true });
   }
 
   // ---------- screen: something went wrong ----------
