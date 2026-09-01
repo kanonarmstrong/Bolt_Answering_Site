@@ -169,6 +169,8 @@ body.demo-lock{overflow:hidden}
 .demo-ar--r2{width:38px;transform:scaleY(-1)}
 .demo-mar{display:block;height:auto;opacity:.92}
 .demo-recap-value--m{color:var(--navy)}
+.demo-free{font-weight:500}
+.demo-sub-sm{font-size:.9em;color:#707070}
 .demo-recap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
 

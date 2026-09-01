@@ -487,7 +487,7 @@
     // value-prop shortened, CTA arrows use the mobile-specific assets.
     var money = m ? null : h('img', { class: 'demo-nomore__money', src: 'assets/demo-money.svg', alt: '' });
     var valueProp = m
-      ? h('p', { class: 'demo-recap-value demo-recap-value--m', text: 'Start Bolt for FREE today' })
+      ? h('p', { class: 'demo-recap-value demo-recap-value--m' }, ['Start Bolt for ', h('span', { class: 'demo-free', text: 'FREE' }), ' today'])
       : h('p', { class: 'demo-recap-value' }, [
           'You’ll start Bolt for FREE today, but remember a receptionist this good ',
           h('span', { class: 'hl', text: 'costs thousands' }),
@@ -517,7 +517,7 @@
       h('div', { class: 'demo-recap' }, [
         h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
         h('p', { class: 'demo-recap-sub' }, m
-          ? ['She’ll catch every detail so you never miss a beat. ', h('span', { class: 'hl', text: 'Scroll to see the word-for-word transcript:' })]
+          ? [h('span', { class: 'hl', text: 'Every detail is caught so you never miss a beat.' }), h('br'), h('span', { class: 'demo-sub-sm', text: 'Scroll to see the transcript:' })]
           : ['Your assistant will always catch every detail to make sure you never miss a beat. ', h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })]),
         box,
         h('div', { class: 'demo-nomore' }, [
