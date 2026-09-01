@@ -19,6 +19,8 @@
     'you agree to (1) receive text messages and emails from Bolt Answering for (a) security verification ' +
     'and (b) marketing purposes and (2) automated phone calls from Bolt Answering’s virtual assistant ' +
     'at the number provided. Message frequency may vary. Standard Message, Voice, and Data Rates may apply. ' +
+    // STOP/HELP kept for OTP/TCPA compliance — intentionally diverges from Figma
+    // node 2354:7460 (which omits it). Do NOT remove to match the design.
     'Reply STOP to opt out. Reply HELP for help. ' +
     'In accordance with our ';
   var CONSENT_LINK = 'Privacy Policy';
@@ -111,6 +113,7 @@
   }
   function closeModal() {
     clearResend();
+    stopRecap();
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
   }
@@ -313,15 +316,20 @@
         return renderCallFailed();
       }
       return apiPost('/api/demo/call', { token: r.data.token }).then(function (c) {
-        if (c.ok) return renderSuccess();
+        if (c.ok) {
+          renderInCall();
+          var callId = c.data && c.data.callId;
+          if (callId) pollRecap(callId);
+          return;
+        }
         if (c.error === 'demo_limit_reached') return renderLimit();
         return renderCallFailed();
       });
     });
   }
 
-  // ---------- screen: success ----------
-  function renderSuccess() {
+  // ---------- screen: in-call (call placed, ringing / in progress) ----------
+  function renderInCall() {
     clearResend();
     setBody([
       h('div', { class: 'demo-ring demo-ring--ok' }, [svg('<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>')]),
@@ -335,6 +343,123 @@
         ])
       ]),
       helpLine()
+    ]);
+  }
+
+  // ---------- recap polling ----------
+  // Backend records call completion via Telnyx webhooks (/webhooks/telnyx-demo);
+  // GET /api/demo/recap/:callId returns the live row. Poll it so the modal
+  // advances from the in-call screen to the recap screen when the call ends.
+  var recapTimer = null;
+  function stopRecap() { if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
+  function pollRecap(callId) {
+    stopRecap();
+    var started = Date.now();
+    var url = API + '/api/demo/recap/' + encodeURIComponent(callId);
+    (function tick() {
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (d) {
+          // Bail if the user closed the modal or moved to another screen.
+          if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
+          if (d && d.status === 'completed') { stopRecap(); return renderRecap(d); }
+          if (d && d.status === 'failed') { stopRecap(); return renderCallFailed(); }
+          if (Date.now() - started > 240000) { stopRecap(); return; } // 4-min cap: leave in-call screen up
+          recapTimer = setTimeout(tick, 3000);
+        })
+        .catch(function () {
+          if (Date.now() - started > 240000) { stopRecap(); return; }
+          recapTimer = setTimeout(tick, 4000); // tolerate transient network/CORS blips
+        });
+    })();
+  }
+
+  // Transcript arrives raw from Telnyx (unnormalized): array of {speaker,text},
+  // or {role,content} (AI-assistant messages), or a plain string. Parse tolerantly.
+  function isAssistant(sp) { return /assist|agent|\bbot\b|\bai\b|bolt/i.test(String(sp || '')); }
+  function normTurns(transcript) {
+    if (!transcript) return [];
+    if (typeof transcript === 'string') {
+      var s = transcript.trim();
+      return s ? [{ assistant: true, label: 'Assistant', text: s }] : [];
+    }
+    if (!Array.isArray(transcript)) return [];
+    return transcript.map(function (t) {
+      if (t == null) return null;
+      if (typeof t === 'string') return { assistant: true, label: 'Assistant', text: t };
+      var sp = t.speaker != null ? t.speaker : (t.role != null ? t.role : (t.from != null ? t.from : t.actor));
+      var tx = t.text != null ? t.text : (t.content != null ? t.content : (t.message != null ? t.message : ''));
+      if (typeof tx !== 'string') tx = tx == null ? '' : String(tx);
+      tx = tx.trim();
+      if (!tx) return null;
+      var a = isAssistant(sp);
+      return { assistant: a, label: a ? 'Assistant' : 'Caller', text: tx };
+    }).filter(Boolean);
+  }
+
+  // ---------- screen: recap (call completed) — Figma 2370:8784 ----------
+  function renderRecap(d) {
+    clearResend(); stopRecap();
+    var turns = normTurns(d && d.transcript);
+
+    var box = h('div', { class: 'demo-transcript' });
+    if (!turns.length) {
+      box.appendChild(h('p', { class: 'demo-transcript__empty', text: 'Your call transcript will appear here in a moment.' }));
+    } else {
+      turns.forEach(function (t) {
+        box.appendChild(h('div', { class: 'demo-turn' + (t.assistant ? '' : ' demo-turn--caller') }, [
+          h('span', { class: 'demo-turn__icon' }, [
+            h('img', { src: t.assistant ? 'assets/demo-icon-assistant.svg' : 'assets/demo-icon-caller.svg', alt: '' })
+          ]),
+          h('div', { class: 'demo-turn__text' }, [
+            h('b', { text: t.label }),
+            document.createTextNode(': ' + t.text)
+          ])
+        ]));
+      });
+    }
+
+    var cta = h('a', {
+      class: 'demo-btn demo-btn--yellow',
+      href: 'https://app.boltanswering.com/signup',
+      style: 'display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto'
+    }, ['Start my free trial now']);
+
+    setBody([
+      h('div', { class: 'demo-recap' }, [
+        h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
+        h('p', { class: 'demo-recap-sub' }, [
+          'Your assistant will always catch every detail to make sure you never miss a beat. ',
+          h('span', { class: 'hl', text: 'Here’s the transcript:' })
+        ]),
+        box,
+        h('div', { class: 'demo-nomore' }, [
+          h('div', { class: 'demo-nomore__list' }, [
+            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed jobs' })]),
+            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed leads' })]),
+            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'hassle when you can’t answer' })])
+          ]),
+          h('img', { class: 'demo-nomore__money', src: 'assets/demo-money.svg', alt: '' })
+        ]),
+        h('p', { class: 'demo-recap-value' }, [
+          'You’ll start Bolt for FREE today, but remember a receptionist this good ',
+          h('span', { class: 'hl', text: 'costs thousands' }),
+          ' and our 24/7 assistants do more for ',
+          h('span', { class: 'hl', text: 'less than $4 a day.' })
+        ]),
+        h('div', { class: 'demo-recap-cta' }, [
+          h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
+            h('img', { src: 'assets/demo-arrow2.svg', alt: '' }),
+            h('img', { src: 'assets/demo-arrow3.svg', alt: '' })
+          ]),
+          cta,
+          h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
+            h('img', { src: 'assets/demo-arrow1.svg', alt: '' }),
+            h('img', { src: 'assets/demo-arrow4.svg', alt: '' })
+          ])
+        ]),
+        helpLine()
+      ])
     ]);
   }
 
