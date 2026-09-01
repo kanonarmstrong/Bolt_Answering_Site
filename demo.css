@@ -167,6 +167,8 @@ body.demo-lock{overflow:hidden}
 .demo-ar--l2{width:40px;transform:scaleX(-1)}
 .demo-ar--r1{width:40px}
 .demo-ar--r2{width:38px;transform:scaleY(-1)}
+.demo-mar{display:block;height:auto;opacity:.92}
+.demo-recap-value--m{color:var(--navy)}
 .demo-recap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
 
@@ -210,13 +212,15 @@ body.demo-lock{overflow:hidden}
   .demo-code input{height:50px;font-size:24px}
   .demo-input{font-size:16px}
   .demo-recap-title{font-size:28px}
-  .demo-nomore{display:block;position:relative;margin:2px 0 14px}
-  .demo-nomore__list{position:relative;z-index:1;font-size:18px}
+  .demo-nomore{display:block;margin:2px 0 14px}
+  .demo-nomore__list{font-size:18px;text-align:center}
   .demo-nomore__more{font-size:24px}
-  .demo-nomore__money{position:absolute;top:50%;right:-4px;width:140px;transform:translateY(-50%) rotate(2.8deg);opacity:.4;z-index:0}
   .demo-recap-cta{gap:5px}
-  .demo-recap-cta__arrows{display:flex;gap:3px}
-  .demo-ar--l1,.demo-ar--l2,.demo-ar--r1,.demo-ar--r2{width:26px}
+  .demo-recap-cta__arrows{display:flex;gap:4px}
+  .demo-mar--lu{width:28px}
+  .demo-mar--ll{width:26px}
+  .demo-mar--ru{width:20px;transform:rotate(-19.64deg) scaleY(-1)}
+  .demo-mar--rl{width:22px;transform:rotate(-19.64deg)}
   .demo-recap-btn{max-width:210px;font-size:16px}
   .demo-assist{width:44px;height:44px}
   .demo-incall__title{font-size:20px}

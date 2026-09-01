@@ -487,6 +487,36 @@
       href: 'https://app.boltanswering.com/signup'
     }, ['Start my free trial now']);
 
+    // Mobile (Figma 2441:811): money vector removed, value statements centered,
+    // value-prop shortened, CTA arrows use the mobile-specific assets.
+    var money = m ? null : h('img', { class: 'demo-nomore__money', src: 'assets/demo-money.svg', alt: '' });
+    var valueProp = m
+      ? h('p', { class: 'demo-recap-value demo-recap-value--m', text: 'Start Bolt for FREE today' })
+      : h('p', { class: 'demo-recap-value' }, [
+          'You’ll start Bolt for FREE today, but remember a receptionist this good ',
+          h('span', { class: 'hl', text: 'costs thousands' }),
+          ' and our 24/7 assistants do more for ',
+          h('span', { class: 'hl', text: 'less than $4 a day.' })
+        ]);
+    var arrowsL = m
+      ? h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
+          h('img', { class: 'demo-mar demo-mar--lu', src: 'assets/demo-marrow-lu.svg', alt: '' }),
+          h('img', { class: 'demo-mar demo-mar--ll', src: 'assets/demo-marrow-ll.svg', alt: '' })
+        ])
+      : h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
+          h('img', { class: 'demo-ar demo-ar--l1', src: 'assets/demo-arrow-lu.svg', alt: '' }),
+          h('img', { class: 'demo-ar demo-ar--l2', src: 'assets/demo-arrow-ll.svg', alt: '' })
+        ]);
+    var arrowsR = m
+      ? h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
+          h('img', { class: 'demo-mar demo-mar--ru', src: 'assets/demo-marrow-ru.svg', alt: '' }),
+          h('img', { class: 'demo-mar demo-mar--rl', src: 'assets/demo-marrow-rl.svg', alt: '' })
+        ])
+      : h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
+          h('img', { class: 'demo-ar demo-ar--r1', src: 'assets/demo-arrow-rl.svg', alt: '' }),
+          h('img', { class: 'demo-ar demo-ar--r2', src: 'assets/demo-arrow-ru.svg', alt: '' })
+        ]);
+
     setBody([
       h('div', { class: 'demo-recap' }, [
         h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
@@ -500,25 +530,10 @@
             h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed leads' })]),
             h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'hassle when you can’t answer' })])
           ]),
-          h('img', { class: 'demo-nomore__money', src: 'assets/demo-money.svg', alt: '' })
+          money
         ]),
-        h('p', { class: 'demo-recap-value' }, [
-          'You’ll start Bolt for FREE today, but remember a receptionist this good ',
-          h('span', { class: 'hl', text: 'costs thousands' }),
-          ' and our 24/7 assistants do more for ',
-          h('span', { class: 'hl', text: 'less than $4 a day.' })
-        ]),
-        h('div', { class: 'demo-recap-cta' }, [
-          h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
-            h('img', { class: 'demo-ar demo-ar--l1', src: 'assets/demo-arrow-lu.svg', alt: '' }),
-            h('img', { class: 'demo-ar demo-ar--l2', src: 'assets/demo-arrow-ll.svg', alt: '' })
-          ]),
-          cta,
-          h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
-            h('img', { class: 'demo-ar demo-ar--r1', src: 'assets/demo-arrow-rl.svg', alt: '' }),
-            h('img', { class: 'demo-ar demo-ar--r2', src: 'assets/demo-arrow-ru.svg', alt: '' })
-          ])
-        ]),
+        valueProp,
+        h('div', { class: 'demo-recap-cta' }, [arrowsL, cta, arrowsR]),
         helpLine()
       ])
     ]);
