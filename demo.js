@@ -93,7 +93,19 @@
   }
 
   // ---------- modal shell ----------
-  var body, backdrop, card;
+  var body, backdrop, card, confetti = null;
+  var recapConfettiDone = false;
+  function isMobile() { return window.matchMedia('(max-width:768px)').matches; }
+  function mk(t) { return h('span', { class: 'demo-mk', text: t }); }
+  // Confetti webp behind the card — MOBILE ONLY, plays on load of the in-call +
+  // recap screens (Figma mobile nodes 2442:1191 / 2441:811).
+  function playConfetti() {
+    if (!confetti || !isMobile()) return;
+    confetti.src = '';
+    confetti.src = 'assets/demo-confetti.webp';
+    backdrop.classList.add('demo-confetti-on');
+  }
+  function stopConfetti() { if (backdrop) backdrop.classList.remove('demo-confetti-on'); }
   function build() {
     body = h('div', { class: 'demo-body' });
     var close = h('button', { class: 'demo-close', 'aria-label': 'Close', onClick: closeModal }, [
@@ -101,12 +113,15 @@
     ]);
     var logo = h('img', { class: 'demo-logo', src: 'assets/logo-wordmark.png', alt: 'Bolt' });
     card = h('div', { class: 'demo-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Talk to your new assistant' }, [close, logo, body]);
-    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(); } }, [card]);
+    confetti = h('img', { class: 'demo-confetti', alt: '', 'aria-hidden': 'true' });
+    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(); } }, [confetti, card]);
     document.body.appendChild(backdrop);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
   }
   function openModal() {
     if (!backdrop) build();
+    stopConfetti();
+    recapConfettiDone = false;
     renderPhone();
     backdrop.classList.add('open');
     document.body.classList.add('demo-lock');
@@ -114,6 +129,7 @@
   function closeModal() {
     clearResend();
     stopRecap();
+    stopConfetti();
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
   }
@@ -321,6 +337,7 @@
 
   // ---------- token + call ----------
   function placeCall() {
+    stopConfetti();
     setBody([
       h('div', { class: 'demo-ring' }, [svg('<path d="M5 4h4l2 5-3 2a11 11 0 005 5l2-3 5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>')]),
       heading('Placing your call…'),
@@ -351,21 +368,27 @@
   // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
   function renderInCall() {
     clearResend();
+    var m = isMobile();
+    // Mobile (Figma 2442:1191) diverges in copy from desktop (2370:8769).
+    var title = m
+      ? h('p', { class: 'demo-incall__title' }, [mk('That works!'), ' Calling you now...'])
+      : h('p', { class: 'demo-incall__title', text: 'That worked! Calling you now...' });
+    var step3 = m
+      ? 'The assistant will collect your details to schedule the job.'
+      : 'The assistant will try to find you an opening or just flag your urgent request to the tech.';
     setBody([
       h('div', { class: 'demo-incall' }, [
-        h('div', { class: 'demo-incall__head' }, [
-          assistIcon(),
-          h('p', { class: 'demo-incall__title', text: 'That worked! Calling you now...' })
-        ]),
+        h('div', { class: 'demo-incall__head' }, [assistIcon(), title]),
         h('p', { class: 'demo-incall__expect', text: 'What to expect:' }),
         h('ol', { class: 'demo-incall__list' }, [
           h('li', {}, ['The assistant will introduce herself']),
           h('li', {}, ['You describe any job. Make something up.']),
-          h('li', {}, ['The assistant will try to find you an opening or just flag your urgent request to the tech.']),
-          h('li', {}, ['Easy'])
+          h('li', {}, [step3]),
+          h('li', {}, [m ? mk('Done.') : 'Easy'])
         ])
       ])
     ]);
+    playConfetti();
   }
 
   // ---------- recap polling ----------
@@ -378,6 +401,7 @@
   function pollRecap(callId) {
     stopRecap();
     recapShown = false;
+    recapConfettiDone = false;
     var started = Date.now();
     var url = API + '/api/demo/recap/' + encodeURIComponent(callId);
     (function tick() {
@@ -434,6 +458,8 @@
   function renderRecap(d, opts) {
     clearResend();
     opts = opts || {};
+    var m = isMobile();
+    if (!recapConfettiDone) { recapConfettiDone = true; playConfetti(); }
     var turns = normTurns(d && d.transcript);
 
     var box = h('div', { class: 'demo-transcript' });
@@ -457,18 +483,16 @@
     }
 
     var cta = h('a', {
-      class: 'demo-btn demo-btn--yellow',
-      href: 'https://app.boltanswering.com/signup',
-      style: 'display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto'
+      class: 'demo-btn demo-btn--yellow demo-recap-btn',
+      href: 'https://app.boltanswering.com/signup'
     }, ['Start my free trial now']);
 
     setBody([
       h('div', { class: 'demo-recap' }, [
         h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
-        h('p', { class: 'demo-recap-sub' }, [
-          'Your assistant will always catch every detail to make sure you never miss a beat. ',
-          h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })
-        ]),
+        h('p', { class: 'demo-recap-sub' }, m
+          ? ['She’ll catch every detail so you never miss a beat. ', h('span', { class: 'hl', text: 'Scroll to see the word-for-word transcript:' })]
+          : ['Your assistant will always catch every detail to make sure you never miss a beat. ', h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })]),
         box,
         h('div', { class: 'demo-nomore' }, [
           h('div', { class: 'demo-nomore__list' }, [
@@ -502,6 +526,7 @@
 
   // ---------- screen: call didn't complete ----------
   function renderCallFailed() {
+    stopConfetti();
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Call me again' });
     btn.addEventListener('click', function () { placeCall(); });
     setBody([
