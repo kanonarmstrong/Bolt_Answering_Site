@@ -534,7 +534,7 @@
         ]),
         valueProp,
         h('div', { class: 'demo-recap-cta' }, [arrowsL, cta, arrowsR]),
-        helpLine()
+        m ? null : helpLine()
       ])
     ]);
   }

@@ -206,15 +206,22 @@ body.demo-lock{overflow:hidden}
 /* ---- mobile ---- */
 @media (max-width:768px){
   .demo-backdrop{padding:16px 10px;align-items:flex-start}
-  .demo-card{padding:26px 20px 22px;border-radius:14px}
+  .demo-card{padding:22px 18px 16px;border-radius:14px}
   .demo-h{font-size:24px}
   .demo-code{gap:7px}
   .demo-code input{height:50px;font-size:24px}
   .demo-input{font-size:16px}
-  .demo-recap-title{font-size:28px}
-  .demo-nomore{display:block;margin:2px 0 14px}
-  .demo-nomore__list{font-size:18px;text-align:center}
-  .demo-nomore__more{font-size:24px}
+  .demo-logo{height:24px;margin:0 auto 12px}
+  .demo-recap-title{font-size:23px;margin:0 0 6px;letter-spacing:.3px}
+  .demo-recap-sub{font-size:14px;line-height:1.25;margin:0 auto 12px;max-width:300px}
+  .demo-transcript{max-height:188px;padding:12px 14px;margin:0 0 14px;border-radius:14px}
+  .demo-turn{gap:8px;margin-bottom:9px}
+  .demo-turn__text{font-size:13.5px;line-height:1.35}
+  .demo-nomore{display:block;margin:0 0 8px}
+  .demo-nomore__list{font-size:16px;text-align:center;line-height:1.15}
+  .demo-nomore__list p{margin:0 0 4px}
+  .demo-nomore__more{font-size:19px;margin-right:6px}
+  .demo-recap-value{font-size:14px;margin:0 auto 10px}
   .demo-recap-cta{gap:5px}
   .demo-recap-cta__arrows{display:flex;gap:4px}
   .demo-mar--lu{width:28px}
