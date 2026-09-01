@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  (function () {
+    try { if (sessionStorage.getItem('bolt_gate') === 'ok') return; } catch (e) {}
+    var password = prompt("Please enter the password to access Bolt Answering:");
+    if (password !== "built4truck$") {
+      alert("Incorrect password.");
+      window.location.href = "https://google.com";
+      return;
+    }
+    try { sessionStorage.setItem('bolt_gate', 'ok'); } catch (e) {}
+  })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bolt for Handymen — Never miss a job again</title>
