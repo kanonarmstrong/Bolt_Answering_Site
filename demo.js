@@ -373,9 +373,11 @@
   // GET /api/demo/recap/:callId returns the live row. Poll it so the modal
   // advances from the in-call screen to the recap screen when the call ends.
   var recapTimer = null;
+  var recapShown = false;
   function stopRecap() { if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
   function pollRecap(callId) {
     stopRecap();
+    recapShown = false;
     var started = Date.now();
     var url = API + '/api/demo/recap/' + encodeURIComponent(callId);
     (function tick() {
@@ -384,9 +386,18 @@
         .then(function (d) {
           // Bail if the user closed the modal or moved to another screen.
           if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
-          if (d && d.status === 'completed') { stopRecap(); return renderRecap(d); }
           if (d && d.status === 'failed') { stopRecap(); return renderCallFailed(); }
-          if (Date.now() - started > 240000) { stopRecap(); return; } // 4-min cap: leave in-call screen up
+          if (d && d.status === 'completed') {
+            if (normTurns(d.transcript).length > 0) { stopRecap(); return renderRecap(d); }
+            // Completed, but the transcript isn't back yet (the server is still
+            // pulling it from Telnyx). Switch to the recap now, keep polling.
+            if (!recapShown) { recapShown = true; renderRecap(d); }
+            if (Date.now() - started > 240000) { stopRecap(); return renderRecap(d, { transcriptUnavailable: true }); }
+            recapTimer = setTimeout(tick, 3000);
+            return;
+          }
+          // pending / in_call — keep waiting for the call to end.
+          if (Date.now() - started > 240000) { stopRecap(); return; } // give up quietly, leave the in-call screen up
           recapTimer = setTimeout(tick, 3000);
         })
         .catch(function () {
@@ -420,13 +431,14 @@
   }
 
   // ---------- screen: recap (call completed) — Figma 2370:8784 ----------
-  function renderRecap(d) {
-    clearResend(); stopRecap();
+  function renderRecap(d, opts) {
+    clearResend();
+    opts = opts || {};
     var turns = normTurns(d && d.transcript);
 
     var box = h('div', { class: 'demo-transcript' });
     if (!turns.length) {
-      box.appendChild(h('p', { class: 'demo-transcript__empty', text: 'Your call transcript will appear here in a moment.' }));
+      box.appendChild(h('p', { class: 'demo-transcript__empty', text: opts.transcriptUnavailable ? 'Transcript unavailable.' : 'Your call transcript will appear here in a moment.' }));
     } else {
       turns.forEach(function (t) {
         box.appendChild(h('div', { class: 'demo-turn' + (t.assistant ? '' : ' demo-turn--caller') }, [
