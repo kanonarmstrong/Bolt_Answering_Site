@@ -442,9 +442,12 @@
     } else {
       turns.forEach(function (t) {
         box.appendChild(h('div', { class: 'demo-turn' + (t.assistant ? '' : ' demo-turn--caller') }, [
-          h('span', { class: 'demo-turn__icon' }, [
-            h('img', { src: t.assistant ? 'assets/demo-icon-assistant.svg' : 'assets/demo-icon-caller.svg', alt: '' })
-          ]),
+          // Only the assistant carries the mascot icon (Figma 2370:8784). The
+          // caller has none; the empty gutter keeps caller text left-aligned
+          // with the assistant's, and the icon sits beside the "Assistant" label.
+          h('span', { class: 'demo-turn__icon' }, t.assistant ? [
+            h('img', { src: 'assets/demo-icon-assistant.svg', alt: '' })
+          ] : []),
           h('div', { class: 'demo-turn__text' }, [
             h('b', { text: t.label }),
             document.createTextNode(': ' + t.text)
