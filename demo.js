@@ -517,10 +517,14 @@
       h('div', { class: 'demo-recap' }, [
         h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
         h('p', { class: 'demo-recap-sub' }, m
-          ? [h('span', { class: 'hl', text: 'Every detail is caught so you never miss a beat.' }), h('br'), h('span', { class: 'demo-sub-sm', text: 'Scroll to see the transcript:' })]
+          ? [h('span', { class: 'hl demo-sub-l1', text: 'Every detail is caught so you never miss a beat.' }), h('br'), h('span', { class: 'demo-sub-sm', text: 'Scroll to see the transcript:' })]
           : ['Your assistant will always catch every detail to make sure you never miss a beat. ', h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })]),
         box,
         h('div', { class: 'demo-nomore' }, [
+          m ? h('span', { class: 'demo-nomore__vec' }, [
+                h('img', { src: 'assets/demo-nomore-vec2.svg', alt: '' }),
+                h('img', { src: 'assets/demo-nomore-vec1.svg', alt: '' })
+              ]) : null,
           h('div', { class: 'demo-nomore__list' }, [
             h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed jobs' })]),
             h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed leads' })]),
