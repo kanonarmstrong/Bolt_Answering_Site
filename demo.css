@@ -148,8 +148,8 @@ body.demo-lock{overflow:hidden}
 .demo-turn--caller .demo-turn__text{color:var(--navy)}
 .demo-transcript__empty{font-size:14px;color:var(--gray);text-align:center;padding:14px 8px;margin:0}
 
-.demo-nomore{display:flex;align-items:center;justify-content:center;gap:18px;margin:2px 0 16px}
-.demo-nomore__list{text-align:left;font-size:22px;line-height:1.2;color:#839393}
+.demo-nomore{display:flex;align-items:flex-start;justify-content:center;gap:16px;margin:2px 0 16px}
+.demo-nomore__list{text-align:left;font-size:18px;line-height:1.25;color:#839393}
 .demo-nomore__list p{margin:0 0 8px}
 .demo-nomore__list p:last-child{margin:0}
 .demo-nomore__more{font-family:'Permanent Marker',cursive;font-weight:400;color:var(--navy);font-size:26px;margin-right:10px}
@@ -161,8 +161,12 @@ body.demo-lock{overflow:hidden}
 
 .demo-recap-cta{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
 .demo-recap-cta .demo-btn{margin-top:0}
-.demo-recap-cta__arrows{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
-.demo-recap-cta__arrows img{width:40px;height:auto;display:block;opacity:.9}
+.demo-recap-cta__arrows{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;align-items:center}
+.demo-ar{display:block;height:auto;opacity:.92}
+.demo-ar--l1{width:44px;transform:scaleX(-1)}
+.demo-ar--l2{width:40px;transform:scaleX(-1)}
+.demo-ar--r1{width:40px}
+.demo-ar--r2{width:38px;transform:scaleY(-1)}
 
 /* ---- assistant mascot icon + heading (phone entry 2387:9076) ---- */
 .demo-h--icon{display:flex;align-items:center;justify-content:center;gap:10px}
@@ -196,9 +200,10 @@ body.demo-lock{overflow:hidden}
   .demo-code input{height:50px;font-size:24px}
   .demo-input{font-size:16px}
   .demo-recap-title{font-size:28px}
-  .demo-nomore{flex-direction:column;gap:12px}
-  .demo-nomore__list{font-size:19px}
-  .demo-nomore__more{font-size:23px}
+  .demo-nomore{gap:12px}
+  .demo-nomore__list{font-size:18px}
+  .demo-nomore__more{font-size:24px}
+  .demo-nomore__money{width:64px}
   .demo-recap-cta__arrows{display:none}
   .demo-assist{width:44px;height:44px}
   .demo-incall__title{font-size:20px}

@@ -467,7 +467,7 @@
         h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
         h('p', { class: 'demo-recap-sub' }, [
           'Your assistant will always catch every detail to make sure you never miss a beat. ',
-          h('span', { class: 'hl', text: 'Here’s the transcript:' })
+          h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })
         ]),
         box,
         h('div', { class: 'demo-nomore' }, [
@@ -486,13 +486,13 @@
         ]),
         h('div', { class: 'demo-recap-cta' }, [
           h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
-            h('img', { src: 'assets/demo-arrow2.svg', alt: '' }),
-            h('img', { src: 'assets/demo-arrow3.svg', alt: '' })
+            h('img', { class: 'demo-ar demo-ar--l1', src: 'assets/demo-arrow-lu.svg', alt: '' }),
+            h('img', { class: 'demo-ar demo-ar--l2', src: 'assets/demo-arrow-ll.svg', alt: '' })
           ]),
           cta,
           h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
-            h('img', { src: 'assets/demo-arrow1.svg', alt: '' }),
-            h('img', { src: 'assets/demo-arrow4.svg', alt: '' })
+            h('img', { class: 'demo-ar demo-ar--r1', src: 'assets/demo-arrow-rl.svg', alt: '' }),
+            h('img', { class: 'demo-ar demo-ar--r2', src: 'assets/demo-arrow-ru.svg', alt: '' })
           ])
         ]),
         helpLine()
