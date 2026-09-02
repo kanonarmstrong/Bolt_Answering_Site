@@ -690,7 +690,7 @@ ul,ol{list-style:none}
 .tpfeat--mediaright .tpfeat__copy{order:1}
 
 /* ---------- "Heroes don't always wear capes" ---------- */
-.tpcapes{position:relative;overflow:hidden;background:#2a2f34 center/cover no-repeat}
+.tpcapes{position:relative;overflow:visible;z-index:2;background:#2a2f34 center/cover no-repeat}
 .tpcapes__overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:0}
 .tpcapes__inner{
   position:relative;z-index:1;
@@ -702,9 +702,9 @@ ul,ol{list-style:none}
 .tpcapes__title{font-size:clamp(26px,3.3vw,40px);line-height:1.15;font-weight:400;margin-bottom:18px}
 .tpcapes__sub{font-size:clamp(17px,1.4vw,25px);line-height:1.28;color:rgba(255,255,255,.8)}
 .tpcapes__phone{
-  position:absolute;right:clamp(-40px,-2vw,0px);top:50%;transform:translateY(-46%) rotate(-6deg);
-  width:clamp(190px,22vw,360px);z-index:2;pointer-events:none;
-  filter:drop-shadow(0 26px 46px rgba(0,0,0,.5));
+  position:absolute;right:clamp(10px,4vw,90px);top:50%;transform:translateY(-50%) rotate(18.66deg);
+  width:clamp(220px,19vw,360px);z-index:3;pointer-events:none;
+  filter:drop-shadow(0 16px 32px rgba(12,12,13,.4));
 }
 
 /* ---------- Photo spacer band ---------- */
