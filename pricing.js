@@ -17,6 +17,7 @@
     promoPriceUsd: 99,
     retailPriceUsd: 129,
     promoMonths: 3,
+    trialDays: 30,
     perMinuteUsd: 0.12,
     perMessageUsd: 0.01
   };
@@ -31,10 +32,24 @@
     var perMin = money(p.perMinuteUsd);
     var perMsg = money(p.perMessageUsd);
     var months = p.promoMonths;
+    var days = p.trialDays || FALLBACK.trialDays;
 
     // Visible mobile price.
     document.querySelectorAll('.mchev__amt').forEach(function (el) {
       el.textContent = promo;
+    });
+
+    // Visible trial length — the chevron's "N-Day Trial" label (a bare number in
+    // a <p>, so a partial span is safe here).
+    document.querySelectorAll('.js-td').forEach(function (el) {
+      el.textContent = days;
+    });
+
+    // CTA buttons are inline-flex, which trims whitespace around child flex
+    // items — so a partial span would drop the space ("free21-day"). Wrap the
+    // WHOLE label in one span and rewrite it from a template instead.
+    document.querySelectorAll('.js-cta-trial').forEach(function (el) {
+      el.textContent = 'Start my free ' + days + '-day trial';
     });
 
     // Mobile fine print (two lines).
@@ -50,7 +65,7 @@
     });
 
     // Accessibility text: the chevron card's aria-label.
-    var prefix = 'First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
+    var prefix = 'First ' + days + '-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
       'Keeps customer info organized, Manages your schedule, Captures leads, ' +
       'Sends confirmations, Drafts quick text replies. New Partner Pricing: ';
     var priced = promo + ' per month for first ' + months + ' months, then ' + retail + '/month; ';

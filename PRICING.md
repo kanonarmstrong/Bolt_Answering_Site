@@ -1,11 +1,16 @@
 # Pricing — single source of truth
 
-The price on this site **flows automatically** from the backend's single source
-(`kanonarmstrong/EZ-Answer` → `src/lib/plans.ts`, exposed at
-`GET /api/public/pricing`). `pricing.js` fetches that feed on load and rewrites
-every price in the page — the visible price, the fine print, and the aria
-accessibility text. The values baked into the HTML are the **fallback**, so the
-page is correct with no JS and if the fetch fails.
+The price **and the free-trial length** on this site **flow automatically** from
+the backend's single source (`kanonarmstrong/EZ-Answer` → `src/lib/plans.ts`,
+exposed at `GET /api/public/pricing`). `pricing.js` fetches that feed on load and
+rewrites every price + trial mention in the page — the visible price, the fine
+print, the trial length (every `.js-td` hook: the CTAs and the chevron's "N-Day
+Trial" label), and the aria accessibility text. The values baked into the HTML
+are the **fallback**, so the page is correct with no JS and if the fetch fails.
+
+The trial length is `trialDays` in `plans.ts` (`TRIAL_DAYS`), the same constant
+that drives the real Stripe trial — so what the site advertises and what a
+customer is actually charged on can never drift (a §17603 requirement).
 
 The site serves on `www.boltanswering.com`, which the API allow-lists for CORS,
 so the browser fetch is permitted. (An earlier note here wrongly said the API
@@ -23,7 +28,7 @@ hand-editing.
 | Retail (standard) price | **$129/month** thereafter |
 | Overage — minutes | **$0.12 / minute** |
 | Overage — messages | **$0.01 / message** |
-| Free trial | 14 days |
+| Free trial | 30 days |
 
 These are display values that mirror the feed; they never need hand-editing.
 
