@@ -50,7 +50,7 @@
     });
 
     // Accessibility text: the chevron card's aria-label.
-    var prefix = 'First 14-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
+    var prefix = 'First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
       'Keeps customer info organized, Manages your schedule, Captures leads, ' +
       'Sends confirmations, Drafts quick text replies. New Partner Pricing: ';
     var priced = promo + ' per month for first ' + months + ' months, then ' + retail + '/month; ';
