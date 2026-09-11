@@ -1,14 +1,18 @@
 # Pricing — single source of truth
 
-The marketing site is static HTML on GitHub Pages, and the hero price is baked
-into an **image** (`assets/pricing-chevron.png`). It cannot fetch the app's live
-pricing feed (the API rejects this origin — CORS). So the site can't
-auto-waterfall like the app does; instead, **this file is the authoritative
-pricing, and a price change is a checklist against it.**
-
-Keep these in lockstep with the backend source of truth
+The price on this site **flows automatically** from the backend's single source
 (`kanonarmstrong/EZ-Answer` → `src/lib/plans.ts`, exposed at
-`GET /api/public/pricing`). The displayed price must equal what Stripe charges.
+`GET /api/public/pricing`). `pricing.js` fetches that feed on load and rewrites
+every price in the HTML — the mobile price, the fine print, and the alt/aria
+accessibility text. The values baked into the HTML are the **fallback**, so the
+page is correct with no JS and if the fetch fails.
+
+The site serves on `www.boltanswering.com`, which the API allow-lists for CORS,
+so the browser fetch is permitted. (An earlier note here wrongly said the API
+refuses this origin — it does not.)
+
+**The displayed price must equal what Stripe charges.** Change the numbers in
+`plans.ts` and this site follows on the next page load — with one exception below.
 
 ## Current pricing (Solo)
 
@@ -20,24 +24,34 @@ Keep these in lockstep with the backend source of truth
 | Overage — messages | **$0.01 / message** |
 | Free trial | 14 days |
 
-## Everywhere the price appears (update ALL on a change)
+These are display values that mirror the feed; they never need hand-editing.
 
-Per trade page — `index.html`, `hvac.html`, `plumbing.html`, `handyman.html`,
-`electrical.html`, `general-contractor.html`:
+## The one manual step: the desktop hero image
 
-1. **Hero image** — `assets/pricing-chevron.png` (desktop). The price is drawn
-   INTO the image, so it must be **regenerated** on a price change; editing HTML
-   does not touch it.
-2. **Hero `alt` text** — `<img class="chev-web" alt="… $99 … $129 … $0.12/minute
-   and $0.01/message …">` (accessibility mirror of the image).
-3. **Mobile `aria-label`** — `<div class="chev-mobile mchev" aria-label="… $99 …
-   $129 … $0.12/minute and $0.01/message …">`.
-4. **Mobile visible price** — `<span class="mchev__amt">$99</span> / mo. for
-   first 3 months`.
-5. **Mobile fine print** — `<li>After promo period, price increases to $129 /
-   month</li>` and `<li>… $0.12 / minute and $0.01/message beyond budget</li>`.
+The desktop hero (`.chev-web`) is a baked PNG, `assets/pricing-chevron.png`, with
+the price **drawn into the image**. `pricing.js` updates its `alt` text, but it
+cannot change the pixels. **On a price change, regenerate that PNG** — it is the
+only place a price is not automatic.
+
+> To remove this last manual step entirely, replace the desktop PNG with the same
+> HTML chevron the mobile view already uses (`.chev-mobile` / `.mchev`), shown
+> responsively on desktop. Then `pricing.js` covers every surface and nothing is
+> baked. That is a hero design change, tracked separately.
+
+## How it flows
+
+```
+plans.ts (EZ-Answer)  →  GET /api/public/pricing  →  pricing.js  →  all HTML text
+                                                                    (mobile price,
+                                                                     fine print,
+                                                                     alt / aria)
+assets/pricing-chevron.png  →  desktop hero  →  regenerate by hand on a change
+```
 
 ## History
 
+- 2026-09-11 — added `pricing.js`: the price now auto-flows from the feed to all
+  HTML text. Corrected the earlier (wrong) claim that CORS blocked the fetch —
+  `www.boltanswering.com` is allow-listed.
 - 2026-09-10 — corrected the message-overage rate from **$0.05** to **$0.01** to
   match the app + the legal ARL disclosure (owner-confirmed $0.01 is correct).
