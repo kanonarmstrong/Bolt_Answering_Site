@@ -30,7 +30,6 @@ bolt-marketing-site/
     ├── num-1..4.png           # hand-drawn step numbers
     ├── ellipse-1..4.svg       # gold hand-drawn rings around each step mockup
     ├── line.svg               # (reference) dashed step divider — drawn in CSS
-    ├── pricing-chevron.png    # real green→navy pricing chevron (source of truth)
     └── sketch-*.png           # hand-drawn step mockups (trade, warm/calm, jobs, schedule)
 ```
 
