@@ -5,9 +5,9 @@
  * FALLBACK, so the page is correct with no JS and if the fetch fails; the feed
  * overrides them when it loads.
  *
- * NOT covered: the desktop hero graphic (assets/pricing-chevron.png) is a baked
- * image — JS updates its alt text (below) but cannot change the pixels. On a
- * price change that PNG must be regenerated; see PRICING.md.
+ * The pricing chevron is one HTML element (.mchev) reflowed by CSS — horizontal
+ * on desktop, vertical on mobile — so every visible price flows from the feed on
+ * both. There is no baked image left to regenerate. See PRICING.md.
  */
 (function () {
   'use strict';
@@ -49,18 +49,13 @@
       }
     });
 
-    // Accessibility text: the desktop image's alt + the mobile card's aria-label.
+    // Accessibility text: the chevron card's aria-label.
     var prefix = 'First 14-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
       'Keeps customer info organized, Manages your schedule, Captures leads, ' +
       'Sends confirmations, Drafts quick text replies. New Partner Pricing: ';
     var priced = promo + ' per month for first ' + months + ' months, then ' + retail + '/month; ';
-    var alt = prefix + priced + 'includes 750 messages and 400 minutes; ' +
-      perMin + '/minute and ' + perMsg + '/message overage.';
     var aria = prefix + priced + '750 messages and 400 minutes per cycle; ' +
       perMin + '/minute and ' + perMsg + '/message beyond budget.';
-    document.querySelectorAll('img.chev-web').forEach(function (el) {
-      el.setAttribute('alt', alt);
-    });
     document.querySelectorAll('.chev-mobile').forEach(function (el) {
       el.setAttribute('aria-label', aria);
     });
