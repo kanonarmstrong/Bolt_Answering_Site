@@ -80,6 +80,8 @@ ol.hca-steps > li::marker { color: #23252b; }
   margin: 0 1px;
 }
 .hca-ic--menu { vertical-align: -3px; }
+/* 2.5x app icons (iOS + Verizon pages; Android blue Phone) — Figma 2354:7372 / 2419:419 / 2354:7413. */
+.hca-ic--lg { height: 50px; vertical-align: middle; margin: 0 4px; }
 
 /* Nested a./b./c. sub-steps */
 ol.hca-sub {
@@ -168,6 +170,7 @@ ol.hca-sub--wide > li { margin: 0 0 12px; }
   ol.hca-sub--wide > li { margin-bottom: 14px; }
   .hca-ic { height: 24px; vertical-align: -6px; }
   .hca-ic--menu { vertical-align: -4px; }
+  .hca-ic--lg { height: 60px; vertical-align: middle; }
   /* Device screenshots go full-width on mobile (Figma 2520:1811/1974/2102). */
   .hca-shot { width: 100%; max-width: 320px; margin: 12px 0 6px; }
   .hca-shotbox { display: block; width: 100%; max-width: 320px; }
