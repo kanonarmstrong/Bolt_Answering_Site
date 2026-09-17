@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turn off spam blockers on Android — Bolt Answering</title>
+  <meta name="description" content="Some Android and carrier settings filter calls from unknown numbers, including your Bolt demo call. Here's how to turn them off for a minute." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <style>
+    :root{ --navy:#180A53; --blue:#2b7ffd; --yellow:#fcbd11; --ink:#212529; --gray:#707070; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:'Inter',system-ui,-apple-system,sans-serif; color:var(--ink); background:#f9fbff; line-height:1.6; }
+    .sp-head{ border-bottom:1px solid #eceef3; background:#fff; }
+    .sp-head__inner{ max-width:760px; margin:0 auto; padding:18px 24px; }
+    .sp-logo img{ height:26px; width:auto; display:block; }
+    main{ max-width:760px; margin:0 auto; padding:40px 24px 72px; }
+    .sp-eyebrow{ font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--blue); margin:0 0 10px; }
+    h1{ font-size:clamp(26px,4vw,34px); line-height:1.2; color:var(--navy); margin:0 0 14px; }
+    .sp-intro{ font-size:17px; color:#3a3a45; margin:0 0 30px; }
+    ol.sp-steps{ margin:0; padding:0; list-style:none; counter-reset:step; }
+    ol.sp-steps > li{ position:relative; padding:0 0 22px 52px; }
+    ol.sp-steps > li::before{ counter-increment:step; content:counter(step); position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%; background:var(--navy); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
+    ol.sp-steps h2{ font-size:18px; color:var(--navy); margin:4px 0 6px; }
+    ol.sp-steps p{ margin:0; color:#3a3a45; }
+    .sp-path{ font-weight:600; color:var(--navy); }
+    .sp-note{ font-size:14px; color:var(--gray); }
+    .sp-back{ margin-top:26px; padding:18px 20px; background:#fff; border:1px solid #eceef3; border-radius:12px; font-size:16px; }
+    .sp-back b{ color:var(--navy); }
+    a{ color:var(--blue); }
+  </style>
+</head>
+<body>
+  <header class="sp-head">
+    <div class="sp-head__inner">
+      <a href="/" class="sp-logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+    </div>
+  </header>
+  <main>
+    <p class="sp-eyebrow">Support · Android</p>
+    <h1>Turn off spam blockers on Android</h1>
+    <p class="sp-intro">Some Android and carrier settings filter calls from numbers you haven&rsquo;t saved &mdash; including your Bolt demo call. Turn these off for a minute, then head back to Bolt and tap <b>Call me again</b>.</p>
+
+    <ol class="sp-steps">
+      <li>
+        <h2>Turn off &ldquo;Filter spam calls&rdquo;</h2>
+        <p>Open the <b>Phone</b> app, tap <span class="sp-path">&#8942; (More) &rarr; Settings &rarr; Caller ID &amp; spam</span>, and turn <b>off</b> <b>Filter spam calls</b>. (Exact wording varies by phone &mdash; on Samsung it&rsquo;s <span class="sp-path">Phone &rarr; Settings &rarr; Block numbers / Caller ID and spam protection</span>.)</p>
+      </li>
+      <li>
+        <h2>Check Do Not Disturb</h2>
+        <p>Pull down the quick settings and make sure <b>Do Not Disturb</b> is off &mdash; it can silence calls from people who aren&rsquo;t in your contacts.</p>
+      </li>
+      <li>
+        <h2>Pause your carrier&rsquo;s call filter</h2>
+        <p>If you use your carrier&rsquo;s spam app &mdash; <b>AT&amp;T ActiveArmor</b>, <b>Verizon Call Filter</b>, <b>T-Mobile Scam Shield</b>, or similar &mdash; open it and turn off automatic blocking while you try the demo.</p>
+      </li>
+    </ol>
+
+    <div class="sp-back">
+      Done? <b>Head back to Bolt and tap &ldquo;Call me again.&rdquo;</b> You can turn these settings back on right after your demo call.
+    </div>
+  </main>
+</body>
+</html>

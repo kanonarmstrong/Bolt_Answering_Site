@@ -12,6 +12,10 @@
   // EXACT — DB CHECK is strict (voice IN ('Sofía','Daniel')). í = í.
   var VOICE = 'Sofía';
 
+  // Caller ID the demo call comes from — shown on the "calling you" screen
+  // (Figma 2442:1191 / 2370:8769). Keep in sync with the demo Telnyx number.
+  var DEMO_CALL_NUMBER = '(925) 725-7959';
+
   // Disclosure — must be sent EXACTLY as rendered (server sha256's it).
   // Built from one source so render == send by construction.
   // “ ” = curly double quotes, ’ = curly apostrophe (match Figma 2370:8697).
@@ -235,7 +239,7 @@
     var boxes = [];
     var codeWrap = h('div', { class: 'demo-code' + (opts.error ? ' err' : '') });
     for (var i = 0; i < 6; i++) {
-      var inp = h('input', { type: 'text', inputmode: 'numeric', maxlength: '1', 'aria-label': 'Digit ' + (i + 1) });
+      var inp = h('input', { type: 'text', inputmode: 'numeric', maxlength: '6', autocomplete: i === 0 ? 'one-time-code' : 'off', 'aria-label': 'Digit ' + (i + 1) });
       if (opts.locked) inp.disabled = true;
       boxes.push(inp); codeWrap.appendChild(inp);
     }
@@ -244,7 +248,17 @@
 
     boxes.forEach(function (b, idx) {
       b.addEventListener('input', function () {
-        this.value = this.value.replace(/\D/g, '').slice(0, 1);
+        var d = this.value.replace(/\D/g, '');
+        if (d.length > 1) {
+          // A paste or OS one-time-code autofill dumped several digits into one
+          // box (mobile Safari/Chrome routinely bypass the `paste` event, and a
+          // maxlength of 1 would otherwise truncate it). Spread the digits across
+          // the boxes from the start instead of dropping all but the first.
+          for (var k = 0; k < 6; k++) boxes[k].value = d[k] || '';
+          if (d.length >= 6) { submit(); } else { focusFirstEmpty(); }
+          return;
+        }
+        this.value = d.slice(0, 1);
         if (this.value && idx < 5) boxes[idx + 1].focus();
         if (code().length === 6) submit();
       });
@@ -364,23 +378,21 @@
   // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
   function renderInCall() {
     clearResend();
-    var m = isMobile();
-    // Mobile (Figma 2442:1191) diverges in copy from desktop (2370:8769).
-    var title = m
-      ? h('p', { class: 'demo-incall__title' }, [mk('That works!'), ' Calling you now...'])
-      : h('p', { class: 'demo-incall__title', text: 'That worked! Calling you now...' });
-    var step3 = m
-      ? 'The assistant will collect your details to schedule the job.'
-      : 'The assistant will try to find you an opening or just flag your urgent request to the tech.';
+    // OTP accepted -> placing the call. Same content mobile + desktop
+    // (Figma 2442:1191 / 2370:8769): "ALL SET! Calling you now from <number>".
     setBody([
-      h('div', { class: 'demo-incall' }, [
-        h('div', { class: 'demo-incall__head' }, [assistIcon(), title]),
-        h('p', { class: 'demo-incall__expect', text: 'What to expect:' }),
-        h('ol', { class: 'demo-incall__list' }, [
-          h('li', {}, ['The assistant will introduce herself']),
-          h('li', {}, ['You describe any job. Make something up.']),
-          h('li', {}, [step3]),
-          h('li', {}, [m ? mk('Done.') : 'Easy'])
+      h('div', { class: 'demo-callcard' }, [
+        h('p', { class: 'demo-callcard__head' }, [
+          h('span', { class: 'demo-mk demo-ul', text: 'ALL SET!' }),
+          document.createTextNode(' Calling you now from '),
+          h('b', { text: DEMO_CALL_NUMBER })
+        ]),
+        h('p', { class: 'demo-callcard__expect demo-mk', text: 'WHAT TO EXPECT:' }),
+        h('ol', { class: 'demo-callcard__list' }, [
+          h('li', {}, ['She’ll introduce herself']),
+          h('li', {}, ['Tell her about an issue or potential project']),
+          h('li', {}, ['Share details to schedule ', h('span', { class: 'demo-callcard__aside', text: '(…make something up.)' })]),
+          h('li', {}, [h('span', { class: 'demo-mk demo-ul', text: 'DONE!' })])
         ])
       ])
     ]);
@@ -542,12 +554,23 @@
   // ---------- screen: call didn't complete ----------
   function renderCallFailed() {
     stopConfetti();
-    var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Call me again' });
+    // Call didn't happen (Figma 2511:1027 / 2370:8833). Most no-shows are the
+    // caller's spam blocker eating the call, so point them at the fix pages.
+    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button', text: 'Call me again' });
     btn.addEventListener('click', function () { placeCall(); });
     setBody([
-      heading('Didn’t catch you that time. Let’s try again.'),
-      sub('Make sure your phone isn’t blocking calls.'),
-      btn
+      h('div', { class: 'demo-failcard' }, [
+        h('p', { class: 'demo-failcard__head' }, [
+          h('span', { class: 'demo-mk', text: 'THAT DIDN’T WORK.' }),
+          document.createTextNode(' Let’s try again.')
+        ]),
+        h('p', { class: 'demo-failcard__body', text: 'Sometimes Bolt calls get spam blocked. Here’s how to temporarily turn off spam blockers so you can try an assistant. Follow these instructions, then come back and try again.' }),
+        h('div', { class: 'demo-failcard__links' }, [
+          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-ios-spam-blockers', target: '_blank', rel: 'noopener', text: 'iPhones' }),
+          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-android-spam-blockers', target: '_blank', rel: 'noopener', text: 'Androids' })
+        ]),
+        btn
+      ])
     ]);
   }
 

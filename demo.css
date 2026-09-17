@@ -199,10 +199,36 @@ body.demo-lock{overflow:hidden}
 .demo-limitmsg__link{color:var(--blue);text-decoration:none;font-weight:600}
 .demo-limitmsg__link:hover{text-decoration:underline}
 
+/* ---- "calling you" + failure cards (2442:1191 / 2511:1027 / 2370:8769 / 2370:8833) ---- */
+.demo-callcard,.demo-failcard{position:relative;text-align:left}
+.demo-callcard::before,.demo-failcard::before{content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05}
+.demo-callcard>*,.demo-failcard>*{position:relative;z-index:1}
+.demo-mk{font-family:'Permanent Marker',cursive;font-weight:400;color:var(--navy)}
+.demo-ul{background:linear-gradient(var(--yellow),var(--yellow)) 0 100%/100% 4px no-repeat;padding-bottom:1px}
+
+.demo-callcard__head{font-size:18px;line-height:1.45;color:var(--navy);margin:0 0 16px}
+.demo-callcard__head .demo-mk{font-size:23px;margin-right:6px}
+.demo-callcard__head b{font-weight:700}
+.demo-callcard__expect{font-size:24px;margin:0 0 14px}
+.demo-callcard__list{margin:0;padding-left:26px;color:#3a3a45;font-size:17px;line-height:1.4;list-style:decimal}
+.demo-callcard__list li{margin-bottom:11px}
+.demo-callcard__list li:last-child{margin-bottom:0}
+.demo-callcard__list .demo-mk{font-size:21px}
+.demo-callcard__aside{color:var(--gray);font-size:.82em}
+
+.demo-failcard__head{font-size:18px;line-height:1.45;color:var(--gray);margin:0 0 12px}
+.demo-failcard__head .demo-mk{font-size:23px;margin-right:8px}
+.demo-failcard__body{font-size:15.5px;line-height:1.55;color:var(--ink);margin:0 0 16px}
+.demo-failcard__links{display:flex;flex-direction:column;gap:8px;margin:0 0 22px}
+.demo-failcard__link{color:var(--blue);text-decoration:none;font-size:15.5px;font-weight:600}
+.demo-failcard__link:hover{text-decoration:underline}
+.demo-failcard__btn{max-width:340px;margin:0 auto;display:block}
+
 /* ---- mobile ---- */
 @media (max-width:768px){
-  .demo-backdrop{padding:16px 10px;align-items:flex-start}
-  .demo-card{padding:22px 18px 16px;border-radius:14px}
+  /* Narrower card on mobile to match the nodes (~82% of the viewport). */
+  .demo-backdrop{padding:16px clamp(16px,8.5vw,44px);align-items:flex-start}
+  .demo-card{padding:20px 18px 16px;border-radius:14px}
   .demo-h{font-size:24px}
   .demo-code{gap:7px}
   .demo-code input{height:50px;font-size:24px}
@@ -233,4 +259,10 @@ body.demo-lock{overflow:hidden}
   .demo-incall__title{font-size:20px}
   .demo-incall__expect{font-size:24px}
   .demo-incall__list{font-size:17px;padding-left:28px}
+  .demo-callcard__head,.demo-failcard__head{font-size:16.5px}
+  .demo-callcard__head .demo-mk,.demo-failcard__head .demo-mk{font-size:21px}
+  .demo-callcard__expect{font-size:22px}
+  .demo-callcard__list{font-size:16px}
+  .demo-callcard__list .demo-mk{font-size:19px}
+  .demo-failcard__btn{max-width:none}
 }
