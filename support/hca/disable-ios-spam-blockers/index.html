@@ -4,65 +4,98 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Turn off spam blockers on iPhone — Bolt Answering</title>
-  <meta name="description" content="Some iPhone and carrier settings silence calls from unknown numbers, including your Bolt demo call. Here's how to turn them off for a minute." />
+  <meta name="description" content="Some iPhone settings silence calls from unknown numbers, including your Bolt test call. Here's how to temporarily disable spam blockers on iPhones." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Permanent+Marker&family=Poppins:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=32" />
+  <link rel="stylesheet" href="/support/hca/hca.css?v=1" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
-  <style>
-    :root{ --navy:#180A53; --blue:#2b7ffd; --yellow:#fcbd11; --ink:#212529; --gray:#707070; }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:'Inter',system-ui,-apple-system,sans-serif; color:var(--ink); background:#f9fbff; line-height:1.6; }
-    .sp-head{ border-bottom:1px solid #eceef3; background:#fff; }
-    .sp-head__inner{ max-width:760px; margin:0 auto; padding:18px 24px; }
-    .sp-logo img{ height:26px; width:auto; display:block; }
-    main{ max-width:760px; margin:0 auto; padding:40px 24px 72px; }
-    .sp-eyebrow{ font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--blue); margin:0 0 10px; }
-    h1{ font-size:clamp(26px,4vw,34px); line-height:1.2; color:var(--navy); margin:0 0 14px; }
-    .sp-intro{ font-size:17px; color:#3a3a45; margin:0 0 30px; }
-    ol.sp-steps{ margin:0; padding:0; list-style:none; counter-reset:step; }
-    ol.sp-steps > li{ position:relative; padding:0 0 22px 52px; }
-    ol.sp-steps > li::before{ counter-increment:step; content:counter(step); position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%; background:var(--navy); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; }
-    ol.sp-steps h2{ font-size:18px; color:var(--navy); margin:4px 0 6px; }
-    ol.sp-steps p{ margin:0; color:#3a3a45; }
-    .sp-path{ font-weight:600; color:var(--navy); }
-    .sp-note{ font-size:14px; color:var(--gray); }
-    .sp-back{ margin-top:26px; padding:18px 20px; background:#fff; border:1px solid #eceef3; border-radius:12px; font-size:16px; }
-    .sp-back b{ color:var(--navy); }
-    a{ color:var(--blue); }
-  </style>
 </head>
 <body>
-  <header class="sp-head">
-    <div class="sp-head__inner">
-      <a href="/" class="sp-logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+  <header class="nav" id="top">
+    <div class="nav__inner">
+      <a href="/" class="logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+
+      <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav__menu" id="navMenu">
+        <ul class="nav__links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/#how">How it works</a></li>
+          <li class="nav__dropdown">
+            <a href="#" class="nav__dropdown-trigger">Trades <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/electrical.html">Electrical</a></li>
+              <li><a href="/general-contractor.html">General contracting</a></li>
+              <li><a href="/handyman.html">Handyman</a></li>
+              <li><a href="/hvac.html">HVAC</a></li>
+              <li><a href="/plumbing.html">Plumbing</a></li>
+            </ul>
+          </li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="#">Support</a></li>
+          <li><a href="https://app.boltanswering.com/login" class="nav__signin">Sign in</a></li>
+        </ul>
+        <a href="https://app.boltanswering.com/signup" class="btn btn--yellow nav__cta"><span class="js-cta-trial">Start my free 30-day trial</span></a>
+      </nav>
     </div>
   </header>
-  <main>
-    <p class="sp-eyebrow">Support · iPhone</p>
-    <h1>Turn off spam blockers on iPhone</h1>
-    <p class="sp-intro">Some iPhone and carrier settings silence calls from numbers you haven&rsquo;t saved &mdash; including your Bolt demo call. Turn these off for a minute, then head back to Bolt and tap <b>Call me again</b>.</p>
 
-    <ol class="sp-steps">
-      <li>
-        <h2>Turn off &ldquo;Silence Unknown Callers&rdquo;</h2>
-        <p>Open <span class="sp-path">Settings &rarr; Apps &rarr; Phone</span> (on older iOS: <span class="sp-path">Settings &rarr; Phone</span>) and turn <b>off</b> <b>Silence Unknown Callers</b>. When it&rsquo;s on, iPhone sends calls from unsaved numbers straight to voicemail.</p>
-      </li>
-      <li>
-        <h2>Check Focus &amp; Do Not Disturb</h2>
-        <p>Swipe down into Control Center and make sure <b>Do Not Disturb</b> (or any Focus) isn&rsquo;t on. A Focus can hush calls from people who aren&rsquo;t in your contacts.</p>
-      </li>
-      <li>
-        <h2>Pause your carrier&rsquo;s call filter</h2>
-        <p>If you use your carrier&rsquo;s spam app &mdash; <b>AT&amp;T ActiveArmor</b>, <b>Verizon Call Filter</b>, <b>T-Mobile Scam Shield</b>, or similar &mdash; open it and turn off automatic blocking while you try the demo.</p>
-      </li>
-    </ol>
+  <main class="hca-wrap">
+    <article class="hca-card">
+      <p class="hca-card__kicker">Bolt How-To&rsquo;s</p>
+      <h1 class="hca-card__title">Temporarily Disable spam blockers on iPhones</h1>
 
-    <div class="sp-back">
-      Done? <b>Head back to Bolt and tap &ldquo;Call me again.&rdquo;</b> You can turn these settings back on right after your demo call.
-    </div>
+      <ol class="hca-steps">
+        <li>Open <b>Settings</b> <img class="hca-ic" src="/assets/support/ic-ios-settings.png" alt="Settings" /></li>
+        <li>Scroll down and tap <b>Apps</b> <img class="hca-ic" src="/assets/support/ic-ios-apps.png" alt="Apps" /></li>
+        <li>Scroll down and tap <b>Phone</b> <img class="hca-ic" src="/assets/support/ic-ios-phone.png" alt="Phone" /></li>
+        <li>Scroll down to <em>Screen Unknown Callers</em>, and <b>select Never</b>
+          <img class="hca-shot" src="/assets/support/ios-screen-unknown.png" alt="iPhone Phone settings with Screen Unknown Callers set to Never" />
+        </li>
+        <li>Scroll down to <em>Call Blocking &amp; Identification</em>, <b>turn off Silence Junk Callers.</b>
+          <img class="hca-shot" src="/assets/support/ios-call-filtering.png" alt="iPhone Call Filtering with Unknown Callers turned off" />
+        </li>
+        <li>Turn off <b>third-party call blocking apps</b> (Verizon Call Filter, Hiya, Truecaller, etc.) if you have them installed.</li>
+        <li>Turn off Call Filtering filtering: Scroll down to the Call Filtering section, then <b>turn off Unknown Callers.</b></li>
+        <li><span class="hca-afterhead">After you have completed your test call...</span>
+          <ol class="hca-sub">
+            <li>Add the phone number that called you to your <b>Contacts</b></li>
+            <li><b>Turn your blockers back ON.</b> (... because robocalls <b>suck.</b>)</li>
+          </ol>
+        </li>
+      </ol>
+
+      <a class="hca-back" href="/" onclick="if(window.history.length>1){history.back();return false;}">Back</a>
+      <p class="hca-help">Still need help? <a href="mailto:support@boltanswering.com">Contact support.</a></p>
+    </article>
   </main>
+
+  <script>
+    (function () {
+      var t = document.getElementById('navToggle'), m = document.getElementById('navMenu');
+      if (t && m) {
+        t.addEventListener('click', function () {
+          var open = !m.classList.contains('open');
+          m.classList.toggle('open', open);
+          t.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+      }
+      var dt = document.querySelector('.nav__dropdown-trigger');
+      if (dt) {
+        dt.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (window.matchMedia('(max-width:768px)').matches) {
+            dt.closest('.nav__dropdown').classList.toggle('open');
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
