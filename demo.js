@@ -13,8 +13,24 @@
   var VOICE = 'Sofía';
 
   // Caller ID the demo call comes from — shown on the "calling you" screen
-  // (Figma 2442:1191 / 2370:8769). Keep in sync with the demo Telnyx number.
-  var DEMO_CALL_NUMBER = '(925) 725-7959';
+  // (Figma 2442:1191 / 2370:8769). The BACKEND is the source of truth for which
+  // number actually dials: the in-call screen renders whatever `/api/demo/call`
+  // hands back as `callerId` (E.164), formatted by fmtDemoNumber() to match the
+  // node. This constant is only a fallback for when the response omits it (the
+  // field is not shipped today), so the screen is never blank. That wiring is
+  // what lets us move to a per-region demo caller-id later with no site change.
+  var DEMO_CALL_NUMBER_FALLBACK = '(925) 725-7959';
+
+  // Format a US number (E.164 "+19257257959" or 10/11 digits) as "(925) 725-7959"
+  // to match the node. Empty -> the fallback constant; anything that isn't a
+  // plain US number passes through untouched so we never render a mangled string.
+  function fmtDemoNumber(raw) {
+    if (!raw) return DEMO_CALL_NUMBER_FALLBACK;
+    var d = String(raw).replace(/\D/g, '');
+    if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+    if (d.length !== 10) return String(raw);
+    return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
+  }
 
   // Disclosure — must be sent EXACTLY as rendered (server sha256's it).
   // Built from one source so render == send by construction.
@@ -364,7 +380,9 @@
       }
       return apiPost('/api/demo/call', { token: r.data.token }).then(function (c) {
         if (c.ok) {
-          renderInCall();
+          // callerId is the number that will actually ring the user. Absent today
+          // (fmtDemoNumber falls back); populated once the backend returns it.
+          renderInCall(c.data && c.data.callerId);
           var callId = c.data && c.data.callId;
           if (callId) pollRecap(callId);
           return;
@@ -376,16 +394,18 @@
   }
 
   // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
-  function renderInCall() {
+  function renderInCall(fromNumber) {
     clearResend();
     // OTP accepted -> placing the call. Same content mobile + desktop
     // (Figma 2442:1191 / 2370:8769): "ALL SET! Calling you now from <number>".
+    // fromNumber is the backend's caller-id when present, else the fallback.
+    var display = fmtDemoNumber(fromNumber);
     setBody([
       h('div', { class: 'demo-callcard' }, [
         h('p', { class: 'demo-callcard__head' }, [
           h('span', { class: 'demo-mk demo-ul', text: 'ALL SET!' }),
           document.createTextNode(' Calling you now from '),
-          h('b', { text: DEMO_CALL_NUMBER })
+          h('b', { text: display })
         ]),
         h('p', { class: 'demo-callcard__expect demo-mk', text: 'WHAT TO EXPECT:' }),
         h('ol', { class: 'demo-callcard__list' }, [

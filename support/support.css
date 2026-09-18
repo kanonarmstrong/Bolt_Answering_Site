@@ -1,0 +1,118 @@
+/* /support — help hub. Figma nodes 2354:7250 (default) + 2527:2350 (form sent).
+   Left card: Popular articles + FAQ accordion. Right card: "Need help?" form.
+   Site header comes from styles.css. */
+
+.sup-wrap {
+  position: relative;
+  min-height: calc(100vh - 105px);
+  padding: 56px 20px 96px;
+  background: #fff;
+  overflow: hidden;
+}
+.sup-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/assets/demo-checker.svg') left top / 230px auto repeat;
+  opacity: .06;
+}
+
+.sup-grid {
+  position: relative;
+  z-index: 1;
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 486fr 617fr;
+  gap: 24px;
+  align-items: start;
+}
+.sup-card {
+  background: #fff;
+  border: 1px solid #eef0f4;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(24, 10, 83, .10);
+}
+.sup-left  { padding: 30px 34px 36px; }
+.sup-right { padding: 38px clamp(24px, 4vw, 54px) 40px; }
+
+/* ---- left card: articles + FAQ ---- */
+.sup-h { font-size: 15px; font-weight: 700; color: #111318; margin: 0 0 12px; }
+.sup-h--faq { margin-top: 26px; }
+
+.sup-articles { list-style: none; margin: 0; padding: 0; }
+.sup-articles li { margin: 0 0 9px; }
+.sup-articles a { color: #2b7ffd; text-decoration: none; font-size: 14px; }
+.sup-articles a:hover { text-decoration: underline; }
+
+.sup-faq { display: flex; flex-direction: column; gap: 8px; }
+.sup-faq__item { background: #f5f6f9; border: 1px solid #eef0f3; border-radius: 10px; }
+.sup-faq__item summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1a1f2b;
+}
+.sup-faq__item summary::-webkit-details-marker { display: none; }
+.sup-faq__chev { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px; color: #9aa0aa; transition: transform .2s; }
+.sup-faq__item[open] .sup-faq__chev { transform: rotate(180deg); }
+.sup-faq__a { padding: 0 16px 14px; font-size: 14px; line-height: 1.6; color: #3a3a45; }
+.sup-faq__a p { margin: 0 0 10px; }
+.sup-faq__a p:last-child { margin-bottom: 0; }
+.sup-faq__a a { color: #2b7ffd; }
+.sup-faq__a strong { color: #111318; font-weight: 700; }
+.sup-faq__a em { font-style: italic; }
+
+/* ---- right card: contact form ---- */
+.sup-logo { display: block; height: 30px; width: auto; margin: 0 auto 18px; }
+.sup-need { text-align: center; font-size: 32px; font-weight: 600; color: #20232a; margin: 0 0 26px; }
+.sup-field { margin: 0 0 16px; }
+.sup-field label { display: block; font-size: 14px; color: #20232a; margin: 0 0 6px; }
+.sup-field input,
+.sup-field textarea {
+  width: 100%;
+  border: 1px solid #d7dae0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  color: #20232a;
+  background: #fff;
+}
+.sup-field input::placeholder,
+.sup-field textarea::placeholder { color: #9aa0aa; }
+.sup-field input:focus,
+.sup-field textarea:focus { outline: none; border-color: #2b7ffd; box-shadow: 0 0 0 3px rgba(43,127,253,.12); }
+.sup-field textarea { min-height: 220px; resize: vertical; }
+.sup-thanks { color: #17935a; font-size: 14px; margin: 2px 0 12px; }
+.sup-send {
+  width: 100%;
+  padding: 13px 20px;
+  background: #2b7ffd;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sup-send:hover { background: #1f6fe6; }
+
+@media (max-width: 820px) {
+  .sup-grid { grid-template-columns: 1fr; gap: 18px; }
+  .sup-wrap { padding: 28px 14px 64px; }
+  .sup-left  { padding: 24px 20px 28px; }
+  .sup-right { padding: 28px 20px 30px; }
+  .sup-need { font-size: 28px; }
+  .sup-field textarea { min-height: 160px; }
+}
