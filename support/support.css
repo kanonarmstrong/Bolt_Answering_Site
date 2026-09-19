@@ -36,14 +36,18 @@
   border-radius: 18px;
 }
 .sup-card > * { position: relative; z-index: 1; }
+/* Decorative brush (Figma "Decorative line"): a large single stroke that
+   overflows the card and is clipped — enlarged well past the card so a few bold
+   strokes show, rather than the whole brush shrunk into thin streaks. Purely
+   decorative; hidden from assistive tech via aria-hidden on the element. */
 .sup-card__deco {
   position: absolute;
-  inset: -10% -6%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: cover;
+  background-size: 200% auto;
 }
 
 /* ---------- form card (top) ---------- */
@@ -54,21 +58,19 @@
 }
 .sup-form-card .sup-card__deco {
   background-image: url('/assets/support/deco-form.svg');
-  opacity: .05;
+  opacity: .13;
 }
 
-.sup-brand { margin: 0 0 18px; }
-.sup-brand__logo { display: block; height: 27px; width: auto; margin: 0 0 2px; }
+/* Title lockup: bolt wordmark + "support" (Permanent Marker, black) — node 2538. */
+.sup-brand { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.sup-brand__logo { display: block; height: 30px; width: auto; }
 .sup-servicebay {
   font-family: 'Permanent Marker', cursive;
   font-weight: 400;
-  color: #180a53;
-  font-size: clamp(38px, 7.5vw, 54px);
-  line-height: .95;
-  text-transform: uppercase;
-  transform: rotate(-6deg);
-  transform-origin: left center;
-  margin: 8px 0 0 6px;
+  color: #000;
+  font-size: 35px;
+  line-height: 1;
+  margin: 0;
 }
 
 .sup-intro {
@@ -105,19 +107,22 @@
 .sup-field textarea { min-height: 193px; resize: vertical; }
 
 .sup-thanks { color: #17935a; font-size: 14px; margin: 2px 0 12px; }
+/* CTA — yellow with navy label, matching the nav trial button (node 2354:7274). */
 .sup-send {
   width: 100%;
   padding: 13px 20px;
-  background: #2b7ffd;
-  color: #fff;
+  background: #fcbd11;
+  color: #180a53;
   border: none;
   border-radius: 6px;
   font-family: inherit;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.1;
   cursor: pointer;
 }
-.sup-send:hover { background: #1f6fe6; }
+.sup-send:hover { background: #eab000; }
+.sup-send:focus-visible { outline: 3px solid rgba(43, 127, 253, .55); outline-offset: 2px; }
 
 /* ---------- articles + FAQ card (below), dark gradient ---------- */
 .sup-hca-card {
@@ -126,7 +131,7 @@
 }
 .sup-hca-card .sup-card__deco {
   background-image: url('/assets/support/deco-hca.svg');
-  opacity: .08;
+  opacity: .17;
 }
 
 .sup-eyebrow {
@@ -142,7 +147,7 @@
 
 .sup-articles { list-style: none; margin: 0; padding: 0; }
 .sup-articles li { margin: 0 0 7px; }
-.sup-articles a { color: #4f8dfd; font-weight: 600; font-size: 15px; text-decoration: none; }
+.sup-articles a { color: #fcbd11; font-weight: 600; font-size: 15px; text-decoration: none; }
 .sup-articles a:hover { text-decoration: underline; }
 
 .sup-faq { display: flex; flex-direction: column; gap: 8px; }
@@ -180,7 +185,7 @@
   .sup-wrap { padding: 28px 14px 60px; }
   .sup-form-card { padding: 26px 20px 30px; }
   .sup-hca-card { padding: 24px 20px 30px; }
-  .sup-servicebay { font-size: clamp(34px, 12vw, 46px); }
+  .sup-servicebay { font-size: 30px; }
   .sup-intro { font-size: 16px; }
   .sup-field textarea { min-height: 150px; }
 }
