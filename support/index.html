@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Permanent+Marker&family=Poppins:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css?v=32" />
-  <link rel="stylesheet" href="/support/support.css?v=1" />
+  <link rel="stylesheet" href="/support/support.css?v=3" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
@@ -47,18 +47,47 @@
   </header>
 
   <main class="sup-wrap">
-    <div class="sup-grid">
+    <div class="sup-stack">
 
-      <!-- LEFT: popular articles + FAQ -->
-      <section class="sup-card sup-left">
-        <h2 class="sup-h">Popular articles</h2>
+      <!-- FORM CARD (top) -->
+      <section class="sup-card sup-form-card">
+        <div class="sup-card__deco"></div>
+        <div class="sup-brand">
+          <img class="sup-brand__logo" src="/assets/logo-wordmark.png" alt="Bolt" />
+          <div class="sup-servicebay">The Service Bay</div>
+        </div>
+        <p class="sup-intro"><strong>Thanks for swinging by our Customer Support hub.</strong> Please fill out the form below and someone will get back to you in 1-2 business days.</p>
+
+        <form class="sup-form" id="supForm" novalidate>
+          <div class="sup-field">
+            <label for="sf-name">Name</label>
+            <input id="sf-name" name="name" placeholder="Name" autocomplete="name" />
+          </div>
+          <div class="sup-field">
+            <label for="sf-email">Email</label>
+            <input id="sf-email" name="email" type="email" placeholder="Email address" autocomplete="email" />
+          </div>
+          <div class="sup-field">
+            <label for="sf-notes">Notes</label>
+            <textarea id="sf-notes" name="notes" placeholder="Tell us about your issue"></textarea>
+          </div>
+          <p class="sup-thanks" id="supThanks" hidden>Thank you. We&rsquo;ll respond within 1-2 business days.</p>
+          <button type="submit" class="sup-send">Send my request</button>
+        </form>
+      </section>
+
+      <!-- ARTICLES + FAQ CARD (below) -->
+      <section class="sup-card sup-hca-card">
+        <div class="sup-card__deco"></div>
+
+        <h2 class="sup-eyebrow">Popular articles</h2>
         <ul class="sup-articles">
-          <li><a href="/support/hca/disable-ios-spam-blockers">Disable spam blockers, iPhones</a></li>
+          <li><a href="/support/hca/disable-ios-spam-blockers">Disable spam blockers, iPhone</a></li>
           <li><a href="/support/hca/disable-android-spam-blockers">Disable spam blockers, Android</a></li>
-          <li><a href="/support/hca/verizon-iphone-disable-live-voicemail">Disable Live Voicemail, iPhones</a></li>
+          <li><a href="/support/hca/verizon-iphone-disable-live-voicemail">Disable Live Voicemail, iPhone</a></li>
         </ul>
 
-        <h2 class="sup-h sup-h--faq">Frequently Asked Questions</h2>
+        <h2 class="sup-eyebrow sup-eyebrow--faq">Frequently asked questions</h2>
         <div class="sup-faq">
 
           <details class="sup-faq__item">
@@ -102,9 +131,9 @@
             </summary>
             <div class="sup-faq__a">
               <p>Depends which one you do.</p>
-              <p><strong>Cancel</strong> and your smart assistant keeps working through the end of your current billing cycle &mdash; you&rsquo;ve already paid for it, so it keeps answering until that period ends. After that, it stops.</p>
+              <p><strong>Cancel</strong> and your smart assistant keeps working through the end of your current billing cycle &mdash; you&rsquo;ve already paid for it, so it keeps answering until then. After that, it stops.</p>
               <p><strong>Delete your account</strong> and your service still runs to the end of that same paid-through cycle &mdash; deleting doesn&rsquo;t cut you off early or bill you again. The difference is what happens after: cancel just stops the service; delete erases your account and all its data for good.</p>
-              <p>Either way, one thing doesn&rsquo;t happen automatically: your calls will keep forwarding to Bolt&rsquo;s number until <em>you</em> turn forwarding off with your carrier. It&rsquo;s the same code you used to turn it on &mdash; dial it again to send calls straight back to your phone.</p>
+              <p>Either way, one thing doesn&rsquo;t happen automatically: your calls keep forwarding to Bolt&rsquo;s number until <em>you</em> turn forwarding off with your carrier. Same code you used to turn it on &mdash; dial it again to send calls straight back to your phone.</p>
             </div>
           </details>
 
@@ -132,34 +161,11 @@
         </div>
       </section>
 
-      <!-- RIGHT: contact form -->
-      <section class="sup-card sup-right">
-        <img class="sup-logo" src="/assets/logo-wordmark.png" alt="Bolt" />
-        <h1 class="sup-need">Need help?</h1>
-        <form class="sup-form" id="supForm" novalidate>
-          <div class="sup-field">
-            <label for="sf-name">User Name</label>
-            <input id="sf-name" name="name" placeholder="User Name" autocomplete="name" />
-          </div>
-          <div class="sup-field">
-            <label for="sf-email">Email</label>
-            <input id="sf-email" name="email" type="email" placeholder="Enter email" autocomplete="email" />
-          </div>
-          <div class="sup-field">
-            <label for="sf-notes">Notes</label>
-            <textarea id="sf-notes" name="notes" placeholder="Tell us about your issue"></textarea>
-          </div>
-          <p class="sup-thanks" id="supThanks" hidden>Thank you. We&rsquo;ll respond within 1-2 business days.</p>
-          <button type="submit" class="sup-send">Send my request</button>
-        </form>
-      </section>
-
     </div>
   </main>
 
   <script>
     (function () {
-      // Nav (mobile toggle + dropdown), self-contained.
       var t = document.getElementById('navToggle'), m = document.getElementById('navMenu');
       if (t && m) {
         t.addEventListener('click', function () {
@@ -178,9 +184,8 @@
         });
       }
 
-      // Contact form: no backend on this static site, so hand the request to the
-      // visitor's mail client (delivers to support@boltanswering.com) and show
-      // the confirmation. Swap for a form service / API endpoint when one exists.
+      // Static site, no backend: hand the request to the visitor's mail client
+      // (delivers to support@boltanswering.com) and show the confirmation.
       var f = document.getElementById('supForm');
       if (f) {
         f.addEventListener('submit', function (e) {
