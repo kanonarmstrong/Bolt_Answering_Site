@@ -69,8 +69,11 @@ ol.hca-steps {
   font-size: 15px;
   line-height: 1.55;
 }
-ol.hca-steps > li { position: relative; margin: 0 0 12px; padding-left: 1.9em; }
-.hca-num { position: absolute; left: 0; top: 0; font-weight: 700; color: #111318; }
+ol.hca-steps > li { margin: 0 0 12px; padding-left: 1.9em; }
+/* Inline (not absolute) so the number sits on the first text line's baseline —
+   a tall inline icon on that line no longer leaves the number floating above.
+   The negative margin pulls it into the gutter; the li pad keeps wraps aligned. */
+.hca-num { display: inline-block; width: 1.9em; margin-left: -1.9em; font-weight: 700; color: #111318; }
 .hca-steps b, .hca-steps strong { font-weight: 700; color: #111318; }
 .hca-steps em { font-style: italic; }
 
@@ -169,6 +172,7 @@ ol.hca-sub--wide > li { margin: 0 0 12px; }
   .hca-card__intro { font-size: 16px; }
   ol.hca-steps { font-size: 17px; line-height: 1.5; padding-left: 0; }
   ol.hca-steps > li { margin-bottom: 18px; padding-left: 2.1em; }
+  .hca-num { width: 2.1em; margin-left: -2.1em; }
   ol.hca-sub { font-size: 17px; }
   ol.hca-sub--wide > li { margin-bottom: 14px; }
   .hca-ic { height: 24px; vertical-align: -6px; }
