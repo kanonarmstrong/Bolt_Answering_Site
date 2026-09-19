@@ -58,16 +58,22 @@
   margin: 0 0 16px;
 }
 
-/* Ordered step list */
+/* Ordered step list — the number is a <b class="hca-num"> pinned to the left
+   gutter; the li has a matching left pad so wrapped text, device screenshots and
+   sub-lists all align beside the number, never hanging underneath it. */
 ol.hca-steps {
   margin: 0;
-  padding-left: 22px;
+  padding-left: 0;
+  list-style: none;
   color: #23252b;
   font-size: 15px;
   line-height: 1.55;
 }
-ol.hca-steps > li { margin: 0 0 12px; padding-left: 6px; }
-ol.hca-steps > li::marker { color: #23252b; }
+ol.hca-steps > li { margin: 0 0 12px; padding-left: 1.9em; }
+/* Inline (not absolute) so the number sits on the first text line's baseline —
+   a tall inline icon on that line no longer leaves the number floating above.
+   The negative margin pulls it into the gutter; the li pad keeps wraps aligned. */
+.hca-num { display: inline-block; width: 1.9em; margin-left: -1.9em; font-weight: 700; color: #111318; }
 .hca-steps b, .hca-steps strong { font-weight: 700; color: #111318; }
 .hca-steps em { font-style: italic; }
 
@@ -164,8 +170,9 @@ ol.hca-sub--wide > li { margin: 0 0 12px; }
   .hca-card__kicker { font-size: 30px; margin-bottom: 20px; }
   .hca-card__title { font-size: 23px; line-height: 1.25; margin-bottom: 18px; }
   .hca-card__intro { font-size: 16px; }
-  ol.hca-steps { font-size: 17px; line-height: 1.5; padding-left: 24px; }
-  ol.hca-steps > li { margin-bottom: 18px; }
+  ol.hca-steps { font-size: 17px; line-height: 1.5; padding-left: 0; }
+  ol.hca-steps > li { margin-bottom: 18px; padding-left: 2.1em; }
+  .hca-num { width: 2.1em; margin-left: -2.1em; }
   ol.hca-sub { font-size: 17px; }
   ol.hca-sub--wide > li { margin-bottom: 14px; }
   .hca-ic { height: 24px; vertical-align: -6px; }
