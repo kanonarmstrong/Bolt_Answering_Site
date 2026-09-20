@@ -9,6 +9,7 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="phone3d.css?v=1" />
   <link rel="stylesheet" href="demo.css?v=14" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
@@ -68,9 +69,20 @@
     <img class="tpfeat__mobileimg" src="assets/plumb-feat-mobile.png?v=2" alt="Set your schedule. We&rsquo;ll fill it" />
     <div class="tpfeat__inner">
       <div class="tpfeat__media rv" data-rd="240">
-        <div class="tpfeat__phones">
-          <img class="tpfeat__phone-sm" src="assets/plumb-feat-phone-sm.png" alt="Bolt schedule list" />
-          <img class="tpfeat__phone-lg" src="assets/plumb-feat-phone-lg.png" alt="Bolt weekly schedule with booked jobs" />
+        <div class="phone3d" role="img" aria-label="Interactive 3D phone showing the Bolt app home screen — drag to rotate">
+          <div class="phone3d__device">
+            <div class="phone3d__body"></div>
+            <span class="phone3d__btn phone3d__btn--pwr"></span>
+            <span class="phone3d__btn phone3d__btn--vup"></span>
+            <span class="phone3d__btn phone3d__btn--vdn"></span>
+            <div class="phone3d__bezel">
+              <div class="phone3d__screen">
+                <img class="phone3d__screenimg" src="assets/plumb-feat-screen.png?v=2" alt="Bolt app Home dashboard showing the day's schedule, jobs and leads" />
+              </div>
+              <div class="phone3d__glass"></div>
+            </div>
+          </div>
+          <div class="phone3d__shadow"></div>
         </div>
       </div>
       <div class="tpfeat__copy">
@@ -183,5 +195,6 @@
   <script src="script.js?v=27"></script>
   <script src="demo.js?v=17"></script>
   <script src="reveal.js?v=6"></script>
+  <script src="phone3d.js?v=1"></script>
 </body>
 </html>
