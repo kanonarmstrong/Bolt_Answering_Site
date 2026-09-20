@@ -43,6 +43,12 @@ ul,ol{list-style:none}
 
 .marker{font-family:var(--marker);font-weight:400;text-transform:uppercase;letter-spacing:.5px}
 
+/* Text reveal — subtle 300ms opacity fade; hero on load, lower sections on
+   scroll (reveal.js). Fails open for reduced-motion + JS-off (noscript below). */
+.rv{opacity:0;transition:opacity .3s ease}
+.rv.rv--in{opacity:1}
+@media (prefers-reduced-motion:reduce){.rv,.rv.rv--in{opacity:1;transition:none}}
+
 /* ---------- Buttons ---------- */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;
