@@ -150,7 +150,7 @@ ul,ol{list-style:none}
 }
 .hero__sub{
   display:inline-block;color:var(--navy);font-weight:600;
-  font-size:clamp(30px,3.6vw,50px);letter-spacing:-.5px;vertical-align:baseline;
+  font-size:clamp(30px,3.6vw,45px);letter-spacing:-.5px;vertical-align:baseline;
 }
 .hero__lead{
   color:var(--gray);font-weight:400;
