@@ -106,9 +106,11 @@
     grid-template-columns: none; gap: clamp(18px, 5vw, 28px); min-height: 0;
   }
   .tpfeat__media { order: -1; width: 100%; min-height: 0; }
-  .tpfeat__copy { color: var(--navy); text-align: center; }
-  .tpfeat__title { color: var(--navy); }
-  .tpfeat__sub { color: var(--gray); }
+  /* Match the mobile feature node (Figma 2309:5163): gray title + sub on white,
+     yellow highlight (.tpfeat__title .hl is already --yellow), blue CTA. */
+  .tpfeat__copy { color: #707070; text-align: center; }
+  .tpfeat__title { color: #707070; }
+  .tpfeat__sub { color: #707070; }
   .phone3d { height: auto; }
   .phone3d__device { height: auto; width: min(72%, 300px); }
 }
