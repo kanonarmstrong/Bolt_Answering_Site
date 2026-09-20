@@ -496,6 +496,7 @@ ul,ol{list-style:none}
     display:inline-flex;
     position:fixed;right:16px;z-index:200;
     top:calc(76px + 10px);                       /* start: 10px below the header bar */
+    height:35px;font-weight:700;                  /* 5px taller + bolder than the base yellow btn */
     transition:top .5s cubic-bezier(.34,.01,.2,1);
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
