@@ -79,23 +79,11 @@
     var wrap = document.createElement('span'); wrap.innerHTML = s; return wrap.firstChild;
   }
 
-  // ---------- phone helpers ----------
-  function digits(s) { return (s || '').replace(/\D/g, ''); }
-  function validPhone(s) { var d = digits(s); return d.length === 10 || (d.length === 11 && d.charAt(0) === '1'); }
-  function e164(s) {
-    var d = digits(s);
-    if (d.length === 11 && d.charAt(0) === '1') return '+' + d;
-    if (d.length === 10) return '+1' + d;
-    return '+' + d;
-  }
-  function fmtPhone(s) {
-    var d = digits(s); if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
-    var a = d.slice(0, 3), b = d.slice(3, 6), c = d.slice(6, 10);
-    if (d.length > 6) return '(' + a + ') ' + b + '-' + c;
-    if (d.length > 3) return '(' + a + ') ' + b;
-    if (d.length > 0) return '(' + a;
-    return '';
-  }
+  // ---------- phone/validation helpers ----------
+  // Canonical layer lives in demo-format.js (also unit-tested); alias it here.
+  var DF = (typeof window !== 'undefined' && window.DemoFormat) || {};
+  var digits = DF.digits, validPhone = DF.validPhone, e164 = DF.e164,
+      fmtPhone = DF.fmtPhone, validEmail = DF.validEmail, validBusiness = DF.validBusiness;
 
   // ---------- API ----------
   function apiPost(path, body) {
@@ -177,21 +165,75 @@
 
   // ---------- screen: phone entry ----------
   function field(label, id, ph, type, val) {
-    var input = h('input', { class: 'demo-input', id: id, type: type || 'text', placeholder: ph, value: val || '', autocomplete: id === 'demo-phone' ? 'tel' : (id === 'demo-email' ? 'email' : 'off') });
-    var err = h('div', { class: 'demo-error', id: id + '-err', style: 'display:none' });
-    return { wrap: h('div', { class: 'demo-field' }, [h('label', { class: 'demo-label', for: id, text: label }), input, err]), input: input, err: err };
+    var input = h('input', {
+      class: 'demo-input', id: id, type: type || 'text', placeholder: ph, value: val || '',
+      required: '', 'aria-required': 'true',
+      autocomplete: id === 'demo-phone' ? 'tel' : (id === 'demo-email' ? 'email' : 'organization'),
+      inputmode: id === 'demo-phone' ? 'tel' : null
+    });
+    return { wrap: h('div', { class: 'demo-field' }, [h('label', { class: 'demo-label', for: id, text: label }), input]), input: input };
   }
   function renderPhone(opts) {
     opts = opts || {};
+    // Every field is required now (including Email) — Figma 2387:9076 / 2548:3438.
     var phone = field('Phone number', 'demo-phone', '(555) 555-1212', 'tel', state.display);
     var biz = field('Business name', 'demo-business', 'John’s HVAC', 'text', state.business);
-    var email = field('Email (optional)', 'demo-email', 'yourname@example.com', 'email', state.email);
+    var email = field('Email', 'demo-email', 'yourname@example.com', 'email', state.email);
 
+    // Single form-level error message shown above the button, with the offending
+    // field(s) turned red/pink (Figma error states 2548:3438/3480/3522/3561).
+    var formErr = h('p', { class: 'demo-formerr', id: 'demo-formerr', role: 'alert', style: 'display:none' });
+    function markErr(f) {
+      f.input.classList.add('err');
+      f.input.setAttribute('aria-invalid', 'true');
+      f.input.setAttribute('aria-describedby', 'demo-formerr');
+    }
+    function clearAllErr() {
+      [phone, biz, email].forEach(function (f) {
+        f.input.classList.remove('err');
+        f.input.removeAttribute('aria-invalid');
+        f.input.removeAttribute('aria-describedby');
+      });
+    }
+    function hideFormErr() { formErr.style.display = 'none'; formErr.textContent = ''; }
+    function showFormErr(fields, msg) { clearAllErr(); fields.forEach(markErr); formErr.textContent = msg; formErr.style.display = 'block'; }
+    function clearFieldErr(f) {
+      f.input.classList.remove('err');
+      f.input.removeAttribute('aria-invalid');
+      f.input.removeAttribute('aria-describedby');
+      if (![phone, biz, email].some(function (x) { return x.input.classList.contains('err'); })) hideFormErr();
+    }
+
+    // Live, cursor-preserving phone formatting -> "(123) 456-7890" on every input.
+    // The caret is kept at the same digit boundary so mid-string edits, backspace,
+    // and paste stay usable (no cursor jumping).
     phone.input.addEventListener('input', function () {
-      var pos = this.selectionStart, before = this.value;
-      this.value = fmtPhone(this.value);
-      if (before === state.display) {} // no-op keep
+      var el = this;
+      var caret = el.selectionStart == null ? el.value.length : el.selectionStart;
+      var digitsBefore = digits(el.value.slice(0, caret)).length;
+      var formatted = fmtPhone(el.value);
+      el.value = formatted;
+      var pos = 0, seen = 0;
+      while (pos < formatted.length && seen < digitsBefore) { if (/\d/.test(formatted.charAt(pos))) seen++; pos++; }
+      try { el.setSelectionRange(pos, pos); } catch (e) {}
+      clearFieldErr(phone);
     });
+    biz.input.addEventListener('input', function () { clearFieldErr(biz); });
+    email.input.addEventListener('input', function () { clearFieldErr(email); });
+
+    // Canonical validation priority: missing required -> phone -> business -> email.
+    function validateForm() {
+      var pv = phone.input.value, bv = biz.input.value, ev = email.input.value;
+      var empty = [];
+      if (!pv.trim()) empty.push(phone);
+      if (!bv.trim()) empty.push(biz);
+      if (!ev.trim()) empty.push(email);
+      if (empty.length) return { fields: empty, msg: 'Please fill out the required fields.' };
+      if (!validPhone(pv)) return { fields: [phone], msg: 'Invalid phone number. Please try again.' };
+      if (!validBusiness(bv)) return { fields: [biz], msg: 'Invalid business name. Please try again.' };
+      if (!validEmail(ev)) return { fields: [email], msg: 'Invalid email address. Please try again.' };
+      return null;
+    }
 
     var disclosure = h('p', { class: 'demo-disclosure' }, [
       CONSENT_A,
@@ -200,18 +242,13 @@
     ]);
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Continue' });
 
-    function showErr(f, msg) { f.err.textContent = msg; f.err.style.display = 'block'; f.input.setAttribute('aria-invalid', 'true'); }
-    function clearErr(f) { f.err.style.display = 'none'; f.input.removeAttribute('aria-invalid'); }
-
     btn.addEventListener('click', function () {
-      [phone, biz, email].forEach(clearErr);
-      var ok = true;
-      if (!validPhone(phone.input.value)) { showErr(phone, 'Enter a valid US phone number.'); ok = false; }
-      if (!biz.input.value.trim()) { showErr(biz, 'Enter your business name.'); ok = false; }
-      if (!ok) return;
+      var bad = validateForm();
+      if (bad) { showFormErr(bad.fields, bad.msg); bad.fields[0].input.focus(); return; }  // no call fires for an invalid form
+      hideFormErr();
 
       state.display = fmtPhone(phone.input.value);
-      state.phone = e164(phone.input.value);
+      state.phone = e164(phone.input.value);            // normalized E.164 to the API
       state.business = biz.input.value.trim();
       state.email = email.input.value.trim();
 
@@ -222,11 +259,16 @@
       }).then(function (r) {
         if (r.ok) return renderCode();
         unbusy(btn, 'Continue');
-        if (r.error === 'invalid_phone') showErr(phone, r.message || 'Enter a valid US phone number.');
+        if (r.error === 'invalid_phone') showFormErr([phone], r.message || 'Invalid phone number. Please try again.');
         else if (r.error === 'demo_limit_reached') renderLimit();
-        else if (r.error === 'rate_limited') showErr(phone, waitMsg(r) );
+        else if (r.error === 'rate_limited') showFormErr([phone], waitMsg(r));
         else renderError();
       });
+    });
+
+    // Keyboard submission from any field.
+    [phone, biz, email].forEach(function (f) {
+      f.input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
     });
 
     var limitMsg = opts.limit ? h('p', { class: 'demo-limitmsg' }, [
@@ -235,10 +277,11 @@
     ]) : null;
 
     setBody([
-      headingIcon('Have my assistant call me'),
+      h('h2', { class: 'demo-h demo-h--form', text: 'I want to talk to my new assistant' }),
       sub('We’ll send you a 6-digit one-time passcode before placing the call'),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
+      formErr,
       btn, disclosure, helpLine()
     ]);
     setTimeout(function () { phone.input.focus(); }, 30);
@@ -486,87 +529,44 @@
   function renderRecap(d, opts) {
     clearResend();
     opts = opts || {};
-    var m = isMobile();
     if (!recapConfettiDone) { recapConfettiDone = true; playConfetti(); }
     var turns = normTurns(d && d.transcript);
 
-    var box = h('div', { class: 'demo-transcript' });
+    // Transcript as a chat (Figma 2370:8784 / 2512:1245): assistant bubbles on the
+    // left, caller bubbles on the right, each with an icon + label underneath.
+    var box = h('div', { class: 'demo-chat' });
     if (!turns.length) {
-      box.appendChild(h('p', { class: 'demo-transcript__empty', text: opts.transcriptUnavailable ? 'Transcript unavailable.' : 'Your call transcript will appear here in a moment.' }));
+      box.appendChild(h('p', { class: 'demo-chat__empty', text: opts.transcriptUnavailable ? 'Transcript unavailable.' : 'Your call transcript will appear here in a moment.' }));
     } else {
       turns.forEach(function (t) {
-        box.appendChild(h('div', { class: 'demo-turn' + (t.assistant ? '' : ' demo-turn--caller') }, [
-          // Only the assistant carries the mascot icon (Figma 2370:8784). The
-          // caller has none; the empty gutter keeps caller text left-aligned
-          // with the assistant's, and the icon sits beside the "Assistant" label.
-          h('span', { class: 'demo-turn__icon' }, t.assistant ? [
-            h('img', { src: 'assets/demo-icon-assistant.svg', alt: '' })
-          ] : []),
-          h('div', { class: 'demo-turn__text' }, [
-            h('b', { text: t.label }),
-            document.createTextNode(': ' + t.text)
-          ])
+        var meta = t.assistant
+          ? [h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-assistant.svg', alt: '' }), h('span', { class: 'demo-chatmeta__label', text: 'Assistant' })]
+          : [h('span', { class: 'demo-chatmeta__label', text: 'Caller' }), h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-caller.svg', alt: '' })];
+        box.appendChild(h('div', { class: 'demo-chatrow ' + (t.assistant ? 'demo-chatrow--assistant' : 'demo-chatrow--caller') }, [
+          h('div', { class: 'demo-bubble', text: t.text }),
+          h('div', { class: 'demo-chatmeta' }, meta)
         ]));
       });
     }
 
-    var cta = h('a', {
-      class: 'demo-btn demo-btn--yellow demo-recap-btn',
-      href: 'https://app.boltanswering.com/signup'
-    }, ['Start my free trial now']);
-
-    // Mobile (Figma 2441:811): money vector removed, value statements centered,
-    // value-prop shortened, CTA arrows use the mobile-specific assets.
-    var money = m ? null : h('img', { class: 'demo-nomore__money', src: 'assets/demo-money.svg', alt: '' });
-    var valueProp = m
-      ? h('p', { class: 'demo-recap-value demo-recap-value--m' }, ['Start Bolt for ', h('span', { class: 'demo-free', text: 'FREE' }), ' today'])
-      : h('p', { class: 'demo-recap-value' }, [
-          'You’ll start Bolt for FREE today, but remember a receptionist this good ',
-          h('span', { class: 'hl', text: 'costs thousands' }),
-          ' and our 24/7 assistants do more for ',
-          h('span', { class: 'hl', text: 'less than $4 a day.' })
-        ]);
-    var arrowsL = m
-      ? h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
-          h('img', { class: 'demo-mar demo-mar--lu', src: 'assets/demo-marrow-lu.svg', alt: '' }),
-          h('img', { class: 'demo-mar demo-mar--ll', src: 'assets/demo-marrow-ll.svg', alt: '' })
-        ])
-      : h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--l' }, [
-          h('img', { class: 'demo-ar demo-ar--l1', src: 'assets/demo-arrow-lu.svg', alt: '' }),
-          h('img', { class: 'demo-ar demo-ar--l2', src: 'assets/demo-arrow-ll.svg', alt: '' })
-        ]);
-    var arrowsR = m
-      ? h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
-          h('img', { class: 'demo-mar demo-mar--ru', src: 'assets/demo-marrow-ru.svg', alt: '' }),
-          h('img', { class: 'demo-mar demo-mar--rl', src: 'assets/demo-marrow-rl.svg', alt: '' })
-        ])
-      : h('span', { class: 'demo-recap-cta__arrows demo-recap-cta__arrows--r' }, [
-          h('img', { class: 'demo-ar demo-ar--r1', src: 'assets/demo-arrow-rl.svg', alt: '' }),
-          h('img', { class: 'demo-ar demo-ar--r2', src: 'assets/demo-arrow-ru.svg', alt: '' })
-        ]);
-
     setBody([
-      h('div', { class: 'demo-recap' }, [
-        h('h2', { class: 'demo-recap-title', text: 'NEVER MISS A JOB AGAIN' }),
-        h('p', { class: 'demo-recap-sub' }, m
-          ? [h('span', { class: 'hl demo-sub-l1', text: 'Every detail is caught so you never miss a beat.' }), h('br'), h('span', { class: 'demo-sub-sm', text: 'Scroll to see the transcript:' })]
-          : ['Your assistant will always catch every detail to make sure you never miss a beat. ', h('span', { class: 'hl', text: 'Here’s the transcript from your call:' })]),
-        box,
-        h('div', { class: 'demo-nomore' }, [
-          m ? h('span', { class: 'demo-nomore__vec' }, [
-                h('img', { src: 'assets/demo-nomore-vec2.svg', alt: '' }),
-                h('img', { src: 'assets/demo-nomore-vec1.svg', alt: '' })
-              ]) : null,
-          h('div', { class: 'demo-nomore__list' }, [
-            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed jobs' })]),
-            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'missed leads' })]),
-            h('p', {}, [h('span', { class: 'demo-nomore__more', text: 'No more' }), h('span', { class: 'hl', text: 'hassle when you can’t answer' })])
-          ]),
-          money
+      h('div', { class: 'demo-success' }, [
+        h('h2', { class: 'demo-success-title' }, [
+          h('span', { class: 'demo-mk demo-ul demo-success-never', text: 'NEVER' }),
+          document.createTextNode(' '),
+          h('span', { class: 'demo-success-rest', text: 'miss a job again.' })
         ]),
-        valueProp,
-        h('div', { class: 'demo-recap-cta' }, [arrowsL, cta, arrowsR]),
-        m ? null : helpLine()
+        h('p', { class: 'demo-success-sub' }, [
+          '…every detail is captured so you’ll never miss a beat. ',
+          h('b', { text: 'Check out the transcript.' })
+        ]),
+        box,
+        h('p', { class: 'demo-success-trial demo-mk' }, [
+          h('span', { class: 'demo-success-trial__sm', text: 'First ' }),
+          h('span', { class: 'demo-success-trial__big demo-ul', text: '30 days' }),
+          h('span', { class: 'demo-success-trial__sm', text: ' are on us!' })
+        ]),
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup' }, ['Start my free trial now'])
       ])
     ]);
   }
@@ -621,6 +621,16 @@
       }
     });
   }
+  // QA-only hook (needs ?demoqa=1) to render each modal state deterministically for
+  // screenshot verification, without walking the live OTP/call API. No effect otherwise.
+  if (typeof window !== 'undefined' && /[?&]demoqa=1/.test(window.location.search)) {
+    window.__demoQA = {
+      open: openModal, phone: renderPhone, code: renderCode, inCall: renderInCall,
+      recap: renderRecap, fail: renderCallFailed, limit: renderLimit, error: renderError,
+      state: state
+    };
+  }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
   else wire();
 })();
