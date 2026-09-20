@@ -38,6 +38,8 @@ body.demo-lock{overflow:hidden}
   font-size:clamp(24px,3vw,32px);font-weight:600;line-height:1.3;
   color:var(--navy);text-align:center;margin:0 0 8px;
 }
+/* Talk-to-your-assistant form heading — Figma 2387:9076 (26px, no mascot icon). */
+.demo-h--form{font-size:clamp(22px,4.6vw,26px)}
 .demo-sub{
   font-size:15px;line-height:1.6;color:var(--gray);
   text-align:center;margin:0 auto 22px;max-width:470px;
@@ -85,6 +87,13 @@ body.demo-lock{overflow:hidden}
 .demo-error{color:#d64545;font-size:13.5px;line-height:1.45;margin:4px 2px 0}
 .demo-note{color:var(--gray);font-size:13.5px;line-height:1.45;margin:4px 2px 10px;text-align:center}
 
+/* ---- validation error state (Figma 2548:3438/3480/3522/3561) ---- */
+/* Offending field: red border + pink fill + red text; single message above CTA. */
+.demo-input.err{border-color:#e5484d;background:#fdecec;color:#d64545}
+.demo-input.err::placeholder{color:#e39a9a}
+.demo-input.err:focus{border-color:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.15)}
+.demo-formerr{color:#e5484d;font-size:14px;line-height:1.4;text-align:center;margin:2px 2px 12px}
+
 /* ---- passcode ---- */
 .demo-code{display:flex;gap:10px;justify-content:space-between;margin:10px 0 6px}
 .demo-code input{
@@ -118,61 +127,53 @@ body.demo-lock{overflow:hidden}
 .demo-ring svg{width:28px;height:28px}
 .demo-ring--ok{background:rgba(34,170,102,.12);color:#22aa66}
 
-/* ---- recap (completed call) — Figma 2370:8784 ---- */
-.demo-recap{position:relative;text-align:center}
-.demo-recap::before{
+/* ---- call success (completed call) — Figma 2370:8784 / 2512:1239 ---- */
+.demo-success{position:relative;text-align:center}
+.demo-success::before{
   content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;
   background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05;
 }
-.demo-recap>*{position:relative;z-index:1}
+.demo-success>*{position:relative;z-index:1}
 
-.demo-recap-title{
-  font-family:'Permanent Marker',cursive;font-weight:400;
-  font-size:clamp(28px,4.6vw,38px);line-height:1.05;letter-spacing:.4px;
-  color:#0a0a0a;margin:2px 0 10px;
+.demo-success-title{margin:2px 0 14px;line-height:1.05;color:var(--navy);font-weight:400}
+.demo-success-never{font-family:'Permanent Marker',cursive;font-size:clamp(38px,7vw,54px);color:var(--navy);line-height:1}
+.demo-success-rest{font-family:var(--body,'Inter',sans-serif);font-weight:400;font-size:clamp(29px,5.2vw,38px);color:var(--navy)}
+
+.demo-success-sub{font-size:clamp(15px,1.8vw,18px);line-height:1.3;color:var(--navy);max-width:430px;margin:0 auto 18px}
+.demo-success-sub b{font-weight:700}
+
+/* transcript chat bubbles */
+.demo-chat{
+  text-align:left;background:rgba(255,255,255,.55);
+  border:1px solid #e6e5ee;border-radius:22px;box-shadow:0 1px 4px rgba(12,12,13,.08);
+  padding:18px 20px;max-height:300px;overflow-y:auto;margin:0 0 18px;
 }
-.demo-recap-sub{font-size:16px;line-height:1.28;color:#707070;max-width:453px;margin:0 auto 16px}
-.demo-recap-sub .hl{color:var(--navy)}
+.demo-chatrow{display:flex;flex-direction:column;margin-bottom:16px}
+.demo-chatrow:last-child{margin-bottom:0}
+.demo-chatrow--assistant{align-items:flex-start}
+.demo-chatrow--caller{align-items:flex-end}
+.demo-bubble{max-width:80%;padding:12px 15px;border-radius:16px;font-size:15px;line-height:1.35;word-break:break-word}
+.demo-chatrow--assistant .demo-bubble{background:#f3f3f5;color:#787888;border-top-left-radius:5px}
+.demo-chatrow--caller .demo-bubble{background:#e5e5ee;color:var(--navy);border-top-right-radius:5px}
+.demo-chatmeta{display:flex;align-items:center;gap:6px;margin-top:5px}
+.demo-chatmeta__icon{width:19px;height:19px;display:block;flex:0 0 19px}
+.demo-chatmeta__label{font-size:13.5px;color:#787888}
+.demo-chatrow--caller .demo-chatmeta__label{color:var(--navy)}
+.demo-chat__empty{font-size:14px;color:var(--gray);text-align:center;padding:14px 8px;margin:0}
 
-.demo-transcript{
-  position:relative;text-align:left;background:#fbfbfe;
-  border:1px solid #e6e5ee;border-radius:18px;box-shadow:0 1px 4px rgba(12,12,13,.08);
-  padding:18px;max-height:300px;overflow-y:auto;margin:0 0 22px;
+/* "First 30 days are on us!" */
+.demo-success-trial{
+  display:inline-block;color:var(--navy);text-transform:uppercase;
+  line-height:1;margin:6px 0 16px;transform:rotate(-3deg);
 }
-.demo-turn{display:flex;gap:9px;align-items:flex-start;margin-bottom:12px}
-.demo-turn:last-child{margin-bottom:0}
-.demo-turn__icon{flex:0 0 19px;width:19px;height:19px;margin-top:2px}
-.demo-turn__icon img{width:100%;height:100%;display:block}
-.demo-turn__text{font-size:14.5px;line-height:1.4;color:#787888;word-break:break-word}
-.demo-turn__text b{font-weight:700}
-.demo-turn--caller .demo-turn__text{color:var(--navy)}
-.demo-transcript__empty{font-size:14px;color:var(--gray);text-align:center;padding:14px 8px;margin:0}
+.demo-success-trial__sm{font-size:clamp(24px,4.4vw,30px)}
+.demo-success-trial__big{font-size:clamp(40px,7.2vw,55px)}
 
-.demo-nomore{display:flex;align-items:flex-start;justify-content:center;gap:16px;margin:2px 0 16px}
-.demo-nomore__list{text-align:left;font-size:18px;line-height:1.25;color:#839393}
-.demo-nomore__list p{margin:0 0 8px}
-.demo-nomore__list p:last-child{margin:0}
-.demo-nomore__more{font-family:'Permanent Marker',cursive;font-weight:400;color:var(--navy);font-size:26px;margin-right:10px}
-.demo-nomore__list .hl{color:var(--navy)}
-.demo-nomore__money{flex:0 0 auto;width:74px;height:auto}
-.demo-nomore__vec{display:none}
-
-.demo-recap-value{font-size:16px;line-height:1.28;color:#707070;max-width:428px;margin:0 auto 14px}
-.demo-recap-value .hl{color:var(--navy)}
-
-.demo-recap-cta{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
-.demo-recap-cta .demo-btn{margin-top:0}
-.demo-recap-cta__arrows{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;align-items:center}
-.demo-ar{display:block;height:auto;opacity:.92}
-.demo-ar--l1{width:44px;transform:scaleX(-1)}
-.demo-ar--l2{width:40px;transform:scaleX(-1)}
-.demo-ar--r1{width:40px}
-.demo-ar--r2{width:38px;transform:scaleY(-1)}
-.demo-mar{display:block;height:auto;opacity:.92}
-.demo-recap-value.demo-recap-value--m{font-family:'Permanent Marker',cursive;font-weight:400;font-size:23px;line-height:1.1;color:var(--navy)}
-.demo-free{font-weight:500}
-.demo-sub-sm{font-size:.9em;color:#707070}
-.demo-recap-btn{display:flex;align-items:center;justify-content:center;text-decoration:none;max-width:280px;margin:0 auto}
+.demo-success-cta{
+  max-width:340px;margin:2px auto 0;height:56px;
+  display:flex;align-items:center;justify-content:center;text-decoration:none;
+  font-size:clamp(18px,2.4vw,22px);
+}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
 
 
@@ -181,18 +182,6 @@ body.demo-lock{overflow:hidden}
 .demo-assist{position:relative;display:inline-block;width:52px;height:52px;flex:0 0 auto;transform:rotate(15deg)}
 .demo-assist img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .demo-assist .demo-assist__g{inset:1.67%}
-
-/* ---- in-call (2370:8769) ---- */
-.demo-incall{position:relative}
-.demo-incall::before{content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05}
-.demo-incall>*{position:relative;z-index:1}
-.demo-incall__head{display:flex;align-items:center;gap:12px;margin:6px 0 26px}
-.demo-incall__head .demo-assist{transform:rotate(-12deg);margin-top:0}
-.demo-incall__title{font-size:clamp(20px,2.6vw,26px);line-height:1.25;color:var(--navy);margin:0;font-weight:400}
-.demo-incall__expect{font-family:'Permanent Marker',cursive;font-weight:400;font-size:28px;color:#0a0a0a;margin:0 0 14px;transform:rotate(-0.3deg)}
-.demo-incall__list{margin:0;padding-left:34px;color:#839393;font-size:20px;line-height:1.3;list-style:decimal}
-.demo-incall__list li{margin-bottom:10px}
-.demo-incall__list li:last-child{margin-bottom:0}
 
 /* ---- demo limit inline message (2370:8877) ---- */
 .demo-limitmsg{color:#d64545;font-size:14px;line-height:1.5;text-align:center;margin:2px 2px 8px}
@@ -206,14 +195,15 @@ body.demo-lock{overflow:hidden}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400;color:var(--navy)}
 .demo-ul{background:linear-gradient(var(--yellow),var(--yellow)) 0 100%/100% 4px no-repeat;padding-bottom:1px}
 
-.demo-callcard__head{font-size:18px;line-height:1.45;color:var(--navy);margin:0 0 16px}
-.demo-callcard__head .demo-mk{font-size:23px;margin-right:6px}
+/* Calling You (Figma 2370:8769) — roomier + responsive so it never crams. */
+.demo-callcard__head{font-size:clamp(16px,2.1vw,19px);line-height:1.5;color:var(--navy);margin:0 0 22px}
+.demo-callcard__head .demo-mk{font-size:clamp(22px,3vw,25px);margin-right:6px}
 .demo-callcard__head b{font-weight:700}
-.demo-callcard__expect{font-size:24px;margin:0 0 14px}
-.demo-callcard__list{margin:0;padding-left:26px;color:#3a3a45;font-size:17px;line-height:1.4;list-style:decimal}
-.demo-callcard__list li{margin-bottom:11px}
+.demo-callcard__expect{font-size:clamp(22px,3.2vw,26px);margin:0 0 18px}
+.demo-callcard__list{margin:0;padding-left:28px;color:#3a3a45;font-size:clamp(16px,2.2vw,18px);line-height:1.5;list-style:decimal}
+.demo-callcard__list li{margin-bottom:14px}
 .demo-callcard__list li:last-child{margin-bottom:0}
-.demo-callcard__list .demo-mk{font-size:21px}
+.demo-callcard__list .demo-mk{font-size:clamp(19px,2.6vw,22px)}
 .demo-callcard__aside{color:var(--gray);font-size:.82em}
 
 .demo-failcard__head{font-size:18px;line-height:1.45;color:var(--gray);margin:0 0 12px}
@@ -234,35 +224,15 @@ body.demo-lock{overflow:hidden}
   .demo-code input{height:50px;font-size:24px}
   .demo-input{font-size:16px}
   .demo-logo{height:26px;margin:0 auto 16px}
-  .demo-recap-title{font-size:22px;margin:0 0 14px;letter-spacing:0;line-height:1.05;white-space:nowrap}
-  .demo-recap-sub{font-size:16px;line-height:1.35;margin:0 auto 20px;max-width:none}
-  .demo-sub-l1{white-space:nowrap;font-size:clamp(10.5px,3.4vw,16px)}
-  .demo-sub-sm{font-size:clamp(9.5px,2.9vw,14px)}
-  .demo-transcript{max-height:246px;padding:16px;margin:0 0 24px;border-radius:16px}
-  .demo-turn{gap:9px;margin-bottom:12px}
-  .demo-turn__text{font-size:14.5px;line-height:1.4}
-  .demo-nomore{display:block;position:relative;margin:0 0 16px}
-  .demo-nomore__vec{display:block;position:absolute;left:50%;top:48%;width:115px;height:115px;transform:translate(-50%,-50%) rotate(28deg);opacity:.15;pointer-events:none;z-index:0}
-  .demo-nomore__vec img{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .demo-nomore__list{position:relative;z-index:1;font-size:18px;text-align:center;line-height:1.3}
-  .demo-nomore__list p{margin:0 0 7px}
-  .demo-nomore__more{font-size:23px;margin-right:8px;color:#000}
-  .demo-recap-value{font-size:16px;margin:0 auto 16px}
-  .demo-recap-cta{gap:6px}
-  .demo-recap-cta__arrows{display:flex;gap:5px}
-  .demo-mar--lu{width:34px}
-  .demo-mar--ll{width:30px}
-  .demo-mar--ru{width:24px;transform:rotate(-19.64deg) scaleY(-1)}
-  .demo-mar--rl{width:26px;transform:rotate(-19.64deg)}
-  .demo-recap-btn{max-width:250px;font-size:17px}
-  .demo-assist{width:44px;height:44px}
-  .demo-incall__title{font-size:20px}
-  .demo-incall__expect{font-size:24px}
-  .demo-incall__list{font-size:17px;padding-left:28px}
-  .demo-callcard__head,.demo-failcard__head{font-size:16.5px}
-  .demo-callcard__head .demo-mk,.demo-failcard__head .demo-mk{font-size:21px}
-  .demo-callcard__expect{font-size:22px}
-  .demo-callcard__list{font-size:16px}
-  .demo-callcard__list .demo-mk{font-size:19px}
+  .demo-h--form{font-size:22px}
+  /* success (mobile) — Figma 2370:8784 responsive; single layout, no arrows/bullets */
+  .demo-success-sub{max-width:none}
+  .demo-chat{padding:15px 16px;border-radius:18px;max-height:262px}
+  .demo-bubble{max-width:86%;font-size:14.5px}
+  .demo-success-trial{margin:4px 0 14px}
+  .demo-success-cta{max-width:none}
+  /* calling / failure (mobile) */
+  .demo-callcard__head{margin-bottom:18px}
+  .demo-failcard__head{margin-bottom:12px}
   .demo-failcard__btn{max-width:none}
 }
