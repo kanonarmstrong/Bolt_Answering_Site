@@ -354,6 +354,15 @@ ul,ol{list-style:none}
    PRICING
    ============================================================ */
 .pricing{background:var(--offwhite);padding-bottom:clamp(56px,7vw,96px)}
+.pricing .section__head {
+  padding-top: 40px;    /* Space above the pricing title */
+  padding-bottom: 20px; /* Space below the subtitle */
+}
+
+/* Reduce gap between title and subtitle */
+.pricing .section__sub {
+  margin-top: 0px; /* Reduces default top margin (adjust or use negative value like -8px if needed) */
+}
 .pricing__title{
   font-weight:500;text-transform:capitalize;color:var(--navy);
   font-size:clamp(30px,3.1vw,40px);letter-spacing:.5px;
