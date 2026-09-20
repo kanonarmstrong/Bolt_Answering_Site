@@ -761,6 +761,18 @@ ul,ol{list-style:none}
   width:clamp(220px,19vw,360px);z-index:3;pointer-events:none;
   filter:drop-shadow(0 16px 32px rgba(12,12,13,.4));
 }
+/* Scroll-zoom background layer (capes-zoom.js): a clipped pseudo-element that
+   scales ONLY the bg image 1.0 -> 1.2. The section stays overflow:visible so the
+   phone can still overflow; the overlay/inner/copy are untouched. z-index:0 keeps
+   it below the overlay. --capes-img is set inline per page. */
+.tpcapes__bg{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.tpcapes__bg::before{
+  content:'';position:absolute;inset:0;
+  background-image:var(--capes-img);background-size:cover;background-position:center;
+  transform:scale(var(--cz,1));transform-origin:center;
+  will-change:transform;backface-visibility:hidden;
+}
+@media (prefers-reduced-motion:reduce){.tpcapes__bg::before{transform:none}}
 
 /* ---------- Photo spacer band ---------- */
 .tpband{
@@ -864,6 +876,6 @@ ul,ol{list-style:none}
 .tpcapes__mobileimg{display:none}
 @media (max-width:768px){
   .tpcapes{min-height:0}
-  .tpcapes__overlay,.tpcapes__inner,.tpcapes__phone{display:none}
+  .tpcapes__bg,.tpcapes__overlay,.tpcapes__inner,.tpcapes__phone{display:none}
   .tpcapes__mobileimg{display:block;width:100%;height:auto}
 }
