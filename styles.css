@@ -321,7 +321,7 @@ ul,ol{list-style:none}
 .step__text{color:#e9e9e9;font-weight:600;font-size:clamp(17px,1.7vw,25px);line-height:1.2;max-width:640px}
 /* fixed media column + centered images => all mockups share one vertical column, centers aligned */
 .step__media{justify-self:stretch;display:flex;align-items:center;justify-content:center}
-.step__mock{display:block;width:auto;height:auto;max-width:100%;max-height:clamp(64px,7vw,104px);position:relative;z-index:1}
+.step__mock{display:block;width:auto;height:auto;max-width:100%;max-height:clamp(85px,7vw,130px);position:relative;z-index:1}
 .step__mock--phone{max-height:clamp(96px,11vw,150px)}
 /* scroll-driven hand-drawn reveal: a conic mask sweeps around the marker
    ellipse so the filled shape appears along its circular path */
