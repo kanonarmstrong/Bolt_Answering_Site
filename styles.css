@@ -436,7 +436,7 @@ ul,ol{list-style:none}
   .logo img{height:24px}
   .nav__toggle{display:flex}
   .nav__menu{
-    position:fixed;inset:76px 0 auto 0;
+    position:fixed;inset:76px 0 auto 0;z-index:0;
     flex-direction:column;align-items:stretch;gap:0;
     background:#fff;padding:8px var(--pad) 24px;
     box-shadow:0 20px 30px rgba(12,12,13,.12);
@@ -444,6 +444,11 @@ ul,ol{list-style:none}
     max-height:calc(100vh - 76px);overflow-y:auto;
   }
   .nav__menu.open{transform:translateY(0)}
+  /* The menu slides from above; an opaque bar over the nav (below the toggle/
+     logo) hides it there so it appears to drop from the BOTTOM of the nav bar,
+     not from the top of the screen. */
+  .nav::before{content:'';position:fixed;top:0;left:0;right:0;height:76px;background:#fff;z-index:1;pointer-events:none}
+  .logo,.nav__toggle{position:relative;z-index:2}
   .nav__links{flex-direction:column;align-items:stretch;gap:0}
   .nav__links>li{border-bottom:1px solid rgba(12,12,13,.06)}
   .nav__links>li>a{display:block;padding:16px 4px;font-size:18px}
@@ -491,6 +496,7 @@ ul,ol{list-style:none}
     display:inline-flex;
     position:fixed;right:16px;z-index:200;
     top:calc(76px + 10px);                       /* start: 10px below the header bar */
+    height:35px;font-weight:700;                  /* 5px taller + bolder than the base yellow btn */
     transition:top .5s cubic-bezier(.34,.01,.2,1);
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
@@ -745,6 +751,11 @@ ul,ol{list-style:none}
   background:#333 center/cover no-repeat;
 }
 .tpband::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.55)}
+/* Video variant of the band: full-width responsive 16:9 embed, no photo/overlay. */
+.tpband.tpband--video{height:auto;background:none}
+.tpband--video::after{content:none}
+.tpband__embed{position:relative;width:100%;height:0;padding-bottom:56.25%}
+.tpband__iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 
 /* ---------- Trade responsive ---------- */
 @media (max-width:1024px){
