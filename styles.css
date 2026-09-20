@@ -751,6 +751,11 @@ ul,ol{list-style:none}
   background:#333 center/cover no-repeat;
 }
 .tpband::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.55)}
+/* Video variant of the band: full-width responsive 16:9 embed, no photo/overlay. */
+.tpband.tpband--video{height:auto;background:none}
+.tpband--video::after{content:none}
+.tpband__embed{position:relative;width:100%;height:0;padding-bottom:56.25%}
+.tpband__iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 
 /* ---------- Trade responsive ---------- */
 @media (max-width:1024px){
