@@ -410,6 +410,10 @@ ul,ol{list-style:none}
 }
 .subscribe__btn:hover{filter:brightness(1.04)}
 .subscribe__btn svg{transform:rotate(0)}
+/* Subscribe status line (subscribe.js) — success/error under the form. */
+.subscribe__msg{margin:12px auto 0;text-align:center;font-size:15px;line-height:1.4;max-width:520px}
+.subscribe__msg.is-ok{color:#178a4c}
+.subscribe__msg.is-err{color:#d64545}
 .subscribe__brand{
   margin-top:clamp(34px,4vw,52px);
   display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;
