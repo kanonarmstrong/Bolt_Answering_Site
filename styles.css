@@ -555,6 +555,8 @@ ul,ol{list-style:none}
   .hero__copy{text-align:center}
   .hero__title{justify-content:center}      /* centers NEVER + miss a job again */
   .hero__never{transform-origin:center}     /* tilt pivots on center, not left */
+  /* Mobile only: +40px hero top padding on top of the base clamp. */
+  .hero__inner{padding-top:calc(clamp(30px,4vw,56px) + 40px)}
 }
 
 /* HTML pricing chevron — shown at all widths (horizontal on desktop, vertical on mobile) */
