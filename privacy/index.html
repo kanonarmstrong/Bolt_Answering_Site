@@ -31,7 +31,7 @@
 <body>
 <main class="container">
 <h1>Privacy Policy for Bolt Answering</h1>
-<p>Last updated: July 9, 2026</p>
+<p>Last updated: September 23, 2026</p>
 <p>This Privacy Policy describes Our policies and procedures on the collection, use, disclosure, and protection of Your information when You use the Service. It also explains Your privacy rights and how the law protects You.</p>
 <p>We use Your Personal Data to provide, maintain, secure, and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.</p>
 
@@ -111,8 +111,14 @@
 <p>Calls answered by the Bolt Answering assistant on your behalf are recorded and transcribed so you can review leads, confirm job details, and improve servicequality. Callers are notified at the start of the call that it may be recorded. Recordings and transcripts are stored securely, accessible only to your account, and deleted when you delete your account (subject to any legal retention period).</p>
 
 <h3>Use of De-identified Call & Message Content</h3>
-<p>We use the content of calls and messages handled by our assistant — including recordings, transcripts, and chat messages — to operate, evaluate, and improve our services, and to train, fine-tune, and improve the artificial-intelligence and machine-learning models that power them. Before this content is used for model training, we apply automated de-identification to personal information (such as names, phone numbers, email addresses, and street addresses) so that training data is maintained in a privacy-preserving form. We do not sell this content, and we do not use it to build profiles of individual callers for advertising.</p>
+<p>We use the content of calls and messages handled by our assistant — including recordings, transcripts, and chat messages — to operate, evaluate, and improve our services, and to train, fine-tune, and improve <strong>our own</strong> artificial-intelligence and machine-learning models that power them. Before this content is used for model training, we apply automated de-identification to personal information (such as names, phone numbers, email addresses, and street addresses) so that training data is maintained in a privacy-preserving form. We do not sell this content, and we do not use it to build profiles of individual callers for advertising.</p>
+<p><strong>Google Workspace data is excluded from all model training.</strong> Information obtained through Google APIs — including Google Calendar data, whether raw, aggregated, anonymized, or derived (such as availability times computed from your calendar) — is never used to develop, train, fine-tune, or improve any artificial-intelligence or machine-learning model, whether our own or a third party's, and is excluded from our model-training datasets. See "Google User Data and Limited Use" below.</p>
   
+<h3>Google User Data and Limited Use</h3>
+<p>Some operators connect a Google Calendar so the assistant can offer accurate appointment times and book jobs. When you connect Google Calendar, we request the minimum access needed: read-only free/busy availability (the calendar.freebusy scope) and the ability to create and cancel the appointment events we book on your behalf (the calendar.events scope). We do not request access to read the contents of your calendar events (titles, descriptions, attendees, or locations), and we do not request the broader restricted full-calendar scope.</p>
+<p>From your calendar we read only free/busy time ranges, from which we compute open appointment slots. Those computed slot times may be provided to the AI services that power the assistant (see "Third-Party Sub-Processors") solely so the assistant can offer and confirm a booking time during a call. Raw calendar event content is never sent to any AI service.</p>
+<p>Our use of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. We do not use, transfer, or sell Google Workspace (Calendar) user data — whether raw, aggregated, anonymized, or derived — to develop, train, or improve any generalized or foundational machine-learning or artificial-intelligence model.</p>
+
 <h3>Sharing Your Personal Data</h3>
 <p>We may share Your Personal Data in the following situations:</p>
 <ul>
@@ -185,17 +191,18 @@
 <h3>Third-Party Sub-Processors</h3>
 <p>To provide our core AI and telephony services, we engage with third-party service providers (sub-processors) to host, process, and store data. By using our services, you acknowledge and agree that your data may be processed by the following sub-processors for the purposes outlined below:</p>
 <ul>
-    <li><strong>Telnyx:</strong> Used for telephony and SMS communication services.</li>
-    <li><strong>RunPod:</strong> Used for AI model inference and processing.</li>
-    <li><strong>Together AI:</strong> Used for AI model inference and processing.</li>
+    <li><strong>Telnyx:</strong> Telephony and SMS communication services, and the AI voice assistant that answers calls (speech-to-text, language-model inference, and text-to-speech).</li>
+    <li><strong>Groq:</strong> AI language-model inference for in-app scheduling assistance (used when that feature is enabled).</li>
+    <li><strong>RunPod:</strong> Cloud GPU infrastructure used to host Bolt's own fine-tuned AI model for inference (used only when advanced scheduling features are enabled).</li>
+    <li><strong>Together AI:</strong> Used to fine-tune and train Bolt's own AI models. Together AI does not serve live calls.</li>
     <li><strong>Supabase:</strong> Used for secure data storage and database management.</li>
     <li><strong>Fly.io:</strong> Used for general application hosting and cloud infrastructure.</li>
 </ul>
-<p>These providers are strictly bound by confidentiality obligations and are only permitted to process data as necessary to deliver their respective services to us.</p>
+<p>These providers are strictly bound by confidentiality obligations and are only permitted to process data as necessary to deliver their respective services to us. None of these providers is permitted to use Bolt customer data — or any data derived from Google Workspace APIs — to train, fine-tune, or improve their own generalized or foundational artificial-intelligence or machine-learning models.</p>
 
 <h3>Usage, Performance, and Miscellaneous</h3>
 <p>We may use third-party Service Providers to maintain and improve Our Service.</p>
-<ul><li><strong>Google Places</strong><br>Google Places is a service operated by Google. Google Places may collect information from You and Your Device for security purposes. The information gathered by Google Places is held in accordance with Google's Privacy Policy: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>.</li></ul>
+<ul><li><strong>Google Maps Platform (Geocoding API)</strong><br>We use Google's Geocoding API to convert service addresses and ZIP codes into geographic coordinates for service-area matching and job routing. Information sent to Google for this purpose is handled in accordance with Google's Privacy Policy: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>.</li></ul>
 <h2>CCPA/CPRA Privacy Notice (California Privacy Rights)</h2>
 <p>This privacy notice section for California residents supplements the information contained in Our Privacy Policy and applies solely to visitors, users, and others who reside in the State of California.</p>
 <h3>Categories of Personal Information Collected</h3>
