@@ -13,9 +13,12 @@
   'use strict';
 
   var FEED = 'https://bolt-staging.fly.dev/api/public/pricing';
+  // AFMBP-1899 — plan prices are a $0 PLACEHOLDER while the real price is being
+  // set; the backend feed serves 0 too, so fallback and feed agree. Usage rates
+  // are NOT zeroed (they are the Stripe metered-price tiers).
   var FALLBACK = {
-    promoPriceUsd: 99,
-    retailPriceUsd: 129,
+    promoPriceUsd: 0,
+    retailPriceUsd: 0,
     promoMonths: 3,
     trialDays: 30,
     perMinuteUsd: 0.12,
