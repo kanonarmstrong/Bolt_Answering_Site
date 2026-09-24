@@ -20,17 +20,31 @@ refuses this origin — it does not.)
 `plans.ts` and this site follows on the next page load — every surface, with no
 hand-editing.
 
-## Current pricing (Solo)
+## Where the numbers come from now
 
-| Field | Value |
+The feed serves the version published in the **Pricing Control Center**
+(`/admin/pricing` in the web app, AFMBP-1892). Until the first publish it serves
+the code constants in `plans.ts`. **Today those are the AFMBP-1899 `$0`
+placeholder**, while Stripe still charges new customers $49.99 → $59.99. The
+first publish from the control center closes that gap (AFMBP-1900).
+
+These hooks in the page follow the feed:
+
+| Hook | Shows |
 |---|---|
-| Promo (intro) price | **$99/month** for the first **3 months** |
-| Retail (standard) price | **$129/month** thereafter |
-| Overage — minutes | **$0.12 / minute** |
-| Overage — messages | **$0.01 / message** |
-| Free trial | 30 days |
+| `.mchev__amt` | promo price |
+| `.js-pm` | promo length ("for first **N** months") |
+| `.js-td` | trial length (chevron label) |
+| `.js-cta-trial` | "Start my free N-day trial" (every page, support pages included) |
+| `.mchev__fine li` | standard price; included messages/minutes; overage rates |
+| `.chev-mobile[aria-label]` | the whole offer, for screen readers |
 
-These are display values that mirror the feed; they never need hand-editing.
+`pricing.test.mjs` pins these hooks and reads every page. A new page that shows
+the offer without a hook, or with a baked number, fails it.
+
+**Not yet data-driven:** the support FAQ's "Your first month is free. The next
+three months are discounted." is baked copy. It needs owner-approved wording
+before it can follow the feed (AFMBP-1903).
 
 ## The pricing chevron is one HTML element, reflowed by CSS
 
@@ -46,7 +60,8 @@ block (`.chev-mobile.mchev`) that CSS reflows by breakpoint:
 
 Because both widths render the **same** `.mchev__amt` (visible price) and
 `.mchev__fine` (fine print) elements, `pricing.js` rewrites them on every
-surface. Nothing is manual.
+surface. The promo length, trial length and allowances follow the feed too
+(AFMBP-1903); the support FAQ sentence above is the one known exception.
 
 ## How it flows
 
@@ -57,6 +72,11 @@ plans.ts (EZ-Answer)  →  GET /api/public/pricing  →  pricing.js  →  .mchev
 ```
 
 ## History
+- 2026-09-23 — AFMBP-1903: the promo length (`.js-pm`), the included
+  allowances and the support pages' trial CTA follow the feed. Previously the
+  visible "for first 3 months" was baked, so a promo-length change reached only
+  the aria-label. The aria-label now says "New Bolt Pro Pricing", matching the
+  visible chevron (it still said the retired "New Partner Pricing").
 
 - 2026-09-11 — removed the desktop hero PNG; the chevron is now one HTML element
   reflowed by CSS (horizontal on desktop, vertical on mobile), so the visible
