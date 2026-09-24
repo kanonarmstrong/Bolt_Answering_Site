@@ -205,8 +205,14 @@
       <h2 class="pricing__title rv">Pricing</h2>
       <p class="section__sub section__sub--sm rv">Our pros say it pays for itself, but you can still try Bolt for free.</p>
     </div>
+<!-- AFMBP-1899: plan prices are a deliberate $0 PLACEHOLDER while the real price
+     is being set. These baked numbers are the FALLBACK (no-JS / pre-fetch);
+     pricing.js overrides them from GET /api/public/pricing, which also serves 0.
+     Restore real numbers here, in pricing.js, in the web app, in iOS and in
+     src/lib/plans.ts together — AFMBP-1900 gates that on the live Stripe key or
+     the first real signup, because Stripe still charges the real amount. -->
     <div class="pricing__chevron-wrap rv">
-      <div class="chev-mobile mchev" role="img" aria-label="First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, Keeps customer info organized, Manages your schedule, Captures leads, Sends confirmations, Drafts quick text replies. New Bolt Pro Pricing: $59.99 per month for first 3 months, then $79.99/month; 750 messages and 400 minutes per cycle; $0.12/minute and $0.01/message beyond budget.">
+      <div class="chev-mobile mchev" role="img" aria-label="First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, Keeps customer info organized, Manages your schedule, Captures leads, Sends confirmations, Drafts quick text replies. New Bolt Pro Pricing: $0 per month for first 3 months, then $0/month; 750 messages and 400 minutes per cycle; $0.12/minute and $0.01/message beyond budget.">
          <svg class="mchev-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="mchevTop" clipPathUnits="objectBoundingBox"><path d="M0.065,0 H0.935 Q1,0 1,0.049 V0.93 L0.5,1 L0,0.93 V0.049 Q0,0 0.065,0 Z"/></clipPath><clipPath id="mchevBot" clipPathUnits="objectBoundingBox"><path d="M0,0 H1 V0.86 Q1,0.94 0.9,0.965 L0.5,1 L0.1,0.965 Q0,0.94 0,0.86 Z"/></clipPath></defs></svg>
 </clipPath></defs></svg>
         <div class="mchev__top">
@@ -224,9 +230,9 @@
         </div>
         <div class="mchev__bot">
           <p class="mchev__partner">New Bolt Pro Pricing</p>
-          <p class="mchev__price"><span class="mchev__amt">79.<sup>99</sup></span> / mo. for first 3 months</p>
+          <p class="mchev__price"><span class="mchev__amt">$0</span> / mo. for first 3 months</p>
           <ul class="mchev__fine">
-            <li>After promo period, price increases to $99.99 / month</li>
+            <li>After promo period, price increases to $0 / month</li>
             <li>Includes 750 messages and 400 minutes per cycle, and only $0.12 / minute and $0.01/message beyond budget</li>
           </ul>
         </div>
