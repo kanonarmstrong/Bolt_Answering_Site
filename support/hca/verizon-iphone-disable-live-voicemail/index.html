@@ -18,7 +18,7 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="/styles.css?v=38" />
-  <link rel="stylesheet" href="/support/hca/hca.css?v=4" />
+  <link rel="stylesheet" href="/support/hca/hca.css?v=5" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
@@ -56,35 +56,38 @@
   </header>
 
   <main class="hca-wrap">
-    <article class="hca-card">
+    <article class="hca-card hca-card--media">
       <p class="hca-card__kicker">Bolt How-To&rsquo;s</p>
       <h1 class="hca-card__title">Disable Live Voicemail on iPhones</h1>
-      <p class="hca-card__intro">The Live Voicemail feature may be intercepting your test call before the call is forwarded to your assistant. Follow these instructions to disable Live Voicemail.</p>
 
-      <ol class="hca-steps">
-        <li><b class="hca-num">1.</b> Open <b>Settings</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-settings.png" alt="Settings" /></li>
-        <li><b class="hca-num">2.</b> Scroll down, and tap <b>Apps</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-apps.png" alt="Apps" /></li>
-        <li><b class="hca-num">3.</b> Scroll down, and tap <b>Phone</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-phone.png" alt="Phone" /></li>
-        <li><b class="hca-num">4.</b> Scroll down, and tap <b>Live Voicemail</b> and the switch to OFF
-          <span class="hca-shotbox">
-            <img class="hca-shot" src="/assets/support/ios-live-voicemail.png" alt="iPhone Phone settings with Live Voicemail turned off" />
-            <span class="hca-shotbox__hl"></span>
-          </span>
-        </li>
-        <li><b class="hca-num">5.</b> <b>(Verizon Users)</b> Reset Call Forwarding (Verizon users only)
-          <ol class="hca-sub hca-sub--wide">
-            <li><b>Dial *73</b></li>
-            <li><b>Wait for several beeps</b>, then hang up</li>
-            <li>Return to the <b>Bolt App</b></li>
-            <li>Tap <b>Settings</b></li>
-            <li>Tap <b>Call Forwarding</b></li>
-            <li><b>Setup Call Forwarding</b> again</li>
+      <div class="hca-media">
+        <div class="hca-device">
+          <div class="hca-device__screen">
+            <iframe src="https://streamable.com/e/vuxywj?autoplay=1&amp;muted=1" title="Turn off Live Voicemail on iPhone tutorial" allow="fullscreen;autoplay" allowfullscreen></iframe>
+          </div>
+          <img class="hca-device__frame" src="/assets/support/phone-frame.png" alt="" aria-hidden="true" />
+        </div>
+
+        <div class="hca-media__body">
+          <p class="hca-media__subtitle">Disable live voicemail on iPhones</p>
+          <p class="hca-card__intro">The Live Voicemail feature may be intercepting your test call before the call is forwarded to your assistant. Follow these instructions to disable Live Voicemail.</p>
+
+          <ol class="hca-steps">
+            <li><b class="hca-num">1.</b> Open <b>Settings</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-settings.png" alt="Settings" /></li>
+            <li><b class="hca-num">2.</b> Scroll down, and tap <b>Apps</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-apps.png" alt="Apps" /></li>
+            <li><b class="hca-num">3.</b> Scroll down, and tap <b>Phone</b> <img class="hca-ic hca-ic--lg" src="/assets/support/ic-ios-phone.png" alt="Phone" /></li>
+            <li><b class="hca-num">4.</b> Scroll down, and tap <b>Live Voicemail</b> and the switch to OFF
+              <span class="hca-shotbox">
+                <img class="hca-shot" src="/assets/support/ios-live-voicemail.png" alt="iPhone Phone settings with Live Voicemail turned off" />
+                <span class="hca-shotbox__hl"></span>
+              </span>
+            </li>
           </ol>
-        </li>
-      </ol>
 
-      <a class="hca-back" href="/" onclick="if(window.history.length>1){history.back();return false;}">Back</a>
-      <p class="hca-help">Still need help? <a href="/support">Contact support.</a></p>
+          <a class="hca-back" href="/" onclick="if(window.history.length>1){history.back();return false;}">Back</a>
+          <p class="hca-help">Still need help? <a href="/support">Contact support.</a></p>
+        </div>
+      </div>
     </article>
   </main>
 
