@@ -74,7 +74,7 @@ ul,ol{list-style:none}
 
 /* ---------- Logo ---------- */
 .logo{display:inline-flex;align-items:center;line-height:0}
-.logo img{height:clamp(60px,6.75vw,84px);width:auto;display:block}
+.logo img{height:clamp(30px,3.375vw,42px);width:auto;display:block}
 .logo--lg img{height:clamp(46px,5.5vw,68px)}
 
 /* ============================================================
