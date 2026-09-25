@@ -277,7 +277,7 @@
     ]) : null;
 
     setBody([
-      h('h2', { class: 'demo-h demo-h--form', text: 'I want to talk to my new assistant' }),
+      h('h2', { class: 'demo-h demo-h--form', text: 'We’ll call you' }),
       sub('We’ll send you a 6-digit one-time passcode before placing the call'),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
@@ -298,7 +298,11 @@
     var boxes = [];
     var codeWrap = h('div', { class: 'demo-code' + (opts.error ? ' err' : '') });
     for (var i = 0; i < 6; i++) {
-      var inp = h('input', { type: 'text', inputmode: 'numeric', maxlength: '6', autocomplete: i === 0 ? 'one-time-code' : 'off', 'aria-label': 'Digit ' + (i + 1) });
+      // Every box carries autocomplete="one-time-code" (not just the first) so
+      // iOS QuickType and Android SMS autofill offer/distribute the code no
+      // matter which box has focus; the input/paste handlers below spread a
+      // full code that lands in any single box across all six.
+      var inp = h('input', { type: 'text', inputmode: 'numeric', maxlength: '6', autocomplete: 'one-time-code', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Digit ' + (i + 1) });
       if (opts.locked) inp.disabled = true;
       boxes.push(inp); codeWrap.appendChild(inp);
     }
