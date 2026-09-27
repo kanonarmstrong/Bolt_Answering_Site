@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+  (function () {
+    try { if (sessionStorage.getItem('bolt_gate') === 'ok') return; } catch (e) {}
+    var password = prompt("Please enter the password to access Bolt Answering:");
+    if (password !== "built4truck$") {
+      alert("Incorrect password.");
+      window.location.href = "https://google.com";
+      return;
+    }
+    try { sessionStorage.setItem('bolt_gate', 'ok'); } catch (e) {}
+  })();
+  </script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C8SFMCRYH"></script>
   <script>
