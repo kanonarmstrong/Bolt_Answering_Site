@@ -33,6 +33,9 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         bezelColor: "#0B0C0E",
         screenColor: "#07080A",
         screenSheen: 0.5,
+        // Force the display to the video's 16:9 so the 16:9 clip fills it with
+        // no edge crop (cover == contain when aspects match).
+        forceScreen16by9: true,
         islandLengthPercent: 34,
         islandWidthPercent: 9,
         islandEdgeOffsetPercent: 4.5,
@@ -391,31 +394,47 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         var sy = sP.map(function (p) {
             return p.y
         })
-        var left = Math.min.apply(null, sx),
-            top = Math.min.apply(null, sy)
-        var wpx = Math.max(1, Math.max.apply(null, sx) - left)
-        var hpx = Math.max(1, Math.max.apply(null, sy) - top)
+        // The projected screen is a rotated quad (the phone carries the 8deg Z
+        // tilt). Lay the overlay out as that rotated rect — centre, true edge
+        // lengths, rotation — so the video sits ON the screen and tilts WITH
+        // the phone, instead of a flat axis-aligned bounding box that leaves
+        // the chassis edges showing and never rotates. Edge 0->1 is the display
+        // width, 1->2 the height; a rigid rotation preserves both, so the
+        // width/height aspect stays the screen's 16:9 (no extra crop).
+        var cx = (sP[0].x + sP[1].x + sP[2].x + sP[3].x) / 4
+        var cy = (sP[0].y + sP[1].y + sP[2].y + sP[3].y) / 4
+        var wpx = Math.max(1, Math.hypot(sP[1].x - sP[0].x, sP[1].y - sP[0].y))
+        var hpx = Math.max(1, Math.hypot(sP[2].x - sP[1].x, sP[2].y - sP[1].y))
+        var angleRad = Math.atan2(sP[1].y - sP[0].y, sP[1].x - sP[0].x)
         var radius = Math.max(
             0,
             (geomCtx.screenRadius * wpx) / Math.max(0.01, s.x1 - s.x0)
         )
         var activeVisible = frontFacing && isInView
-        overlay.style.left = left + "px"
-        overlay.style.top = top + "px"
+        overlay.style.left = cx - wpx / 2 + "px"
+        overlay.style.top = cy - hpx / 2 + "px"
         overlay.style.width = wpx + "px"
         overlay.style.height = hpx + "px"
+        overlay.style.transformOrigin = "center center"
+        overlay.style.transform = "rotate(" + angleRad + "rad)"
         overlay.style.borderRadius = radius + "px"
         overlay.style.opacity = activeVisible ? "1" : "0"
         overlay.style.visibility = activeVisible ? "visible" : "hidden"
+        // Interactive only when the video is up, so Streamable's own controls
+        // (unmute / seek / fullscreen) work; the rest of the phone stays
+        // pointer-events:none and never blocks the CTA or neighbours.
+        overlay.style.pointerEvents = activeVisible ? "auto" : "none"
 
         var overlayKey =
-            Math.round(left) +
+            Math.round(cx) +
             "|" +
-            Math.round(top) +
+            Math.round(cy) +
             "|" +
             Math.round(wpx) +
             "|" +
             Math.round(hpx) +
+            "|" +
+            Math.round(angleRad * 180) +
             "|" +
             (activeVisible ? 1 : 0)
         if (overlayKey !== previousOverlayKey) {
