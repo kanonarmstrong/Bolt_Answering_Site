@@ -29,7 +29,7 @@
 }
 .hiwphone__iframe {
   position: absolute; left: 0; top: 0; width: 100%; height: 100%;
-  border: none; margin: 0; padding: 0; display: block; pointer-events: none;
+  border: none; margin: 0; padding: 0; display: block; pointer-events: auto;
 }
 .hiwphone__island {
   position: absolute; left: 0; top: 0; width: 0; height: 0;
@@ -41,30 +41,67 @@
    overflows into the neighbouring sections. band__inner reserves the right zone
    so the copy + CTA never sit under the phone. */
 @media (min-width: 861px) {
-  .band__inner { padding-right: clamp(360px, 40%, 560px); }
-  /* Copy + CTA sit above the decorative phone so text stays readable and the
-     CTA stays clickable even where the phone's box overlaps. */
+  /* Phone = overflow layer on the LEFT; copy + CTA stacked on the RIGHT
+     (Figma 2251-108). Reserve the left zone so copy never sits under the phone. */
+  .band__inner {
+    padding-left: clamp(360px, 42%, 580px);
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+    gap: clamp(14px, 1.6vw, 24px);
+  }
+  .band__copy { flex: 0 1 auto; text-align: right; }
+  .band__sub { margin: 0 0 0 auto; }
+  /* Copy + CTA above the decorative phone so text stays readable + clickable. */
   .band__copy, .band__inner > .btn--blue { position: relative; z-index: 2; }
   .hiwphone {
     position: absolute;
-    right: clamp(8px, 3vw, 56px);
+    left: clamp(8px, 3vw, 56px);
     top: 50%;
-    transform: translateY(-50%);
-    width: clamp(300px, 32vw, 460px);
-    height: clamp(340px, 30vw, 460px);
+    transform: translateY(-54%);   /* biased up so it overflows into Reviews */
+    width: clamp(320px, 34vw, 500px);
+    height: clamp(360px, 30vw, 480px);
     z-index: 1;               /* above the band background, below the copy/CTA */
     overflow: visible;
   }
 }
 
-/* Mobile: in normal flow, below the CTA, centred, fully contained. */
+/* Mobile: phone on TOP, then copy, then CTA (Figma 2613-2612); contained. */
 @media (max-width: 860px) {
+  .band__inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .band__sub { margin: 0 auto; }
   .hiwphone {
     position: relative;
-    width: min(84vw, 360px);
-    height: min(56vw, 240px);
-    margin: clamp(18px, 5vw, 34px) auto 0;
+    order: -1;                 /* phone above the copy + CTA */
+    width: min(88vw, 380px);
+    height: min(58vw, 250px);
+    margin: 0 auto clamp(18px, 5vw, 30px);
     overflow: hidden;          /* never overflow into adjacent sections */
     z-index: 1;
   }
 }
+
+/* "How It Works" band copy typography (Figma 2251-108 / 2613-2612): the lead
+   phrase is Permanent Marker + yellow, the remainder Inter/white and smaller;
+   the sub is semi-transparent white. Scoped to the home page (this file only). */
+.band__title {
+  color: #fff;
+  font-weight: 400;
+  font-size: clamp(22px, 2.3vw, 34px);
+  line-height: 1.12;
+}
+.band__title .band__title__hl {
+  color: var(--yellow);
+  font-size: clamp(38px, 4.6vw, 62px);
+  letter-spacing: 0.5px;
+  margin-right: 0.1em;
+  line-height: 0.9;
+}
+.band__sub { color: rgba(255, 255, 255, 0.5); }
