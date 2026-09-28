@@ -58,7 +58,10 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         startRotationDeg: 180,
         endRotationDeg: 0,
         flipStart: 0.1,
-        flipEnd: 0.72,
+        // ~30% faster spin: the flip completes over a 30%-shorter scroll span
+        // (0.62 -> 0.43), so the phone is front-facing while it is still fully
+        // in frame -- the video mounts + paints before the viewer scrolls past.
+        flipEnd: 0.53,
         smoothing: 0.12,
         // Two clips that alternate (Streamable exposes no ended event, so we
         // swap on each clip's known duration). "No hot water" then "No cool".
