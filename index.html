@@ -31,6 +31,7 @@
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="styles.css?v=41" />
   <link rel="stylesheet" href="demo.css?v=15" />
+  <link rel="stylesheet" href="hiw-phone.css?v=1" />
   <noscript><style>.rv{opacity:1 !important}</style></noscript>
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
@@ -148,6 +149,10 @@
         <p class="band__sub rv">Find out why so many pros are hiring our assistants to handle the phone while they build their business.</p>
       </div>
       <a href="#" class="btn btn--blue">Talk to your new assistant</a>
+      <!-- How It Works 3D phone (vanilla Three.js port of PhoneFlip3D). Desktop:
+           overflows into Reviews (above) + Sign-Up (below). Mobile: in-flow below
+           the CTA, contained. Decorative (pointer-events:none). -->
+      <div class="hiwphone" aria-hidden="true"></div>
     </div>
   </section>
 
@@ -303,5 +308,6 @@
   <script src="demo-format.js?v=1"></script>  <script src="demo.js?v=19"></script>
   <script src="reveal.js?v=6"></script>
   <script src="subscribe.js?v=1"></script>
+  <script type="module" src="hiw-phone.js?v=1"></script>
 </body>
 </html>

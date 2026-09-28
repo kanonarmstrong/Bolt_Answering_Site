@@ -1,0 +1,70 @@
+/* How It Works 3D phone (index.html #band "How It Works"). Loaded on the home
+   page only. Desktop: the phone is an absolute visual layer that overflows the
+   band into the neighbouring Reviews (above) and Sign-Up (below) sections
+   without changing their dimensions. Mobile: the phone is in normal flow below
+   the CTA and stays fully inside the section. The phone is decorative
+   (pointer-events:none) so it never blocks the CTA or neighbouring links. */
+
+/* Positioned, overflow-visible stacking context above the neighbours so the
+   phone can visually cross the section edges. The band's own box (and every
+   neighbour's box) keeps its existing dimensions. */
+.band { position: relative; overflow: visible; z-index: 3; }
+.band__inner { position: relative; z-index: 2; }
+
+.hiwphone { pointer-events: none; }
+.hiwphone__fallback {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 78%; aspect-ratio: 1.7778 / 1; background: #2a2c31;
+  border-radius: 10%; opacity: 1; transition: opacity 240ms ease;
+  pointer-events: none;
+}
+.hiwphone__canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+}
+.hiwphone__overlay {
+  position: absolute; left: 0; top: 0; width: 0; height: 0; margin: 0; padding: 0;
+  border: none; overflow: hidden; background: transparent;
+  pointer-events: none; opacity: 0; visibility: hidden;
+  transition: opacity 180ms ease; z-index: 4;
+}
+.hiwphone__iframe {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  border: none; margin: 0; padding: 0; display: block; pointer-events: none;
+}
+.hiwphone__island {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  background: #000; border-radius: 9999px; pointer-events: none;
+  z-index: 2; display: none;
+}
+
+/* Desktop / tablet-wide: phone floats on the right, taller than the band so it
+   overflows into the neighbouring sections. band__inner reserves the right zone
+   so the copy + CTA never sit under the phone. */
+@media (min-width: 861px) {
+  .band__inner { padding-right: clamp(360px, 40%, 560px); }
+  /* Copy + CTA sit above the decorative phone so text stays readable and the
+     CTA stays clickable even where the phone's box overlaps. */
+  .band__copy, .band__inner > .btn--blue { position: relative; z-index: 2; }
+  .hiwphone {
+    position: absolute;
+    right: clamp(8px, 3vw, 56px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: clamp(300px, 32vw, 460px);
+    height: clamp(340px, 30vw, 460px);
+    z-index: 1;               /* above the band background, below the copy/CTA */
+    overflow: visible;
+  }
+}
+
+/* Mobile: in normal flow, below the CTA, centred, fully contained. */
+@media (max-width: 860px) {
+  .hiwphone {
+    position: relative;
+    width: min(84vw, 360px);
+    height: min(56vw, 240px);
+    margin: clamp(18px, 5vw, 34px) auto 0;
+    overflow: hidden;          /* never overflow into adjacent sections */
+    z-index: 1;
+  }
+}
