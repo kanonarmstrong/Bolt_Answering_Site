@@ -48,6 +48,14 @@ ul,ol{list-style:none}
 .rv{opacity:0;transition:opacity .3s ease}
 .rv.rv--in{opacity:1}
 @media (prefers-reduced-motion:reduce){.rv,.rv.rv--in{opacity:1;transition:none}}
+/* Slide-up-on-scroll: reveal.js adds .rv-up--in when the element enters the
+   viewport. Eases up + fades; overrides the plain .rv fade. Fails open (noscript
+   + reduced-motion below, plus reveal.js safety net). */
+.rv-up{opacity:0;transform:translateY(28px);
+  transition:opacity .55s ease,transform .55s cubic-bezier(.22,.61,.36,1);
+  will-change:opacity,transform}
+.rv-up.rv-up--in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv-up,.rv-up.rv-up--in{opacity:1;transform:none;transition:none}}
 
 /* ---------- Buttons ---------- */
 .btn{
@@ -225,15 +233,24 @@ ul,ol{list-style:none}
   display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2vw,30px);
 }
 .card{
-  background:#fff;border-radius:10px;box-shadow:var(--shadow-card);
+  background:#f9fbff;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.24);
   padding:clamp(28px,3vw,48px);
 }
 .card__title{
   color:var(--navy);font-weight:500;font-size:clamp(19px,1.5vw,22px);
-  line-height:1.2;margin-bottom:24px;
+  line-height:1.25;margin-bottom:24px;
 }
+/* Node 2251-108: one word per card title is Permanent Marker, a touch larger,
+   same navy as the rest (the shared .marker class uppercases it). */
+.card__title .marker{color:inherit;font-size:clamp(23px,1.9vw,26px)}
 .card__body{color:var(--gray);font-weight:400;font-size:18px;line-height:1.4}
 .card__body strong{color:var(--navy);font-weight:400}
+/* Cards slide up + fade in on scroll (reveal.js). Desktop: the row enters
+   together, so stagger left->right. Mobile: no delay -> each appears as scrolled. */
+@media (min-width:861px){
+  .trust__cards .rv-up:nth-child(2){transition-delay:.12s}
+  .trust__cards .rv-up:nth-child(3){transition-delay:.24s}
+}
 
 /* ============================================================
    REVIEWS
