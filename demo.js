@@ -114,6 +114,15 @@
     if (mobile) out.push(h('span', { class: 'demo-m', text: mobile }));
     return out;
   }
+  // Transcript meta icon ('assistant' | 'caller'): desktop keeps its artwork;
+  // mobile (<=768px) gets the mobile node's icons (Figma 2633:919) through a
+  // standard <picture> source, so the browser picks + paints it reliably.
+  function chatIcon(who) {
+    return h('picture', { class: 'demo-chatmeta__pic' }, [
+      h('source', { media: '(max-width:768px)', srcset: 'assets/demo-m-icon-' + who + '.svg' }),
+      h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-' + who + '.svg', alt: '' })
+    ]);
+  }
   // Confetti webp behind the card — MOBILE ONLY, plays on load of the in-call +
   // recap screens (Figma mobile nodes 2442:1191 / 2441:811).
   // Confetti reverted (owner) — backdrop is the plain shaded overlay. Stubs kept
@@ -131,7 +140,20 @@
     document.body.appendChild(backdrop);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
   }
+  // Warm the mobile node art (brush underlines, arrow, OS lockups, watermark,
+  // chat icons) when the modal opens, so the calling / recap / failure screens
+  // later paint complete instead of popping the strokes in on a slow connection.
+  var MOBILE_ART = ['demo-m-ul-thankyou', 'demo-m-ul-done', 'demo-m-ul-never', 'demo-m-ul-30days',
+    'demo-m-arrow', 'demo-m-checker', 'demo-os-iphone', 'demo-os-android',
+    'demo-m-icon-assistant', 'demo-m-icon-caller'];
+  var artWarmed = false;
+  function warmMobileArt() {
+    if (artWarmed || !isMobile()) return;
+    artWarmed = true;
+    MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n + '.svg'; });
+  }
   function openModal() {
+    warmMobileArt();
     if (!backdrop) build();
     stopConfetti();
     recapConfettiDone = false;
@@ -563,8 +585,8 @@
     } else {
       turns.forEach(function (t) {
         var meta = t.assistant
-          ? [h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-assistant.svg', alt: '' }), h('span', { class: 'demo-chatmeta__label', text: 'Assistant' })]
-          : [h('span', { class: 'demo-chatmeta__label', text: 'Caller' }), h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-caller.svg', alt: '' })];
+          ? [chatIcon('assistant'), h('span', { class: 'demo-chatmeta__label', text: 'Assistant' })]
+          : [h('span', { class: 'demo-chatmeta__label', text: 'Caller' }), chatIcon('caller')];
         box.appendChild(h('div', { class: 'demo-chatrow ' + (t.assistant ? 'demo-chatrow--assistant' : 'demo-chatrow--caller') }, [
           h('div', { class: 'demo-bubble', text: t.text }),
           h('div', { class: 'demo-chatmeta' }, meta)

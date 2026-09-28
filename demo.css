@@ -156,6 +156,7 @@ body.demo-lock{overflow:hidden}
 .demo-chatrow--assistant .demo-bubble{background:#f3f3f5;color:#787888;border-top-left-radius:5px}
 .demo-chatrow--caller .demo-bubble{background:#e5e5ee;color:var(--navy);border-top-right-radius:5px}
 .demo-chatmeta{display:flex;align-items:center;gap:6px;margin-top:5px}
+.demo-chatmeta__pic{display:block;flex:0 0 auto;line-height:0}
 .demo-chatmeta__icon{width:19px;height:19px;display:block;flex:0 0 19px}
 .demo-chatmeta__label{font-size:13.5px;color:#787888}
 .demo-chatrow--caller .demo-chatmeta__label{color:var(--navy)}
@@ -348,9 +349,6 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__icon{width:12.007px;height:12.464px;flex:0 0 12.007px}
   .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:12.808px;flex-basis:12.808px}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:8.805px;line-height:10.66px}
-  /* node icon artwork (caller = person in a rounded square) */
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--assistant .demo-chatmeta__icon{content:url('assets/demo-m-icon-assistant.svg')}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{content:url('assets/demo-m-icon-caller.svg')}
   .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:11px;padding:36px 8px}
   .demo-backdrop[data-screen="recap"] .demo-success-trial{
     display:block;width:-webkit-fit-content;width:fit-content;margin:25.77px auto 0;position:relative;left:-10.7px;
