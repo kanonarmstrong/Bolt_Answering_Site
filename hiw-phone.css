@@ -65,17 +65,10 @@
     z-index: 1;               /* above the band background, below the copy/CTA */
     overflow: visible;
   }
-  /* Desktop title = one uniform regular-weight line (Figma 2251-108): neutralise
-     the Permanent Marker treatment that the shared .marker class applies. */
+  /* Desktop title = "More jobs." in Permanent Marker (via the shared .marker
+     class) + "Less hassle." regular, one line, both white (Figma 2251-108).
+     The .marker class supplies the font, uppercase + letter-spacing. */
   .band__title { font-size: clamp(24px, 2.4vw, 34px); }
-  .band__title .band__title__hl {
-    font-family: inherit;
-    font-size: inherit;
-    letter-spacing: normal;
-    line-height: inherit;
-    margin-right: 0;
-    text-transform: none;   /* node desktop title is mixed-case, not caps */
-  }
 }
 
 /* Mobile: phone on TOP, then copy, then CTA (Figma 2613-2612); contained. */

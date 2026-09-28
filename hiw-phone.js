@@ -486,9 +486,19 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         iframe.style.top = topPct + "%"
     }
 
-    // Two demo clips that alternate. Streamable embeds emit no "ended" event,
-    // so we swap on each clip's known duration (CFG.video{1,2}Seconds).
+    // ---- Two demo clips that alternate, with mute persistence ----
+    // Streamable speaks the player.js (Embedly) protocol over postMessage:
+    // events ready/play/pause/ended, methods mute/unmute/getMuted. We swap on
+    // the `ended` event (precise; no hardcoded duration), and because there is
+    // NO mute/volume event we poll getMuted so the viewer's mute/unmute choice
+    // (made via the clip's native controls) is captured and re-applied to every
+    // subsequent clip. Each clip is always mounted muted so autoplay is allowed,
+    // then unmuted after `ready` if the viewer had chosen sound.
+    var STREAMABLE_ORIGIN = "https://streamable.com"
     var activeClip = 0
+    var userMuted = true // default muted -> autoplay always permitted
+    var currentPlayer = null
+    var mutePoll = 0
     var clipTimer = 0
     function clipUrl() {
         return activeClip === 0 ? CFG.video1EmbedUrl : CFG.video2EmbedUrl
@@ -496,23 +506,125 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
     function clipSeconds() {
         return activeClip === 0 ? CFG.video1Seconds : CFG.video2Seconds
     }
-    function scheduleClipSwap() {
+    // Minimal player.js client scoped to one Streamable iframe.
+    function makeStreamablePlayer(frame) {
+        var evHandlers = {},
+            once = {},
+            ready = false,
+            queue = []
+        function post(o) {
+            try {
+                frame.contentWindow.postMessage(
+                    JSON.stringify(
+                        Object.assign(
+                            { context: "player.js", version: "0.0.1" },
+                            o
+                        )
+                    ),
+                    STREAMABLE_ORIGIN
+                )
+            } catch (e) {}
+        }
+        function send(o) {
+            ready ? post(o) : queue.push(o)
+        }
+        function onMsg(e) {
+            if (e.origin !== STREAMABLE_ORIGIN || e.source !== frame.contentWindow)
+                return
+            var d
+            try {
+                d = typeof e.data === "string" ? JSON.parse(e.data) : e.data
+            } catch (_) {
+                return
+            }
+            if (!d || d.context !== "player.js") return
+            if (d.event === "ready") {
+                ready = true
+                for (var i = 0; i < queue.length; i++) post(queue[i])
+                queue = []
+                if (evHandlers.ready) evHandlers.ready()
+            } else if (d.listener && once[d.listener]) {
+                var cb = once[d.listener]
+                delete once[d.listener]
+                cb(d.value)
+            } else if (d.event && evHandlers[d.event]) {
+                evHandlers[d.event](d.value)
+            }
+        }
+        window.addEventListener("message", onMsg)
+        return {
+            on: function (ev, cb) {
+                evHandlers[ev] = cb
+                send({ method: "addEventListener", value: ev, listener: ev })
+            },
+            getMuted: function (cb) {
+                var id = "gm" + ++makeStreamablePlayer._n
+                once[id] = cb
+                send({ method: "getMuted", listener: id })
+            },
+            mute: function () {
+                send({ method: "mute" })
+            },
+            unmute: function () {
+                send({ method: "unmute" })
+            },
+            destroy: function () {
+                window.removeEventListener("message", onMsg)
+                evHandlers = {}
+                once = {}
+            },
+        }
+    }
+    makeStreamablePlayer._n = 0
+
+    function stopMutePoll() {
+        if (mutePoll) {
+            window.clearInterval(mutePoll)
+            mutePoll = 0
+        }
+    }
+    function teardownPlayer() {
+        stopMutePoll()
         window.clearTimeout(clipTimer)
-        clipTimer = window.setTimeout(function () {
-            if (disposed || !embedMounted) return
+        if (currentPlayer) {
+            currentPlayer.destroy()
+            currentPlayer = null
+        }
+    }
+    function mountClip() {
+        teardownPlayer()
+        var swapped = false
+        function swap() {
+            if (swapped || disposed || !embedMounted) return
+            swapped = true
             activeClip = activeClip === 0 ? 1 : 0
-            iframe.src = withEmbedParams(clipUrl())
-            scheduleClipSwap()
-        }, Math.round(clipSeconds() * 1000))
+            mountClip()
+        }
+        iframe.src = withEmbedParams(clipUrl())
+        var p = makeStreamablePlayer(iframe)
+        currentPlayer = p
+        p.on("ready", function () {
+            if (!userMuted) p.unmute() // carry the viewer's choice to this clip
+            stopMutePoll()
+            mutePoll = window.setInterval(function () {
+                if (currentPlayer === p)
+                    p.getMuted(function (m) {
+                        if (typeof m === "boolean") userMuted = m
+                    })
+            }, 1000)
+        })
+        p.on("ended", swap)
+        // Fallback: if `ended` never arrives (paused/stalled player), swap on
+        // the clip's known duration + margin so alternation never stalls.
+        clipTimer = window.setTimeout(swap, Math.round(clipSeconds() * 1000) + 2500)
     }
     function setEmbed(active) {
         if (active === embedMounted) return
         embedMounted = active
         if (active) {
-            iframe.src = withEmbedParams(clipUrl())
-            scheduleClipSwap()
+            mountClip()
         } else {
-            window.clearTimeout(clipTimer)
+            teardownPlayer()
             iframe.src = ""
             activeClip = 0 // next time the phone faces front, start on clip 1
         }
@@ -941,7 +1053,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         "pagehide",
         function () {
             disposed = true
-            window.clearTimeout(clipTimer)
+            teardownPlayer()
             if (raf) window.cancelAnimationFrame(raf)
             if (resizeObserver) resizeObserver.disconnect()
             if (renderer) {
