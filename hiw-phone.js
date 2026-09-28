@@ -60,7 +60,12 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         flipStart: 0.1,
         flipEnd: 0.72,
         smoothing: 0.12,
-        videoEmbedUrl: "https://streamable.com/e/9wb5p8",
+        // Two clips that alternate (Streamable exposes no ended event, so we
+        // swap on each clip's known duration). "No hot water" then "No cool".
+        video1EmbedUrl: "https://streamable.com/e/9wb5p8",
+        video2EmbedUrl: "https://streamable.com/e/ns5jtf",
+        video1Seconds: 33.033,
+        video2Seconds: 33.659,
         videoFit: "cover",
     }
 
@@ -83,11 +88,11 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
             var parsed = new URL(url)
             parsed.searchParams.set("autoplay", "1")
             parsed.searchParams.set("muted", "1")
-            parsed.searchParams.set("loop", "1")
+            parsed.searchParams.set("loop", "0") // play once; timer swaps clips
             return parsed.toString()
         } catch (e) {
             var glue = url.indexOf("?") >= 0 ? "&" : "?"
-            return url + glue + "autoplay=1&muted=1&loop=1"
+            return url + glue + "autoplay=1&muted=1&loop=0"
         }
     }
 
@@ -478,10 +483,36 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         iframe.style.top = topPct + "%"
     }
 
+    // Two demo clips that alternate. Streamable embeds emit no "ended" event,
+    // so we swap on each clip's known duration (CFG.video{1,2}Seconds).
+    var activeClip = 0
+    var clipTimer = 0
+    function clipUrl() {
+        return activeClip === 0 ? CFG.video1EmbedUrl : CFG.video2EmbedUrl
+    }
+    function clipSeconds() {
+        return activeClip === 0 ? CFG.video1Seconds : CFG.video2Seconds
+    }
+    function scheduleClipSwap() {
+        window.clearTimeout(clipTimer)
+        clipTimer = window.setTimeout(function () {
+            if (disposed || !embedMounted) return
+            activeClip = activeClip === 0 ? 1 : 0
+            iframe.src = withEmbedParams(clipUrl())
+            scheduleClipSwap()
+        }, Math.round(clipSeconds() * 1000))
+    }
     function setEmbed(active) {
         if (active === embedMounted) return
         embedMounted = active
-        iframe.src = active ? withEmbedParams(CFG.videoEmbedUrl) : ""
+        if (active) {
+            iframe.src = withEmbedParams(clipUrl())
+            scheduleClipSwap()
+        } else {
+            window.clearTimeout(clipTimer)
+            iframe.src = ""
+            activeClip = 0 // next time the phone faces front, start on clip 1
+        }
     }
 
     function init() {
@@ -827,7 +858,11 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
                 1
             )
             var target = easeInOutCubic(mapped)
-            if (reduce) target = 1 // static, front-facing; tilt preserved
+            // The flip is core to the "How It Works" story, so it tracks scroll
+            // for everyone. Under prefers-reduced-motion we skip the eased
+            // smoothing below (the `reduce` branch snaps currentFlip straight to
+            // the scroll position) so there is no autonomous/inertial motion —
+            // the phone only moves when the user themselves scrolls.
             var dt = Math.min(0.05, lastTs > 0 ? (ts - lastTs) / 1000 : 0.016)
             lastTs = ts
             if (!hasSnapped || reduce) {
@@ -903,6 +938,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
         "pagehide",
         function () {
             disposed = true
+            window.clearTimeout(clipTimer)
             if (raf) window.cancelAnimationFrame(raf)
             if (resizeObserver) resizeObserver.disconnect()
             if (renderer) {
