@@ -105,6 +105,15 @@
   var recapConfettiDone = false;
   function isMobile() { return window.matchMedia('(max-width:768px)').matches; }
   function mk(t) { return h('span', { class: 'demo-mk', text: t }); }
+  // Per-breakpoint copy: desktop text (Figma desktop nodes 2370:*) and mobile
+  // text (Figma mobile nodes 2633:*). CSS shows .demo-d on desktop, .demo-m on
+  // mobile (the hidden one is display:none, so it isn't read out either).
+  function dm(desktop, mobile) {
+    var out = [];
+    if (desktop) out.push(h('span', { class: 'demo-d', text: desktop }));
+    if (mobile) out.push(h('span', { class: 'demo-m', text: mobile }));
+    return out;
+  }
   // Confetti webp behind the card — MOBILE ONLY, plays on load of the in-call +
   // recap screens (Figma mobile nodes 2442:1191 / 2441:811).
   // Confetti reverted (owner) — backdrop is the plain shaded overlay. Stubs kept
@@ -137,7 +146,14 @@
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
   }
-  function setBody(nodes) { body.innerHTML = ''; nodes.forEach(function (n) { if (n) body.appendChild(n); }); }
+  // `screen` tags the backdrop (data-screen) so CSS can apply the pixel-matched
+  // mobile layouts (Figma 2633:860 / 919 / 1029) to just those screens; every
+  // other screen renders with the attribute empty (styling unchanged).
+  function setBody(nodes, screen) {
+    body.innerHTML = '';
+    nodes.forEach(function (n) { if (n) body.appendChild(n); });
+    if (backdrop) backdrop.setAttribute('data-screen', screen || '');
+  }
   function heading(t) { return h('h2', { class: 'demo-h', text: t }); }
   function sub(t) { return h('p', { class: 'demo-sub', text: t }); }
   // Assistant mascot icon (Figma 2434:586 / 2434:631) — two stacked SVG layers.
@@ -443,26 +459,29 @@
   // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
   function renderInCall(fromNumber) {
     clearResend();
-    // OTP accepted -> placing the call. Same content mobile + desktop
-    // (Figma 2442:1191 / 2370:8769): "ALL SET! Calling you now from <number>".
+    // OTP accepted -> placing the call. Desktop copy = Figma 2370:8769 ("All set!",
+    // "...potential project"); mobile copy = Figma 2633:860 ("Thank you!", "...or
+    // project"). dm() renders both; CSS shows one per breakpoint. Marker copy is
+    // mixed case (Permanent Marker renders lowercase as small caps); desktop CSS
+    // uppercases it. The title and "Calling you now from" line are separate
+    // spans: inline on desktop, stacked + centred title on mobile.
     // fromNumber is the backend's caller-id when present, else the fallback.
     var display = fmtDemoNumber(fromNumber);
     setBody([
       h('div', { class: 'demo-callcard' }, [
         h('p', { class: 'demo-callcard__head' }, [
-          h('span', { class: 'demo-mk demo-ul', text: 'THANK YOU!' }),
-          document.createTextNode(' Calling you now from '),
-          h('b', { text: display })
+          h('span', { class: 'demo-mk demo-ul demo-callcard__title' }, dm('All set!', 'Thank you!')),
+          h('span', { class: 'demo-callcard__from' }, [' Calling you now from ', h('b', { text: display })])
         ]),
-        h('p', { class: 'demo-callcard__expect demo-mk', text: 'WHAT TO EXPECT:' }),
+        h('p', { class: 'demo-callcard__expect demo-mk', text: 'What to expect:' }),
         h('ol', { class: 'demo-callcard__list' }, [
           h('li', {}, ['She’ll introduce herself']),
-          h('li', {}, ['Tell her about an issue or potential project']),
-          h('li', {}, ['Share details to schedule ', h('span', { class: 'demo-callcard__aside', text: '(…make something up.)' })]),
-          h('li', {}, [h('span', { class: 'demo-mk demo-ul', text: 'DONE!' })])
+          h('li', {}, ['Tell her about an issue or '].concat(dm('potential ', ''), ['project'])),
+          h('li', {}, ['Share details to schedule ', h('span', { class: 'demo-callcard__aside' }, dm('(…make something up.)', '(...make something up.)'))]),
+          h('li', {}, [h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
         ])
       ])
-    ]);
+    ], 'calling');
     playConfetti();
   }
 
@@ -555,24 +574,28 @@
 
     setBody([
       h('div', { class: 'demo-success' }, [
+        // Desktop copy = Figma 2370:8784 ("miss a job again." / "…"); mobile copy =
+        // Figma 2633:919 (no period, "..." lead-in).
         h('h2', { class: 'demo-success-title' }, [
           h('span', { class: 'demo-mk demo-ul demo-success-never', text: 'NEVER' }),
           document.createTextNode(' '),
-          h('span', { class: 'demo-success-rest', text: 'miss a job again.' })
+          h('span', { class: 'demo-success-rest' }, ['miss a job again'].concat(dm('.', '')))
         ]),
-        h('p', { class: 'demo-success-sub' }, [
+        h('p', { class: 'demo-success-sub' }, dm(
           '…every detail is captured so you’ll never miss a beat. ',
-          h('b', { text: 'Check out the transcript.' })
-        ]),
+          '...every detail is captured so you’ll never miss a beat. '
+        ).concat([h('b', { text: 'Check out the transcript.' })])),
         box,
         h('p', { class: 'demo-success-trial demo-mk' }, [
           h('span', { class: 'demo-success-trial__sm', text: 'First ' }),
           h('span', { class: 'demo-success-trial__big demo-ul', text: '30 days' }),
           h('span', { class: 'demo-success-trial__sm', text: ' are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup' }, ['Start my free trial now'])
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup' }, ['Start my free trial now']),
+        // Hand-drawn arrow pointing at the CTA — mobile only (hidden on desktop).
+        h('img', { class: 'demo-success-arrow', src: 'assets/demo-m-arrow.svg', alt: '', 'aria-hidden': 'true' })
       ])
-    ]);
+    ], 'recap');
   }
 
   // ---------- screen: call didn't complete ----------
@@ -580,24 +603,34 @@
     stopConfetti();
     // Call didn't happen (Figma 2511:1027 / 2370:8833). Most no-shows are the
     // caller's spam blocker eating the call, so point them at the fix pages.
-    // "Try again" re-places the call -> back to the "calling you" screen
-    // (Figma mobile 2633:1029; button is blue, not yellow).
-    var btn = h('button', { class: 'demo-btn demo-failcard__btn', type: 'button', text: 'Try again' });
+    // The button re-places the call -> back to the "calling you" screen.
+    // Desktop (Figma 2370:8833): yellow "Call me again"; mobile (Figma 2633:1029):
+    // blue "Try again" (mobile CSS recolours it).
+    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button' }, dm('Call me again', 'Try again'));
     btn.addEventListener('click', function () { placeCall(); });
+    // Marker copy is lowercase per the nodes (renders as uniform small caps);
+    // desktop CSS re-uppercases it. On mobile each link also carries the
+    // platform lockup (Apple / Android logo) the mobile node shows beside it.
+    function osLink(href, desktopName, mobileName, logo) {
+      return h('a', { class: 'demo-failcard__link', href: href, target: '_blank', rel: 'noopener' }, [
+        h('span', { class: 'demo-failcard__osname' }, dm(desktopName, mobileName)),
+        h('img', { class: 'demo-failcard__os', src: logo, alt: '', 'aria-hidden': 'true' })
+      ]);
+    }
     setBody([
       h('div', { class: 'demo-failcard' }, [
         h('p', { class: 'demo-failcard__head' }, [
-          h('span', { class: 'demo-mk', text: 'THAT DIDN’T WORK.' }),
+          h('span', { class: 'demo-mk demo-failcard__title', text: 'that didn’t work.' }),
           document.createTextNode(' Let’s try again.')
         ]),
         h('p', { class: 'demo-failcard__body', text: 'Sometimes Bolt calls get spam blocked. Here’s how to temporarily turn off spam blockers so you can try an assistant. Follow these instructions, then come back and try again.' }),
         h('div', { class: 'demo-failcard__links' }, [
-          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-ios-spam-blockers', target: '_blank', rel: 'noopener', text: 'iPhone' }),
-          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-android-spam-blockers', target: '_blank', rel: 'noopener', text: 'Android' })
+          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'iPhone', 'assets/demo-os-iphone.svg'),
+          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'Android', 'assets/demo-os-android.svg')
         ]),
         btn
       ])
-    ]);
+    ], 'fail');
   }
 
   // ---------- demo limit reached — inline on the phone form (Figma 2370:8877) ----------
