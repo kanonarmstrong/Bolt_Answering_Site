@@ -9,6 +9,7 @@
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
     var revealAll = function () {
       document.querySelectorAll('.rv').forEach(function (el) { el.classList.add('rv--in'); });
+      document.querySelectorAll('.rv-up').forEach(function (el) { el.classList.add('rv-up--in'); });
     };
     if (reduce) { revealAll(); return; }
 
@@ -55,9 +56,30 @@
     if (document.readyState === 'complete') arm();
     else window.addEventListener('load', arm);
 
+    // Slide-up-on-scroll for .rv-up (trust cards) — observed per element so each
+    // reveals as it enters the viewport. Mobile: stacked cards appear one by one.
+    // Desktop: the row enters together and CSS transition-delay staggers it L->R.
+    var upEls = [].slice.call(document.querySelectorAll('.rv-up'));
+    if (upEls.length) {
+      if ('IntersectionObserver' in window) {
+        var upObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              e.target.classList.add('rv-up--in');
+              upObserver.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+        upEls.forEach(function (el) { upObserver.observe(el); });
+      } else {
+        upEls.forEach(function (el) { el.classList.add('rv-up--in'); });
+      }
+    }
+
     // Safety net: reveal anything still hidden after 6s.
     setTimeout(revealAll, 6000);
   } catch (e) {
     document.querySelectorAll('.rv').forEach(function (el) { el.classList.add('rv--in'); });
+    document.querySelectorAll('.rv-up').forEach(function (el) { el.classList.add('rv-up--in'); });
   }
 })();
