@@ -66,7 +66,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
 
     // Persistent code-level visual tilt on the phone group's Z axis (degrees).
     // Flip `-` to change lean direction.
-    var PHONE_VISUAL_TILT_DEG = -8
+    var PHONE_VISUAL_TILT_DEG = 8
 
     var reduce =
         window.matchMedia &&
