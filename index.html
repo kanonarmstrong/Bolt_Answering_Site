@@ -51,7 +51,7 @@
       <nav class="nav__menu" id="navMenu">
         <ul class="nav__links">
           <li><a href="#top">Home</a></li>
-          <li><a href="#how">How it works</a></li>
+          <li style="display:none"><a href="#how">How it works</a></li><!-- under construction -->
           <li class="nav__dropdown">
             <a href="#" class="nav__dropdown-trigger">Trades <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
             <ul class="nav__dropdown-menu">
@@ -157,7 +157,9 @@
   </section>
 
   <!-- ===================== SIGN UP / HOW IT WORKS ===================== -->
-  <section class="signup" id="how" data-reveal>
+  <!-- UNDER CONSTRUCTION — section temporarily hidden (remove style + the two
+       "How it works" nav links' hidden styles below to restore). -->
+  <section class="signup" id="how" data-reveal style="display:none">
     <div class="signup__overlay" aria-hidden="true"></div>
     <div class="signup__inner">
       <header class="signup__head">
@@ -290,7 +292,7 @@
     </div>
     <nav class="footer__menu">
       <a href="#top">Home</a>
-      <a href="#how">How it works</a>
+      <a href="#how" style="display:none">How it works</a><!-- under construction -->
       <a href="#pricing">Pricing</a>
       <a href="/support">Support</a>
       <a href="https://app.boltanswering.com/login" class="footer__signin">Sign in</a>
