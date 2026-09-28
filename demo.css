@@ -245,6 +245,37 @@ body.demo-lock{overflow:hidden}
 }
 
 /* ============================================================
+   "Talk to your assistant" form — desktop, pixel-matched to Figma 2387:9076
+   (617x741 card). Offsets are the node's, card-relative; the card's 1px border
+   is subtracted. No in-card logo / close, as in the node (click outside or Esc).
+   ============================================================ */
+@media (min-width:769px){
+  .demo-backdrop[data-screen="phone"] .demo-card{padding:37.2px 0 38.8px}
+  .demo-backdrop[data-screen="phone"] :is(.demo-logo,.demo-close){display:none}
+  /* checker-plate watermark (368x501 at 119,12; mirrored) behind the form */
+  .demo-backdrop[data-screen="phone"] .demo-card::before{
+    content:"";position:absolute;left:118px;top:11px;width:368px;height:501px;pointer-events:none;
+    background:url('assets/demo-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
+  }
+  .demo-backdrop[data-screen="phone"] .demo-body{position:relative;z-index:1}
+  .demo-backdrop[data-screen="phone"] .demo-h--form{margin:0;font-family:'Permanent Marker',cursive;font-weight:400;font-size:32px;line-height:41.6px}
+  .demo-backdrop[data-screen="phone"] .demo-sub{margin:1.2px auto 0;max-width:none;font-size:15px;line-height:24px}
+  .demo-backdrop[data-screen="phone"] .demo-field{margin:0 0 0 88px;width:436px}
+  .demo-backdrop[data-screen="phone"] .demo-field--phone{margin-top:53.25px}
+  .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:14.25px}
+  .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:20.25px}
+  .demo-backdrop[data-screen="phone"] .demo-label{margin:0 0 7.25px;font-size:15px;line-height:22.5px}
+  .demo-backdrop[data-screen="phone"] .demo-input{display:block;height:45px;padding:0 9px;font-size:22px;border-radius:6px}
+  .demo-backdrop[data-screen="phone"] .demo-btn{width:436px;height:49px;margin:85px 0 0 89px;font-size:22px;font-weight:400;border-radius:6px}
+  .demo-backdrop[data-screen="phone"] .demo-disclosure{width:436px;margin:9px 0 0 89px;font-size:11px;line-height:13.32px}
+  .demo-backdrop[data-screen="phone"] .demo-help{margin:28.64px 0 0;font-size:16px;line-height:19.37px}
+  /* validation / limit messages sit inside the 85px gap above Continue */
+  .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){width:436px;margin:24px 0 0 88px;font-size:14px;line-height:20px}
+  .demo-backdrop[data-screen="phone"] .demo-formerr[style*="block"] + .demo-btn,
+  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{margin-top:41px} /* 24 + 20 + 41 = the node's 85 gap */
+}
+
+/* ============================================================
    Mobile demo — calling you / recap (cta) / failure, pixel-matched to the
    Figma mobile nodes 2633:860 / 2633:919 / 2633:1029 (402x753 frames).
    Scoped by data-screen (set by demo.js setBody) so the form / OTP / placing
@@ -254,18 +285,18 @@ body.demo-lock{overflow:hidden}
 @media (max-width:768px){
   .demo-d{display:none}
   .demo-m{display:inline}
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]){background:rgba(0,0,0,.3);padding:16px}
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]){background:rgba(0,0,0,.3);padding:16px}
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) .demo-card{
     width:331px;max-width:100%;padding:0;border:.536px solid rgba(0,0,0,.18);border-radius:9.654px;box-shadow:none;
     position:relative;left:-1px; /* node card sits at 50%-0.5px; the hairline border renders a full device px */
   }
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) :is(.demo-logo,.demo-close){display:none}
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) :is(.demo-logo,.demo-close){display:none}
   /* Checker-plate watermark: 128x175, centred, mirrored (node rotate 180 + flipY). */
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) :is(.demo-callcard,.demo-failcard,.demo-success)::before{
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) :is(.demo-callcard,.demo-failcard,.demo-success)::before{
     inset:auto;left:calc(50% - 64.52px);top:calc(50% - 87px);width:128.012px;height:174.537px;
     background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;opacity:1;transform:scaleX(-1);
   }
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-ul{background:none;padding-bottom:0}
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) .demo-ul{background:none;padding-bottom:0}
 
   /* ---- calling you (2633:860) — card 331x294 ---- */
   .demo-backdrop[data-screen="calling"] .demo-callcard{padding:16.55px 0 48.5px}
@@ -369,4 +400,33 @@ body.demo-lock{overflow:hidden}
     display:block;position:absolute;left:245.74px;top:370.83px;width:23.577px;height:28.193px;
     transform:rotate(-19.64deg) scaleY(-1);pointer-events:none;
   }
+
+  /* ---- talk to your assistant (2635:1141) — card 331x398 ---- */
+  .demo-backdrop[data-screen="phone"] .demo-card{padding:11.08px 0 20.49px;left:0} /* node card sits at 50%+0.09px */
+  .demo-backdrop[data-screen="phone"] .demo-card::before{
+    content:"";position:absolute;left:62.91px;top:5.45px;width:197.637px;height:269.065px;pointer-events:none;
+    background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
+  }
+  .demo-backdrop[data-screen="phone"] .demo-body{position:relative;z-index:1}
+  .demo-backdrop[data-screen="phone"] .demo-h--form{margin:0;position:relative;left:.5px;font-family:'Permanent Marker',cursive;font-weight:400;font-size:21.858px;line-height:22.342px}
+  .demo-backdrop[data-screen="phone"] :is(.demo-h__l1,.demo-h__l2){display:block}
+  .demo-backdrop[data-screen="phone"] .demo-sub{margin:9.09px auto 0;max-width:none;position:relative;left:.77px;font-size:10.492px;line-height:12.889px}
+  .demo-backdrop[data-screen="phone"] .demo-field{margin:0 0 0 46.8px;overflow:hidden}
+  .demo-backdrop[data-screen="phone"] .demo-field--phone{margin-top:12.47px}
+  .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:7.97px}
+  .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:11.2px}
+  .demo-backdrop[data-screen="phone"] .demo-label{margin:0 0 3.57px;font-size:8.056px;line-height:12.084px;color:var(--navy)}
+  /* Inputs render at the node's 11.8px but keep a real 16px font, scaled down:
+     iOS Safari zooms the whole page when focusing an input under 16px. The
+     field clips the unscaled layout box so nothing scrolls sideways. */
+  .demo-backdrop[data-screen="phone"] .demo-input{
+    display:block;width:317.1px;height:32.729px;padding:0 6.545px;border-width:.727px;border-radius:4.363px;font-size:16px;
+    transform:scale(.738438);transform-origin:0 0;margin-bottom:-8.561px;
+  }
+  .demo-backdrop[data-screen="phone"] .demo-btn{width:234.156px;height:26.316px;margin:17.66px 0 0 47.34px;font-size:11.815px;font-weight:400;border-radius:3.222px}
+  .demo-backdrop[data-screen="phone"] .demo-disclosure{width:234.157px;margin:4.83px 0 0 47.33px;font-size:7.213px;line-height:8.734px}
+  .demo-backdrop[data-screen="phone"] .demo-help{margin:8.85px 0 0;position:relative;left:-.27px;font-size:8.593px;line-height:10.405px}
+  .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){width:234.16px;margin:6px 0 0 46.8px;font-size:8.6px;line-height:11px}
+  .demo-backdrop[data-screen="phone"] .demo-formerr[style*="block"] + .demo-btn,
+  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{margin-top:8px}
 }

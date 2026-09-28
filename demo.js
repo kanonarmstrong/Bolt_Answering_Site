@@ -209,7 +209,10 @@
       autocomplete: id === 'demo-phone' ? 'tel' : (id === 'demo-email' ? 'email' : 'organization'),
       inputmode: id === 'demo-phone' ? 'tel' : null
     });
-    return { wrap: h('div', { class: 'demo-field' }, [h('label', { class: 'demo-label', for: id, text: label }), input]), input: input };
+    // demo-field--{phone,business,email}: the nodes space the three fields
+    // unevenly, so each wrapper is addressable in CSS.
+    var key = id.replace('demo-', '');
+    return { wrap: h('div', { class: 'demo-field demo-field--' + key }, [h('label', { class: 'demo-label', for: id, text: label }), input]), input: input };
   }
   function renderPhone(opts) {
     opts = opts || {};
@@ -315,13 +318,18 @@
     ]) : null;
 
     setBody([
-      h('h2', { class: 'demo-h demo-h--form', text: 'We’ll call you' }),
-      sub('We’ll send you a 6-digit one-time passcode before placing the call'),
+      // Figma desktop 2387:9076 / mobile 2635:1141: marker title (one line on
+      // desktop, "We'll call / you right now" on mobile) + per-breakpoint sub.
+      h('h2', { class: 'demo-h demo-h--form' }, [
+        h('span', { class: 'demo-h__l1', text: 'We’ll call' }), ' ',
+        h('span', { class: 'demo-h__l2', text: 'you right now' })
+      ]),
+      h('p', { class: 'demo-sub' }, dm('We’ll send you a 6-digit one-time passcode before calling.', 'But first, we’ll send you a one-time passcode.')),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
       formErr,
       btn, disclosure, helpLine()
-    ]);
+    ], 'phone');
     setTimeout(function () { phone.input.focus(); }, 30);
   }
 
