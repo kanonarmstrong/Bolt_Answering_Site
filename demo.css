@@ -231,8 +231,29 @@ body.demo-lock{overflow:hidden}
   .demo-bubble{max-width:86%;font-size:14.5px}
   .demo-success-trial{margin:4px 0 14px}
   .demo-success-cta{max-width:none}
-  /* calling / failure (mobile) */
-  .demo-callcard__head{margin-bottom:18px}
-  .demo-failcard__head{margin-bottom:12px}
-  .demo-failcard__btn{max-width:none}
+  /* The demo modal is sized to sit on a phone screen (Figma mobile 2633:860 /
+     919 / 1029): the card auto-centres (margin:auto) once the content is compact,
+     so shrink the type + spacing on each screen so nothing crams or overflows. */
+  /* recap title (2633:919) */
+  .demo-success-never{font-size:33px}
+  .demo-success-rest{font-size:23px}
+  .demo-success-sub{font-size:15px;margin-bottom:14px}
+  .demo-success-trial__sm{font-size:23px}
+  .demo-success-trial__big{font-size:40px}
+  .demo-success-cta{height:46px;font-size:16px}
+  /* calling you (2633:860) */
+  .demo-callcard__head{font-size:15px;line-height:1.5;margin:0 0 14px}
+  .demo-callcard__head .demo-mk{font-size:27px;margin-right:6px}
+  .demo-callcard__expect{font-size:18px;margin:0 0 10px}
+  .demo-callcard__list{padding-left:22px;font-size:14px;line-height:1.45}
+  .demo-callcard__list li{margin-bottom:9px}
+  .demo-callcard__list .demo-mk{font-size:18px}
+  /* failure (2633:1029): heading on one/two tight lines, navy body, small blue
+     links + a compact blue "Try again" button. */
+  .demo-failcard__head{font-size:13px;line-height:1.4;margin:0 0 12px;color:var(--navy)}
+  .demo-failcard__head .demo-mk{font-size:19px;margin-right:7px}
+  .demo-failcard__body{font-size:14px;line-height:1.45;color:var(--navy);margin:0 0 14px}
+  .demo-failcard__links{gap:2px;margin:0 0 16px}
+  .demo-failcard__link{font-size:14px}
+  .demo-failcard__btn{max-width:none;height:40px;font-size:15px}
 }

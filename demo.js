@@ -450,7 +450,7 @@
     setBody([
       h('div', { class: 'demo-callcard' }, [
         h('p', { class: 'demo-callcard__head' }, [
-          h('span', { class: 'demo-mk demo-ul', text: 'ALL SET!' }),
+          h('span', { class: 'demo-mk demo-ul', text: 'THANK YOU!' }),
           document.createTextNode(' Calling you now from '),
           h('b', { text: display })
         ]),
@@ -580,7 +580,9 @@
     stopConfetti();
     // Call didn't happen (Figma 2511:1027 / 2370:8833). Most no-shows are the
     // caller's spam blocker eating the call, so point them at the fix pages.
-    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button', text: 'Call me again' });
+    // "Try again" re-places the call -> back to the "calling you" screen
+    // (Figma mobile 2633:1029; button is blue, not yellow).
+    var btn = h('button', { class: 'demo-btn demo-failcard__btn', type: 'button', text: 'Try again' });
     btn.addEventListener('click', function () { placeCall(); });
     setBody([
       h('div', { class: 'demo-failcard' }, [
@@ -590,8 +592,8 @@
         ]),
         h('p', { class: 'demo-failcard__body', text: 'Sometimes Bolt calls get spam blocked. Here’s how to temporarily turn off spam blockers so you can try an assistant. Follow these instructions, then come back and try again.' }),
         h('div', { class: 'demo-failcard__links' }, [
-          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-ios-spam-blockers', target: '_blank', rel: 'noopener', text: 'iPhones' }),
-          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-android-spam-blockers', target: '_blank', rel: 'noopener', text: 'Androids' })
+          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-ios-spam-blockers', target: '_blank', rel: 'noopener', text: 'iPhone' }),
+          h('a', { class: 'demo-failcard__link', href: '/support/hca/disable-android-spam-blockers', target: '_blank', rel: 'noopener', text: 'Android' })
         ]),
         btn
       ])
