@@ -12,9 +12,9 @@ const P = require('./pricing.js');
 /* A tiny stand-in for the chevron's DOM: just the hooks pricing.js writes. */
 function fakeDoc() {
   const el = (text) => ({ textContent: text, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } });
-  const li = [el('After promo period, price increases to $69.99 / month'), el('Includes 750 messages …')];
+  const li = [el('After promo period, price increases to $79 / month'), el('Includes 750 messages …')];
   const nodes = {
-    '.mchev__amt': [el('$49.99')],
+    '.mchev__amt': [el('$59')],
     '.js-pm': [el('3')],
     '.js-td': [el('30')],
     '.js-cta-trial': [el('Start my free 30-day trial'), el('Start my free 30-day trial')],
@@ -92,8 +92,8 @@ test('feed down: the fallback stays and nothing throws', async () => {
   await P.run(doc, () => Promise.reject(new Error('offline')));
   assert.equal(String(text(doc, '.js-pm')), '3');
   // AFMBP-1935: feed down shows the published Solo price, never $0.
-  assert.equal(text(doc, '.mchev__amt'), '$49.99');
-  assert.equal(doc.li[0].textContent, 'After promo period, price increases to $69.99 / month');
+  assert.equal(text(doc, '.mchev__amt'), '$59');
+  assert.equal(doc.li[0].textContent, 'After promo period, price increases to $79 / month');
 });
 
 test('feed up: run() applies plans.solo from GET /api/public/pricing', async () => {

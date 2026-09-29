@@ -24,13 +24,13 @@
   'use strict';
 
   var FEED = 'https://bolt-staging.fly.dev/api/public/pricing';
-  // AFMBP-1935 — the published Solo price: $49.99 for 3 months, then $69.99
+  // AFMBP-1935 — the published Solo price: $59 for 3 months, then $79
   // (owner, 2026-09-29). Equal to the backend constants and the prices baked
   // into the six pricing pages (pinned by pricing.test.mjs), so no-JS, feed-down
   // and feed-up all show the same numbers.
   var FALLBACK = {
-    promoPriceUsd: 49.99,
-    retailPriceUsd: 69.99,
+    promoPriceUsd: 59,
+    retailPriceUsd: 79,
     promoMonths: 3,
     trialDays: 30,
     perMinuteUsd: 0.12,
