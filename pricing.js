@@ -24,20 +24,25 @@
   'use strict';
 
   var FEED = 'https://bolt-staging.fly.dev/api/public/pricing';
-  // AFMBP-1935 — the published Solo price: $59 for 3 months, then $79
+  // AFMBP-1938 — the published Solo price: $59 for 1 month, then $79
   // (owner, 2026-09-29). Equal to the backend constants and the prices baked
   // into the six pricing pages (pinned by pricing.test.mjs), so no-JS, feed-down
   // and feed-up all show the same numbers.
   var FALLBACK = {
     promoPriceUsd: 59,
     retailPriceUsd: 79,
-    promoMonths: 3,
+    promoMonths: 1,
     trialDays: 30,
     perMinuteUsd: 0.12,
     perMessageUsd: 0.01,
     minutesIncluded: 400,
     messagesIncluded: 750
   };
+
+  // AFMBP-1938: "1 month", "3 months" — the unit (and verb) agree with the count.
+  function monthsWord(n) {
+    return n === 1 ? 'month' : 'months';
+  }
 
   function money(n) {
     return n === Math.round(n) ? '$' + n : '$' + n.toFixed(2);
@@ -74,6 +79,12 @@
     each(doc, '.js-pm', function (el) {
       el.textContent = months;
     });
+    each(doc, '.js-pm-unit', function (el) {
+      el.textContent = monthsWord(months);
+    });
+    each(doc, '.js-pm-verb', function (el) {
+      el.textContent = months === 1 ? 'is' : 'are';
+    });
 
     // Visible trial length — the chevron's "N-Day Trial" label (a bare number in
     // a <p>, so a partial span is safe here).
@@ -104,7 +115,7 @@
     var prefix = 'First ' + days + '-Day Trial FREE — Blocks spam calls, Flags urgent calls, ' +
       'Keeps customer info organized, Manages your schedule, Captures leads, ' +
       'Sends confirmations, Drafts quick text replies. New Bolt Pro Pricing: ';
-    var priced = promo + ' per month for first ' + months + ' months, then ' + retail + '/month; ';
+    var priced = promo + ' per month for first ' + months + ' ' + monthsWord(months) + ', then ' + retail + '/month; ';
     var aria = prefix + priced + messages + ' messages and ' + minutes + ' minutes per cycle; ' +
       perMin + '/minute and ' + perMsg + '/message beyond budget.';
     each(doc, '.chev-mobile', function (el) {
@@ -129,5 +140,5 @@
     return go();
   }
 
-  return { FEED: FEED, FALLBACK: FALLBACK, money: money, apply: apply, run: run };
+  return { FEED: FEED, FALLBACK: FALLBACK, money: money, monthsWord: monthsWord, apply: apply, run: run };
 });

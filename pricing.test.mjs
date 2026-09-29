@@ -15,7 +15,9 @@ function fakeDoc() {
   const li = [el('After promo period, price increases to $79 / month'), el('Includes 750 messages …')];
   const nodes = {
     '.mchev__amt': [el('$59')],
-    '.js-pm': [el('3')],
+    '.js-pm': [el('1')],
+    '.js-pm-unit': [el('month')],
+    '.js-pm-verb': [el('is')],
     '.js-td': [el('30')],
     '.js-cta-trial': [el('Start my free 30-day trial'), el('Start my free 30-day trial')],
     '.mchev__fine': [{ querySelectorAll: () => li }],
@@ -47,10 +49,12 @@ test('the feed reaches every hook: price, promo LENGTH, trial, allowances, aria'
   assert.match(aria, /New Bolt Pro Pricing: \$39\.99 per month for first 6 months, then \$59\.99\/month; 900 messages and 500 minutes per cycle;/);
 });
 
-test('the fallback is the baked HTML (idempotent): 3 months, 30 days, 750 / 400', () => {
+test('the fallback is the baked HTML (idempotent): 1 month, 30 days, 750 / 400', () => {
   const doc = fakeDoc();
   P.apply(doc, P.FALLBACK);
-  assert.equal(String(text(doc, '.js-pm')), '3');
+  assert.equal(String(text(doc, '.js-pm')), '1');
+  assert.equal(text(doc, '.js-pm-unit'), 'month');
+  assert.equal(text(doc, '.js-pm-verb'), 'is');
   assert.equal(String(text(doc, '.js-td')), '30');
   assert.equal(
     doc.li[1].textContent,
@@ -74,6 +78,31 @@ test('every pricing page bakes the FALLBACK prices (AFMBP-1935): no-JS shows wha
   }
 });
 
+test('AFMBP-1938: a 1-month promo reads "1 month … is"; any other length reads "N months … are"', () => {
+  assert.equal(P.monthsWord(1), 'month');
+  assert.equal(P.monthsWord(3), 'months');
+  const one = fakeDoc();
+  P.apply(one, { ...FEED, promoMonths: 1 });
+  assert.equal(text(one, '.js-pm-unit'), 'month');
+  assert.equal(text(one, '.js-pm-verb'), 'is');
+  assert.match(one.nodes['.chev-mobile'][0].attrs['aria-label'], / per month for first 1 month, then /);
+  const six = fakeDoc();
+  P.apply(six, FEED); // 6 months
+  assert.equal(text(six, '.js-pm-unit'), 'months');
+  assert.equal(text(six, '.js-pm-verb'), 'are');
+  assert.match(six.nodes['.chev-mobile'][0].attrs['aria-label'], / per month for first 6 months, then /);
+});
+
+test('AFMBP-1938: every page bakes the FALLBACK promo length with the agreeing unit (and the FAQ its verb)', () => {
+  const doc = fakeDoc();
+  P.apply(doc, P.FALLBACK);
+  const period = `<span class="js-pm">${text(doc, '.js-pm')}</span> <span class="js-pm-unit">${text(doc, '.js-pm-unit')}</span>`;
+  const pages = readdirSync('.').filter((f) => f.endsWith('.html') && readFileSync(f, 'utf8').includes('mchev__amt'));
+  for (const f of pages) assert.ok(readFileSync(f, 'utf8').includes(period), `${f}: promo length is not "${period}"`);
+  const faq = readFileSync('support/index.html', 'utf8');
+  assert.ok(faq.includes(`${period} <span class="js-pm-verb">${text(doc, '.js-pm-verb')}</span> discounted`), 'support FAQ: promo length/verb differ from the FALLBACK render');
+});
+
 test('0 is a real value — a 0-day trial is never shown as the 30-day fallback', () => {
   const doc = fakeDoc();
   P.apply(doc, { ...FEED, trialDays: 0 });
@@ -90,7 +119,8 @@ test('an older feed without allowances keeps the fallback allowances', () => {
 test('feed down: the fallback stays and nothing throws', async () => {
   const doc = fakeDoc();
   await P.run(doc, () => Promise.reject(new Error('offline')));
-  assert.equal(String(text(doc, '.js-pm')), '3');
+  assert.equal(String(text(doc, '.js-pm')), '1');
+  assert.equal(text(doc, '.js-pm-unit'), 'month');
   // AFMBP-1935: feed down shows the published Solo price, never $0.
   assert.equal(text(doc, '.mchev__amt'), '$59');
   assert.equal(doc.li[0].textContent, 'After promo period, price increases to $79 / month');
@@ -124,7 +154,8 @@ test('every visible "for first N months" is the .js-pm hook, never a baked numbe
   assert.ok(pages.length >= 6, `found ${pages.length} chevron pages`);
   for (const f of pages) {
     const line = readFileSync(f, 'utf8').split('\n').find((l) => l.includes('class="mchev__price"'));
-    assert.match(line, /for first <span class="js-pm">\d+<\/span> months/, f);
+    // AFMBP-1938: the unit is a hook too, so "1 month" / "3 months" follow the feed.
+    assert.match(line, /for first <span class="js-pm">\d+<\/span> <span class="js-pm-unit">months?<\/span>/, f);
   }
 });
 
