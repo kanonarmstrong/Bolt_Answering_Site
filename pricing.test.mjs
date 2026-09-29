@@ -12,9 +12,9 @@ const P = require('./pricing.js');
 /* A tiny stand-in for the chevron's DOM: just the hooks pricing.js writes. */
 function fakeDoc() {
   const el = (text) => ({ textContent: text, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } });
-  const li = [el('After promo period, price increases to $0 / month'), el('Includes 750 messages …')];
+  const li = [el('After promo period, price increases to $69.99 / month'), el('Includes 750 messages …')];
   const nodes = {
-    '.mchev__amt': [el('$0')],
+    '.mchev__amt': [el('$49.99')],
     '.js-pm': [el('3')],
     '.js-td': [el('30')],
     '.js-cta-trial': [el('Start my free 30-day trial'), el('Start my free 30-day trial')],
@@ -58,6 +58,22 @@ test('the fallback is the baked HTML (idempotent): 3 months, 30 days, 750 / 400'
   );
 });
 
+test('every pricing page bakes the FALLBACK prices (AFMBP-1935): no-JS shows what pricing.js renders', () => {
+  const doc = fakeDoc();
+  P.apply(doc, P.FALLBACK);
+  const promo = text(doc, '.mchev__amt');
+  const fine = doc.li[0].textContent;
+  const aria = doc.nodes['.chev-mobile'][0].attrs['aria-label'];
+  const pages = readdirSync('.').filter((f) => f.endsWith('.html') && readFileSync(f, 'utf8').includes('mchev__amt'));
+  assert.ok(pages.length >= 6, `expected the six pricing pages, found ${pages.length}`);
+  for (const f of pages) {
+    const html = readFileSync(f, 'utf8');
+    assert.ok(html.includes(`<span class="mchev__amt">${promo}</span>`), `${f}: chevron amount is not the fallback ${promo}`);
+    assert.ok(html.includes(`<li>${fine}</li>`), `${f}: fine print is not "${fine}"`);
+    assert.ok(html.includes(`aria-label="${aria}"`), `${f}: aria-label differs from the fallback render`);
+  }
+});
+
 test('0 is a real value — a 0-day trial is never shown as the 30-day fallback', () => {
   const doc = fakeDoc();
   P.apply(doc, { ...FEED, trialDays: 0 });
@@ -75,7 +91,9 @@ test('feed down: the fallback stays and nothing throws', async () => {
   const doc = fakeDoc();
   await P.run(doc, () => Promise.reject(new Error('offline')));
   assert.equal(String(text(doc, '.js-pm')), '3');
-  assert.equal(text(doc, '.mchev__amt'), '$0');
+  // AFMBP-1935: feed down shows the published Solo price, never $0.
+  assert.equal(text(doc, '.mchev__amt'), '$49.99');
+  assert.equal(doc.li[0].textContent, 'After promo period, price increases to $69.99 / month');
 });
 
 test('feed up: run() applies plans.solo from GET /api/public/pricing', async () => {
