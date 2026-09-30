@@ -1,0 +1,39 @@
+/* Home hero 3D phone (hero-phone.js). The phone sits exactly over the hero
+   image's box; the image stays as the first paint and fallback and fades out
+   once the 3D phone is ready. Decorative: never takes pointer events. */
+.heroPhone {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  pointer-events: none; opacity: 0; transition: opacity 320ms ease;
+  filter: drop-shadow(0 30px 50px rgba(24, 10, 83, .22));
+}
+.heroPhone__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* The app screen, in points (402x874); hero-phone.js maps it onto the
+   display with a perspective transform. */
+.heroPhone__screen {
+  position: absolute; left: 0; top: 0; width: 402px; height: 874px;
+  overflow: hidden; transform-origin: 0 0; background: #f9fbff;
+  backface-visibility: hidden;
+}
+/* One app screen (Figma frame, 402x874pt). Slides swipe horizontally. */
+.hp-slide {
+  position: absolute; left: 0; top: 0; width: 402px; height: 874px;
+  background: #f9fbff center / 100% 100% no-repeat;
+}
+.hp-layer, .hp-chip__icon { position: absolute; background: center / 100% 100% no-repeat; }
+.hp-clip, .hp-deck { position: absolute; overflow: hidden; }
+/* Fixed status bar + Dynamic Island above the sliding screens. */
+.hp-status { position: absolute; z-index: 2; background: center / 100% 100% no-repeat; }
+/* Jobs / Leads counts + trend chips (Figma: Inter Bold 37.28pt #180A53,
+   Inter SemiBold 10.87pt #009245). */
+.hp-count {
+  position: absolute; margin: 0; text-align: right; white-space: nowrap;
+  font: 700 37.2798px/normal Inter, system-ui, sans-serif; color: #180a53;
+}
+.hp-chip { position: absolute; transform-origin: 0 50%; }
+.hp-pct {
+  position: absolute; display: flex; align-items: center; white-space: nowrap;
+  font: 600 10.8732px/normal Inter, system-ui, sans-serif; color: #009245;
+}
+.hero__media > img { transition: opacity 320ms ease; }
+.hero__media--3d > img { opacity: 0; }
+.hero__media--3d .heroPhone { opacity: 1; }
