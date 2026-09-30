@@ -14,15 +14,20 @@
   overflow: hidden; transform-origin: 0 0; background: #f9fbff;
   backface-visibility: hidden;
 }
-/* One app screen (Figma frame, 402x874pt). Slides swipe horizontally. */
+/* One app screen (Figma frame, 402x874pt). Slides swipe horizontally.
+   Stacking, like the app: tab screens < the sticky menu < Call detail (a
+   full-screen page, no menu) < Safari's bar < the status bar. */
 .hp-slide {
-  position: absolute; left: 0; top: 0; width: 402px; height: 874px;
+  position: absolute; left: 0; top: 0; width: 402px; height: 874px; z-index: 0;
   background: #f9fbff center / 100% 100% no-repeat;
 }
+.hp-slide--over { z-index: 2; }
+.hp-menu { position: absolute; overflow: hidden; z-index: 1; }
+.hp-safari { z-index: 3; }
 .hp-layer, .hp-chip__icon { position: absolute; background: center / 100% 100% no-repeat; }
 .hp-clip, .hp-deck { position: absolute; overflow: hidden; }
 /* Fixed status bar + Dynamic Island above the sliding screens. */
-.hp-status { position: absolute; z-index: 2; background: center / 100% 100% no-repeat; }
+.hp-status { position: absolute; z-index: 4; background: center / 100% 100% no-repeat; }
 /* Jobs / Leads counts + trend chips (Figma: Inter Bold 37.28pt #180A53,
    Inter SemiBold 10.87pt #009245). */
 .hp-count {

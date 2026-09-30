@@ -58,7 +58,7 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
 
     // ---------- helpers ----------
     var A = "assets/hero-phone/"
-    var V = "?v=1"
+    var V = "?v=2"
     function el(cls, parent, box) {
         var e = document.createElement("div")
         e.className = cls
@@ -176,6 +176,23 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
     // 5 · Customers (2648:1266): no animation
     slide(4, "s5-customers.webp")
 
+    // Call detail is a full-screen page in the app (no menu): it slides over
+    // the sticky menu, not under it.
+    sDetail.classList.add("hp-slide--over")
+
+    // Sticky bottom chrome (AFMBP-1958), like the real app: the app's menu and
+    // Safari's bar stay put while the screens swipe underneath. Menu = Home's
+    // node (2648:1609) with the current tab selected; Safari = 2648:1610.
+    var MENU_STATES = ["home", "calls", "schedule", "customers"]
+    var MENU_SCREEN = { home: 0, calls: 1, schedule: 3, customers: 4 } // loads with the screen it shows on
+    var menu = el("hp-menu", screen, { x: 0, y: 734.667, w: SCREEN_W, h: 64.667 })
+    var menuLayers = {}
+    MENU_STATES.forEach(function (s) {
+        menuLayers[s] = layer(MENU_SCREEN[s], menu, { x: 0, y: 0, w: SCREEN_W, h: 64.667 }, "menu-" + s + ".webp")
+    })
+    layer(0, screen, { x: 26, y: 813.667, w: 346.333, h: 37.333 }, "safari.png").className =
+        "hp-layer hp-safari"
+
     // Fixed status bar + Dynamic Island, above the sliding screens.
     bg(el("hp-status", screen, { x: 0, y: 0, w: SCREEN_W, h: 54 }), "status.png")
     files[0].push("status.png")
@@ -252,6 +269,32 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
             slides[i].style.transform = "translateX(" + x + "px)"
         }
     }
+    // The sticky menu's selected tab per screen: [while it shows, what it
+    // swipes to]. Tab to tab, the new tab fades in over the old one. Calls ->
+    // Detail holds on Calls (Detail slides over the menu); under Detail it
+    // turns to Schedule, which Detail reveals as it slides away.
+    var MENU_SEG = [
+        ["home", "calls"],
+        ["calls", "calls"],
+        ["schedule", "schedule"],
+        ["schedule", "customers"],
+        ["customers", "home"],
+    ]
+    var menuState = {}
+    function setMenu(from, to, p) {
+        for (var i = 0; i < MENU_STATES.length; i++) {
+            var s = MENU_STATES[i]
+            // opaque layers: the source stays at full opacity under the target
+            var o = s === from ? 1 : s === to ? p : 0
+            var st = o > 0 ? o + (s === to && s !== from ? "t" : "f") : "off"
+            if (menuState[s] === st) continue
+            menuState[s] = st
+            var m = menuLayers[s]
+            m.style.display = o > 0 ? "block" : "none"
+            m.style.opacity = String(o)
+            m.style.zIndex = s === to && s !== from ? "1" : "0"
+        }
+    }
     function renderAt(t) {
         t = ((t % LOOP) + LOOP) % LOOP
         var cur = Math.floor(t / SEG) % N
@@ -265,11 +308,13 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
         }
         ANIMS[cur](unit((local - ANIM_AT) / ANIM_LEN))
         if (p > 0) ANIMS[nxt](0) // a screen swiping in shows its start state
+        setMenu(MENU_SEG[cur][0], MENU_SEG[cur][1], p)
     }
     function renderStill() {
         // Reduced motion: Home, finished, with the node's own card centred.
         for (var i = 0; i < N; i++) show(i, i === 0 ? 0 : null)
         ANIMS[0](1, true)
+        setMenu("home", "home", 0)
     }
 
     // ---------- clock: runs only while the hero is on screen ----------
