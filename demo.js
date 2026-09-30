@@ -700,6 +700,18 @@
     };
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
-  else wire();
+  // Ad links land straight in the flow (AFMBP-1960): a page with the flow opens
+  // it on arrival when its URL carries `talk` (/?talk=1, /hvac.html?talk=1,
+  // alongside any utm_* / click-id params). Closing it leaves the visitor on
+  // the page; the trade still comes from the page path, as with the buttons.
+  function autoOpen() {
+    if (/[?&]talk(=|&|$)/.test(window.location.search)) openModal();
+  }
+  function init() {
+    wire();
+    autoOpen();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
