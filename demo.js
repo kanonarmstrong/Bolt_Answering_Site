@@ -61,6 +61,22 @@
   var state = { phone: '', display: '', name: '', business: '', email: '' };
   var resendTimer = null;
 
+  // ---------- funnel events (AFMBP-1968) ----------
+  // Every stage goes to Bolt's own analytics through attribution.js (loaded on
+  // every page). Only the stage, the trade and what the API said went wrong —
+  // never the phone, email or business typed above.
+  var step = '';       // the screen showing now, for demo_closed
+  var finishedFor = null;
+  function track(event, props) {
+    try {
+      if (!window.boltAttr) return;
+      var p = { trade: TRADE };
+      if (props) Object.keys(props).forEach(function (k) { p[k] = props[k]; });
+      window.boltAttr.track(event, p);
+    } catch (e) {}
+  }
+  function reasonOf(r) { return (r && (r.error || (r.status ? 'http_' + r.status : 'network'))) || 'unknown'; }
+
   // ---------- tiny DOM helpers ----------
   function h(tag, attrs, kids) {
     var el = document.createElement(tag);
@@ -152,7 +168,7 @@
     artWarmed = true;
     MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n + '.svg'; });
   }
-  function openModal() {
+  function openModal(trigger) {
     warmMobileArt();
     if (!backdrop) build();
     stopConfetti();
@@ -160,8 +176,10 @@
     renderPhone();
     backdrop.classList.add('open');
     document.body.classList.add('demo-lock');
+    track('demo_opened', { trigger: trigger || 'button' });
   }
   function closeModal() {
+    if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
     clearResend();
     stopRecap();
     stopConfetti();
@@ -216,6 +234,7 @@
   }
   function renderPhone(opts) {
     opts = opts || {};
+    step = opts.limit ? 'limit' : 'details';
     // Every field is required now (including Email) — Figma 2387:9076 / 2548:3438.
     var phone = field('Phone number', 'demo-phone', '(555) 555-1212', 'tel', state.display);
     var biz = field('Business name', 'demo-business', 'John’s HVAC', 'text', state.business);
@@ -294,11 +313,13 @@
       state.email = email.input.value.trim();
 
       busy(btn, 'Sending…');
+      track('demo_details_submitted');
       apiPost('/api/demo/otp/send', {
         phone: state.phone, email: state.email,
         businessName: state.business, consentText: CONSENT_TEXT
       }).then(function (r) {
-        if (r.ok) return renderCode();
+        if (r.ok) { track('demo_code_sent'); return renderCode(); }
+        track('demo_code_send_failed', { reason: reasonOf(r) });
         unbusy(btn, 'Continue');
         if (r.error === 'invalid_phone') showFormErr([phone], r.message || 'Invalid phone number. Please try again.');
         else if (r.error === 'demo_limit_reached') renderLimit();
@@ -314,7 +335,7 @@
 
     var limitMsg = opts.limit ? h('p', { class: 'demo-limitmsg' }, [
       'You’ve reached your demo limit. ',
-      h('a', { class: 'demo-limitmsg__link', href: 'https://app.boltanswering.com/signup' }, ['Start a free trial today'])
+      h('a', { class: 'demo-limitmsg__link', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', { from: 'limit' }); } }, ['Start a free trial today'])
     ]) : null;
 
     setBody([
@@ -341,6 +362,7 @@
   // ---------- screen: code entry ----------
   function renderCode(opts) {
     opts = opts || {};
+    step = 'code';
     var boxes = [];
     var codeWrap = h('div', { class: 'demo-code' + (opts.error ? ' err' : '') });
     for (var i = 0; i < 6; i++) {
@@ -400,7 +422,8 @@
       if (c.length !== 6) return;
       busy(btn, 'Verifying…');
       apiPost('/api/demo/otp/verify', { phone: state.phone, code: c }).then(function (r) {
-        if (r.ok) return placeCall();
+        if (r.ok) { track('demo_code_verified'); return placeCall(); }
+        track('demo_code_failed', { reason: reasonOf(r) });
         unbusy(btn, 'Continue');
         if (r.error === 'incorrect') renderCode({ error: 'Wrong code. Please try again or request another code.' });
         else if (r.error === 'locked_out') renderCode({ error: 'Too many tries. Request a new code.', locked: true });
@@ -432,7 +455,8 @@
       phone: state.phone, email: state.email,
       businessName: state.business, consentText: CONSENT_TEXT
     }).then(function (r) {
-      if (r.ok) return renderCode({ resendSecs: 60 });
+      if (r.ok) { track('demo_code_resent'); return renderCode({ resendSecs: 60 }); }
+      track('demo_code_send_failed', { reason: reasonOf(r), resend: true });
       if (r.error === 'rate_limited') return renderCode({ resendSecs: retryAfter(r) });
       if (r.error === 'demo_limit_reached') return renderLimit();
       renderError();
@@ -457,6 +481,7 @@
   // ---------- token + call ----------
   function placeCall() {
     stopConfetti();
+    step = 'placing';
     setBody([
       h('div', { class: 'demo-ring' }, [svg('<path d="M5 4h4l2 5-3 2a11 11 0 005 5l2-3 5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>')]),
       heading('Placing your call…'),
@@ -467,6 +492,7 @@
       businessName: state.business, locale: 'en', source: 'marketing'
     }).then(function (r) {
       if (!r.ok) {
+        track('demo_call_failed', { stage: 'token', reason: reasonOf(r) });
         if (r.error === 'phone_not_verified') return renderCode({ error: 'That code has expired. Request a new code.', locked: true });
         if (r.error === 'demo_limit_reached') return renderLimit();
         return renderCallFailed();
@@ -477,9 +503,13 @@
           // (fmtDemoNumber falls back); populated once the backend returns it.
           renderInCall(c.data && c.data.callerId);
           var callId = c.data && c.data.callId;
+          // call_id = the server's demo_calls row: the funnel report reads the
+          // call's real outcome there, even if a browser event never arrives.
+          track('demo_call_placed', { call_id: callId || null });
           if (callId) pollRecap(callId);
           return;
         }
+        track('demo_call_failed', { stage: 'call', reason: reasonOf(c) });
         if (c.error === 'demo_limit_reached') return renderLimit();
         return renderCallFailed();
       });
@@ -489,6 +519,7 @@
   // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
   function renderInCall(fromNumber) {
     clearResend();
+    step = 'in_call';
     // OTP accepted -> placing the call. Desktop copy = Figma 2370:8769 ("All set!",
     // "...potential project"); mobile copy = Figma 2633:860 ("Thank you!", "...or
     // project"). dm() renders both; CSS shows one per breakpoint. Marker copy is
@@ -534,8 +565,12 @@
         .then(function (d) {
           // Bail if the user closed the modal or moved to another screen.
           if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
-          if (d && d.status === 'failed') { stopRecap(); return renderCallFailed(); }
+          if (d && d.status === 'failed') { stopRecap(); track('demo_call_failed', { stage: 'call_status', call_id: callId }); return renderCallFailed(); }
           if (d && d.status === 'completed') {
+            if (finishedFor !== callId) {
+              finishedFor = callId;
+              track('demo_call_finished', { call_id: callId, transcript: normTurns(d.transcript).length > 0 });
+            }
             if (normTurns(d.transcript).length > 0) { stopRecap(); return renderRecap(d); }
             // Completed, but the transcript isn't back yet (the server is still
             // pulling it from Telnyx). Switch to the recap now, keep polling.
@@ -545,7 +580,7 @@
             return;
           }
           // pending / in_call — keep waiting for the call to end.
-          if (Date.now() - started > 240000) { stopRecap(); return; } // give up quietly, leave the in-call screen up
+          if (Date.now() - started > 240000) { stopRecap(); track('demo_call_timeout', { call_id: callId }); return; } // give up quietly, leave the in-call screen up
           recapTimer = setTimeout(tick, 3000);
         })
         .catch(function () {
@@ -581,6 +616,7 @@
   // ---------- screen: recap (call completed) — Figma 2370:8784 ----------
   function renderRecap(d, opts) {
     clearResend();
+    step = 'recap';
     opts = opts || {};
     if (!recapConfettiDone) { recapConfettiDone = true; playConfetti(); }
     var turns = normTurns(d && d.transcript);
@@ -621,7 +657,7 @@
           h('span', { class: 'demo-success-trial__big demo-ul', text: '30 days' }),
           h('span', { class: 'demo-success-trial__sm', text: ' are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup' }, ['Start my free trial now']),
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', { from: 'recap', call_id: finishedFor }); } }, ['Start my free trial now']),
         // Hand-drawn arrow pointing at the CTA — mobile only (hidden on desktop).
         h('img', { class: 'demo-success-arrow', src: 'assets/demo-m-arrow.svg', alt: '', 'aria-hidden': 'true' })
       ])
@@ -631,6 +667,7 @@
   // ---------- screen: call didn't complete ----------
   function renderCallFailed() {
     stopConfetti();
+    step = 'call_failed';
     // Call didn't happen (Figma 2511:1027 / 2370:8833). Most no-shows are the
     // caller's spam blocker eating the call, so point them at the fix pages.
     // The button re-places the call -> back to the "calling you" screen.
@@ -666,11 +703,14 @@
   // ---------- demo limit reached — inline on the phone form (Figma 2370:8877) ----------
   function renderLimit() {
     clearResend();
+    track('demo_limit_reached', { at: step });
     renderPhone({ limit: true });
   }
 
   // ---------- screen: something went wrong ----------
   function renderError() {
+    track('demo_error', { at: step });
+    step = 'error';
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Try again' });
     btn.addEventListener('click', function () { renderPhone(); });
     setBody([
@@ -686,7 +726,7 @@
     var btns = document.querySelectorAll('a.btn--blue, button.btn--blue, [data-demo-open]');
     Array.prototype.forEach.call(btns, function (b) {
       if (b.hasAttribute('data-demo-open') || /talk to your new assistant/i.test(b.textContent)) {
-        b.addEventListener('click', function (e) { e.preventDefault(); openModal(); });
+        b.addEventListener('click', function (e) { e.preventDefault(); openModal('button'); });
       }
     });
   }
@@ -694,7 +734,7 @@
   // screenshot verification, without walking the live OTP/call API. No effect otherwise.
   if (typeof window !== 'undefined' && /[?&]demoqa=1/.test(window.location.search)) {
     window.__demoQA = {
-      open: openModal, phone: renderPhone, code: renderCode, inCall: renderInCall,
+      open: function () { openModal('qa'); }, phone: renderPhone, code: renderCode, inCall: renderInCall,
       recap: renderRecap, fail: renderCallFailed, limit: renderLimit, error: renderError,
       state: state
     };
@@ -705,7 +745,7 @@
   // alongside any utm_* / click-id params). Closing it leaves the visitor on
   // the page; the trade still comes from the page path, as with the buttons.
   function autoOpen() {
-    if (/[?&]talk(=|&|$)/.test(window.location.search)) openModal();
+    if (/[?&]talk(=|&|$)/.test(window.location.search)) openModal('ad_link');
   }
   function init() {
     wire();
