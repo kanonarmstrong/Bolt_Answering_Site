@@ -119,13 +119,6 @@ body.demo-lock{overflow:hidden}
 .demo-expect li{font-size:14.5px;line-height:1.55;color:#3a3a45;margin-bottom:6px}
 .demo-expect li:last-child{margin-bottom:0}
 
-.demo-ring{
-  width:56px;height:56px;margin:4px auto 16px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(43,127,253,.1);color:var(--blue);
-}
-.demo-ring svg{width:28px;height:28px}
-.demo-ring--ok{background:rgba(34,170,102,.12);color:#22aa66}
 
 /* ---- call success (completed call) — Figma 2370:8784 / 2512:1239 ---- */
 .demo-success{position:relative;text-align:center}
@@ -217,8 +210,8 @@ body.demo-lock{overflow:hidden}
 /* Marker copy is authored mixed-case for the mobile nodes (Permanent Marker
    renders lowercase as small caps); desktop keeps its all-caps look. */
 .demo-callcard__title,.demo-callcard__expect,.demo-failcard__title{text-transform:uppercase}
-/* Mobile-only decorations (Figma mobile 2633:919 arrow, 2633:1029 OS lockups). */
-.demo-success-arrow,.demo-failcard__os{display:none}
+/* Mobile-only decoration (Figma mobile 2511:1027 OS lockups). */
+.demo-failcard__os{display:none}
 /* Per-breakpoint copy (demo.js dm()): desktop nodes 2370:* vs mobile nodes 2633:*. */
 .demo-m{display:none}
 /* Desktop underline: flat 4px bar (unchanged). The mobile node screens replace
@@ -276,157 +269,237 @@ body.demo-lock{overflow:hidden}
 }
 
 /* ============================================================
-   Mobile demo — calling you / recap (cta) / failure, pixel-matched to the
-   Figma mobile nodes 2633:860 / 2633:919 / 2633:1029 (402x753 frames).
-   Scoped by data-screen (set by demo.js setBody) so the form / OTP / placing
-   screens are untouched. All offsets are the node's, card-relative: a fixed
-   331px card, no in-card logo or close (tap the shade to dismiss), 0.3 shade.
+   Mobile demo — form / calling you / success / failure, pixel-matched to the
+   Figma mobile nodes 2657:1639 / 2442:1191 / 2441:811 / 2511:1027 (AFMBP-1982).
+   The nodes are 402x753 frames drawn at 4.575x: every value below is the
+   node's divided by 4.575, relative to the card's outer box. Card / transcript
+   hairlines are painted (inset shadow), not borders: Chrome lays a sub-pixel
+   border out as a whole pixel and would shift every child. Line heights are
+   whole px (WebKit truncates fractional ones: 14.517 renders as 14), with the
+   node's fractional box heights kept by height / padding; multi-line static
+   paragraphs are laid out at the node's 4.575x and scaled down, so their line
+   pitch is the node's in every engine. Text tops carry small nudges (.3-.9px)
+   where the rendered glyph rows sat high against the node render on iPhone
+   Safari and Chrome at 3x; engines round baselines differently, so where they
+   disagree the nudge splits the difference. Scoped by
+   data-screen (set by demo.js setBody), so the passcode / error screens and
+   desktop are untouched. No in-card logo or close (tap the shade), 0.3 shade.
    ============================================================ */
 @media (max-width:768px){
   .demo-d{display:none}
   .demo-m{display:inline}
   .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]){background:rgba(0,0,0,.3);padding:16px}
   .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) .demo-card{
-    width:331px;max-width:100%;padding:0;border:.536px solid rgba(0,0,0,.18);border-radius:9.654px;box-shadow:none;
-    position:relative;left:-1px; /* node card sits at 50%-0.5px; the hairline border renders a full device px */
+    max-width:100%;padding:0;box-shadow:none;position:relative;
   }
   .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) :is(.demo-logo,.demo-close){display:none}
-  /* Checker-plate watermark: 128x175, centred, mirrored (node rotate 180 + flipY). */
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) :is(.demo-callcard,.demo-failcard,.demo-success)::before{
-    inset:auto;left:calc(50% - 64.52px);top:calc(50% - 87px);width:128.012px;height:174.537px;
-    background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;opacity:1;transform:scaleX(-1);
-  }
   .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"],[data-screen="phone"]) .demo-ul{background:none;padding-bottom:0}
-
-  /* ---- calling you (2633:860) — card 331x294 ---- */
-  .demo-backdrop[data-screen="calling"] .demo-callcard{padding:16.55px 0 48.5px}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__head{margin:0;font-size:14px;line-height:22.312px;color:var(--navy)}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__title{
-    display:block;width:-webkit-fit-content;width:fit-content;margin:0 auto;position:relative;left:-1.5px;
-    font-size:26.77px;line-height:19.144px;text-transform:none;
-  }
-  .demo-backdrop[data-screen="calling"] .demo-callcard__title::after{
-    content:"";position:absolute;left:0;top:24.37px;width:92.719px;height:6.839px;
-    background:url('assets/demo-m-ul-thankyou.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="calling"] .demo-callcard__from{display:block;margin:34.66px 0 0;padding-left:27.42px}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__expect{margin:27.04px 0 0;padding-left:29.42px;font-size:18px;line-height:12.872px;text-transform:none}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__list{margin:10.43px 0 0;padding:0 0 0 43.42px;font-size:14px;line-height:14.478px;color:var(--navy)}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__list li{margin:0 0 14px}
-  /* Pin the DONE line + give the tiny aside its own line-height: mixing marker /
-     8px text into a 14.478px line otherwise grows each line box by ~2px. */
-  .demo-backdrop[data-screen="calling"] .demo-callcard__list li:last-child{margin-bottom:0;height:14.478px}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__aside{font-size:8.108px;line-height:8px;color:inherit}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__done{display:inline-block;position:relative;top:1.3px;font-size:18px;line-height:14.478px}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__done::after{
-    content:"";position:absolute;left:1.74px;top:16.3px;width:44.392px;height:4.003px;
-    background:url('assets/demo-m-ul-done.svg') center/100% 100% no-repeat;
-  }
-
-  /* ---- failure (2633:1029) — card 331x286 ---- */
-  .demo-backdrop[data-screen="fail"] .demo-card{position:relative;top:-3.5px}
-  .demo-backdrop[data-screen="fail"] .demo-failcard{padding:24.6px 0 17.55px}
-  .demo-backdrop[data-screen="fail"] .demo-failcard::before{top:calc(50% - 102px)}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__head{margin:0;padding-left:28.07px;font-size:12.387px;line-height:26.032px;color:var(--navy);white-space:nowrap}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__title{font-size:18.773px;line-height:15.018px;margin-right:2px;text-transform:none}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__body{
-    width:298px;max-width:100%;box-sizing:border-box;margin:14.52px 0 0;padding-left:26px;
-    font-size:14px;line-height:16.94px;color:var(--navy);
-  }
-  .demo-backdrop[data-screen="fail"] .demo-failcard__links{display:block;margin:21.61px 0 0;padding-left:53px}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__link{display:flex;align-items:center;width:-webkit-fit-content;width:fit-content;height:28px;font-size:14px;line-height:28px;font-weight:400;color:var(--blue)}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__osname{display:inline-block;width:66.46px}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__os{display:block;height:12px;width:auto;transform:translateY(-1px)}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__btn{
-    display:flex;align-items:center;justify-content:center;width:162px;max-width:none;height:27px;margin:12px auto 0;padding:0;
-    border-radius:2.963px;font-size:10.863px;font-weight:500;line-height:9.628px;background:var(--blue);color:#fff;
-    box-shadow:0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);
-  }
-  .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#1f6fe6}
-
-  /* ---- recap / cta (2633:919) — card 331x420 ---- */
-  .demo-backdrop[data-screen="recap"] .demo-success{padding:28.78px 0 29.64px}
-  /* height pinned: the 26.7px marker word would otherwise grow this 11.97px line
-     box by ~4px and push everything below down. */
-  .demo-backdrop[data-screen="recap"] .demo-success-title{margin:0;padding-right:13px;height:11.972px;font-size:18.955px;line-height:11.972px;font-weight:400;white-space:nowrap}
-  .demo-backdrop[data-screen="recap"] .demo-success-never{display:inline-block;position:relative;font-size:26.677px;line-height:11.972px}
-  .demo-backdrop[data-screen="recap"] .demo-success-never::after{
-    content:"";position:absolute;left:-3px;top:18.45px;width:89.043px;height:7.777px;
-    background:url('assets/demo-m-ul-never.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="recap"] .demo-success-rest{font-size:18.955px;line-height:11.972px}
-  .demo-backdrop[data-screen="recap"] .demo-success-sub{width:259px;max-width:none;margin:38.84px 0 0 48px;text-align:left;font-size:14px;line-height:16.94px;color:var(--navy)}
-  .demo-backdrop[data-screen="recap"] .demo-success-sub b{font-weight:400}
-  .demo-backdrop[data-screen="recap"] .demo-chat{
-    width:258.68px;height:144.03px;max-height:none;box-sizing:border-box;margin:20.76px 0 0 37.46px;
-    padding:10.63px 29.11px 10px 10.24px;background:rgba(255,255,255,.31);border:.255px solid #e6e5ee;border-radius:11.496px;
-    box-shadow:0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);overflow-y:auto;
-    scrollbar-width:thin;scrollbar-color:#cbcbcb transparent;
-  }
-  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar{width:3px}
-  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar-thumb{background:#cbcbcb;border-radius:3px}
-  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar-track{margin:17px 0}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow{margin:0 0 8.54px}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow:last-child{margin-bottom:0}
-  .demo-backdrop[data-screen="recap"] .demo-bubble{font-size:9.606px;line-height:11.63px}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--assistant .demo-bubble{
-    max-width:175.3px;margin-left:11.21px;padding:8.8px 9.2px 10.4px 8.56px;border-radius:7.204px;background:#f3f3f5;color:#787888;
-  }
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-bubble{
-    max-width:176.9px;margin-right:11.21px;padding:8.81px 10.4px 7.53px 11.2px;border-radius:6.404px;background:#e5e5ee;color:var(--navy);
-  }
-  .demo-backdrop[data-screen="recap"] .demo-chatmeta{gap:4px;margin-top:-1.8px}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta{margin-top:.9px}
-  .demo-backdrop[data-screen="recap"] .demo-chatmeta__icon{width:12.007px;height:12.464px;flex:0 0 12.007px}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:12.808px;flex-basis:12.808px}
-  .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:8.805px;line-height:10.66px}
-  .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:11px;padding:36px 8px}
-  .demo-backdrop[data-screen="recap"] .demo-success-trial{
-    display:block;width:-webkit-fit-content;width:fit-content;margin:25.77px auto 0;position:relative;left:-10.7px;
-    height:14.219px;font-size:14.219px;line-height:14.219px;text-transform:none;transform:rotate(-4.06deg);
-  }
-  .demo-backdrop[data-screen="recap"] .demo-success-trial__sm{font-size:14.219px}
-  .demo-backdrop[data-screen="recap"] .demo-success-trial__big{display:inline-block;position:relative;font-size:26.305px;line-height:14.219px}
-  .demo-backdrop[data-screen="recap"] .demo-success-trial__big::after{
-    content:"";position:absolute;left:50%;top:20px;width:97.381px;height:8.032px;margin-left:-46.69px;
-    background:url('assets/demo-m-ul-30days.svg') center/100% 100% no-repeat;transform:rotate(1.9deg);
-  }
-  .demo-backdrop[data-screen="recap"] .demo-success-cta{
-    width:161.95px;max-width:none;height:27.651px;margin:26.52px 0 0 72.73px;padding:0;border-radius:2.963px;
-    font-size:10.863px;font-weight:500;line-height:9.628px;
-    box-shadow:0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);
-  }
-  .demo-backdrop[data-screen="recap"] .demo-success-arrow{
-    display:block;position:absolute;left:245.74px;top:370.83px;width:23.577px;height:28.193px;
-    transform:rotate(-19.64deg) scaleY(-1);pointer-events:none;
-  }
-
-  /* ---- talk to your assistant (2635:1141) — card 331x398 ---- */
-  .demo-backdrop[data-screen="phone"] .demo-card{padding:11.08px 0 20.49px;left:0} /* node card sits at 50%+0.09px */
+  /* Checker-plate watermark, mirrored (node rotate 180 + flipY); each screen
+     sets its own box. */
+  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) :is(.demo-callcard,.demo-failcard,.demo-success)::before,
   .demo-backdrop[data-screen="phone"] .demo-card::before{
-    content:"";position:absolute;left:62.91px;top:5.45px;width:197.637px;height:269.065px;pointer-events:none;
+    content:"";position:absolute;inset:auto;z-index:0;pointer-events:none;opacity:1;
     background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
   }
-  .demo-backdrop[data-screen="phone"] .demo-body{position:relative;z-index:1}
-  .demo-backdrop[data-screen="phone"] .demo-h--form{margin:0;position:relative;left:.5px;font-family:'Permanent Marker',cursive;font-weight:400;font-size:21.858px;line-height:22.342px}
-  .demo-backdrop[data-screen="phone"] :is(.demo-h__l1,.demo-h__l2){display:block}
-  .demo-backdrop[data-screen="phone"] .demo-sub{margin:9.09px auto 0;max-width:none;position:relative;left:.77px;font-size:10.492px;line-height:12.889px}
-  .demo-backdrop[data-screen="phone"] .demo-field{margin:0 0 0 46.8px;overflow:hidden}
-  .demo-backdrop[data-screen="phone"] .demo-field--phone{margin-top:12.47px}
-  .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:7.97px}
-  .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:11.2px}
-  .demo-backdrop[data-screen="phone"] .demo-label{margin:0 0 3.57px;font-size:8.056px;line-height:12.084px;color:var(--navy)}
-  /* Inputs render at the node's 11.8px but keep a real 16px font, scaled down:
-     iOS Safari zooms the whole page when focusing an input under 16px. The
-     field clips the unscaled layout box so nothing scrolls sideways. */
-  .demo-backdrop[data-screen="phone"] .demo-input{
-    display:block;width:317.1px;height:32.729px;padding:0 6.545px;border-width:.727px;border-radius:4.363px;font-size:16px;
-    transform:scale(.738438);transform-origin:0 0;margin-bottom:-8.561px;
+
+  /* ---- talk to your assistant (2657:1639) — card 336.17x484.81 ---- */
+  .demo-backdrop[data-screen="phone"] .demo-card{
+    width:336.17px;padding:10.49px 0 24.75px;border:0;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18);
+    left:-1px;top:4.044px; /* node card sits at 50%-1px, 50%+4px */
   }
-  .demo-backdrop[data-screen="phone"] .demo-btn{width:234.156px;height:26.316px;margin:17.66px 0 0 47.34px;font-size:11.815px;font-weight:400;border-radius:3.222px}
-  .demo-backdrop[data-screen="phone"] .demo-disclosure{width:234.157px;margin:4.83px 0 0 47.33px;font-size:7.213px;line-height:8.734px}
-  .demo-backdrop[data-screen="phone"] .demo-help{margin:8.85px 0 0;position:relative;left:-.27px;font-size:8.593px;line-height:10.405px}
-  .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){width:234.16px;margin:6px 0 0 46.8px;font-size:8.6px;line-height:11px}
+  .demo-backdrop[data-screen="phone"] .demo-card::before{left:9.78px;top:2.32px;width:80.437px;height:109.508px}
+  .demo-backdrop[data-screen="phone"] .demo-body{position:relative;z-index:1}
+  .demo-backdrop[data-screen="phone"] .demo-h--form{margin:0;position:relative;left:.79px;top:.3px;font-family:'Permanent Marker',cursive;font-weight:400;font-size:20.765px;line-height:25px}
+  .demo-backdrop[data-screen="phone"] :is(.demo-h__l1,.demo-h__l2){display:block;height:24.95px}
+  /* Yellow brush under "call you" (node vector 2657:1711), anchored to the words. */
+  .demo-backdrop[data-screen="phone"] .demo-h__ul{position:relative}
+  .demo-backdrop[data-screen="phone"] .demo-h__ul::after{
+    content:"";position:absolute;left:.235px;top:24.901px;width:78.244px;height:4.682px;pointer-events:none;
+    background:url('assets/demo-m-ul-callyou.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="phone"] .demo-sub{position:relative;top:.7px;margin:8.1px auto 0;width:243.06px;height:14.394px;max-width:none;font-size:11.585px;line-height:14px;color:#839393;white-space:nowrap}
+  .demo-backdrop[data-screen="phone"] .demo-field{margin:0 0 0 37.533px;overflow:hidden}
+  .demo-backdrop[data-screen="phone"] .demo-field--phone{margin-top:16.363px}
+  .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:14.982px}
+  .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:16.393px}
+  .demo-backdrop[data-screen="phone"] .demo-label{position:relative;top:.7px;margin:0 0 4.47px;height:13.495px;font-size:9.836px;line-height:13px;font-weight:700;color:#707070}
+  /* Inputs render at the node's 261.5x27 box and 11.585px text but keep a real
+     16px font, scaled down: iOS Safari zooms the whole page when focusing an
+     input under 16px. The field clips the unscaled layout box. */
+  .demo-backdrop[data-screen="phone"] .demo-input{
+    display:block;width:361.157px;height:37.276px;padding:0 8.284px;border-width:.8287px;border-radius:6.038px;font-size:16px;
+    transform:scale(.724063);transform-origin:0 0;margin-bottom:-10.286px;
+  }
+  .demo-backdrop[data-screen="phone"] .demo-btn{width:261.497px;height:29.388px;margin:20.379px 0 0 38.132px;font-size:13.195px;font-weight:400;line-height:13px;border-radius:3.599px}
+  /* Disclosure: 10 lines at the node's AUTO pitch (48 / 4.575 = 10.492px). */
+  .demo-backdrop[data-screen="phone"] .demo-disclosure-wrap{position:relative;width:261.497px;height:104.92px;margin:5.398px 0 0 38.132px}
+  .demo-backdrop[data-screen="phone"] .demo-disclosure{
+    position:absolute;left:0;top:.5px;width:1196.35px;margin:0;font-size:40px;line-height:48px;
+    transform:scale(.218579);transform-origin:0 0;
+  }
+  .demo-backdrop[data-screen="phone"] .demo-help{margin:22.9px 0 0;height:11.585px;position:relative;left:.79px;top:.5px;font-size:9.596px;line-height:12px} /* node AUTO: 53 / 4.575 */
+  .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){width:261.497px;margin:6px 0 0 37.533px;font-size:9.6px;line-height:12px}
   .demo-backdrop[data-screen="phone"] .demo-formerr[style*="block"] + .demo-btn,
   .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{margin-top:8px}
+
+  /* ---- calling you (2442:1191) — card 330.93x236.94 ---- */
+  .demo-backdrop[data-screen="calling"] .demo-card{width:330.93px;border:0;border-radius:9.654px;box-shadow:inset 0 0 0 .536px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="calling"] .demo-callcard{height:236.94px}
+  .demo-backdrop[data-screen="calling"] .demo-callcard::before{left:119.496px;top:51.346px;width:91.89px;height:125.29px}
+  .demo-backdrop[data-screen="calling"] .demo-callcard__head{margin:0;height:0}
+  .demo-backdrop[data-screen="calling"] .demo-callcard__head::after{
+    content:"";position:absolute;left:27.546px;top:46.256px;width:62.345px;height:4.599px;pointer-events:none;
+    background:url('assets/demo-m-ul-allset.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="calling"] .demo-callcard__title{
+    position:absolute;left:27.589px;top:30.356px;margin:0;font-size:16.09px;line-height:13px;white-space:nowrap;
+    text-transform:uppercase;transform:rotate(-.44deg) skewX(-.22deg); /* node copy is "ALL SET!" (full caps) */
+  }
+  .demo-backdrop[data-screen="calling"] .demo-callcard__from{position:absolute;left:102.716px;top:26.003px;font-size:11.585px;line-height:22px;white-space:nowrap;color:var(--navy)}
+  .demo-backdrop[data-screen="calling"] .demo-callcard__expect{
+    position:absolute;left:27.755px;top:76.19px;margin:0;font-size:16.09px;line-height:13px;white-space:nowrap;
+    text-transform:none;transform:rotate(-.44deg) skewX(-.22deg);
+  }
+  .demo-backdrop[data-screen="calling"] .demo-callcard__list{
+    position:absolute;left:55.736px;top:111.336px;width:260px;margin:0;padding:0;list-style:none;counter-reset:demo-step;
+    font-size:11.583px;line-height:14px;color:var(--navy);
+  }
+  .demo-backdrop[data-screen="calling"] .demo-callcard__list li{position:relative;height:14.478px;margin:0 0 7.722px 17.374px;white-space:nowrap;counter-increment:demo-step}
+  /* Numbers drawn here, right-aligned with the period ending 4.46px before
+     the text as in the node (engines place native markers differently). */
+  .demo-backdrop[data-screen="calling"] .demo-callcard__list li::before{
+    content:counter(demo-step) ".";position:absolute;right:100%;top:0;margin-right:4.46px;text-align:right;
+  }
+  /* Item 4 is the bare "4." line with DONE! set on it at the node's offset. */
+  .demo-backdrop[data-screen="calling"] .demo-callcard__list li:last-child{margin-bottom:0;position:relative}
+  .demo-backdrop[data-screen="calling"] .demo-callcard__list li:last-child::after{
+    content:"";position:absolute;left:1.005px;top:17.52px;width:44.392px;height:4.003px;pointer-events:none;
+    background:url('assets/demo-m-ul-done.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="calling"] .demo-callcard__done{
+    position:absolute;left:-.712px;top:-.218px;font-size:16.09px;line-height:13px;white-space:nowrap;
+    transform:rotate(-.44deg) skewX(-.22deg);
+  }
+
+  /* ---- failure (2511:1027) — card 331.15x232.13, no border ---- */
+  .demo-backdrop[data-screen="fail"] .demo-card{width:331.15px;border:0;border-radius:9.872px;top:-6.667px}
+  .demo-backdrop[data-screen="fail"] .demo-failcard{height:232.13px}
+  .demo-backdrop[data-screen="fail"] .demo-failcard::before{left:52.955px;top:22.818px;width:40.985px;height:55.881px}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__head{margin:0;height:0}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__title{
+    position:absolute;left:37.187px;top:29.976px;margin:0;font-size:16.134px;line-height:13px;white-space:nowrap;
+    text-transform:none;transform:rotate(-.44deg) skewX(-.22deg);
+  }
+  .demo-backdrop[data-screen="fail"] .demo-failcard__again{position:absolute;left:174.44px;top:25.913px;font-size:11.585px;line-height:22px;color:var(--navy);white-space:nowrap}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__body{
+    position:absolute;left:49.139px;top:60.929px;width:1195.936px;margin:0;font-size:53px;line-height:66.416px;color:var(--navy);
+    transform:scale(.218579);transform-origin:0 0; /* 4 lines at the node's 14.517px pitch */
+  }
+  .demo-backdrop[data-screen="fail"] .demo-failcard__links{position:absolute;left:74.689px;top:128.737px;width:200.48px;margin:0;display:block}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__link{display:block;position:relative;width:-webkit-fit-content;width:fit-content;height:18.426px;font-size:10.929px;line-height:18px;font-weight:400;color:var(--blue)}
+  /* Platform lockups beside each link (node 2659:1730 iPhone, 2659:1717 android). */
+  .demo-backdrop[data-screen="fail"] .demo-failcard__os{display:block;position:absolute;left:58.207px;top:3.722px;height:9.399px;width:auto;max-width:none}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__link + .demo-failcard__link .demo-failcard__os{top:3.875px}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__btn{
+    position:absolute;left:51.594px;top:180.264px;width:227.01px;max-width:none;height:24.077px;margin:0;padding:0;
+    display:flex;align-items:center;justify-content:center;border-radius:2.948px;
+    font-size:10.81px;font-weight:400;line-height:10px;background:var(--yellow);color:var(--navy);
+  }
+  .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#eab00c}
+
+  /* ---- success / recap (2441:811) — card 331.37x431.48 ---- */
+  .demo-backdrop[data-screen="recap"] .demo-card{width:331.37px;border:0;border-radius:9.669px;background:#fafcff;box-shadow:inset 0 0 0 .537px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="recap"] .demo-success{height:431.48px;text-align:left}
+  .demo-backdrop[data-screen="recap"] .demo-success::before{left:122.127px;top:112.347px;width:130.11px;height:177.14px}
+  .demo-backdrop[data-screen="recap"] .demo-success-title{
+    position:absolute;left:0;right:0;top:31.81px;height:12.893px;margin:0;text-align:center;
+    font-size:20.413px;line-height:13px;font-weight:400;white-space:nowrap;
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-never{font-size:28.729px;line-height:13px}
+  .demo-backdrop[data-screen="recap"] .demo-success-rest{font-size:20.413px;line-height:13px}
+  /* Brush under NEVER (node 2511:1018), offset from the card centre so it
+     follows the centred title. */
+  .demo-backdrop[data-screen="recap"] .demo-success-title::after{
+    content:"";position:absolute;left:calc(50% - 131.221px);top:19.465px;width:95.893px;height:8.375px;pointer-events:none;
+    background:url('assets/demo-m-ul-never.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-sub{
+    position:absolute;left:calc(50% - 110.6px);top:79.107px;width:1012px;max-width:none;margin:0;text-align:center;
+    font-size:53px;line-height:66.4px;color:var(--navy);
+    transform:scale(.218579);transform-origin:0 0; /* 2 lines at the node's 14.514px pitch */
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-sub b{font-weight:700}
+  .demo-backdrop[data-screen="recap"] .demo-chat{
+    position:absolute;left:35.746px;top:118.807px;width:259.02px;height:190.6px;max-height:none;margin:0;
+    padding:15.582px 29.22px 14px 10.319px;background:rgba(255,255,255,.31);border:0;border-radius:11.504px;
+    box-shadow:inset 0 0 0 .256px #e6e5ee,0 .219px .874px rgba(12,12,13,.1),0 .219px .874px rgba(12,12,13,.05);overflow-y:auto;
+    scrollbar-width:thin;scrollbar-color:#cbcbcb transparent;
+  }
+  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar{width:2.812px}
+  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar-thumb{background:#cbcbcb;border-radius:2.812px}
+  .demo-backdrop[data-screen="recap"] .demo-chat::-webkit-scrollbar-track{margin:64.5px 0 55.8px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow{margin:0 0 14.91px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow:last-child{margin-bottom:0}
+  /* Bubble text: 13px lines (node AUTO 61 / 4.575 = 13.333; WebKit truncates a
+     fractional line-height). Paddings keep a 3-line bubble at the node's height
+     and centre the .33px-per-line difference on the middle line. */
+  .demo-backdrop[data-screen="recap"] .demo-bubble{font-size:10.929px;line-height:13px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow--assistant .demo-bubble{
+    max-width:175.3px;margin-left:11.32px;padding:7.169px 9.18px 6.727px 8.524px;border-radius:7.209px;background:#f3f3f5;color:#787888;
+  }
+  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-bubble{
+    max-width:177.05px;margin-right:11.215px;padding:9.843px 10.49px 9.955px 11.148px;border-radius:6.408px;background:#e5e5ee;color:var(--navy);
+  }
+  .demo-backdrop[data-screen="recap"] .demo-chatmeta{align-items:center;gap:3.895px;margin-top:3.338px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta{gap:4.083px;margin-top:3.8px}
+  .demo-backdrop[data-screen="recap"] .demo-chatmeta__icon{width:12.015px;height:12.472px;flex:0 0 12.015px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:12.816px;flex-basis:12.816px}
+  .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:10.929px;line-height:13px}
+  .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:10.929px;line-height:13px;color:#787888;padding:62px 12px}
+  .demo-backdrop[data-screen="recap"] .demo-success-trial{
+    position:absolute;left:0;right:0;top:329.577px;display:block;height:15.47px;margin:0;text-align:center;
+    font-size:15.47px;line-height:15px;text-transform:none;transform:rotate(-4.06deg);
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-trial__sm{font-size:15.47px}
+  .demo-backdrop[data-screen="recap"] .demo-success-trial__big{font-size:28.619px;line-height:15px}
+  /* Brush under "30 days" (node 2511:1024): its own -2.16deg, so it sits on the
+     card, not inside the -4.06deg line. */
+  .demo-backdrop[data-screen="recap"] .demo-success::after{
+    content:"";position:absolute;z-index:1;left:calc(50% - 69.485px);top:352.54px;width:105.95px;height:8.738px;pointer-events:none;
+    background:url('assets/demo-m-ul-30days.svg') center/100% 100% no-repeat;transform:rotate(-2.16deg);
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-cta{
+    position:absolute;left:87.547px;top:378.257px;width:176.2px;max-width:none;height:30.083px;margin:0;padding:0;border-radius:3.223px;
+    font-size:11.818px;font-weight:500;line-height:10px;
+    box-shadow:0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05);
+    animation:demo-cta-glow 2s linear infinite,demo-cta-lift 2s linear infinite,demo-cta-scale 2s linear infinite;
+  }
+}
+/* Success CTA pulse — Figma motion on node 2442:1184 (2s loop: glow, a 3.2px
+   lift, a slight swell). Off for anyone who asks for reduced motion. */
+@keyframes demo-cta-glow{
+  0%{box-shadow:0 0 0 0 rgba(255,217,26,0),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  20%{box-shadow:0 0 4.919px 1.23px rgba(255,217,26,.45),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  25%{box-shadow:0 0 5.246px 1.311px rgba(255,217,26,.42),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  50%{box-shadow:0 0 3.431px .767px rgba(255,217,26,.25),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  60%{box-shadow:0 0 3.06px .656px rgba(255,217,26,.31),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  75%{box-shadow:0 0 3.716px .874px rgba(255,217,26,.4),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  90%{box-shadow:0 0 4.372px 1.093px rgba(255,217,26,.34),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+  100%{box-shadow:0 0 4.372px 1.093px rgba(255,217,26,.3),0 .193px .774px rgba(12,12,13,.1),0 .193px .774px rgba(12,12,13,.05)}
+}
+@keyframes demo-cta-lift{
+  0%{translate:0 0;animation-timing-function:ease-out}
+  25%{translate:0 -3.223px}
+  100%{translate:0 -3.223px}
+}
+@keyframes demo-cta-scale{
+  0%{scale:1;animation-timing-function:ease-in-out}
+  20%{scale:1.015;animation-timing-function:ease-in-out}
+  45%{scale:1;animation-timing-function:ease-in-out}
+  70%{scale:1.01;animation-timing-function:ease-in-out}
+  95%{scale:1}
+  100%{scale:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .demo-backdrop[data-screen="recap"] .demo-success-cta{animation:none}
 }
