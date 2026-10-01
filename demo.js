@@ -237,7 +237,7 @@
     step = opts.limit ? 'limit' : 'details';
     // Every field is required now (including Email) — Figma 2387:9076 / 2548:3438.
     var phone = field('Phone number', 'demo-phone', '(555) 555-1212', 'tel', state.display);
-    var biz = field('Business name', 'demo-business', 'John’s HVAC', 'text', state.business);
+    var biz = field('Business name', 'demo-business', 'Your Business Name', 'text', state.business);
     var email = field('Email', 'demo-email', 'yourname@example.com', 'email', state.email);
 
     // Single form-level error message shown above the button, with the offending
