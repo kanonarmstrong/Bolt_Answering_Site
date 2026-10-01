@@ -156,11 +156,11 @@
     document.body.appendChild(backdrop);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
   }
-  // Warm the mobile node art (brush underlines, arrow, OS lockups, watermark,
+  // Warm the mobile node art (brush underlines, OS lockups, watermark,
   // chat icons) when the modal opens, so the calling / recap / failure screens
   // later paint complete instead of popping the strokes in on a slow connection.
-  var MOBILE_ART = ['demo-m-ul-thankyou', 'demo-m-ul-done', 'demo-m-ul-never', 'demo-m-ul-30days',
-    'demo-m-arrow', 'demo-m-checker', 'demo-os-iphone', 'demo-os-android',
+  var MOBILE_ART = ['demo-m-ul-callyou', 'demo-m-ul-allset', 'demo-m-ul-done', 'demo-m-ul-never',
+    'demo-m-ul-30days', 'demo-m-checker', 'demo-os-iphone', 'demo-os-android',
     'demo-m-icon-assistant', 'demo-m-icon-caller'];
   var artWarmed = false;
   function warmMobileArt() {
@@ -187,8 +187,8 @@
     document.body.classList.remove('demo-lock');
   }
   // `screen` tags the backdrop (data-screen) so CSS can apply the pixel-matched
-  // mobile layouts (Figma 2633:860 / 919 / 1029) to just those screens; every
-  // other screen renders with the attribute empty (styling unchanged).
+  // mobile layouts (Figma 2657:1639 / 2442:1191 / 2441:811 / 2511:1027) to just
+  // those screens; every other screen renders with the attribute empty.
   function setBody(nodes, screen) {
     body.innerHTML = '';
     nodes.forEach(function (n) { if (n) body.appendChild(n); });
@@ -339,17 +339,21 @@
     ]) : null;
 
     setBody([
-      // Figma desktop 2387:9076 / mobile 2635:1141: marker title (one line on
-      // desktop, "We'll call / you right now" on mobile) + per-breakpoint sub.
+      // Figma desktop 2387:9076 / mobile 2657:1639: marker title (one line on
+      // desktop; "We'll call you" / "right now" on mobile, with the yellow brush
+      // under "call you") + per-breakpoint sub.
       h('h2', { class: 'demo-h demo-h--form' }, [
-        h('span', { class: 'demo-h__l1', text: 'We’ll call' }), ' ',
-        h('span', { class: 'demo-h__l2', text: 'you right now' })
+        h('span', { class: 'demo-h__l1' }, ['We’ll ', h('span', { class: 'demo-h__ul', text: 'call you' })]), ' ',
+        h('span', { class: 'demo-h__l2', text: 'right now' })
       ]),
-      h('p', { class: 'demo-sub' }, dm('We’ll send you a 6-digit one-time passcode before calling.', 'But first, we’ll send you a one-time passcode.')),
+      h('p', { class: 'demo-sub' }, dm('We’ll send you a 6-digit one-time passcode before calling.', 'But first, we’ll send a one-time passcode')),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
       formErr,
-      btn, disclosure, helpLine()
+      // The wrapper holds the disclosure's box on mobile, where the text is laid
+      // out at the node's 4.575x scale and scaled down (exact line pitch in
+      // WebKit, which truncates fractional line heights). Plain block on desktop.
+      btn, h('div', { class: 'demo-disclosure-wrap' }, [disclosure]), helpLine()
     ], 'phone');
     setTimeout(function () { phone.input.focus(); }, 30);
   }
@@ -479,14 +483,15 @@
   function clearResend() { if (resendTimer) { clearInterval(resendTimer); resendTimer = null; } }
 
   // ---------- token + call ----------
+  // The code is accepted: the canonical Calling You card goes up right away and
+  // stays up while the token + call requests run and through the call itself.
+  // It is never re-rendered, so there is no second "calling" screen and no
+  // flash between two (AFMBP-1982). Logical steps are unchanged for analytics:
+  // 'placing' until the call is placed, then 'in_call'.
   function placeCall() {
     stopConfetti();
     step = 'placing';
-    setBody([
-      h('div', { class: 'demo-ring' }, [svg('<path d="M5 4h4l2 5-3 2a11 11 0 005 5l2-3 5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>')]),
-      heading('Placing your call…'),
-      sub('Hang tight — your phone should ring in a few seconds.')
-    ]);
+    var numberEl = renderCalling();
     apiPost('/api/demo/token', {
       phone: state.phone, trade: TRADE, voice: VOICE,
       businessName: state.business, locale: 'en', source: 'marketing'
@@ -499,9 +504,12 @@
       }
       return apiPost('/api/demo/call', { token: r.data.token }).then(function (c) {
         if (c.ok) {
+          step = 'in_call';
           // callerId is the number that will actually ring the user. Absent today
-          // (fmtDemoNumber falls back); populated once the backend returns it.
-          renderInCall(c.data && c.data.callerId);
+          // (the card already shows the fmtDemoNumber fallback); updated in place
+          // once the backend returns it.
+          if (c.data && c.data.callerId) numberEl.textContent = fmtDemoNumber(c.data.callerId);
+          playConfetti();
           var callId = c.data && c.data.callId;
           // call_id = the server's demo_calls row: the funnel report reads the
           // call's real outcome there, even if a browser event never arrives.
@@ -516,34 +524,37 @@
     });
   }
 
-  // ---------- screen: in-call (call placed, ringing) — Figma 2370:8769 ----------
-  function renderInCall(fromNumber) {
+  // ---------- screen: Calling You — Figma desktop 2370:8769 / mobile 2442:1191 ----------
+  // Shown from the moment the code is accepted until the call resolves. Returns
+  // the number element so placeCall() can swap in the backend's caller-id.
+  // Copy is the nodes' (desktop keeps its "(…make something up.)" aside; mobile
+  // reads "Share fake details to schedule"). Marker copy is mixed case
+  // (Permanent Marker renders lowercase as small caps); desktop CSS uppercases
+  // it. Title + "Calling you now from" are separate spans: inline on desktop,
+  // placed on one line at the node's offsets on mobile.
+  function renderCalling(fromNumber) {
     clearResend();
-    step = 'in_call';
-    // OTP accepted -> placing the call. Desktop copy = Figma 2370:8769 ("All set!",
-    // "...potential project"); mobile copy = Figma 2633:860 ("Thank you!", "...or
-    // project"). dm() renders both; CSS shows one per breakpoint. Marker copy is
-    // mixed case (Permanent Marker renders lowercase as small caps); desktop CSS
-    // uppercases it. The title and "Calling you now from" line are separate
-    // spans: inline on desktop, stacked + centred title on mobile.
-    // fromNumber is the backend's caller-id when present, else the fallback.
-    var display = fmtDemoNumber(fromNumber);
+    var numberEl = h('b', { text: fmtDemoNumber(fromNumber) });
     setBody([
       h('div', { class: 'demo-callcard' }, [
         h('p', { class: 'demo-callcard__head' }, [
-          h('span', { class: 'demo-mk demo-ul demo-callcard__title' }, dm('All set!', 'Thank you!')),
-          h('span', { class: 'demo-callcard__from' }, [' Calling you now from ', h('b', { text: display })])
+          h('span', { class: 'demo-mk demo-ul demo-callcard__title', text: 'All set!' }),
+          h('span', { class: 'demo-callcard__from' }, [' Calling you now from ', numberEl])
         ]),
         h('p', { class: 'demo-callcard__expect demo-mk', text: 'What to expect:' }),
         h('ol', { class: 'demo-callcard__list' }, [
           h('li', {}, ['She’ll introduce herself']),
-          h('li', {}, ['Tell her about an issue or '].concat(dm('potential ', ''), ['project'])),
-          h('li', {}, ['Share details to schedule ', h('span', { class: 'demo-callcard__aside' }, dm('(…make something up.)', '(...make something up.)'))]),
-          h('li', {}, [h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
+          h('li', {}, ['Tell her about an issue or potential project']),
+          h('li', {}, [
+            h('span', { class: 'demo-d' }, ['Share details to schedule ', h('span', { class: 'demo-callcard__aside', text: '(…make something up.)' })]),
+            h('span', { class: 'demo-m', text: 'Share fake details to schedule' })
+          ]),
+          // A zero-width space keeps the "4." line when mobile lifts DONE! onto it.
+          h('li', {}, ['\u200B', h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
         ])
       ])
     ], 'calling');
-    playConfetti();
+    return numberEl;
   }
 
   // ---------- recap polling ----------
@@ -642,12 +653,12 @@
 
     setBody([
       h('div', { class: 'demo-success' }, [
-        // Desktop copy = Figma 2370:8784 ("miss a job again." / "…"); mobile copy =
-        // Figma 2633:919 (no period, "..." lead-in).
+        // Desktop copy = Figma 2370:8784 ("…" lead-in); mobile copy = Figma
+        // 2441:811 ("..." lead-in). Both read "miss a job again."
         h('h2', { class: 'demo-success-title' }, [
           h('span', { class: 'demo-mk demo-ul demo-success-never', text: 'NEVER' }),
           document.createTextNode(' '),
-          h('span', { class: 'demo-success-rest' }, ['miss a job again'].concat(dm('.', '')))
+          h('span', { class: 'demo-success-rest', text: 'miss a job again.' })
         ]),
         h('p', { class: 'demo-success-sub' }, dm(
           '…every detail is captured so you’ll never miss a beat. ',
@@ -659,9 +670,7 @@
           h('span', { class: 'demo-success-trial__big demo-ul', text: '30 days' }),
           h('span', { class: 'demo-success-trial__sm', text: ' are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', { from: 'recap', call_id: finishedFor }); } }, ['Start my free trial now']),
-        // Hand-drawn arrow pointing at the CTA — mobile only (hidden on desktop).
-        h('img', { class: 'demo-success-arrow', src: 'assets/demo-m-arrow.svg', alt: '', 'aria-hidden': 'true' })
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', { from: 'recap', call_id: finishedFor }); } }, ['Start my free trial now'])
       ])
     ], 'recap');
   }
@@ -673,16 +682,15 @@
     // Call didn't happen (Figma 2511:1027 / 2370:8833). Most no-shows are the
     // caller's spam blocker eating the call, so point them at the fix pages.
     // The button re-places the call -> back to the "calling you" screen.
-    // Desktop (Figma 2370:8833): yellow "Call me again"; mobile (Figma 2633:1029):
-    // blue "Try again" (mobile CSS recolours it).
-    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button' }, dm('Call me again', 'Try again'));
+    // Yellow "Call me again" on both (Figma desktop 2370:8833 / mobile 2511:1027).
+    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button', text: 'Call me again' });
     btn.addEventListener('click', function () { placeCall(); });
     // Marker copy is lowercase per the nodes (renders as uniform small caps);
     // desktop CSS re-uppercases it. On mobile each link also carries the
     // platform lockup (Apple / Android logo) the mobile node shows beside it.
-    function osLink(href, desktopName, mobileName, logo) {
+    function osLink(href, name, logo) {
       return h('a', { class: 'demo-failcard__link', href: href, target: '_blank', rel: 'noopener' }, [
-        h('span', { class: 'demo-failcard__osname' }, dm(desktopName, mobileName)),
+        h('span', { class: 'demo-failcard__osname', text: name }),
         h('img', { class: 'demo-failcard__os', src: logo, alt: '', 'aria-hidden': 'true' })
       ]);
     }
@@ -690,12 +698,12 @@
       h('div', { class: 'demo-failcard' }, [
         h('p', { class: 'demo-failcard__head' }, [
           h('span', { class: 'demo-mk demo-failcard__title', text: 'that didn’t work.' }),
-          document.createTextNode(' Let’s try again.')
+          h('span', { class: 'demo-failcard__again', text: ' Let’s try again.' })
         ]),
         h('p', { class: 'demo-failcard__body', text: 'Sometimes Bolt calls get spam blocked. Here’s how to temporarily turn off spam blockers so you can try an assistant. Follow these instructions, then come back and try again.' }),
         h('div', { class: 'demo-failcard__links' }, [
-          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'iPhone', 'assets/demo-os-iphone.svg'),
-          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'Android', 'assets/demo-os-android.svg')
+          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'assets/demo-os-iphone.svg'),
+          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'assets/demo-os-android.svg')
         ]),
         btn
       ])
@@ -736,7 +744,7 @@
   // screenshot verification, without walking the live OTP/call API. No effect otherwise.
   if (typeof window !== 'undefined' && /[?&]demoqa=1/.test(window.location.search)) {
     window.__demoQA = {
-      open: function () { openModal('qa'); }, phone: renderPhone, code: renderCode, inCall: renderInCall,
+      open: function () { openModal('qa'); }, phone: renderPhone, code: renderCode, inCall: renderCalling,
       recap: renderRecap, fail: renderCallFailed, limit: renderLimit, error: renderError,
       state: state
     };
