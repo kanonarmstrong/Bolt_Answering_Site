@@ -569,13 +569,15 @@
           if (d && d.status === 'completed') {
             if (finishedFor !== callId) {
               finishedFor = callId;
-              track('demo_call_finished', { call_id: callId, transcript: normTurns(d.transcript).length > 0 });
+              // The call has ended (answered or not). The transcript usually lands a
+              // few polls later; demo_transcript_shown marks a real conversation.
+              track('demo_call_finished', { call_id: callId });
             }
-            if (normTurns(d.transcript).length > 0) { stopRecap(); return renderRecap(d); }
+            if (normTurns(d.transcript).length > 0) { stopRecap(); track('demo_transcript_shown', { call_id: callId }); return renderRecap(d); }
             // Completed, but the transcript isn't back yet (the server is still
             // pulling it from Telnyx). Switch to the recap now, keep polling.
             if (!recapShown) { recapShown = true; renderRecap(d); }
-            if (Date.now() - started > 240000) { stopRecap(); return renderRecap(d, { transcriptUnavailable: true }); }
+            if (Date.now() - started > 240000) { stopRecap(); track('demo_transcript_unavailable', { call_id: callId }); return renderRecap(d, { transcriptUnavailable: true }); }
             recapTimer = setTimeout(tick, 3000);
             return;
           }
