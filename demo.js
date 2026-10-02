@@ -230,11 +230,12 @@
   function renderPhone(opts) {
     opts = opts || {};
     step = opts.limit ? 'limit' : 'details';
-    // Labels = Figma 2657:1639 on both breakpoints. Phone + business name are
-    // required; email is optional (AFMBP-2000). The business placeholder stays
-    // the owner's "Your Business Name" (AFMBP-1999), not the node's example.
+    // Labels = Figma 2657:1639 on both breakpoints, except the business label
+    // ("What’s your business called?", owner, AFMBP-2003). Phone + business name
+    // are required; email is optional (AFMBP-2000). The business placeholder is
+    // the owner's "Business name" (AFMBP-2003; node 2664:800), on every page.
     var phone = field('What’s your phone number?', 'demo-phone', '(555) 555-1212', 'tel', state.display, true);
-    var biz = field('What’s your business name?', 'demo-business', 'Your Business Name', 'text', state.business, true);
+    var biz = field('What’s your business called?', 'demo-business', 'Business name', 'text', state.business, true);
     var email = field(['What’s your email? ', h('span', { class: 'demo-label__opt', text: '(optional)' })],
       'demo-email', 'yourname@example.com', 'email', state.email, false);
     var byKey = { phone: phone, business: biz, email: email };
