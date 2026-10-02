@@ -65,6 +65,47 @@
     return /\p{L}/u.test(s == null ? '' : String(s));
   }
 
+  // ---- the demo form's rules (AFMBP-2000) ----
+  function str(s) { return s == null ? '' : String(s); }
+
+  // Email is optional: blank, or spaces only, means no email. Anything typed
+  // must still be a real address.
+  function normEmail(s) { return str(s).trim(); }
+  function emailOk(s) { var v = normEmail(s); return v === '' || validEmail(v); }
+
+  // Continue unlocks once phone and business name both have something in them.
+  // Email never gates it. What they hold is checked on tap (checkForm).
+  function formComplete(v) {
+    v = v || {};
+    return str(v.phone).trim() !== '' && str(v.business).trim() !== '';
+  }
+
+  // What a tap on Continue finds wrong, in priority order: missing required ->
+  // phone -> business -> email. null = good to send. `fields` are form keys.
+  var MSG_INCOMPLETE = 'Please complete the form to continue.';
+  function checkForm(v) {
+    v = v || {};
+    var missing = [];
+    if (str(v.phone).trim() === '') missing.push('phone');
+    if (str(v.business).trim() === '') missing.push('business');
+    if (missing.length) return { fields: missing, msg: MSG_INCOMPLETE };
+    if (!validPhone(v.phone)) return { fields: ['phone'], msg: 'Invalid phone number. Please try again.' };
+    if (!validBusiness(v.business)) return { fields: ['business'], msg: 'Invalid business name. Please try again.' };
+    if (!emailOk(v.email)) return { fields: ['email'], msg: 'Invalid email address. Please try again.' };
+    return null;
+  }
+
+  // Body for /api/demo/otp/send. No email -> no `email` key at all: the server
+  // treats a missing address as "no marketing lead" and never needs one to text
+  // the code. Never a made-up address.
+  function otpSendBody(v, consentText) {
+    v = v || {};
+    var body = { phone: v.phone, businessName: v.business, consentText: consentText };
+    var email = normEmail(v.email);
+    if (email) body.email = email;
+    return body;
+  }
+
   return {
     digits: digits,
     nationalDigits: nationalDigits,
@@ -72,6 +113,12 @@
     e164: e164,
     fmtPhone: fmtPhone,
     validEmail: validEmail,
-    validBusiness: validBusiness
+    validBusiness: validBusiness,
+    normEmail: normEmail,
+    emailOk: emailOk,
+    formComplete: formComplete,
+    checkForm: checkForm,
+    otpSendBody: otpSendBody,
+    MSG_INCOMPLETE: MSG_INCOMPLETE
   };
 });
