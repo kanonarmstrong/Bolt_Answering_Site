@@ -91,3 +91,77 @@ test('email: malformed / blank fails', () => {
 test('email: surrounding whitespace is trimmed before validating', () => {
   assert.equal(DF.validEmail('  john@gmail.com  '), true);
 });
+
+// ---- the demo form's rules: email is optional (AFMBP-2000) ----
+const OK = { phone: '(415) 555-1234', business: 'QA Test Co' };
+
+test('form: empty email is valid and does not block Continue', () => {
+  assert.equal(DF.emailOk(''), true);
+  assert.equal(DF.formComplete({ ...OK, email: '' }), true);
+  assert.equal(DF.checkForm({ ...OK, email: '' }), null);
+});
+
+test('form: whitespace-only email normalizes to empty and is valid', () => {
+  assert.equal(DF.normEmail('   '), '');
+  assert.equal(DF.emailOk('   '), true);
+  assert.equal(DF.checkForm({ ...OK, email: '   ' }), null);
+});
+
+test('form: a missing email key is the same as a blank one', () => {
+  assert.equal(DF.formComplete(OK), true);
+  assert.equal(DF.checkForm(OK), null);
+});
+
+test('form: valid email is accepted', () => {
+  assert.equal(DF.emailOk('james@example.com'), true);
+  assert.equal(DF.checkForm({ ...OK, email: 'james@example.com' }), null);
+});
+
+test('form: malformed non-empty email is rejected with the email message', () => {
+  for (const bad of ['james', '@example.com', 'james@', 'james@example', 'ja mes@example.com']) {
+    assert.equal(DF.emailOk(bad), false, bad);
+    assert.deepEqual(DF.checkForm({ ...OK, email: bad }), { fields: ['email'], msg: 'Invalid email address. Please try again.' }, bad);
+  }
+});
+
+test('form: a malformed email does not grey out Continue (it is caught on tap)', () => {
+  assert.equal(DF.formComplete({ ...OK, email: 'james' }), true);
+});
+
+test('form: email is never in the required set', () => {
+  const r = DF.checkForm({ phone: '', business: '', email: '' });
+  assert.deepEqual(r, { fields: ['phone', 'business'], msg: 'Please complete the form to continue.' });
+  assert.ok(!r.fields.includes('email'));
+});
+
+test('form: phone and business name still gate Continue', () => {
+  assert.equal(DF.formComplete({ phone: '', business: '' }), false);
+  assert.equal(DF.formComplete({ phone: '(415) 555-1234', business: '' }), false);
+  assert.equal(DF.formComplete({ phone: '', business: 'QA Test Co' }), false);
+  assert.equal(DF.formComplete({ phone: '   ', business: 'QA Test Co' }), false);
+  assert.equal(DF.formComplete({ phone: '(415) 555-1234', business: '  ' }), false);
+  assert.deepEqual(DF.checkForm({ phone: '(415) 555-1234', business: '' }).fields, ['business']);
+  assert.deepEqual(DF.checkForm({ phone: '', business: 'QA Test Co', email: 'james@example.com' }).fields, ['phone']);
+});
+
+test('form: an incomplete or invalid phone still blocks, before any email check', () => {
+  assert.equal(DF.formComplete({ phone: '555', business: 'QA Test Co' }), true);
+  assert.deepEqual(DF.checkForm({ phone: '555', business: 'QA Test Co', email: 'james' }), { fields: ['phone'], msg: 'Invalid phone number. Please try again.' });
+});
+
+test('form: a business name with no letters still blocks', () => {
+  assert.deepEqual(DF.checkForm({ phone: '(415) 555-1234', business: '123', email: '' }), { fields: ['business'], msg: 'Invalid business name. Please try again.' });
+});
+
+test('otp/send body: no email -> no email key (never a placeholder address)', () => {
+  for (const e of ['', '   ', undefined, null]) {
+    const b = DF.otpSendBody({ phone: '+14155551234', business: 'QA Test Co', email: e }, 'CONSENT');
+    assert.equal('email' in b, false, String(e));
+    assert.deepEqual(b, { phone: '+14155551234', businessName: 'QA Test Co', consentText: 'CONSENT' });
+  }
+});
+
+test('otp/send body: a given email is sent trimmed', () => {
+  const b = DF.otpSendBody({ phone: '+14155551234', business: 'QA Test Co', email: '  james@example.com ' }, 'CONSENT');
+  assert.equal(b.email, 'james@example.com');
+});
