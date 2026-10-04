@@ -782,7 +782,12 @@
   // alongside any utm_* / click-id params). Closing it leaves the visitor on
   // the page; the trade still comes from the page path, as with the buttons.
   function autoOpen() {
-    if (/[?&]talk(=|&|$)/.test(window.location.search)) openModal('ad_link');
+    if (!/[?&]talk(=|&|$)/.test(window.location.search)) return;
+    // AFMBP-2010: open (and log `demo_opened`) only once someone is looking at
+    // the page. A preloaded or prerendered ad landing is not a demo opened.
+    var whenVisible = window.boltAttr && window.boltAttr.whenVisible;
+    if (whenVisible) whenVisible(function () { openModal('ad_link'); });
+    else openModal('ad_link');
   }
   function init() {
     wire();
