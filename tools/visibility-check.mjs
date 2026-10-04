@@ -3,7 +3,8 @@
 import { spawn } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
-const PORT = 8765, DBG = 9339;
+// Random ports: a previous run's server or browser still shutting down must not answer this one.
+const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const srv = spawn('python3', ['-m', 'http.server', String(PORT), '--bind', '127.0.0.1', '--directory', ROOT], { stdio: 'ignore' });
 const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${mkdtempSync('/tmp/cdp-2010-')}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
