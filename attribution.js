@@ -3,7 +3,9 @@
    Loaded on every page. It:
    - keeps an anonymous visitor id and the latest ad touch (utm_* and
      any ad click id) in localStorage;
-   - logs `site_landed` once per browser session;
+   - logs `site_landed` once per browser session, once the page is actually
+     seen (AFMBP-2010: a preloaded, prerendered or background page logs
+     nothing);
    - hands both to the app on every signup link (?bvid=…&utm_*=…), so a
      person's demo and signup join up in Bolt's analytics;
    - exposes window.boltAttr.track() for the demo flow (demo.js).
@@ -57,6 +59,37 @@
   else if (params.get('bolt_qa') === '0') remove('bolt_qa');
   function isQa() { return get('bolt_qa') === '1' || /[?&]demoqa=1(&|$)/.test(window.location.search); }
 
+  // ---------- count only a page someone sees (AFMBP-2010) ----------
+  // A page can run without anyone looking at it: browsers prerender likely next
+  // pages, apps preload links in the background, and automated browsers (ad
+  // review, link scanners) load landing pages. Counting those inflated
+  // "landed" (and, on ?talk ad links, "opened the demo") past the ad platforms'
+  // click counts. Anything that should count a real view waits for whenVisible.
+  function isVisible() {
+    var vs = document.visibilityState;
+    return (!vs || vs === 'visible') && !document.prerendering;
+  }
+  var visibleAtLoad = isVisible();
+  var loadedAt = Date.now();
+  function whenVisible(fn) {
+    var done = false;
+    function check() {
+      if (done || !isVisible()) return;
+      done = true;
+      document.removeEventListener('visibilitychange', check);
+      document.removeEventListener('prerenderingchange', check);
+      fn();
+    }
+    document.addEventListener('visibilitychange', check);
+    document.addEventListener('prerenderingchange', check);
+    check();
+  }
+  // An automated browser (ad review, link scanners, test rigs) announces itself
+  // here; every event says so, so reporting can leave the whole visitor out.
+  function isAutomated() {
+    try { return window.navigator.webdriver === true; } catch (e) { return false; }
+  }
+
   // The latest ad touch wins; a visit with no touch keeps the stored one.
   (function captureTouch() {
     var touch = {}, any = false;
@@ -90,6 +123,7 @@
       var touch = getTouch();
       if (touch) data.attr = touch;
       if (isQa()) data.qa = true;
+      if (isAutomated()) data.automated = true;
       // JSON + keepalive (not sendBeacon: the ingest parses JSON only), so an
       // event fired just before a navigation still leaves.
       window.fetch(API + '/api/public/analytics/events', {
@@ -159,13 +193,17 @@
     track('site_landed', {
       referrer: ref,
       device: mobile ? 'mobile' : 'desktop',
-      talk_link: /[?&]talk(=|&|$)/.test(window.location.search)
+      talk_link: /[?&]talk(=|&|$)/.test(window.location.search),
+      // Diagnostics: was the page visible when it loaded, and if not, how long
+      // it waited before someone saw it.
+      visible_at_load: visibleAtLoad,
+      hidden_ms: visibleAtLoad ? 0 : Math.max(0, Date.now() - loadedAt)
     });
   }
 
-  function init() { decorateAll(); landed(); }
+  function init() { decorateAll(); whenVisible(landed); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.boltAttr = { track: track, visitorId: visitorId, touch: getTouch, decorate: decorate };
+  window.boltAttr = { track: track, visitorId: visitorId, touch: getTouch, decorate: decorate, whenVisible: whenVisible };
 })();
