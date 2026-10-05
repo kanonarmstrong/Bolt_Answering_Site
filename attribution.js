@@ -8,7 +8,8 @@
      nothing);
    - hands both to the app on every signup link (?bvid=…&utm_*=…), so a
      person's demo and signup join up in Bolt's analytics;
-   - exposes window.boltAttr.track() for the demo flow (demo.js).
+   - exposes window.boltAttr.track() for the demo flow (demo.js), and
+     announces each event as a `bolt:track` window event (meta-pixel.js).
    Events go to Bolt's own ingest with source 'site'. No personal data,
    ever: never a phone number, email, name or business name.
    Storage can be unavailable (private mode, blocked site data); then
@@ -134,6 +135,9 @@
           events: [{ event_type: event, session_id: visitorId(), source: 'site', event_data: data }]
         })
       }).catch(function () {});
+      // Other first-party scripts follow the funnel through this event rather
+      // than hooking track(): meta-pixel.js (AFMBP-2021) maps a few steps to Meta.
+      try { window.dispatchEvent(new CustomEvent('bolt:track', { detail: { event: event, data: data } })); } catch (e) {}
     } catch (e) {}
   }
 
@@ -205,5 +209,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.boltAttr = { track: track, visitorId: visitorId, touch: getTouch, decorate: decorate, whenVisible: whenVisible };
+  window.boltAttr = { track: track, visitorId: visitorId, touch: getTouch, decorate: decorate, whenVisible: whenVisible, isQa: isQa, isAutomated: isAutomated };
 })();
