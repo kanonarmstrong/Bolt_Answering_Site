@@ -5,7 +5,7 @@
 // recording stub, the ingest and the demo API are stubbed in-page, and app.boltanswering.com
 // navigations are cancelled.
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
 const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
@@ -20,13 +20,17 @@ const srv = createServer((req, res) => {
     let body = readFileSync(f);
     if (p.endsWith('meta-pixel.js')) {
       const src = body.toString('utf8');
-      if (!src.includes("var PIXEL_ID = '';")) throw new Error('meta-pixel.js must ship with an empty PIXEL_ID');
-      body = Buffer.from(src.replace("var PIXEL_ID = '';", `var PIXEL_ID = '${pixelId}';`));
+      // Every scenario serves its own test ID in place of whatever the file carries (the real one
+      // since AFMBP-2019), so a run can never send to the live pixel even if the stub failed.
+      const ID_LINE = /var PIXEL_ID = '[0-9]*';/;
+      if ((src.match(new RegExp(ID_LINE.source, 'g')) || []).length !== 1) throw new Error('meta-pixel.js must carry exactly one PIXEL_ID line');
+      body = Buffer.from(src.replace(ID_LINE, `var PIXEL_ID = '${pixelId}';`));
     }
     res.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream' }); res.end(body);
   } catch { res.writeHead(404); res.end(); }
 }).listen(PORT, '127.0.0.1');
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${mkdtempSync('/tmp/cdp-2021-')}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
+const PROFILE = mkdtempSync('/tmp/cdp-2021-'); // removed at exit (each run's profile is ~50-90 MB)
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 for (let i = 0; i < 100; i++) { try { if ((await fetch(`http://127.0.0.1:${PORT}/index.html`)).ok) break; } catch {} await sleep(100); }
 let ver; for (let i = 0; i < 50 && !ver; i++) { try { ver = await (await fetch(`http://127.0.0.1:${DBG}/json/version`)).json(); } catch { await sleep(200); } }
@@ -190,4 +194,4 @@ const [r10] = await scenario({ name: 'trial click', steps: [{ path: '/hvac.html?
 ok(tracks(r10, 'StartTrialClick').length === 1, `one StartTrialClick (${JSON.stringify(tracks(r10, 'StartTrialClick')[0]?.[2] ?? null)})`);
 
 console.log(fails ? `\n${fails} FAILED` : '\nALL PASS');
-ws.close(); chrome.kill(); srv.close(); process.exit(fails ? 1 : 0);
+ws.close(); chrome.kill('SIGKILL'); srv.close(); await sleep(300); rmSync(PROFILE, { recursive: true, force: true }); process.exit(fails ? 1 : 0);
