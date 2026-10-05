@@ -97,6 +97,7 @@ async function scenario({ name, steps, pre = '', automated = false, id = TEST_ID
       meta: JSON.parse(await evalv('JSON.stringify(window.boltMeta || null)')),
       hasFbq: await evalv("typeof window.fbq === 'function'"),
       loads: fbeventsLoads,
+      probe: step.probe ? await evalv(step.probe) : undefined,
     });
   }
   listeners.splice(listeners.indexOf(onMsg), 1);
@@ -163,19 +164,26 @@ ok(r7b.loads === 1 && tracks(r7b, 'PageView').length === 1, 'loads and sends one
 
 console.log('[8] demo verified: Lead with the event_id the server gets');
 const [r8] = await scenario({ name: 'demo lead', steps: [{ path: TALK, act: DEMO, until: "(window.__fbq || []).some(c => c[1] === 'Lead')" }] });
-const body8 = r8.verify[0] ?? {}; const lead8 = tracks(r8, 'Lead');
-console.log(`    verify body keys: ${Object.keys(body8).sort().join(', ')}`);
-ok(lead8.length === 1 && lead8[0][3]?.eventID && lead8[0][3].eventID === body8.event_id, `one Lead, eventID = the verify body's event_id (${body8.event_id})`);
+const body8 = r8.verify[0] ?? {}; const lead8 = tracks(r8, 'Lead'); const m8 = body8.meta ?? {};
+console.log(`    verify body keys: ${Object.keys(body8).sort().join(', ')} | meta: ${Object.keys(m8).sort().join(', ')}`);
+ok(lead8.length === 1 && lead8[0][3]?.eventID && lead8[0][3].eventID === m8.event_id, `one Lead, eventID = the verify body's meta.event_id (${m8.event_id})`);
 ok(body8.sessionId && body8.sessionId === r8.sent.find((e) => e.type === 'site_landed')?.sid, `verify body carries the visitor id the ingest saw (${body8.sessionId})`);
-ok(body8.fbp === 'fb.1.1700000000000.1111111111' && body8.fbc === 'fb.1.1700000000000.TESTCLICK', 'verify body carries _fbp and _fbc');
-ok(r8.sent.some((e) => e.type === 'demo_code_verified' && e.data.event_id === body8.event_id), 'the first-party demo_code_verified carries the same event_id');
+ok(m8.fbp === 'fb.1.1700000000000.1111111111' && m8.fbc === 'fb.1.1700000000000.TESTCLICK', 'verify body meta carries _fbp and _fbc');
+ok(r8.sent.some((e) => e.type === 'demo_code_verified' && e.data.event_id === m8.event_id), 'the first-party demo_code_verified carries the same event_id');
 
 console.log('[9] demo verified with GPC: no Meta ids leave');
 const [r9] = await scenario({ name: 'demo gpc', pre: GPC, steps: [{ path: TALK, act: DEMO, until: '(window.__verify || []).length > 0' }] });
 const body9 = r9.verify[0] ?? {};
 console.log(`    verify body keys: ${Object.keys(body9).sort().join(', ')}`);
-ok(!('event_id' in body9) && !('fbp' in body9) && !('fbc' in body9) && body9.sessionId, 'no event_id / fbp / fbc; the visitor id still goes (first-party)');
+ok(!('meta' in body9) && body9.sessionId, 'no meta ids at all; the visitor id still goes (first-party)');
 ok(r9.loads === 0 && r9.fbq.length === 0, 'and no pixel');
+
+console.log('[10a] signup links carry our QA flag into the app');
+const SIGNUP_HREF = "([...document.querySelectorAll('a')].find(x => /app\\.boltanswering\\.com\\/signup/.test(x.href) && !x.closest('.demo-backdrop')) || {}).href || ''";
+const r10a = await scenario({ name: 'qa decorate', steps: [{ path: '/hvac.html?bolt_qa=1', waitMs: 1500, probe: SIGNUP_HREF }, { path: '/hvac.html?bolt_qa=0', waitMs: 1500, probe: SIGNUP_HREF }] });
+console.log(`    QA: ${r10a[0].probe} | cleared: ${r10a[1].probe}`);
+ok(/[?&]bolt_qa=1(&|$)/.test(r10a[0].probe) && /[?&]bvid=/.test(r10a[0].probe), 'a QA browser hands bolt_qa=1 (and the visitor id) to the app');
+ok(r10a[1].probe.includes('bvid=') && !/bolt_qa/.test(r10a[1].probe), 'after ?bolt_qa=0 it does not');
 
 console.log('[10] signup link tapped');
 const [r10] = await scenario({ name: 'trial click', steps: [{ path: '/hvac.html?utm_source=fb', act: "setTimeout(() => { const a = [...document.querySelectorAll('a')].find(x => /app\\.boltanswering\\.com\\/signup/.test(x.href) && !x.closest('.demo-backdrop')); a && a.click(); }, 1500)", until: "(window.__fbq || []).some(c => c[1] === 'StartTrialClick')" }] });

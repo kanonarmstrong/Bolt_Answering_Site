@@ -158,6 +158,9 @@
         UTM.forEach(function (k) { if (touch[k]) u.searchParams.set(k, touch[k]); });
         if (touch.click_id_type && touch.click_id) u.searchParams.set(touch.click_id_type, touch.click_id);
       }
+      // Our own test browsers stay test browsers in the app (AFMBP-2021: the app's
+      // pixel and analytics leave QA out the same way the site does).
+      if (isQa()) u.searchParams.set('bolt_qa', '1');
       return u.toString();
     } catch (e) { return href; }
   }

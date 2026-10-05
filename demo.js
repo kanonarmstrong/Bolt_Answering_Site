@@ -86,12 +86,13 @@
     } catch (e) { return null; }
   }
   // Ids for Meta's Conversions API (AFMBP-2021), only when the pixel is allowed
-  // to run in this browser (meta-pixel.js decides: GPC, opt-out, QA, automation).
-  // event_id is shared by the browser's Lead and the server's copy, so Meta
-  // counts the lead once; _fbp / _fbc let Meta match the server copy to the ad.
+  // to run in this browser (meta-pixel.js decides: GPC, opt-out, QA, automation);
+  // null otherwise. event_id is shared by the browser's Lead and the server's
+  // copy, so Meta counts the lead once; _fbp / _fbc let Meta match the server
+  // copy to the ad.
   function metaIds() {
     var m = window.boltMeta;
-    if (!m || !m.enabled) return {};
+    if (!m || !m.enabled) return null;
     var ids = { event_id: m.newEventId() };
     var fbp = cookie('_fbp'), fbc = cookie('_fbc');
     if (fbp) ids.fbp = fbp;
@@ -99,12 +100,12 @@
     return ids;
   }
   // /api/demo/otp/verify body: the phone and code, the visitor id (AFMBP-2020:
-  // a later signup with the same phone carries this visit's ad), and the Meta
-  // ids when the pixel is allowed. The server ignores what it doesn't use.
+  // a later signup with the same phone carries this visit's ad), and `meta`
+  // when the pixel is allowed. The server ignores what it doesn't use.
   function verifyBody(c, meta) {
     var b = { phone: state.phone, code: c };
     try { if (window.boltAttr && window.boltAttr.visitorId) b.sessionId = window.boltAttr.visitorId(); } catch (e) {}
-    Object.keys(meta).forEach(function (k) { b[k] = meta[k]; });
+    if (meta) b.meta = meta;
     return b;
   }
   function reasonOf(r) { return (r && (r.error || (r.status ? 'http_' + r.status : 'network'))) || 'unknown'; }
@@ -462,7 +463,7 @@
       busy(btn, 'Verifying…');
       var meta = metaIds();
       apiPost('/api/demo/otp/verify', verifyBody(c, meta)).then(function (r) {
-        if (r.ok) { track('demo_code_verified', meta.event_id ? { event_id: meta.event_id } : null); return placeCall(); }
+        if (r.ok) { track('demo_code_verified', meta ? { event_id: meta.event_id } : null); return placeCall(); }
         track('demo_code_failed', { reason: reasonOf(r) });
         unbusy(btn, 'Continue');
         if (r.error === 'incorrect') renderCode({ error: 'Wrong code. Please try again or request another code.' });
