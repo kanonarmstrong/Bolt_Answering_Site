@@ -20,8 +20,11 @@ const srv = createServer((req, res) => {
     let body = readFileSync(f);
     if (p.endsWith('meta-pixel.js')) {
       const src = body.toString('utf8');
-      if (!src.includes("var PIXEL_ID = '';")) throw new Error('meta-pixel.js must ship with an empty PIXEL_ID');
-      body = Buffer.from(src.replace("var PIXEL_ID = '';", `var PIXEL_ID = '${pixelId}';`));
+      // Every scenario serves its own test ID in place of whatever the file carries (the real one
+      // since AFMBP-2019), so a run can never send to the live pixel even if the stub failed.
+      const ID_LINE = /var PIXEL_ID = '[0-9]*';/;
+      if ((src.match(new RegExp(ID_LINE.source, 'g')) || []).length !== 1) throw new Error('meta-pixel.js must carry exactly one PIXEL_ID line');
+      body = Buffer.from(src.replace(ID_LINE, `var PIXEL_ID = '${pixelId}';`));
     }
     res.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream' }); res.end(body);
   } catch { res.writeHead(404); res.end(); }

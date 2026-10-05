@@ -7,10 +7,17 @@
      ViewContent      the demo opened (content_category: button / ad_link)
      Lead             the demo phone was verified; its event_id is shared with
                       the server's copy (Conversions API) so Meta counts it once
-     StartTrialClick  (custom) a "start free trial" link was tapped
+     DemoCallFinished (custom) the demo call ended (AFMBP-2019) — with Lead and
+                      StartTrialClick it lets ads retarget people who stopped
+                      partway through the demo
+     StartTrialClick  (custom) a "start free trial" link was tapped; from: recap
+                      is the owner's demo win (the end-of-demo button)
+   Every event carries the trade (hvac, plumbing, …) so audiences can be per
+   trade (AFMBP-2019).
    It never loads, and sends nothing, for:
      - a browser sending Global Privacy Control (navigator.globalPrivacyControl)
-     - a browser that opted out: ?bolt_optout=1, until ?bolt_optout=0
+     - a browser that opted out: ?bolt_optout=1, until ?bolt_optout=0, or the
+       "Your Privacy Choices" switch (privacy-choices.js, AFMBP-2019)
      - our own test traffic (?bolt_qa=1, see attribution.js) — add
        ?bolt_pixel_debug=1 to load it anyway for one browser session, to check
        events in Meta's "Test events" tab
@@ -24,7 +31,7 @@
 
   // Meta Events Manager → Data sources → the dataset (pixel) ID. Not a secret:
   // it is visible in the page either way. Empty = the pixel is off.
-  var PIXEL_ID = '';
+  var PIXEL_ID = '2336657957107489';
 
   function store(kind) {
     try { return kind === 'session' ? window.sessionStorage : window.localStorage; } catch (e) { return null; }
@@ -76,16 +83,30 @@
 
   // Funnel steps arrive from attribution.js as `bolt:track` events. Anything
   // before the page is seen is ignored: the pixel isn't loaded yet.
+  // The trade, from the event (demo events carry it) or else the page — the
+  // same path rule demo.js uses.
+  function tradeOf(data) {
+    if (data && data.trade) return String(data.trade);
+    var p = window.location.pathname.toLowerCase();
+    if (p.indexOf('plumbing') > -1) return 'plumbing';
+    if (p.indexOf('electrical') > -1) return 'electrical';
+    if (p.indexOf('hvac') > -1) return 'hvac';
+    if (p.indexOf('handyman') > -1) return 'handyman';
+    return 'general_contracting';
+  }
   function onTrack(e) {
     var d = e && e.detail; if (!d || !window.fbq) return;
     var data = d.data || {};
+    var trade = tradeOf(data);
     if (d.event === 'demo_opened') {
-      window.fbq('track', 'ViewContent', { content_name: 'demo', content_category: String(data.trigger || 'button') });
+      window.fbq('track', 'ViewContent', { content_name: 'demo', content_category: String(data.trigger || 'button'), trade: trade });
     } else if (d.event === 'demo_code_verified') {
-      if (data.event_id) window.fbq('track', 'Lead', { content_name: 'demo' }, { eventID: String(data.event_id) });
-      else window.fbq('track', 'Lead', { content_name: 'demo' });
+      if (data.event_id) window.fbq('track', 'Lead', { content_name: 'demo', trade: trade }, { eventID: String(data.event_id) });
+      else window.fbq('track', 'Lead', { content_name: 'demo', trade: trade });
+    } else if (d.event === 'demo_call_finished') {
+      window.fbq('trackCustom', 'DemoCallFinished', { content_name: 'demo', trade: trade });
     } else if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {
-      window.fbq('trackCustom', 'StartTrialClick', { from: String(data.from || data.placement || 'site') });
+      window.fbq('trackCustom', 'StartTrialClick', { from: String(data.from || data.placement || 'site'), trade: trade });
     }
   }
   window.addEventListener('bolt:track', onTrack);
