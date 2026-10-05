@@ -7,7 +7,7 @@
 // Headless Chrome. Nothing leaves the machine: Google's and Meta's scripts and endpoints, Bolt's
 // API and app.boltanswering.com are all answered locally, and the served pixel carries a test ID.
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize } from 'node:path';
@@ -47,7 +47,8 @@ const srv = createServer((req, res) => {
   } catch { res.writeHead(404); res.end(); }
 }).listen(PORT, '127.0.0.1');
 
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp-2019-'))}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
+const PROFILE = mkdtempSync(join(tmpdir(), 'cdp-2019-')); // removed at exit
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'PASS' : 'FAIL'} ${m}`); if (!c) bad++; };
@@ -221,5 +222,6 @@ try {
   ws.close();
 } finally {
   chrome.kill('SIGKILL'); srv.close();
+  await sleep(300); rmSync(PROFILE, { recursive: true, force: true });
 }
 process.exit(bad ? 1 : 0);
