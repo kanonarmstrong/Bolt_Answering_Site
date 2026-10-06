@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js). Not loaded for a browser that opted out (Your Privacy Choices)
-       or sends Global Privacy Control (AFMBP-2019). -->
+       or sends Global Privacy Control (AFMBP-2019), nor for our own test visits unless
+       ?bolt_pixel_debug=1 asks for the tags in this browser session (AFMBP-2039). -->
   <script>
     (function () {
       var q = location.search, off = false;
@@ -10,7 +11,12 @@
         if (/[?&]bolt_optout=1(&|$)/.test(q)) localStorage.setItem('bolt_optout', '1');
         else if (/[?&]bolt_optout=0(&|$)/.test(q)) localStorage.removeItem('bolt_optout');
         off = navigator.globalPrivacyControl === true || localStorage.getItem('bolt_optout') === '1';
-      } catch (e) { off = navigator.globalPrivacyControl === true; }
+        // Our own test visits: ?bolt_qa=1 (remembered until ?bolt_qa=0) or ?demoqa=1. The URL is
+        // read first because this runs before attribution.js saves the flag.
+        var qa = /[?&](bolt_qa|demoqa)=1(&|$)/.test(q) || (localStorage.getItem('bolt_qa') === '1' && !/[?&]bolt_qa=0(&|$)/.test(q));
+        var debug = /[?&]bolt_pixel_debug=1(&|$)/.test(q) || sessionStorage.getItem('bolt_pixel_debug') === '1';
+        if (qa && !debug) off = true;
+      } catch (e) { off = navigator.globalPrivacyControl === true || (/[?&](bolt_qa|demoqa)=1(&|$)/.test(q) && !/[?&]bolt_pixel_debug=1(&|$)/.test(q)); }
       window.dataLayer = window.dataLayer || [];
       window.gtag = function () { window.dataLayer.push(arguments); };
       if (off) return;

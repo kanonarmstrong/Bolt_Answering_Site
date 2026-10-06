@@ -2,6 +2,7 @@
 // Meta and Google run by default, stop on opt-out (this page and the next) and for Global Privacy
 // Control, come back on opt-in; the pixel's events carry the trade, the demo's call-finished step
 // is sent, and nothing typed into the demo reaches Meta or Google. Bolt's own funnel keeps going.
+// Our own test visits (?bolt_qa=1) load neither Meta nor Google unless ?bolt_pixel_debug=1 (AFMBP-2039).
 // Run: node tools/privacy-choices-check.mjs [siteRoot]
 //      NC=<name> node tools/privacy-choices-check.mjs   — one negative control (see MUTATE)
 // Headless Chrome. Nothing leaves the machine: Google's and Meta's scripts and endpoints, Bolt's
@@ -27,6 +28,7 @@ const MUTATE = {
   no_trade: (f, s) => (f.endsWith('meta-pixel.js') ? s.split(', trade: trade').join('') : s),
   no_call_finished: (f, s) => (f.endsWith('meta-pixel.js') ? s.replace("window.fbq('trackCustom', 'DemoCallFinished'", "void ('DemoCallFinished'") : s),
   no_footer_link: (f, s) => (f.endsWith('.html') ? s.split(' data-privacy-choices>Your Privacy Choices').join('>Your Privacy Choices') : s),
+  no_qa_google: (f, s) => (f.endsWith('.html') ? s.split('if (qa && !debug) off = true;').join(';') : s),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -217,6 +219,21 @@ try {
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await sleep(200);
   ok((await ev("!document.querySelector('.pc-card') && document.activeElement && document.activeElement.hasAttribute('data-privacy-choices')")) === true, 'Escape closes it and focus returns to the button');
+
+  // [8] Our own test visits (AFMBP-2039): no Google tag, like no Meta pixel, unless ?bolt_pixel_debug=1.
+  // Runs last: ?bolt_pixel_debug=1 sets a flag for the rest of this tab's session.
+  console.log('[8] our test visits skip the Google tag');
+  await reset(); g0 = log.gtag; f0 = log.fbevents;
+  await nav('/hvac.html?bolt_qa=1');
+  ok(log.gtag === g0 && log.fbevents === f0, `?bolt_qa=1: no Google tag, no Meta pixel (google +${log.gtag - g0}, meta +${log.fbevents - f0})`);
+  g0 = log.gtag; await nav('/plumbing.html');
+  ok(log.gtag === g0 && (await ev("localStorage.getItem('bolt_qa')")) === '1', `remembered on the next page (google +${log.gtag - g0})`);
+  g0 = log.gtag; await nav('/hvac.html?bolt_qa=0');
+  ok(log.gtag === g0 + 1 && (await ev("localStorage.getItem('bolt_qa')")) === null, `?bolt_qa=0 turns it back on (google +${log.gtag - g0})`);
+  await reset(); g0 = log.gtag; await nav('/hvac.html?demoqa=1');
+  ok(log.gtag === g0, `?demoqa=1: no Google tag (google +${log.gtag - g0})`);
+  await reset(); g0 = log.gtag; await nav('/hvac.html?bolt_qa=1&bolt_pixel_debug=1');
+  ok(log.gtag === g0 + 1, `?bolt_pixel_debug=1 loads it for a test visit (google +${log.gtag - g0})`);
 
   console.log(bad ? `\n${bad} FAILED${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
   ws.close();
