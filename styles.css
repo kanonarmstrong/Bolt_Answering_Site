@@ -885,6 +885,25 @@ ul,ol{list-style:none}
   .tpfeat__mobileimg{display:block;width:100%;height:auto}
 }
 
+/* ---------- Phone: a real "Talk to your new assistant" link over the painted button ----------
+   AFMBP-2059. On phones the trade hero (and the handyman/plumbing feature section) is one baked
+   image with the button painted in, so a tap on that button tapped a picture. This invisible link
+   sits on the painted button and opens the demo like the desktop button (demo.js wires
+   [data-demo-open]). Positions are % of the image, measured from the images' pixels: the painted
+   button spans 21.4-78.6% across, and 40.8-46.3% down a hero / 93.0-98.8% down a feature image.
+   The link is a little bigger than the painted button and at least 44px tall at any phone width. */
+.tphero__mobilecta,.tpfeat__mobilecta{display:none}
+@media (max-width:768px){
+  .tphero__mobilecta,.tpfeat__mobilecta{
+    display:block;position:absolute;z-index:2;left:20.5%;width:59%;
+    border-radius:12px;-webkit-tap-highlight-color:transparent;
+  }
+  /* centred on the painted button (43.6% / 95.9% down), never shorter than 44px */
+  .tphero__mobilecta{top:calc(43.62% - max(3.35%, 22px));height:max(6.7%, 44px)}
+  .tpfeat__mobilecta{top:calc(95.86% - max(3.7%, 22px));height:max(7.4%, 44px)}
+  .tphero__mobilecta:focus-visible,.tpfeat__mobilecta:focus-visible{outline:3px solid #fff;outline-offset:2px}
+}
+
 /* ---------- Feature highlight with animated (APNG) phone — electrical/hvac/gc ----------
    web: default dark layout, taller phone slot for the tall call-detail frame
    mobile: white background, stacked (phone on top, dark copy below) */
