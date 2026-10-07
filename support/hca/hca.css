@@ -222,36 +222,52 @@ ol.hca-sub--wide > li { margin: 0 0 12px; }
 .hca-media__body .hca-back { margin-top: 22px; }
 
 /* Device frame: a transparent-screen iPhone PNG (assets/support/phone-frame.png,
-   1112x2305) sits ON TOP of the video; the black screen box + video sit behind,
-   inset to the bezel so the video shows through the cutout. The frame is
-   pointer-events:none so play/seek/volume/fullscreen reach the iframe. */
+   1112x2305) sits ON TOP of the video; the black screen box + video sit behind
+   and show through the frame's screen opening. The frame is
+   pointer-events:none so play/seek/volume/fullscreen reach the iframe.
+
+   --clip-w: the demo clips are portrait screen-recordings exported inside a
+   16:9 file, pillar-boxed. --clip-w is the recording's width as a share of the
+   file's width, measured from the video itself (Android vedtix 322/1280 =
+   0.2516; iPhone ez9956 and kboews 502/1920 = 0.2615). Each page sets it on
+   its .hca-device next to the embed; a new video needs it re-measured. */
 .hca-device {
+  --clip-w: 0.2516;
   position: relative;
   width: 100%;
   max-width: 300px;
   margin: 2px auto 0;
   aspect-ratio: 1112 / 2305;
 }
+/* AFMBP-2080 — the screen box IS the frame's opening, so no page shows
+   between the video and the bezel. The opening was measured from the PNG's
+   alpha channel (x 37–1074, y 27–2274, smooth ~156px corners); the box is that
+   opening pushed 8 frame px further under the opaque bezel, so sub-pixel
+   rounding at any phone size still leaves no sliver. Solved against the PNG:
+   it covers every transparent pixel of the opening and never reaches past the
+   phone's outer edge (valid corner radii at this margin: 128–184 frame px;
+   156 is the middle). Percentages, so it scales with the device. The old box
+   (inset 1.5% 4.7%, 30px corners) stopped ~15 frame px short of each side. */
 .hca-device__screen {
   position: absolute;
-  inset: 1.5% 4.7%;
+  inset: 0.824% 2.608% 0.954%;
   background: #000;
-  border-radius: 30px;
+  border-radius: 14.8% / 6.89%;
   overflow: hidden;
   z-index: 1;
 }
-/* The demo clips are portrait screen-recordings exported inside a 16:9 file
-   (the content sits in the centre ~25% of the width, pillar-boxed). To make the
-   recording FILL the portrait phone screen (owner decision: crop + resize to
-   follow the phone), the 16:9 iframe is blown up to ~4x the screen width and
-   centred, so the centre content column covers the screen and the black side
-   bars overflow and are clipped. */
+/* The 16:9 iframe is scaled so the recording column is exactly the screen
+   box's width, centred: the pillar-box bars overflow and are clipped, and the
+   recording's soft edge pixels land in the box's 8px tuck under the bezel, out
+   of sight. Height follows the 16:9 aspect and always covers the screen: the
+   iPhone recordings (h/w 2.151) match the screen (2.148) almost exactly; the
+   taller Android one (2.236) loses ~2% top and bottom under the bezel. */
 .hca-device__screen iframe {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 400%;
+  width: calc(100% / var(--clip-w));
   aspect-ratio: 16 / 9;
   height: auto;
   border: 0;
