@@ -174,10 +174,13 @@
       svg('<path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')
     ]);
     var logo = h('img', { class: 'demo-logo', src: 'assets/logo-wordmark.png', alt: 'Bolt' });
-    card = h('div', { class: 'demo-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Talk to your new assistant' }, [close, logo, body]);
-    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(); } }, [card]);
+    // tabindex -1: the dialog itself can take focus (as it opens), but Tab never stops on it.
+    card = h('div', { class: 'demo-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Talk to your new assistant', tabindex: '-1' }, [close, logo, body]);
+    backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(e); } }, [card]);
     document.body.appendChild(backdrop);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(e); });
+    document.addEventListener('keydown', keepTab, true);
+    document.addEventListener('focusin', keepFocus, true);
   }
   // Warm the mobile node art (brush underlines, OS lockups, watermark,
   // chat icons) when the modal opens, so the calling / recap / failure screens
@@ -194,9 +197,12 @@
   // The modal opens on the choice between the two demos (AFMBP-2083); `entry`
   // 'form' skips it for the "We'll call you" form (/?talk=form). A call this tab
   // started on the demo line takes precedence: the page follows it instead.
-  function openModal(trigger, entry) {
+  // `from`: the button that opened it, which gets focus back when the demo is closed
+  // from the keyboard.
+  function openModal(trigger, entry, from) {
     warmMobileArt();
     if (!backdrop) build();
+    if (!isOpen()) opener = from || document.activeElement;
     stopConfetti();
     recapConfettiDone = false;
     var s = resumableInbound();
@@ -205,10 +211,13 @@
     else renderChoice();
     backdrop.classList.add('open');
     document.body.classList.add('demo-lock');
+    // Keyboard focus moves into the dialog. A screen with a field (the form, the
+    // code) moves it on to that field a moment later.
+    focusDialog();
     // A reload in the middle of a demo-line call is not a new open.
     if (trigger !== 'resume') track('demo_opened', { trigger: trigger || 'button' });
   }
-  function closeModal() {
+  function closeModal(e) {
     if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
     clearResend();
     stopRecap();
@@ -217,8 +226,75 @@
     stopConfetti();
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
+    returnFocus(!!e && (e.type === 'keydown' || e.detail === 0));
   }
   function isOpen() { return !!backdrop && backdrop.classList.contains('open'); }
+
+  // ---------- keyboard focus (AFMBP-2097) ----------
+  // The dialog is modal: it takes keyboard focus as it opens, Tab and Shift+Tab stay
+  // inside it while it is open, and closing it from the keyboard gives focus back to
+  // the button that opened it.
+  // Focus goes to the dialog itself, not to "Make a call": iOS Safari draws a focus
+  // ring on whatever a script focuses as the page loads (an ad link opens the demo
+  // then), and the dialog has no ring of its own (demo.css).
+  var opener = null;   // what had focus when the demo opened
+  var tabDir = 0;      // the Tab press the browser is carrying out: 1, or -1 for Shift+Tab
+  function focusDialog() { try { card.focus({ preventScroll: true }); } catch (e) {} }
+  // Closed from the keyboard (Escape, or Enter / Space on ×, whose click has detail 0):
+  // focus goes back to the button that opened the demo. After a tap or a click no
+  // focus is moved: iOS Safari rings a button a script focuses after a tap on the
+  // shade (seen in the simulator).
+  function returnFocus(fromKeys) {
+    var el = opener;
+    opener = null;
+    if (fromKeys && el && el !== document.body && el.isConnected && el.focus) {
+      try { el.focus({ preventScroll: true }); } catch (e) {}
+    }
+  }
+  // Where Tab stops in the dialog now, in page order: the links, buttons and fields
+  // that are showing and enabled, and the transcript while it scrolls (Chrome stops
+  // there, so the keyboard can scroll it).
+  function tabStops() {
+    return Array.prototype.filter.call(card.querySelectorAll('a[href],button,input,select,textarea,[tabindex],.demo-chat'), function (el) {
+      var stop = el.classList.contains('demo-chat') ? el.scrollHeight > el.clientHeight : el.tabIndex >= 0 && !el.disabled;
+      return stop && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+    });
+  }
+  // Focus stop i, or the next one on in the same direction that takes focus (a browser
+  // may not focus the transcript); the dialog itself if none does.
+  function focusStop(f, i, dir) {
+    for (var n = 0; n < f.length; n++, i = (i + dir + f.length) % f.length) {
+      f[i].focus();
+      if (document.activeElement === f[i]) return;
+    }
+    focusDialog();
+  }
+  // Tab from the last stop goes round to the first, and Shift+Tab from the first to
+  // the last. From the dialog itself, or with focus outside it (a screen change drops
+  // focus), Tab goes to the first stop and Shift+Tab to the last. Anywhere else the
+  // browser moves focus as usual.
+  function keepTab(e) {
+    if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || !isOpen()) return;
+    var dir = e.shiftKey ? -1 : 1, f = tabStops(), a = document.activeElement, end = f.length - 1;
+    if (!f.length) { e.preventDefault(); focusDialog(); return; }   // nothing to stop on (phone: calling you)
+    if (a === card || !card.contains(a) || f.indexOf(a) === (dir > 0 ? end : 0)) {
+      e.preventDefault();
+      focusStop(f, dir > 0 ? 0 : end, dir);
+      return;
+    }
+    tabDir = dir;
+    setTimeout(function () { tabDir = 0; }, 0);
+  }
+  // Focus that lands behind the dialog while it is open (a browser whose Tab skips
+  // some stops, a phone keyboard's previous / next buttons, a script) comes back:
+  // to the end a Shift+Tab was heading for, else the first stop.
+  function keepFocus(e) {
+    if (!isOpen() || card.contains(e.target)) return;
+    var f = tabStops();
+    if (!f.length) focusDialog();
+    else if (tabDir < 0) focusStop(f, f.length - 1, -1);
+    else focusStop(f, 0, 1);
+  }
   // `screen` tags the backdrop (data-screen) so CSS can apply the pixel-matched
   // mobile layouts (Figma 2657:1639 / 2442:1191 / 2441:811 / 2511:1027) to just
   // those screens; every other screen renders with the attribute empty.
@@ -1142,7 +1218,7 @@
     var btns = document.querySelectorAll('a.btn--blue, button.btn--blue, [data-demo-open]');
     Array.prototype.forEach.call(btns, function (b) {
       if (b.hasAttribute('data-demo-open') || /talk to your new assistant/i.test(b.textContent)) {
-        b.addEventListener('click', function (e) { e.preventDefault(); openModal('button'); });
+        b.addEventListener('click', function (e) { e.preventDefault(); openModal('button', null, b); });
       }
     });
   }
