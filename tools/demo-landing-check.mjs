@@ -10,11 +10,18 @@
 //   - analytics: demo_opened once per open, each selection once;
 //   - accessibility: stars hidden from the accessibility tree, the rest in reading order;
 //     both ways in work from the keyboard, with a visible focus ring;
+//   - keyboard focus (AFMBP-2097): the dialog takes focus as it opens and draws no ring of
+//     its own; Tab reaches "Make a call" first and goes round the dialog, and Tab / Shift+Tab
+//     never leave it, on every screen at both sizes; focus moved behind it comes back;
+//     closing it from the keyboard gives focus back to the button that opened it, and closing
+//     it with a tap or a click moves no focus and leaves no ring (iOS Safari rings a button a
+//     script focuses after a tap on the shade);
 //   - responsive: phones 320-430, tablet 768, desktop 1024-1920: no horizontal overflow,
 //     both buttons inside the viewport, nothing outside the card.
 // Run: node tools/demo-landing-check.mjs [siteRoot]
 //      SHOTS=<dir> saves the choice at 402x753 @3x and 1920x1200 @1x (plus each phone size).
-//      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE).
+//      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE). no_fix takes out
+//      the whole AFMBP-2097 change.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
 import { spawn } from 'node:child_process';
@@ -49,8 +56,30 @@ const MUTATE = {
   no_attr: ['attribution.js', (s) => cut(s, 'if (touch) data.attr = touch;', '')],
   // "Make a call" moves off the node.
   off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{top:153px}', '.demo-choice__call{top:158px}')],
+  // AFMBP-2097, one piece at a time, then all of it.
+  // Opening the demo leaves keyboard focus where it was.
+  no_focus_in: ['demo.js', (s) => cut(s, '    focusDialog();\n    // A reload in the middle', '    // A reload in the middle')],
+  // Tab is not kept in the dialog.
+  no_trap: ['demo.js', (s) => cut(s, "    document.addEventListener('keydown', keepTab, true);\n", '')],
+  // Focus that lands behind the dialog stays there.
+  no_guard: ['demo.js', (s) => cut(s, "    document.addEventListener('focusin', keepFocus, true);\n", '')],
+  // Closing from the keyboard leaves focus where it was.
+  no_restore: ['demo.js', (s) => cut(s, "    returnFocus(!!e && (e.type === 'keydown' || e.detail === 0));\n", '')],
+  // A tap or a click on the shade also moves focus back to the button (iOS Safari rings it).
+  pointer_restore: ['demo.js', (s) => cut(s, 'if (fromKeys && el && ', 'if (el && ')],
+  // The dialog draws the browser's ring when it takes focus.
+  card_ring: ['demo.css', (s) => cut(s, '.demo-card:focus{outline:none}\n', '')],
 };
+const UNFIX = [(s) => cut(s, ", tabindex: '-1' }, [close, logo, body]);", ' }, [close, logo, body]);'), (s) => cut(s, "openModal('button', null, b);", "openModal('button');")];
+MUTATE.no_fix = [['demo.js', (s) => [...['no_focus_in', 'no_trap', 'no_guard', 'no_restore'].map((k) => MUTATE[k][1]), ...UNFIX].reduce((t, f) => f(t), s)], MUTATE.card_ring];
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
+// [file, mutate] or a list of them. A missing anchor fails here, before anything runs: thrown
+// while serving, it would 404 the file and fake a red run.
+const MUTS = !NC ? [] : Array.isArray(MUTATE[NC][0]) ? MUTATE[NC] : [MUTATE[NC]];
+for (const [file, fn] of MUTS) {
+  const s = readFileSync(join(ROOT, file), 'utf8');
+  if (fn(s) === s) throw new Error(`NC ${NC} leaves ${file} unchanged`);
+}
 
 const srv = createServer((req, res) => {
   try {
@@ -58,7 +87,7 @@ const srv = createServer((req, res) => {
     let f = join(ROOT, p);
     if (statSync(f).isDirectory()) f = join(f, 'index.html');
     let body = readFileSync(f);
-    if (NC && f.endsWith('/' + MUTATE[NC][0])) body = Buffer.from(MUTATE[NC][1](body.toString('utf8')));
+    for (const [file, fn] of MUTS) if (f.endsWith('/' + file)) body = Buffer.from(fn(body.toString('utf8')));
     res.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' });
     res.end(body);
   } catch { res.writeHead(404); res.end(); }
@@ -152,16 +181,19 @@ try {
   const visible = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return false; var s=getComputedStyle(e); var r=e.getBoundingClientRect(); return s.display!=='none' && s.visibility!=='hidden' && r.width>0 && r.height>0;})()`);
   const text = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); return e ? e.innerText.replace(/\\s+/g,' ').trim() : null;})()`);
   let touch = false;
+  const tapAt = async (x, y) => {
+    if (touch) {
+      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    } else {
+      for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+    }
+    await sleep(300);
+  };
   const tap = async (sel) => {
     const b = await rect(sel);
     if (!b) return false;
-    if (touch) {
-      await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: b.cx, y: b.cy }] });
-      await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    } else {
-      for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: b.cx, y: b.cy, button: 'left', clickCount: 1 });
-    }
-    await sleep(300);
+    await tapAt(b.cx, b.cy);
     return true;
   };
   const key = async (k, code, vk) => {
@@ -171,6 +203,27 @@ try {
     await sleep(150);
   };
   const lastClick = () => ev('(window.__clicks||[]).slice(-1)[0]||null');
+  // Where keyboard focus is (AFMBP-2097): on the dialog itself, on one of its controls, or
+  // outside it ('closed' when no dialog is open); which control (its place among the
+  // dialog's showing, enabled controls); and whether a ring shows there.
+  const FOCUS = `(function(){var a=document.activeElement, k=document.querySelector('.demo-backdrop.open .demo-card'), s=a?getComputedStyle(a):null;
+    var ctl=k?[].slice.call(k.querySelectorAll('a[href],button,input')).filter(function(e){return !e.disabled && e.getClientRects().length && getComputedStyle(e).visibility!=='hidden'}):[];
+    return {on: !k ? 'closed' : a===k ? 'dialog' : k.contains(a) ? 'inside' : 'outside', idx: ctl.indexOf(a), n: ctl.length,
+      call: !!a && a.classList.contains('demo-choice__call'), get: !!a && a.classList.contains('demo-choice__get'),
+      desc: a ? a.tagName.toLowerCase()+(a.className?'.'+String(a.className).trim().split(/\\s+/)[0]:'')+' '+JSON.stringify((a.innerText||a.getAttribute('aria-label')||'').replace(/\\s+/g,' ').trim().slice(0,22)) : 'none',
+      fv: !!a && a.matches(':focus-visible'), outline: s ? s.outlineStyle : 'none',
+      ring: !!s && ((s.outlineStyle!=='none' && parseFloat(s.outlineWidth)>0) || s.boxShadow!=='none')};})()`;
+  // One Tab press (Shift+Tab with back), then where focus went.
+  const tab = async (back = false) => {
+    for (const type of ['rawKeyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers: back ? 8 : 0 });
+    await sleep(40);
+    return ev(FOCUS);
+  };
+  const tabs = async (n, back = false) => { const r = []; for (let i = 0; i < n; i++) r.push(await tab(back)); return r; };
+  const outside = (fs) => fs.filter((f) => f.on !== 'inside' && f.on !== 'dialog').map((f) => `${f.on} ${f.desc}`).join(', ');
+  // The page's own "Talk to your new assistant" button showing at this size.
+  const OPENER = "[].slice.call(document.querySelectorAll('a.btn--blue, button.btn--blue, [data-demo-open]')).filter(function(x){return (x.hasAttribute('data-demo-open') || /talk to your new assistant/i.test(x.textContent)) && x.getBoundingClientRect().width > 0})[0]";
+  const openerState = () => ev(`(function(){var o=${OPENER}; return {back: document.activeElement === o, fv: o.matches(':focus-visible')};})()`);
   const view = async (w, h, dpr, mobile) => {
     touch = mobile;
     await send('Emulation.setTouchEmulationEnabled', mobile ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
@@ -268,34 +321,112 @@ try {
   ok(evs('demo_mode_selected', (d) => d.mode === 'outbound').length === 1 && evs('demo_mode_selected').length === 1, `events: one selection, outbound (${evs('demo_mode_selected').length})`);
   ok(evs('demo_mode_selected', ATTR).length === 1, 'attribution: the touch rides on the "Get a call" selection');
 
-  console.log('[phone] keyboard: both ways in, with a focus ring');
+  console.log('[phone] keyboard (AFMBP-2097): focus starts in the dialog, Tab goes round it and never leaves');
   reset();
   await load('/hvac.html?talk=1');
   ok(await waitScreen('choice'), 'keyboard: choice');
-  await ev("document.activeElement && document.activeElement.blur && document.activeElement.blur(); 1");
-  let reached = { call: false, get: false }, ring = { call: false, get: false };
-  // The dialog does not move focus into itself when it opens (as before this change), so
-  // Tab walks the page first; it must still get there, and show where it is.
-  let tabs = 0;
-  for (let i = 0; i < 120 && !(reached.call && reached.get); i++) {
-    tabs++;
-    await key('Tab', 'Tab', 9);
-    const a = await ev("(function(){var a=document.activeElement; if(!a) return null; var s=getComputedStyle(a); return {call:a.classList.contains('demo-choice__call'), get:a.classList.contains('demo-choice__get'), fv:a.matches(':focus-visible'), ring:(s.outlineStyle!=='none' && parseFloat(s.outlineWidth)>0) || s.boxShadow!=='none'};})()");
-    if (a && a.call) { reached.call = true; ring.call = a.fv && a.ring; }
-    if (a && a.get) { reached.get = true; ring.get = a.fv && a.ring; }
-  }
-  ok(reached.call && reached.get, `keyboard: Tab reaches both ways in (${JSON.stringify(reached)}, ${tabs} presses)`);
-  console.log(`  note: Tab reached "Get a call" after ${tabs} presses (focus starts on the page, not in the dialog)`);
+  // An ad link opens the demo with no tap. Focus starts on the dialog itself, not on a
+  // control: iOS Safari rings a control a script focuses as the page loads.
+  const f0 = await ev(FOCUS);
+  ok(f0.on === 'dialog', `keyboard: focus is on the dialog as it opens (${f0.on} ${f0.desc}; before AFMBP-2097 it stayed on the page, 33 Tab presses from "Make a call")`);
+  const fwd = await tabs(7);
+  const toCall = fwd.findIndex((f) => f.call) + 1;
+  console.log(`  note: Tab reaches "Make a call" after ${toCall} press(es): ${fwd.map((f) => f.desc).join(' > ')}`);
+  ok(toCall >= 1 && toCall <= 2, `keyboard: Tab reaches "Make a call" within 2 presses of the dialog opening (${toCall})`);
+  ok(!outside(fwd), `keyboard: Tab never leaves the dialog (${outside(fwd)})`);
+  ok(fwd[0].call && fwd[1].get && /Contact support/.test(fwd[2].desc) && fwd[3].call, `keyboard: Tab goes "Make a call", "Get a call", the help link, then round to "Make a call" (${fwd.slice(0, 4).map((f) => f.desc).join(' > ')})`);
+  const ring = { call: fwd[0].fv && fwd[0].ring, get: fwd[1].fv && fwd[1].ring };
   ok(ring.call && ring.get, `keyboard: each shows a focus ring (${JSON.stringify(ring)})`);
-  await ev("document.querySelector('.demo-choice__get').focus(); 1");
+  const bwd = await tabs(7, true);
+  ok(!outside(bwd), `keyboard: Shift+Tab never leaves the dialog (${outside(bwd)})`);
+  ok(/Contact support/.test(bwd[0].desc) && bwd[1].get && bwd[2].call, `keyboard: Shift+Tab from "Make a call" goes round to the help link, then back (${bwd.slice(0, 3).map((f) => f.desc).join(' > ')})`);
+  // Focus moved behind the dialog (a browser whose Tab skips some stops, a phone keyboard's
+  // previous / next buttons, a script) comes straight back.
+  const behind = await ev(`(function(){var b=[].slice.call(document.querySelectorAll('a[href],button,input')).filter(function(x){return !x.closest('.demo-backdrop') && x.getClientRects().length})[0]; b.focus(); return ${FOCUS};})()`);
+  ok(behind.on === 'inside' || behind.on === 'dialog', `keyboard: focus moved behind the dialog comes back into it (${behind.on} ${behind.desc})`);
+  // Enter on "Get a call", reached with Tab: the form, focus on its first field, Tab still in.
+  for (let i = 0; i < 4 && !(await ev(FOCUS)).get; i++) await tab();
   await key('Enter', 'Enter', 13);
   ok(await waitScreen('phone'), 'keyboard: Enter on "Get a call" opens the form');
+  await sleep(200);
+  ok((await ev("document.activeElement === document.getElementById('demo-phone')")) === true, `keyboard: focus moves on to the phone field (${(await ev(FOCUS)).desc})`);
+  const form = [...(await tabs(8)), ...(await tabs(8, true))];
+  ok(!outside(form), `keyboard: on the form, Tab and Shift+Tab stay in the dialog (${outside(form)})`);
   reset();
   await load('/hvac.html?talk=1');
   ok(await waitScreen('choice'), 'keyboard: choice again');
-  await ev("document.querySelector('.demo-choice__call').focus(); 1");
+  ok((await tab()).call, 'keyboard: one Tab, on "Make a call"');
   await key('Enter', 'Enter', 13);
   ok(await waitScreen('inbound-call'), 'keyboard: Enter on "Make a call" starts the call');
+  const callCard = [...(await tabs(3)), ...(await tabs(3, true))];
+  ok(!outside(callCard), `keyboard: on the call card, focus stays in the dialog (${outside(callCard)})`);
+
+  // A point on the shade (outside the card, nothing else on top of it).
+  const shade = () => ev("(function(){var b=document.querySelector('.demo-backdrop.open'), p=[[6,innerHeight-6],[6,innerHeight/2],[innerWidth-6,innerHeight-6],[innerWidth/2,innerHeight-6]]; for(var i=0;i<p.length;i++){ if(document.elementFromPoint(p[i][0],p[i][1])===b) return {x:p[i][0],y:p[i][1]}; } return null;})()");
+  const openerAt = () => ev(`(function(){var o=${OPENER}; o.scrollIntoView({block:'center'}); var r=o.getBoundingClientRect(); return {x:r.left+r.width/2, y:r.top+r.height/2};})()`);
+  for (const [w, h, dpr, mobile] of [[402, 753, 3, true], [1280, 800, 1, false]]) {
+    const where = `${w}x${h}`;
+    console.log(`[${where}] closing from the keyboard gives focus back to the button; a tap or a click moves none`);
+    await view(w, h, dpr, mobile);
+    reset();
+    await load('/hvac.html');
+    await openerAt();
+    await ev(`(${OPENER}).focus(), 1`);
+    await key('Enter', 'Enter', 13);
+    ok(await waitScreen('choice'), `${where} restore: Enter on the page's "Talk to your new assistant" opens the demo`);
+    // Opened from the keyboard, the dialog matches :focus-visible, where a browser draws its
+    // ring. It must draw none; its controls keep theirs.
+    const k1 = await ev(FOCUS);
+    ok(k1.on === 'dialog' && k1.fv && k1.outline === 'none', `${where} restore: opened from the keyboard, focus is on the dialog and it draws no ring (${JSON.stringify({ on: k1.on, fv: k1.fv, outline: k1.outline })})`);
+    if (!mobile) {
+      const d1 = await tab();
+      ok(d1.call, `${where} keyboard: the first Tab is on "Call now", the same link (${d1.desc})`);
+      const dk = [...(await tabs(6)), ...(await tabs(7, true))];
+      ok(!outside(dk), `${where} keyboard: Tab and Shift+Tab never leave the dialog (${outside(dk)})`);
+    }
+    await key('Escape', 'Escape', 27);
+    ok((await screen()) === null, `${where} restore: Escape closes the demo`);
+    const r1 = await openerState();
+    ok(r1.back && r1.fv, `${where} restore: Escape gives focus back to "Talk to your new assistant", ring showing (${JSON.stringify(r1)})`);
+    // Then a tap (a click on desktop) opens it and a tap on the shade closes it: no focus
+    // moves and no ring shows anywhere. iOS Safari rings a button a script focuses after a
+    // tap on the shade; Chrome does too once the keyboard has been used, as it just was.
+    const o = await openerAt();
+    await tapAt(o.x, o.y);
+    ok(await waitScreen('choice'), `${where} restore: a ${mobile ? 'tap' : 'click'} on "Talk to your new assistant" opens the demo`);
+    const sp = await shade();
+    if (sp) await tapAt(sp.x, sp.y);
+    ok(!!sp && (await screen()) === null, `${where} restore: a ${mobile ? 'tap' : 'click'} on the shade closes it`);
+    const r2 = await ev(`(function(){var o=${OPENER}, v=document.querySelector(':focus-visible'); return {back: document.activeElement === o, ring: v ? v.tagName.toLowerCase()+'.'+String(v.className).split(' ')[0] : null};})()`);
+    ok(!r2.back && !r2.ring, `${where} restore: after the ${mobile ? 'tap' : 'click'}, no focus moves to the button and no ring shows (${JSON.stringify(r2)})`);
+  }
+
+  console.log('[keyboard] every screen, both sizes: Tab and Shift+Tab stay in the dialog and reach every control');
+  const LONG = Array.from({ length: 14 }, (_, i) => ({ role: i % 2 ? 'user' : 'assistant', content: `Line ${i} of a longer transcript, long enough to wrap in its bubble.` }));
+  const SCREENS = [
+    ['choice', '__demoQA.choice()'], ['form', '__demoQA.phone()'], ['limit', '__demoQA.limit()'], ['code', '__demoQA.code()'],
+    ['code, locked', "__demoQA.code({ error: 'Too many tries. Request a new code.', locked: true })"], ['calling you', '__demoQA.inCall()'],
+    ['recap', `__demoQA.recap({ status: 'completed', transcript: ${JSON.stringify(LONG)} })`], ['recap, no transcript yet', "__demoQA.recap({ status: 'completed', transcript: null })"],
+    ['call failed', '__demoQA.fail()'], ['error', '__demoQA.error()'],
+    ['call card', "__demoQA.inbound('4321', false)"], ['call card with the number', "__demoQA.inbound('4321', true)"], ['call card failed', '__demoQA.inboundFail()'],
+  ];
+  for (const [w, h, dpr, mobile] of [[402, 753, 3, true], [1280, 800, 1, false]]) {
+    await view(w, h, dpr, mobile);
+    reset();
+    await load('/hvac.html?demoqa=1');
+    await ev('__demoQA.open(); 1');
+    await sleep(300);
+    for (const [name, js] of SCREENS) {
+      await ev(`${js}; 1`);
+      await sleep(150);
+      await ev("document.querySelector('.demo-backdrop.open .demo-card').focus(); 1");
+      const n = (await ev(FOCUS)).n;
+      const fs = [...(await tabs(n + 2)), ...(await tabs(n + 2, true))];
+      const seen = new Set(fs.map((f) => f.idx).filter((x) => x >= 0));
+      ok(!outside(fs), `${w}x${h} ${name}: Tab and Shift+Tab stay in the dialog (${outside(fs)})`);
+      ok(seen.size === n, `${w}x${h} ${name}: Tab reaches every control (${seen.size} of ${n})`);
+    }
+  }
 
   }
 
