@@ -481,18 +481,26 @@
   // waiting -> connected (call id) -> completed, or limit / expired / failed.
   // Polls every 3s while the card is up. A phone suspends the page during the
   // call, so coming back to it checks at once (visibilitychange, below).
-  function stopInbound() { if (inboundTimer) { clearTimeout(inboundTimer); inboundTimer = null; } }
+  // Each run of checks has a generation: stopping or restarting them drops an
+  // answer still on its way. Coming back to the page could otherwise land two
+  // checks at once (the timer that slept through the call, and the check on
+  // return) and follow the call twice, counting the recap twice (AFMBP-2099).
+  var inboundGen = 0;
+  function clearInboundTimer() { if (inboundTimer) { clearTimeout(inboundTimer); inboundTimer = null; } }
+  function stopInbound() { inboundGen++; clearInboundTimer(); }
   function pollInbound(s, opts) {
     opts = opts || {};
     stopInbound();
+    var gen = inboundGen;
     var url = API + '/api/demo/inbound/session/' + encodeURIComponent(s.sessionId);
     var first = true;
-    function again(ms) { stopInbound(); inboundTimer = setTimeout(tick, ms); }
+    function again(ms) { clearInboundTimer(); inboundTimer = setTimeout(tick, ms); }
     function tick() {
       inboundTimer = null;
       fetch(url, { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d || {} }; }); })
         .then(function (res) {
+          if (gen !== inboundGen) return;   // superseded while it was out
           var f = inboundFlow;
           // Closed, or another flow took over while this request was out.
           if (!isOpen() || !f || f.session !== s || step !== 'inbound_call') return;
@@ -515,7 +523,7 @@
           }
           again(res.status === 429 ? 10000 : 5000);   // rate limited / server error: back off
         })
-        .catch(function () { again(5000); });
+        .catch(function () { if (gen === inboundGen) again(5000); });
     }
     tick();
   }
@@ -929,7 +937,10 @@
   // events are sent exactly as before (no mode = outbound).
   var recapMode = null;
   function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }
-  function stopRecap() { if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
+  // Same generation guard as the status checks (AFMBP-2099): a recap answer from
+  // a superseded run is neither tracked nor rendered.
+  var recapGen = 0;
+  function stopRecap() { recapGen++; if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
   // opts (the inbound branch; the outbound demo passes none): mode, onFailed
   // (its failure screen), inCallLimitMs (how long to wait for the call to end),
   // transcriptFromEnd (time the transcript wait from the end of the call, not
@@ -937,6 +948,7 @@
   function pollRecap(callId, opts) {
     opts = opts || {};
     stopRecap();
+    var gen = recapGen;
     recapShown = false;
     recapConfettiDone = false;
     recapMode = opts.mode || null;
@@ -950,6 +962,7 @@
       fetch(url, { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (d) {
+          if (gen !== recapGen) return;   // superseded while it was out
           // Bail if the user closed the modal or moved to another screen.
           if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
           if (d && d.status === 'failed') { stopRecap(); track('demo_call_failed', modeProps({ stage: 'call_status', call_id: callId })); settled(); return onFailed(); }
@@ -975,6 +988,7 @@
           recapTimer = setTimeout(tick, 3000);
         })
         .catch(function () {
+          if (gen !== recapGen) return;
           if (Date.now() - started > inCallLimit) { stopRecap(); return; }
           recapTimer = setTimeout(tick, 4000); // tolerate transient network/CORS blips
         });
