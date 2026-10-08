@@ -308,7 +308,9 @@
         h('span', { class: 'demo-choice__l1' }, [
           h('span', { class: 'demo-choice__two', text: 'Two' }),
           h('span', { class: 'demo-choice__2', text: '2' }),
-          ' ways to'
+          // The nodes' line ends in a space, which centres the words half a
+          // space left of the line's middle; a no-break space keeps it.
+          ' ways to\u00A0'
         ]),
         h('span', { class: 'demo-choice__l2', text: 'talk to an assistant now' })
       ]),
