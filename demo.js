@@ -261,6 +261,15 @@
   // line here (owner): calling us sends nothing to the visitor's phone, and the
   // form keeps its own disclosure. The desktop node still shows that line; it is
   // left out on both breakpoints, as agreed.
+  // AFMBP-2090: the phone node was redrawn for conversion — the rating and its
+  // quote, "Available now", "Make a call", and a line under each way in. Desktop
+  // keeps its own node (owner); CSS shows each breakpoint's own pieces.
+  function callLabel() {
+    return [
+      h('span', { class: 'demo-choice__lbl-d', text: 'Call now' }),
+      h('span', { class: 'demo-choice__lbl-m', text: 'Make a call' })
+    ];
+  }
   function renderChoice() {
     clearResend();
     stopRecap();
@@ -269,7 +278,7 @@
     step = 'choice';
     // A real link from the first paint: iOS hands a tel: link to the dialer only
     // from the tap itself, so the code is fetched now, before anyone taps.
-    var call = h('a', { class: 'demo-btn demo-choice__btn demo-choice__call', href: '#' }, ['Call now']);
+    var call = h('a', { class: 'demo-btn demo-choice__btn demo-choice__call', href: '#' }, callLabel());
     var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button', text: 'Get a call' });
     var waiting = false;
     call.addEventListener('click', function (e) {
@@ -290,7 +299,7 @@
       waiting = true;
       call.innerHTML = '';
       call.appendChild(h('span', { class: 'demo-spinner' }));
-      call.appendChild(document.createTextNode('Call now'));
+      callLabel().forEach(function (n) { call.appendChild(n); });
       ensureInbound().then(function (s2) {
         waiting = false;
         if (!isOpen() || step !== 'choice') return;
@@ -312,10 +321,29 @@
           // space left of the line's middle; a no-break space keeps it.
           ' ways to\u00A0'
         ]),
-        h('span', { class: 'demo-choice__l2', text: 'talk to an assistant now' })
+        h('span', { class: 'demo-choice__l2' }, [
+          'talk to an assistant',
+          // Desktop (2670:896) ends "…now"; the redrawn phone node drops it.
+          h('span', { class: 'demo-choice__now', text: ' now' })
+        ])
       ]),
       h('p', { class: 'demo-choice__sub', text: 'Call us or we’ll call you' }),
-      h('div', { class: 'demo-choice__btns' }, [call, h('p', { class: 'demo-choice__or', text: 'OR' }), get]),
+      // Phone only (2670:952): the rating with its quote, and "Available now".
+      // The stars and the dot are drawn and hidden from screen readers; the
+      // words say it.
+      h('div', { class: 'demo-choice__proof' }, [
+        h('span', { class: 'demo-choice__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
+        h('p', { class: 'demo-choice__score', text: '4.9/5' }),
+        h('p', { class: 'demo-choice__quote', text: '“Professional and helpful”' }),
+        h('p', { class: 'demo-choice__live', text: 'Available now' })
+      ]),
+      h('div', { class: 'demo-choice__btns' }, [
+        call,
+        h('p', { class: 'demo-choice__when demo-choice__when--call' }, ['Average time to connect: ', h('b', { text: '3 seconds' })]),
+        h('p', { class: 'demo-choice__or', text: 'OR' }),
+        get,
+        h('p', { class: 'demo-choice__when demo-choice__when--get' }, ['Your assistant will call you ', h('b', { text: 'right now' })])
+      ]),
       helpLine()
     ], 'choice');
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });

@@ -202,7 +202,8 @@ try {
   await sleep(300);
   ok(api.created === 1, `phone: one code fetched on open (${api.created})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
-  ok((await text('.demo-choice__h')) === '2 ways to talk to an assistant now', `phone: heading copy (${await text('.demo-choice__h')})`);
+  // AFMBP-2090: the redrawn phone node drops "now" (desktop keeps it).
+  ok((await text('.demo-choice__h')) === '2 ways to talk to an assistant', `phone: heading copy (${await text('.demo-choice__h')})`);
   ok((await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')), 'phone: "OR" shown, "Two" hidden');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-disclosure')")), 'phone: no consent line on the choice');
   await shot('m-choice', '.demo-card');
