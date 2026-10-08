@@ -128,6 +128,9 @@ try {
   console.log('[2] demo walk (hvac.html?talk=1)');
   await reset(); log.thirdParty = []; log.ingest = [];
   await nav('/hvac.html?talk=1');
+  // The demo opens on the choice of two (AFMBP-2083): this walk is the outbound demo.
+  await until(async () => (await ev("!!document.querySelector('.demo-choice__get')")) === true, 15000);
+  await ev("document.querySelector('.demo-choice__get').click(), 1");
   await until(async () => (await ev("!!document.getElementById('demo-phone')")) === true, 15000);
   await ev(`(function(){function v(id,val){var i=document.getElementById(id); if(!i) return; i.value=val; i.dispatchEvent(new Event('input',{bubbles:true}));} v('demo-phone','5551230000'); v('demo-business','QA Test Co'); v('demo-email','qa-pc@example.com'); [].slice.call(document.querySelectorAll('.demo-btn')).find(function(b){return /continue/i.test(b.textContent)}).click(); return 1})()`);
   await until(async () => (await ev("document.querySelectorAll('.demo-code input').length")) === 6, 8000);

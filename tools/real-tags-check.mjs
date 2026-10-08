@@ -144,6 +144,9 @@ try {
 
   console.log(`[1] demo walk with the real Meta and Google scripts (pixel ${PIXEL}, hvac.html?talk=1)${NC ? ` — NC ${NC}` : ''}`);
   await send('Page.navigate', { url: ORIGIN + '/hvac.html?talk=1' });
+  // The demo opens on the choice of two (AFMBP-2083): this walk is the outbound demo.
+  await until(async () => (await ev("!!document.querySelector('.demo-choice__get')")) === true, 15000);
+  await ev("document.querySelector('.demo-choice__get').click(), 1");
   await until(async () => (await ev("!!document.getElementById('demo-phone')")) === true, 15000);
   await sleep(1500);
   await typeInto('#demo-phone', PHONE);

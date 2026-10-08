@@ -118,6 +118,9 @@ const TALK = '/index.html?talk=1&utm_source=facebook&utm_medium=paid_social&fbcl
 // Fills the demo form, gets a (stubbed) code sent, enters it: the verify body is captured.
 const DEMO = `(async () => {
   const w = (t) => new Promise((r) => setTimeout(r, t));
+  // The demo opens on the choice of two (AFMBP-2083): this walk is the outbound demo.
+  for (let i = 0; i < 50 && !document.querySelector('.demo-choice__get') && !document.getElementById('demo-phone'); i++) await w(100);
+  if (document.querySelector('.demo-choice__get')) document.querySelector('.demo-choice__get').click();
   for (let i = 0; i < 50 && !document.getElementById('demo-phone'); i++) await w(100);
   const set = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
   set(document.getElementById('demo-phone'), '4155552671');
