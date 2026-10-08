@@ -99,8 +99,8 @@ const NODE = {
   stars: { x: 49, y: 109, w: 75, h: 15 },
   // Text line boxes: the node's centres, each row 1px lower where Figma renders it so.
   centres: {
-    '.demo-choice__score': [142.96, 117.5], '.demo-choice__live': [251.5, 117.5], '.demo-choice__quote': [100.4, 132.4],
-    '.demo-choice__when--call': [168.5, 214.4], '.demo-choice__or': [166, 239.4], '.demo-choice__when--get': [168.5, 321.4],
+    '.demo-choice__score': [142.96, 117.167], '.demo-choice__live': [251.5, 117.167], '.demo-choice__quote': [100.4, 132.067],
+    '.demo-choice__when--call': [168.5, 214.067], '.demo-choice__or': [166, 239.067], '.demo-choice__when--get': [168.5, 321.067],
     '.demo-help': [169.79, 355.1],
   },
 };
