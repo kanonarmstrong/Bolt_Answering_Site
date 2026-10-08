@@ -549,3 +549,162 @@ body.demo-lock{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .demo-backdrop[data-screen="recap"] .demo-success-cta{animation:none}
 }
+
+/* ============================================================
+   Two ways to try it (AFMBP-2083): the choice, "You call us" call in progress,
+   and its failure card. Figma desktop 2670:896 / 2670:924 / 2670:1097, mobile
+   2670:952 / 2672:2064 / 2670:1124. Values are the nodes' own, in CSS px.
+   Deviations agreed with the owner: no consent line on the choice (the desktop
+   node still has one, so the help line moves up into its place and the card is
+   shorter); the desktop call card adds the code and the number to call above
+   "What to expect" (its node has no code block yet), and the mobile card shows
+   the number only when no dialer took the tap (.demo-incall--manual); the
+   failure card uses the mobile node's copy on desktop too.
+   ============================================================ */
+.demo-choice__h,.demo-choice__l1,.demo-choice__l2{display:block}
+.demo-choice__2,.demo-choice__or{display:none}
+.demo-choice__btn{text-decoration:none}
+.demo-choice__call{background:#2b7ffd}
+.demo-choice__get{background:#83b5ff}
+.demo-choice__call:hover{background:#1f6fe6}
+.demo-choice__get:hover{background:#6aa5ff}
+.demo-choice__btn .demo-spinner{flex:0 0 auto}
+.demo-incall,.demo-ifail{position:relative;text-align:left}
+.demo-incall>*,.demo-ifail>*{position:relative;z-index:1}
+.demo-incall::before,.demo-ifail::before{
+  content:"";position:absolute;z-index:0;pointer-events:none;
+  background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
+}
+.demo-incall p,.demo-ifail p{margin:0}
+.demo-incall__label,.demo-incall__digits,.demo-incall__dial{text-align:center;color:var(--navy)}
+.demo-incall__label{font-weight:700}
+.demo-incall__tel{color:var(--blue);text-decoration:none;white-space:nowrap}
+.demo-incall__tel:hover{text-decoration:underline}
+.demo-incall__expect,.demo-incall__done,.demo-ifail__title{color:var(--navy);white-space:nowrap;transform:rotate(-.44deg) skewX(-.22deg)}
+.demo-incall__list{margin:0;padding:0;list-style:none;counter-reset:demo-istep;color:var(--navy)}
+.demo-incall__list li{position:relative;white-space:nowrap;counter-increment:demo-istep}
+/* Numbers drawn here ("1. " ending where the text starts, as a decimal marker
+   does) so every engine places them the same. */
+.demo-incall__list li::before{content:counter(demo-istep) ". ";white-space:pre;position:absolute;right:100%;top:0}
+.demo-incall__list li:last-child::after{content:"";position:absolute;pointer-events:none;background:center/100% 100% no-repeat}
+.demo-incall__done{position:absolute;left:0;top:0}
+.demo-ifail__body{color:var(--navy)}
+.demo-ifail__btn{display:flex;align-items:center;justify-content:center;margin:0;padding:0;border-radius:6px;font-size:22px;font-weight:400;line-height:21px}
+
+@media (min-width:769px){
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"]) :is(.demo-logo,.demo-close){display:none}
+
+  /* ---- choice (2670:896): 617-wide card, 1px border; offsets from the padding box ---- */
+  .demo-backdrop[data-screen="choice"] .demo-card{padding:43.4px 0 37.8px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__h{margin:0;font-size:32px;line-height:41.6px;font-weight:400;color:var(--navy);text-align:center}
+  /* Yellow brush under "talk to an assistant now" (node vector 2670:989). */
+  .demo-backdrop[data-screen="choice"] .demo-card::after{
+    content:"";position:absolute;left:116px;top:121.078px;width:387.994px;height:9.643px;pointer-events:none;
+    background:url('assets/demo-ul-twoways.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-choice__sub{margin:14.4px 0 0;padding-left:2px;font-size:15px;line-height:24px;color:#839393;text-align:center}
+  .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:flex;gap:89px;margin:32px 0 0;padding-left:89px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__btn{
+    width:171px;height:49px;margin:0;padding:0;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:400;line-height:21px;color:#fff;
+  }
+  /* The node's help line sat under the consent text; it takes that text's place. */
+  .demo-backdrop[data-screen="choice"] .demo-help{margin:44px 0 0;font-size:16px;line-height:19.37px}
+
+  /* ---- call in progress (2670:924 + the code block): 674-wide card, 1px border ---- */
+  .demo-backdrop[data-screen="inbound-call"] .demo-card{max-width:674px;padding:0;border-radius:20.09px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall{height:452px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall::before{left:241.266px;top:143.39px;width:187.508px;height:255.657px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__code{position:absolute;left:0;right:0;top:29px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__label{font-size:24px;line-height:32px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__digits{margin-top:2px;font-size:32px;line-height:40px;letter-spacing:.04em}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__dial{position:absolute;left:0;right:0;top:109px;font-size:22px;line-height:30px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__expect{position:absolute;left:71.9px;top:170.98px;font-size:32.834px;line-height:26px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list{position:absolute;left:129px;top:223.05px;font-size:23.635px;line-height:30px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li{height:29.544px;margin:0 0 15.757px 35.45px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child{margin-bottom:0}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child::after{
+    left:3.15px;top:31.106px;width:90.603px;height:8.168px;background-image:url('assets/demo-ul-done.svg');
+  }
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__done{left:-.34px;top:-.506px;font-size:32.834px;line-height:26px}
+
+  /* ---- didn't connect (2670:1097, mobile copy): 674x311, no border ---- */
+  .demo-backdrop[data-screen="inbound-fail"] .demo-card{max-width:674px;padding:0;border:0;border-radius:20.09px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:311px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail::before{display:none}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__title{position:absolute;left:75.62px;top:60.2px;font-size:32.834px;line-height:26px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:100px;top:124px;width:532px;font-size:23.635px;line-height:29.544px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:119px;top:231px;width:436px;height:49px}
+}
+
+@media (max-width:768px){
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"]){background:rgba(0,0,0,.3);padding:16px}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"]) .demo-card{
+    max-width:100%;padding:0;border:0;box-shadow:none;position:relative;
+  }
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"]) :is(.demo-logo,.demo-close){display:none}
+  .demo-choice__two{display:none}
+  .demo-choice__2,.demo-choice__or{display:block}
+
+  /* ---- choice (2670:952) — card 337x402 at 50%-1.5px, 50%+.5px ---- */
+  .demo-backdrop[data-screen="choice"] .demo-card{width:337px;height:402px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18);left:-1.5px;top:.5px}
+  .demo-backdrop[data-screen="choice"] .demo-body{position:relative;height:100%}
+  .demo-backdrop[data-screen="choice"] .demo-choice__h{
+    position:absolute;left:0;top:32px;width:334px;margin:0;font-size:21px;line-height:25px;font-weight:400;color:var(--navy);
+    text-align:center;white-space:nowrap;
+  }
+  .demo-backdrop[data-screen="choice"] :is(.demo-choice__l1,.demo-choice__l2){height:25px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__2{display:inline;font-size:25px}
+  .demo-backdrop[data-screen="choice"] .demo-card::after{
+    content:"";position:absolute;left:31px;top:83.078px;width:263.99px;height:9.643px;pointer-events:none;
+    background:url('assets/demo-m-ul-twoways.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-choice__sub{
+    position:absolute;left:0;top:113px;width:332px;margin:0;font-size:15px;line-height:24px;color:#839393;text-align:center;white-space:nowrap;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-choice__btn{
+    position:absolute;left:81px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;color:#fff;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:164px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:271px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__or{
+    position:absolute;left:0;top:230px;width:332px;margin:0;font-size:15px;font-weight:700;line-height:24px;color:var(--navy);text-align:center;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-help{
+    position:absolute;left:45.04px;top:359.2px;width:249.5px;margin:0;font-size:9.596px;line-height:12px;text-align:center;
+  }
+
+  /* ---- call in progress (2672:2064) — card 331x281 at 50%-.5px, 50% ----
+     With the number shown (no dialer took the tap) everything from "What to
+     expect" down moves 24px to make room for it. */
+  .demo-backdrop[data-screen="inbound-call"] .demo-card{width:331px;border-radius:9.654px;box-shadow:inset 0 0 0 .536px rgba(0,0,0,.18);left:-.5px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall{--demo-dial:0px;height:calc(281px + var(--demo-dial))}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall--manual{--demo-dial:24px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall::before{left:120.115px;top:20.997px;width:91.89px;height:125.286px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__code{position:absolute;left:0;right:0;top:18px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__label{margin-left:.84px;font-size:15px;line-height:22px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__digits{margin:9px 0 0 1px;font-size:19.886px;line-height:24px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__dial{display:none;position:absolute;left:1px;right:0;top:76px;font-size:15px;line-height:20px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall--manual .demo-incall__dial{display:block}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__expect{
+    position:absolute;left:28.918px;top:calc(94.466px + var(--demo-dial));font-size:16.091px;line-height:13px;
+  }
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list{
+    position:absolute;left:28.42px;top:calc(119.536px + var(--demo-dial));width:279px;font-size:14.5px;line-height:20px;
+  }
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li{height:20px;margin:0 0 7.722px 21.75px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child{margin-bottom:0}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child::after{
+    left:4.986px;top:19.165px;width:44.4px;height:4.002px;background-image:url('assets/demo-m-ul-done.svg');
+  }
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall__done{left:3.28px;top:1.484px;font-size:16.091px;line-height:13px}
+
+  /* ---- didn't connect (2670:1124) — card 332x202 at 50%, 50%-60.5px, no border ---- */
+  .demo-backdrop[data-screen="inbound-fail"] .demo-card{width:332px;border-radius:9.872px;top:-60.5px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:202px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail::before{left:52.95px;top:61.82px;width:40.985px;height:55.881px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__title{position:absolute;left:37.15px;top:28.51px;font-size:21px;line-height:13px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:37px;top:74px;width:252px;font-size:15px;line-height:18px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:33px;top:131px;width:253px;height:49px;padding-right:4px}
+}

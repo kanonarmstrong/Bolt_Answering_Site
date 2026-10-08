@@ -191,24 +191,34 @@
     artWarmed = true;
     MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n + '.svg'; });
   }
-  function openModal(trigger) {
+  // The modal opens on the choice between the two demos (AFMBP-2083); `entry`
+  // 'form' skips it for the "We'll call you" form (/?talk=form). A call this tab
+  // started on the demo line takes precedence: the page follows it instead.
+  function openModal(trigger, entry) {
     warmMobileArt();
     if (!backdrop) build();
     stopConfetti();
     recapConfettiDone = false;
-    renderPhone();
+    var s = resumableInbound();
+    if (s) resumeInbound(s);
+    else if (entry === 'form') renderPhone();
+    else renderChoice();
     backdrop.classList.add('open');
     document.body.classList.add('demo-lock');
-    track('demo_opened', { trigger: trigger || 'button' });
+    // A reload in the middle of a demo-line call is not a new open.
+    if (trigger !== 'resume') track('demo_opened', { trigger: trigger || 'button' });
   }
   function closeModal() {
     if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
     clearResend();
     stopRecap();
+    stopInbound();
+    if (inbound) { inbound.open = false; inboundSave(); }
     stopConfetti();
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
   }
+  function isOpen() { return !!backdrop && backdrop.classList.contains('open'); }
   // `screen` tags the backdrop (data-screen) so CSS can apply the pixel-matched
   // mobile layouts (Figma 2657:1639 / 2442:1191 / 2441:811 / 2511:1027) to just
   // those screens; every other screen renders with the attribute empty.
@@ -241,6 +251,297 @@
   }
   function busy(btn, label) { btn.disabled = true; btn.innerHTML = ''; btn.appendChild(h('span', { class: 'demo-spinner' })); btn.appendChild(document.createTextNode(label)); }
   function unbusy(btn, label) { btn.disabled = false; btn.textContent = label; }
+
+  // "What to expect" steps, shared by both calling cards (step 4 is DONE!).
+  var EXPECT = ['She’ll act like your receptionist', 'Describe an issue or potential project', 'Share fake details to schedule'];
+
+  // ---------- screen: two ways to try it — Figma desktop 2670:896 / mobile 2670:952 ----------
+  // "Call now" = the visitor calls Bolt's demo line ("You call us", AFMBP-2083);
+  // "Get a call" = the outbound demo, unchanged from its form on. No consent
+  // line here (owner): calling us sends nothing to the visitor's phone, and the
+  // form keeps its own disclosure. The desktop node still shows that line; it is
+  // left out on both breakpoints, as agreed.
+  function renderChoice() {
+    clearResend();
+    stopRecap();
+    stopInbound();
+    inboundFlow = null;
+    step = 'choice';
+    // A real link from the first paint: iOS hands a tel: link to the dialer only
+    // from the tap itself, so the code is fetched now, before anyone taps.
+    var call = h('a', { class: 'demo-btn demo-choice__btn demo-choice__call', href: '#' }, ['Call now']);
+    var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button', text: 'Get a call' });
+    var waiting = false;
+    call.addEventListener('click', function (e) {
+      var s = inboundUsable(inbound) ? inbound : null;
+      var auto = !!s && canDial();
+      if (!auto) e.preventDefault();
+      if (waiting) return;
+      track('demo_mode_selected', { mode: 'inbound', dial: auto ? 'auto' : 'manual' });
+      if (s) {
+        if (auto) track('demo_inbound_call_tapped', { mode: 'inbound', from: 'choice' });
+        // Swap screens after the browser has acted on the tap, with the link
+        // still in the page.
+        setTimeout(function () { startInbound(s, !auto); }, 0);
+        return;
+      }
+      // No code yet (slow network, or it failed): get one, then show it with
+      // the number to call.
+      waiting = true;
+      call.innerHTML = '';
+      call.appendChild(h('span', { class: 'demo-spinner' }));
+      call.appendChild(document.createTextNode('Call now'));
+      ensureInbound().then(function (s2) {
+        waiting = false;
+        if (!isOpen() || step !== 'choice') return;
+        if (!s2) return renderInboundFailed('session');
+        startInbound(s2, true);
+      });
+    });
+    get.addEventListener('click', function () {
+      track('demo_mode_selected', { mode: 'outbound' });
+      renderPhone();
+    });
+    setBody([
+      // Desktop reads "Two ways to", mobile "2 ways to" (the nodes); CSS shows one.
+      h('h2', { class: 'demo-choice__h demo-mk' }, [
+        h('span', { class: 'demo-choice__l1' }, [
+          h('span', { class: 'demo-choice__two', text: 'Two' }),
+          h('span', { class: 'demo-choice__2', text: '2' }),
+          ' ways to'
+        ]),
+        h('span', { class: 'demo-choice__l2', text: 'talk to an assistant now' })
+      ]),
+      h('p', { class: 'demo-choice__sub', text: 'Call us or we’ll call you' }),
+      h('div', { class: 'demo-choice__btns' }, [call, h('p', { class: 'demo-choice__or', text: 'OR' }), get]),
+      helpLine()
+    ], 'choice');
+    ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
+  }
+
+  // ---------- "You call us" — the demo line (AFMBP-2083) ----------
+  // POST /api/demo/inbound/session gives this browser a one-time 4-digit code
+  // (10 minutes, single use) and the line's tel: link, which dials, pauses, then
+  // sends the code as keypad tones (tel:+18554973151,,1234; no trailing #, which
+  // Verizon breaks on). The line links the call to whichever session owns the
+  // code, so the page follows THAT call (GET /api/demo/inbound/session/:id) and
+  // never "the latest call". Once linked, it hands the call id to the recap the
+  // outbound demo uses. The code is also on screen, for a phone that does not
+  // send it: the line asks for it.
+  var INBOUND_KEY = 'bolt_demo_inbound';
+  var inbound = null;      // this tab's session: {sessionId, code, telUri, numberDisplay, expiresAt (ms), tappedAt, open, callId}
+  var inboundReq = null;   // the create request in flight
+  var inboundTimer = null;
+  var inboundFlow = null;  // the call the card follows: {session, manual, hidden, back, callId}
+
+  // Kept in sessionStorage so a phone that unloads the tab while the visitor is
+  // on the call can pick the same call back up when they return.
+  function inboundLoad() {
+    try {
+      var s = JSON.parse(window.sessionStorage.getItem(INBOUND_KEY) || 'null');
+      return s && s.sessionId && s.code && s.telUri ? s : null;
+    } catch (e) { return null; }
+  }
+  function inboundSave() {
+    try {
+      if (inbound) window.sessionStorage.setItem(INBOUND_KEY, JSON.stringify(inbound));
+      else window.sessionStorage.removeItem(INBOUND_KEY);
+    } catch (e) {}
+  }
+  // A code is offered for a new call only with time left to dial and type it.
+  function inboundUsable(s) { return !!s && s.expiresAt - Date.now() > 120000; }
+  // A call this tab started that has not reached its recap or failure screen.
+  function resumableInbound() {
+    if (!inbound) inbound = inboundLoad();
+    var s = inbound;
+    return s && s.tappedAt && Date.now() - s.tappedAt < 30 * 60000 ? s : null;
+  }
+  // The flow reached its end (recap, failure, limit): the next "Call now" gets
+  // a new code, and reopening the demo starts over.
+  function inboundFinish() {
+    inbound = null;
+    inboundFlow = null;
+    inboundSave();
+  }
+  function ensureInbound() {
+    if (inboundUsable(inbound)) return Promise.resolve(inbound);
+    if (inboundReq) return inboundReq;
+    inboundReq = apiPost('/api/demo/inbound/session', { trade: TRADE, voice: VOICE, locale: 'en' }).then(function (r) {
+      inboundReq = null;
+      var d = r.data || {};
+      if (r.ok && d.sessionId && /^\d{4}$/.test(String(d.code)) && /^tel:/.test(String(d.telUri))) {
+        inbound = {
+          sessionId: String(d.sessionId), code: String(d.code), telUri: String(d.telUri),
+          numberDisplay: d.numberDisplay || fmtDemoNumber(d.number),
+          expiresAt: Date.parse(d.expiresAt) || Date.now() + 9 * 60000
+        };
+        inboundSave();
+        track('demo_inbound_session_created', { mode: 'inbound' });
+        return inbound;
+      }
+      track('demo_inbound_session_failed', { mode: 'inbound', reason: reasonOf(r) });
+      return null;
+    });
+    return inboundReq;
+  }
+  // A phone hands a tel: link to its dialer. A computer with a mouse would only
+  // offer FaceTime or an app picker, so there the card shows the number instead.
+  function canDial() {
+    try { return !window.matchMedia('(hover:hover) and (pointer:fine)').matches; } catch (e) { return true; }
+  }
+
+  // `manual`: no dialer took the tap, so the card shows the number to call.
+  function startInbound(s, manual) {
+    s.tappedAt = Date.now();
+    s.open = true;
+    inboundSave();
+    var f = inboundFlow = { session: s, manual: !!manual, hidden: false, back: false, callId: null };
+    renderInboundCall(s, { manual: manual });
+    pollInbound(s);
+    // On a phone the dialer hides the page. If it is still in front a few
+    // seconds after the tap, the call never started (the visitor cancelled
+    // iOS's prompt, or an in-app browser ignored the link): show the number.
+    if (!manual) setTimeout(function () { if (inboundFlow === f && !f.hidden && !f.callId) revealDial(); }, 4000);
+  }
+  // Reopened (or reloaded) while a call this tab started may be live: let the
+  // server say where it is. Not connected yet -> back to the choice.
+  function resumeInbound(s) {
+    inbound = s;
+    s.open = true;
+    inboundSave();
+    inboundFlow = { session: s, manual: true, hidden: false, back: true, callId: null };
+    renderInboundCall(s, { manual: true });
+    pollInbound(s, { resume: true });
+  }
+
+  // ---------- screen: You call us, call in progress — Figma mobile 2672:2064 / desktop 2670:924 ----------
+  // The mobile node is the code and "What to expect". Desktop adds the number to
+  // call (owner, AFMBP-2083: the desktop node has no code block yet); mobile
+  // shows it only when no dialer took the tap (demo-incall--manual).
+  function renderInboundCall(s, opts) {
+    opts = opts || {};
+    clearResend();
+    step = 'inbound_call';
+    var tel = h('a', { class: 'demo-incall__tel', href: s.telUri, text: s.numberDisplay });
+    tel.addEventListener('click', function () { track('demo_inbound_call_tapped', { mode: 'inbound', from: 'card' }); });
+    var done = h('span', { class: 'demo-mk demo-incall__done', text: 'DONE!' });
+    setBody([
+      h('div', { class: 'demo-incall' + (opts.manual ? ' demo-incall--manual' : '') }, [
+        h('div', { class: 'demo-incall__code', role: 'status' }, [
+          h('p', { class: 'demo-incall__label', text: 'Your code' }),
+          h('p', { class: 'demo-incall__digits', text: s.code })
+        ]),
+        h('p', { class: 'demo-incall__dial' }, ['Call ', tel]),
+        h('p', { class: 'demo-incall__expect demo-mk', text: 'What to expect:' }),
+        h('ol', { class: 'demo-incall__list' }, EXPECT.map(function (t) { return h('li', {}, [t]); })
+          .concat([h('li', {}, ['​', done])]))
+      ])
+    ], 'inbound-call');
+  }
+  function revealDial() {
+    var card = body && body.querySelector('.demo-incall');
+    if (card) card.classList.add('demo-incall--manual');
+    if (inboundFlow) inboundFlow.manual = true;
+  }
+
+  // ---------- inbound polling ----------
+  // waiting -> connected (call id) -> completed, or limit / expired / failed.
+  // Polls every 3s while the card is up. A phone suspends the page during the
+  // call, so coming back to it checks at once (visibilitychange, below).
+  function stopInbound() { if (inboundTimer) { clearTimeout(inboundTimer); inboundTimer = null; } }
+  function pollInbound(s, opts) {
+    opts = opts || {};
+    stopInbound();
+    var url = API + '/api/demo/inbound/session/' + encodeURIComponent(s.sessionId);
+    var first = true;
+    function again(ms) { stopInbound(); inboundTimer = setTimeout(tick, ms); }
+    function tick() {
+      inboundTimer = null;
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, d: d || {} }; }); })
+        .then(function (res) {
+          var f = inboundFlow;
+          // Closed, or another flow took over while this request was out.
+          if (!isOpen() || !f || f.session !== s || step !== 'inbound_call') return;
+          var resume = opts.resume && first;
+          first = false;
+          var st = res.status === 404 ? 'expired' : res.d.state;
+          if ((st === 'connected' || st === 'completed') && res.d.callId) return followCall(f, String(res.d.callId));
+          if (st === 'waiting') {
+            if (resume) return renderChoice();   // never got through: choose again, same code
+            if (f.back) revealDial();
+            return again(3000);
+          }
+          if (st === 'limit') {
+            inboundFinish();
+            return renderLimit();
+          }
+          if (st === 'expired' || st === 'failed') {
+            if (resume) { inboundFinish(); return renderChoice(); }
+            return renderInboundFailed(st);
+          }
+          again(res.status === 429 ? 10000 : 5000);   // rate limited / server error: back off
+        })
+        .catch(function () { again(5000); });
+    }
+    tick();
+  }
+  // The call reached the line with this session's code: from here it is the
+  // same call record the outbound demo follows to its recap.
+  function followCall(f, callId) {
+    f.callId = callId;
+    // Counted once per call, also across a reload that picked the call back up.
+    if (f.session.callId !== callId) {
+      f.session.callId = callId;
+      inboundSave();
+      track('demo_inbound_call_connected', { mode: 'inbound', call_id: callId });
+    }
+    stopInbound();
+    pollRecap(callId, inboundRecapOpts());
+  }
+  function inboundRecapOpts() {
+    return {
+      mode: 'inbound',
+      // The visitor sets the call's length: wait up to 20 minutes for it to end,
+      // and time the transcript wait from the end of the call.
+      inCallLimitMs: 20 * 60000,
+      transcriptFromEnd: true,
+      onSettled: inboundFinish,
+      onFailed: function () { renderInboundFailed('call_failed'); }
+    };
+  }
+  document.addEventListener('visibilitychange', function () {
+    var f = inboundFlow;
+    if (!f || !isOpen()) return;
+    if (document.visibilityState === 'hidden') { f.hidden = true; return; }
+    if (step !== 'inbound_call') return;
+    f.back = true;
+    // Timers may have slept through the call: check now, and restart the
+    // recap wait from here.
+    if (f.callId) pollRecap(f.callId, inboundRecapOpts());
+    else pollInbound(f.session);
+  });
+
+  // ---------- screen: You call us didn't connect — Figma mobile 2670:1124 / desktop 2670:1097 ----------
+  // Copy = the mobile node on both breakpoints (owner: the desktop node's copy
+  // is older). Continue -> back to the choice, with a new code.
+  function renderInboundFailed(reason) {
+    stopInbound();
+    stopRecap();
+    clearResend();
+    track('demo_inbound_failed', { mode: 'inbound', reason: reason || 'unknown' });
+    inboundFinish();
+    step = 'inbound_failed';
+    var btn = h('button', { class: 'demo-btn demo-ifail__btn', type: 'button', text: 'Continue' });
+    btn.addEventListener('click', function () { renderChoice(); });
+    setBody([
+      h('div', { class: 'demo-ifail' }, [
+        h('p', { class: 'demo-ifail__title demo-mk', text: 'Sorry... that didn’t work' }),
+        h('p', { class: 'demo-ifail__body' }, ['We weren’t able to connect.', h('br'), 'Please try your call again later.']),
+        btn
+      ])
+    ], 'inbound-fail');
+  }
 
   // ---------- screen: phone entry ----------
   // `label` is text or a list of nodes; `required` marks the field required to
@@ -575,13 +876,10 @@
           h('span', { class: 'demo-callcard__from' }, [' Calling you now from ', numberEl])
         ]),
         h('p', { class: 'demo-callcard__expect demo-mk', text: 'What to expect:' }),
-        h('ol', { class: 'demo-callcard__list' }, [
-          h('li', {}, ['She’ll act like your receptionist']),
-          h('li', {}, ['Describe an issue or potential project']),
-          h('li', {}, ['Share fake details to schedule']),
+        h('ol', { class: 'demo-callcard__list' }, EXPECT.map(function (t) { return h('li', {}, [t]); }).concat([
           // A zero-width space keeps the "4." line when mobile lifts DONE! onto it.
           h('li', {}, ['\u200B', h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
-        ])
+        ]))
       ])
     ], 'calling');
     return numberEl;
@@ -593,12 +891,27 @@
   // advances from the in-call screen to the recap screen when the call ends.
   var recapTimer = null;
   var recapShown = false;
+  // 'inbound' while the recap follows a demo-line call (AFMBP-2083), else null.
+  // Events from the inbound branch carry mode: 'inbound'; the outbound demo's
+  // events are sent exactly as before (no mode = outbound).
+  var recapMode = null;
+  function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }
   function stopRecap() { if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
-  function pollRecap(callId) {
+  // opts (the inbound branch; the outbound demo passes none): mode, onFailed
+  // (its failure screen), inCallLimitMs (how long to wait for the call to end),
+  // transcriptFromEnd (time the transcript wait from the end of the call, not
+  // from the first poll), onSettled (the call ended, completed or failed).
+  function pollRecap(callId, opts) {
+    opts = opts || {};
     stopRecap();
     recapShown = false;
     recapConfettiDone = false;
+    recapMode = opts.mode || null;
+    var onFailed = opts.onFailed || renderCallFailed;
+    var inCallLimit = opts.inCallLimitMs || 240000;
     var started = Date.now();
+    var endedAt = 0;
+    function settled() { if (opts.onSettled) { var fn = opts.onSettled; opts.onSettled = null; fn(); } }
     var url = API + '/api/demo/recap/' + encodeURIComponent(callId);
     (function tick() {
       fetch(url, { headers: { 'Accept': 'application/json' } })
@@ -606,28 +919,30 @@
         .then(function (d) {
           // Bail if the user closed the modal or moved to another screen.
           if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
-          if (d && d.status === 'failed') { stopRecap(); track('demo_call_failed', { stage: 'call_status', call_id: callId }); return renderCallFailed(); }
+          if (d && d.status === 'failed') { stopRecap(); track('demo_call_failed', modeProps({ stage: 'call_status', call_id: callId })); settled(); return onFailed(); }
           if (d && d.status === 'completed') {
+            if (!endedAt) endedAt = Date.now();
+            settled();
             if (finishedFor !== callId) {
               finishedFor = callId;
               // The call has ended (answered or not). The transcript usually lands a
               // few polls later; demo_transcript_shown marks a real conversation.
-              track('demo_call_finished', { call_id: callId });
+              track('demo_call_finished', modeProps({ call_id: callId }));
             }
-            if (normTurns(d.transcript).length > 0) { stopRecap(); track('demo_transcript_shown', { call_id: callId }); return renderRecap(d); }
+            if (normTurns(d.transcript).length > 0) { stopRecap(); track('demo_transcript_shown', modeProps({ call_id: callId })); return renderRecap(d); }
             // Completed, but the transcript isn't back yet (the server is still
             // pulling it from Telnyx). Switch to the recap now, keep polling.
             if (!recapShown) { recapShown = true; renderRecap(d); }
-            if (Date.now() - started > 240000) { stopRecap(); track('demo_transcript_unavailable', { call_id: callId }); return renderRecap(d, { transcriptUnavailable: true }); }
+            if (Date.now() - (opts.transcriptFromEnd ? endedAt : started) > 240000) { stopRecap(); track('demo_transcript_unavailable', modeProps({ call_id: callId })); return renderRecap(d, { transcriptUnavailable: true }); }
             recapTimer = setTimeout(tick, 3000);
             return;
           }
           // pending / in_call — keep waiting for the call to end.
-          if (Date.now() - started > 240000) { stopRecap(); track('demo_call_timeout', { call_id: callId }); return; } // give up quietly, leave the in-call screen up
+          if (Date.now() - started > inCallLimit) { stopRecap(); track('demo_call_timeout', modeProps({ call_id: callId })); return; } // give up quietly, leave the in-call screen up
           recapTimer = setTimeout(tick, 3000);
         })
         .catch(function () {
-          if (Date.now() - started > 240000) { stopRecap(); return; }
+          if (Date.now() - started > inCallLimit) { stopRecap(); return; }
           recapTimer = setTimeout(tick, 4000); // tolerate transient network/CORS blips
         });
     })();
@@ -704,7 +1019,7 @@
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__sm', text: 'are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', { from: 'recap', call_id: finishedFor }); } }, ['Start my free trial now'])
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start my free trial now'])
       ])
     ], 'recap');
     chatBar(box, bar);
@@ -801,9 +1116,17 @@
   // QA-only hook (needs ?demoqa=1) to render each modal state deterministically for
   // screenshot verification, without walking the live OTP/call API. No effect otherwise.
   if (typeof window !== 'undefined' && /[?&]demoqa=1/.test(window.location.search)) {
+    // AFMBP-2083: choice, You call us card (code, manual = number shown) and its
+    // failure card, with a stand-in session so nothing is created on the server.
+    var qaSession = function (code) {
+      return { sessionId: 'qa', code: code || '1234', telUri: 'tel:+18554973151,,' + (code || '1234'), numberDisplay: '(855) 497-3151', expiresAt: Date.now() + 9 * 60000 };
+    };
     window.__demoQA = {
       open: function () { openModal('qa'); }, phone: renderPhone, code: renderCode, inCall: renderCalling,
       recap: renderRecap, fail: renderCallFailed, limit: renderLimit, error: renderError,
+      choice: renderChoice,
+      inbound: function (code, manual) { renderInboundCall(qaSession(code), { manual: !!manual }); },
+      inboundFail: renderInboundFailed,
       state: state
     };
   }
@@ -812,16 +1135,28 @@
   // it on arrival when its URL carries `talk` (/?talk=1, /hvac.html?talk=1,
   // alongside any utm_* / click-id params). Closing it leaves the visitor on
   // the page; the trade still comes from the page path, as with the buttons.
+  // It opens on the choice of the two demos; `talk=form` goes straight to the
+  // "We'll call you" form (AFMBP-2083).
   function autoOpen() {
     if (!/[?&]talk(=|&|$)/.test(window.location.search)) return;
+    var entry = /[?&]talk=form(&|$)/.test(window.location.search) ? 'form' : null;
     // AFMBP-2010: open (and log `demo_opened`) only once someone is looking at
     // the page. A preloaded or prerendered ad landing is not a demo opened.
     var whenVisible = window.boltAttr && window.boltAttr.whenVisible;
-    if (whenVisible) whenVisible(function () { openModal('ad_link'); });
-    else openModal('ad_link');
+    if (whenVisible) whenVisible(function () { openModal('ad_link', entry); });
+    else openModal('ad_link', entry);
   }
   function init() {
     wire();
+    // The phone unloaded this tab while the visitor was on a demo-line call
+    // started here: reopen and follow that call to its recap.
+    var s = resumableInbound();
+    if (s && s.open) {
+      var whenVisible = window.boltAttr && window.boltAttr.whenVisible;
+      if (whenVisible) whenVisible(function () { openModal('resume'); });
+      else openModal('resume');
+      return;
+    }
     autoOpen();
   }
 
