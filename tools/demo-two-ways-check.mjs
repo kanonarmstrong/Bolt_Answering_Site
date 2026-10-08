@@ -12,7 +12,7 @@
 // Run: node tools/demo-two-ways-check.mjs [siteRoot]
 //      SHOTS=<dir> also saves a screenshot of every new state (desktop 1920x1200 @1x,
 //      phone 402x753 @3x) plus boxes.json (each card's box), for the Figma comparison.
-//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse — negative controls on the
+//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse | NC=no_gen — negative controls on the
 //      SERVED copy only; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
@@ -41,6 +41,8 @@ const MUTATE = {
   mode_leak: (s) => cut(s, 'function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }', "function modeProps(p) { p.mode = recapMode || 'outbound'; return p; }"),
   // A code fetched on one trade page is reused on another (AFMBP-2096).
   trade_reuse: (s) => cut(s, 'return !!s && s.trade === TRADE && s.expiresAt', 'return !!s && s.expiresAt'),
+  // Answers from superseded checks are processed again (AFMBP-2099).
+  no_gen: (s) => cut(cut(s, 'if (gen !== inboundGen) return;   // superseded while it was out', ''), 'if (gen !== recapGen) return;   // superseded while it was out', ''),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -62,12 +64,13 @@ const api = {
   recaps: new Map(), // callId -> recap body
   createStatus: 200,
   created: 0,
+  delayMs: 0, // hold every Bolt API answer this long (overlapping checks)
   trades: [], // the trade each code was fetched for, in order
   statusGets: [], // { t, id }
   events: [], // { type, data }
   nextCode: 4321,
 };
-const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.trades = []; api.statusGets = []; api.events = []; api.nextCode = 4321; };
+const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.delayMs = 0; api.trades = []; api.statusGets = []; api.events = []; api.nextCode = 4321; };
 function apiRespond(method, url, postData) {
   const p = new URL(url).pathname;
   if (method === 'POST' && p === '/api/demo/inbound/session') {
@@ -127,8 +130,10 @@ try {
     const quiet = (p) => p.catch(() => {});
     if (new URL(request.url).hostname === '127.0.0.1') return quiet(send('Fetch.continueRequest', { requestId }));
     if (request.method === 'OPTIONS') return quiet(send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }));
-    const [code, body] = /bolt-staging\.fly\.dev$/.test(new URL(request.url).hostname) ? apiRespond(request.method, request.url, request.postData) : [200, {}];
-    return quiet(send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from(JSON.stringify(body)).toString('base64') }));
+    const bolt = /bolt-staging\.fly\.dev$/.test(new URL(request.url).hostname);
+    const [code, body] = bolt ? apiRespond(request.method, request.url, request.postData) : [200, {}];
+    const answer = () => quiet(send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from(JSON.stringify(body)).toString('base64') }));
+    return bolt && api.delayMs ? setTimeout(answer, api.delayMs) : answer();
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
@@ -304,6 +309,29 @@ try {
   await load('/plumbing.html?talk=1', { keepStorage: true });
   await waitScreen('choice'); await sleep(400);
   ok(api.created === 2, `phone: back on the same trade page, the same code is reused (${api.created} codes)`);
+
+  console.log('[phone] back from the call with two checks in flight -> counted once (AFMBP-2099)');
+  reset();
+  await load('/hvac.html?talk=1');
+  await waitScreen('choice'); await sleep(300);
+  await tap('.demo-choice__call');
+  await waitScreen('inbound-call');
+  await setVis('hidden');
+  await sleep(300);
+  setState('completed', 'in-9');
+  api.recaps.set('in-9', { status: 'completed', transcript: TRANSCRIPT });
+  // Answers take 700ms, so the two checks below overlap, as on an iPhone waking up.
+  api.delayMs = 700;
+  await setVis('visible');
+  await sleep(100);
+  await setVis('hidden');
+  await setVis('visible');
+  ok(await waitScreen('recap', 8000), 'phone: the call is followed to the recap');
+  await sleep(2500);
+  api.delayMs = 0;
+  ok(evs('demo_transcript_shown', (d) => d.call_id === 'in-9').length === 1, `events: demo_transcript_shown once (${evs('demo_transcript_shown').length})`);
+  ok(evs('demo_call_finished', (d) => d.call_id === 'in-9').length === 1, `events: demo_call_finished once (${evs('demo_call_finished').length})`);
+  ok(evs('demo_inbound_call_connected', (d) => d.call_id === 'in-9').length === 1, `events: demo_inbound_call_connected once (${evs('demo_inbound_call_connected').length})`);
 
   console.log('[phone] expired -> failure -> Continue -> new code');
   reset();
