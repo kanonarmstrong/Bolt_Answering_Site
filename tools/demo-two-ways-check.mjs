@@ -12,7 +12,7 @@
 // Run: node tools/demo-two-ways-check.mjs [siteRoot]
 //      SHOTS=<dir> also saves a screenshot of every new state (desktop 1920x1200 @1x,
 //      phone 402x753 @3x) plus boxes.json (each card's box), for the Figma comparison.
-//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse | NC=no_gen — negative controls on the
+//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse | NC=no_gen | NC=no_visitor — negative controls on the
 //      SERVED copy only; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
@@ -42,6 +42,8 @@ const MUTATE = {
   // A code fetched on one trade page is reused on another (AFMBP-2096).
   trade_reuse: (s) => cut(s, 'return !!s && s.trade === TRADE && s.expiresAt', 'return !!s && s.expiresAt'),
   // Answers from superseded checks are processed again (AFMBP-2099).
+  // The code request goes without the visitor id (AFMBP-2109).
+  no_visitor: (s) => cut(s, "body.sessionId = window.boltAttr.visitorId();", ';'),
   no_gen: (s) => cut(cut(s, 'if (gen !== inboundGen) return;   // superseded while it was out', ''), 'if (gen !== recapGen) return;   // superseded while it was out', ''),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -66,11 +68,12 @@ const api = {
   created: 0,
   delayMs: 0, // hold every Bolt API answer this long (overlapping checks)
   trades: [], // the trade each code was fetched for, in order
+  visitors: [], // the visitor id each code request carried, in order
   statusGets: [], // { t, id }
   events: [], // { type, data }
   nextCode: 4321,
 };
-const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.delayMs = 0; api.trades = []; api.statusGets = []; api.events = []; api.nextCode = 4321; };
+const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.delayMs = 0; api.trades = []; api.visitors = []; api.statusGets = []; api.events = []; api.nextCode = 4321; };
 function apiRespond(method, url, postData) {
   const p = new URL(url).pathname;
   if (method === 'POST' && p === '/api/demo/inbound/session') {
@@ -78,7 +81,7 @@ function apiRespond(method, url, postData) {
     const id = `00000000-0000-4000-8000-${String(++api.created).padStart(12, '0')}`;
     const code = String(api.nextCode++);
     api.sessions.set(id, { code, state: 'waiting', callId: null });
-    try { api.trades.push(JSON.parse(postData || '{}').trade); } catch { api.trades.push(null); }
+    try { const b = JSON.parse(postData || '{}'); api.trades.push(b.trade); api.visitors.push(b.sessionId ?? null); } catch { api.trades.push(null); api.visitors.push(null); }
     return [200, { sessionId: id, code, number: '+18554973151', numberDisplay: '(855) 497-3151', telUri: `tel:+18554973151,,${code}`, expiresAt: new Date(Date.now() + 600000).toISOString() }];
   }
   let m = p.match(/^\/api\/demo\/inbound\/session\/([^/]+)$/);
@@ -210,6 +213,8 @@ try {
   ok(await waitScreen('choice'), 'phone: ?talk=1 opens on the choice');
   await sleep(300);
   ok(api.created === 1, `phone: one code fetched on open (${api.created})`);
+  const vid = await ev('window.boltAttr && window.boltAttr.visitorId()');
+  ok(/^[A-Za-z0-9-]{8,64}$/.test(vid || '') && api.visitors[0] === vid, `phone: the code request carries this visit's visitor id, so the call can be tied to the ad (AFMBP-2109) (${api.visitors[0] ? 'sent' : 'missing'})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
   // AFMBP-2090: the redrawn phone node drops "now" (desktop keeps it).
   ok((await text('.demo-choice__h')) === '2 ways to talk to an assistant', `phone: heading copy (${await text('.demo-choice__h')})`);
