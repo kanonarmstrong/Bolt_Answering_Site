@@ -378,8 +378,11 @@
       else window.sessionStorage.removeItem(INBOUND_KEY);
     } catch (e) {}
   }
-  // A code is offered for a new call only with time left to dial and type it.
-  function inboundUsable(s) { return !!s && s.expiresAt - Date.now() > 120000; }
+  // A code is offered for a new call only with time left to dial and type it,
+  // and only on a page of the trade it was fetched for: the line runs the call
+  // with the code's trade (AFMBP-2096), so another trade page gets its own code.
+  // A call already started still resumes on any page (resumableInbound).
+  function inboundUsable(s) { return !!s && s.trade === TRADE && s.expiresAt - Date.now() > 120000; }
   // A call this tab started that has not reached its recap or failure screen.
   function resumableInbound() {
     if (!inbound) inbound = inboundLoad();
@@ -401,7 +404,7 @@
       var d = r.data || {};
       if (r.ok && d.sessionId && /^\d{4}$/.test(String(d.code)) && /^tel:/.test(String(d.telUri))) {
         inbound = {
-          sessionId: String(d.sessionId), code: String(d.code), telUri: String(d.telUri),
+          sessionId: String(d.sessionId), code: String(d.code), telUri: String(d.telUri), trade: TRADE,
           numberDisplay: d.numberDisplay || fmtDemoNumber(d.number),
           expiresAt: Date.parse(d.expiresAt) || Date.now() + 9 * 60000
         };

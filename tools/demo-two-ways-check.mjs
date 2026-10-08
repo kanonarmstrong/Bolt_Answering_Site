@@ -12,7 +12,7 @@
 // Run: node tools/demo-two-ways-check.mjs [siteRoot]
 //      SHOTS=<dir> also saves a screenshot of every new state (desktop 1920x1200 @1x,
 //      phone 402x753 @3x) plus boxes.json (each card's box), for the Figma comparison.
-//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak — negative controls on the
+//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse — negative controls on the
 //      SERVED copy only; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
@@ -39,6 +39,8 @@ const MUTATE = {
   no_reveal: (s) => cut(s, 'if (inboundFlow === f && !f.hidden && !f.callId) revealDial();', ''),
   // The outbound demo's events start carrying a mode.
   mode_leak: (s) => cut(s, 'function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }', "function modeProps(p) { p.mode = recapMode || 'outbound'; return p; }"),
+  // A code fetched on one trade page is reused on another (AFMBP-2096).
+  trade_reuse: (s) => cut(s, 'return !!s && s.trade === TRADE && s.expiresAt', 'return !!s && s.expiresAt'),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -60,11 +62,12 @@ const api = {
   recaps: new Map(), // callId -> recap body
   createStatus: 200,
   created: 0,
+  trades: [], // the trade each code was fetched for, in order
   statusGets: [], // { t, id }
   events: [], // { type, data }
   nextCode: 4321,
 };
-const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.statusGets = []; api.events = []; api.nextCode = 4321; };
+const reset = () => { api.sessions.clear(); api.recaps.clear(); api.createStatus = 200; api.created = 0; api.trades = []; api.statusGets = []; api.events = []; api.nextCode = 4321; };
 function apiRespond(method, url, postData) {
   const p = new URL(url).pathname;
   if (method === 'POST' && p === '/api/demo/inbound/session') {
@@ -72,6 +75,7 @@ function apiRespond(method, url, postData) {
     const id = `00000000-0000-4000-8000-${String(++api.created).padStart(12, '0')}`;
     const code = String(api.nextCode++);
     api.sessions.set(id, { code, state: 'waiting', callId: null });
+    try { api.trades.push(JSON.parse(postData || '{}').trade); } catch { api.trades.push(null); }
     return [200, { sessionId: id, code, number: '+18554973151', numberDisplay: '(855) 497-3151', telUri: `tel:+18554973151,,${code}`, expiresAt: new Date(Date.now() + 600000).toISOString() }];
   }
   let m = p.match(/^\/api\/demo\/inbound\/session\/([^/]+)$/);
@@ -287,6 +291,19 @@ try {
   ok(await waitScreen('choice'), 'phone: not connected -> back to the choice');
   await sleep(300);
   ok(api.created === 1 && (await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: same code, no second session');
+
+  console.log('[phone] another trade page in the same tab -> its own code (AFMBP-2096)');
+  reset();
+  await load('/hvac.html?talk=1');
+  await waitScreen('choice'); await sleep(300);
+  await load('/plumbing.html?talk=1', { keepStorage: true });
+  ok(await waitScreen('choice'), 'phone: plumbing page opens on the choice');
+  await sleep(400);
+  ok(api.created === 2 && api.trades.join(',') === 'hvac,plumbing', `phone: the plumbing page fetched its own code (${api.trades.join(',')})`);
+  ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4322', 'phone: "Call now" carries the plumbing code, not the hvac one');
+  await load('/plumbing.html?talk=1', { keepStorage: true });
+  await waitScreen('choice'); await sleep(400);
+  ok(api.created === 2, `phone: back on the same trade page, the same code is reused (${api.created} codes)`);
 
   console.log('[phone] expired -> failure -> Continue -> new code');
   reset();
