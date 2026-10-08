@@ -37,8 +37,8 @@ const MUTATE = {
   swap_ctas: ['demo.js', (s) => cut(cut(cut(s, "'demo-btn demo-choice__btn demo-choice__call'", 'TMP_CALL'), "'demo-btn demo-choice__btn demo-choice__get'", "'demo-btn demo-choice__btn demo-choice__call'"), 'TMP_CALL', "'demo-btn demo-choice__btn demo-choice__get'")],
   // The phone shows the desktop label and title ("Call now", "…assistant now").
   old_label: ['demo.css', (s) => cut(s, '  .demo-choice__lbl-d,.demo-choice__now{display:none}\n', '')],
-  // The stars reach screen readers.
-  noisy_stars: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-choice__stars', 'aria-hidden': 'true' }", "h('span', { class: 'demo-choice__stars' }")],
+  // The stars reach screen readers (as text stars, not hidden).
+  noisy_stars: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-choice__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')])", "h('span', { class: 'demo-choice__stars' }, ['★★★★★'])")],
   // The phone-only pieces leak onto desktop.
   desktop_leak: ['demo.css', (s) => cut(s, '.demo-choice__lbl-m,.demo-choice__proof,.demo-choice__when{display:none}\n', '')],
   // "Get a call" is counted twice.
@@ -99,9 +99,9 @@ const NODE = {
   stars: { x: 49, y: 109, w: 75, h: 15 },
   // Text line boxes: the node's centres, each row 1px lower where Figma renders it so.
   centres: {
-    '.demo-choice__score': [142.96, 118], '.demo-choice__live': [251.5, 118], '.demo-choice__quote': [100.4, 132.4],
+    '.demo-choice__score': [142.96, 117.5], '.demo-choice__live': [251.5, 117.5], '.demo-choice__quote': [100.4, 132.4],
     '.demo-choice__when--call': [168.5, 214.4], '.demo-choice__or': [166, 239.4], '.demo-choice__when--get': [168.5, 321.4],
-    '.demo-help': [169.79, 354.6],
+    '.demo-help': [169.79, 355.1],
   },
 };
 

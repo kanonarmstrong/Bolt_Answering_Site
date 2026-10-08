@@ -666,8 +666,9 @@ body.demo-lock{overflow:hidden}
   }
   .demo-backdrop[data-screen="choice"] :is(.demo-choice__l1,.demo-choice__l2){height:25px}
   /* Line 2 rendered 1.0-1.33px above the node on iPhone Safari and on Chrome at
-     a true 3x; nudged to the node. */
-  .demo-backdrop[data-screen="choice"] .demo-choice__l2{position:relative;top:1.17px}
+     a true 3x; nudged to the node. Re-measured against the redrawn node (AFMBP-2090):
+     .67px puts it on the node in Chrome and .33px low in Safari. */
+  .demo-backdrop[data-screen="choice"] .demo-choice__l2{position:relative;top:.67px}
   .demo-backdrop[data-screen="choice"] .demo-choice__2{display:inline;font-size:25px}
   /* The redrawn node sets line 1 ("2 ways to") in Inter; line 2 stays in the marker. */
   .demo-backdrop[data-screen="choice"] .demo-choice__l1{font-family:var(--font)}
@@ -690,11 +691,13 @@ body.demo-lock{overflow:hidden}
     width:15px;height:15px;background:url('assets/demo-m-star.svg') .3675px 0/14.2658px 13.5676px no-repeat;
   }
   .demo-backdrop[data-screen="choice"] :is(.demo-choice__score,.demo-choice__live,.demo-choice__quote){position:absolute;margin:0;text-align:center;white-space:nowrap}
-  .demo-backdrop[data-screen="choice"] :is(.demo-choice__score,.demo-choice__live){top:111.172px;font-size:11.538px;line-height:13.657px}
+  /* The rating row and the help line: WebKit sets these small lines 1px lower (rating)
+     and higher (help) than Blink; each sits half way, within .5px of the node on both. */
+  .demo-backdrop[data-screen="choice"] :is(.demo-choice__score,.demo-choice__live){top:110.672px;font-size:11.538px;line-height:13.657px}
   .demo-backdrop[data-screen="choice"] .demo-choice__score{left:112.96px;width:60px;font-weight:700;color:var(--navy)}
   .demo-backdrop[data-screen="choice"] .demo-choice__live{left:211.5px;width:80px;font-weight:400;color:#707070}
   .demo-backdrop[data-screen="choice"] .demo-choice__live::before{
-    content:"";position:absolute;left:-12.5px;top:-.172px;width:10.385px;height:10.385px;pointer-events:none;
+    content:"";position:absolute;left:-12.5px;top:.328px;width:10.385px;height:10.385px;pointer-events:none;
     background:url('assets/demo-m-dot-live.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__quote{left:40.4px;width:120px;top:126.482px;font-size:9.6px;line-height:11.836px;font-style:italic;font-weight:400;color:#707070}
@@ -716,7 +719,7 @@ body.demo-lock{overflow:hidden}
     position:absolute;left:0;top:227.4px;width:332px;margin:0;font-size:15px;font-weight:700;line-height:24px;color:var(--navy);text-align:center;
   }
   .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:45.04px;top:348.6px;width:249.5px;margin:0;font-size:9.596px;line-height:12px;text-align:center;
+    position:absolute;left:45.04px;top:349.1px;width:249.5px;margin:0;font-size:9.596px;line-height:12px;text-align:center;
   }
 
   /* ---- call in progress (2672:2064) — card 331x281 at 50%-.5px, 50% ----
