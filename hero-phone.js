@@ -15,14 +15,22 @@
 
    Progressive: the hero <img> stays the first paint (LCP) and the fallback;
    the 3D phone fades in over it once its first frame and the Home screen are
-   ready. No WebGL -> the image simply stays. Reduced motion -> Home, still. */
+   ready. No WebGL -> the image simply stays. Reduced motion -> Home, still.
 
-import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScreen } from "./three-phone.js?v=2"
+   AFMBP-2113: the <img> IS this phone's own frame, rendered by
+   tools/hero-first-frame.mjs in the same box: the loop's first frame (t=0),
+   or for reduced motion (a <picture> source) the finished Home still. The
+   fade-in therefore swaps identical pixels. Change a screen, the pose or the
+   loop's start and the picture must be re-rendered:
+   `node tools/hero-first-frame.mjs render`, then `... check`. */
+
+import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScreen } from "./three-phone.js?v=3"
 
 ;(function () {
     if (typeof window === "undefined" || typeof document === "undefined") return
     var media = document.querySelector(".hero__media")
-    var img = media && media.querySelector(":scope > img")
+    // AFMBP-2113: the image sits in a <picture> (a reduced-motion source).
+    var img = media && media.querySelector(":scope > picture > img, :scope > img")
     if (!media || !img) return
 
     // App screen size in points (Figma frames are 1206x2622 = 3x).

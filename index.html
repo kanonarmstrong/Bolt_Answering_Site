@@ -43,7 +43,12 @@
   <link rel="stylesheet" href="styles.css?v=42" />
   <link rel="stylesheet" href="demo.css?v=21" />
   <link rel="stylesheet" href="hiw-phone.css?v=9" />
-  <link rel="stylesheet" href="hero-phone.css?v=3" />
+  <link rel="stylesheet" href="hero-phone.css?v=4" />
+  <!-- AFMBP-2113: fetch the 3D phone's code while the hero picture loads, at low
+       priority so the picture (the page's largest paint) still goes first. -->
+  <link rel="modulepreload" href="hero-phone.js?v=5" fetchpriority="low" />
+  <link rel="modulepreload" href="three-phone.js?v=3" fetchpriority="low" />
+  <link rel="modulepreload" href="vendor/three-0.169.0/three.module.min.js" fetchpriority="low" />
   <noscript><style>.rv,.rv-up{opacity:1 !important;transform:none !important}</style></noscript>
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
@@ -99,7 +104,13 @@
         <a href="#" class="btn btn--blue rv" data-rd="580">Talk to your new assistant</a>
       </div>
       <div class="hero__media">
-        <img src="assets/hero-phone.png" alt="Bolt app on a phone showing jobs, leads and today's schedule" />
+        <!-- AFMBP-2113: the 3D phone's own first frame (tools/hero-first-frame.mjs), so its
+             fade-in swaps identical pixels; reduced motion gets the finished Home still. -->
+        <picture>
+          <source media="(prefers-reduced-motion: reduce)" type="image/webp" srcset="assets/hero-frame/still-534.webp?v=1 534w, assets/hero-frame/still-1068.webp?v=1 1068w, assets/hero-frame/still-1602.webp?v=1 1602w" sizes="(max-width: 1024px) 380px, 430px" />
+          <source type="image/webp" srcset="assets/hero-frame/start-534.webp?v=1 534w, assets/hero-frame/start-1068.webp?v=1 1068w, assets/hero-frame/start-1602.webp?v=1 1602w" sizes="(max-width: 1024px) 380px, 430px" />
+          <img src="assets/hero-frame/start-1068.png?v=1" width="1068" height="1566" fetchpriority="high" alt="Bolt app on a phone showing jobs, leads and today's schedule" />
+        </picture>
       </div>
     </div>
   </section>
@@ -107,7 +118,7 @@
   <!-- ===================== TRUST ===================== -->
   <section class="trust" id="trust" data-reveal>
     <div class="section__head">
-      <h2 class="trust__heading rv"><span class="th-word">Why</span><span class="th-slot"><img class="switcher-video" src="assets/switcher.png?v=1" alt="independent, HVAC, plumbing, electrical, handyman" /></span><span class="th-word">pros trust Bolt</span></h2>
+      <h2 class="trust__heading rv"><span class="th-word">Why</span><span class="th-slot"><img class="switcher-video" src="assets/switcher.png?v=1" loading="lazy" decoding="async" fetchpriority="low" alt="independent, HVAC, plumbing, electrical, handyman" /></span><span class="th-word">pros trust Bolt</span></h2>
       <p class="section__sub rv" style="color:#180A53">Your assistant takes calls and sorts real opportunities from spam so nothing falls through the cracks and your business grows.</p>
     </div>
     <div class="trust__cards">
@@ -321,7 +332,7 @@
   <script src="demo-format.js?v=2"></script>  <script src="demo.js?v=33"></script>
   <script src="reveal.js?v=7"></script>
   <script src="subscribe.js?v=1"></script>
-  <script type="module" src="hero-phone.js?v=4"></script>
-  <script type="module" src="hiw-phone.js?v=10"></script>
+  <script type="module" src="hero-phone.js?v=5"></script>
+  <script type="module" src="hiw-phone.js?v=11"></script>
 </body>
 </html>

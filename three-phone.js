@@ -11,7 +11,10 @@
    clamps the display's long side, e.g. 16/9 for the How It Works video; the
    legacy `forceScreen16by9` flag still means exactly that. */
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+// AFMBP-2113: three.js is served from this site (the npm package's own minified
+// build, checked against the registry's published integrity), so the hero phone
+// no longer waits on a hop to jsDelivr. index.html modulepreloads it.
+import * as THREE from "./vendor/three-0.169.0/three.module.min.js"
 
 export { THREE }
 
