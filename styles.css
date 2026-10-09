@@ -145,9 +145,6 @@ ul,ol{list-style:none}
 /* Streamable hero background — 16:9 iframe sized to COVER the hero box (iframes
    can't object-fit:cover their content), centered, behind the copy, non-interactive. */
 .hero__vidframe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;width:auto;height:auto;aspect-ratio:16/9;border:0;pointer-events:none}
-/* AFMBP-2114: a 50% black shade over the video (owner ask). It sits inside .hero__bg, so the
-   copy and the phone stay above it, unshaded; absolutely positioned, so the band's size is unchanged. */
-.hero__bg::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.5);pointer-events:none}
 
 .hero__inner{
   position:relative;z-index:1;
@@ -163,7 +160,7 @@ ul,ol{list-style:none}
 }
 .hero__never{
   position:relative;
-  display:inline-block;color:#CBCBCB; /* AFMBP-2114: light grey on the shaded video (owner) */
+  display:inline-block;color:#000;
   font-size:clamp(52px,6.4vw,84px);line-height:.85;
   transform:rotate(-5.68deg);transform-origin:left center;
   margin-right:.15em;
@@ -178,7 +175,7 @@ ul,ol{list-style:none}
   pointer-events:none;
 }
 .hero__sub{
-  display:inline-block;color:#fff;font-weight:600; /* AFMBP-2114: white on the shaded video (owner) */
+  display:inline-block;color:var(--navy);font-weight:600;
   font-size:clamp(30px,3.2vw,42px);letter-spacing:-.5px;vertical-align:baseline;
 }
 .hero__lead{
@@ -187,7 +184,7 @@ ul,ol{list-style:none}
   margin-bottom:16px;max-width:750px;
 }
 .hero__built{
-  color:#CBCBCB; /* AFMBP-2114: light grey on the shaded video (owner) */font-size:clamp(18px,1.55vw,27px);line-height:1.48;margin-bottom:30px;
+  color:var(--navy);font-size:clamp(18px,1.55vw,27px);line-height:1.48;margin-bottom:30px;
 }
 .hero__built .med{font-weight:500}
 .hero__built .bold{font-weight:700}
