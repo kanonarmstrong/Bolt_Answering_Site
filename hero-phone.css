@@ -39,6 +39,12 @@
   position: absolute; display: flex; align-items: center; white-space: nowrap;
   font: 600 10.8732px/normal Inter, system-ui, sans-serif; color: #009245;
 }
-.hero__media > img { transition: opacity 320ms ease; }
-.hero__media--3d > img { opacity: 0; }
+/* AFMBP-2113: the image sits in a <picture> (a reduced-motion source);
+   display:contents lays the <img> out exactly as when it was a direct child. */
+.hero__media > picture { display: contents; }
+/* width/height attributes reserve the box before the picture loads (no layout
+   shift); height:auto keeps the CSS width in charge of the size. */
+.hero__media img { height: auto; }
+.hero__media > img, .hero__media > picture > img { transition: opacity 320ms ease; }
+.hero__media--3d > img, .hero__media--3d > picture > img { opacity: 0; }
 .hero__media--3d .heroPhone { opacity: 1; }
