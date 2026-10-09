@@ -40,7 +40,7 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
-  <link rel="stylesheet" href="styles.css?v=42" />
+  <link rel="stylesheet" href="styles.css?v=43" />
   <link rel="stylesheet" href="demo.css?v=21" />
   <link rel="stylesheet" href="hiw-phone.css?v=9" />
   <link rel="stylesheet" href="hero-phone.css?v=3" />
@@ -86,7 +86,10 @@
   <!-- ===================== HERO ===================== -->
   <section class="hero">
     <div class="hero__bg" aria-hidden="true">
-      <iframe class="hero__vidframe" tabindex="-1" title="" allow="autoplay; fullscreen" src="https://streamable.com/e/wyg0wg?autoplay=1&amp;muted=1&amp;nocontrols=1"></iframe>
+      <!-- AFMBP-2114: the heroes video (owner's Streamable embed q37222: autoplay, muted, no controls).
+           It sits in the existing .hero__vidframe, a centred 16:9 box that covers the band at every
+           screen size, so the band's dimensions do not change. -->
+      <iframe class="hero__vidframe" tabindex="-1" title="" allow="fullscreen; autoplay" allowfullscreen src="https://streamable.com/e/q37222?autoplay=1&amp;muted=1&amp;nocontrols=1"></iframe>
     </div>
     <div class="hero__inner">
       <div class="hero__copy">
@@ -95,7 +98,7 @@
           <span class="hero__sub rv" data-rd="0">miss a job again</span>
         </h1>
         <p class="hero__lead rv" data-rd="380">Bolt is more than just answering. Our assistants capture every lead, prep follow-ups, and help manage your schedule, so you can stay focused on working hard and doing a great job.</p>
-        <p class="hero__built rv" data-rd="480"><span class="med">Built for the truck.</span> <span class="bold">Not a desk.</span></p>
+        <p class="hero__built rv" data-rd="480"><span class="med">Built for trucks.</span> <span class="bold">Not desks.</span></p>
         <a href="#" class="btn btn--blue rv" data-rd="580">Talk to your new assistant</a>
       </div>
       <div class="hero__media">
