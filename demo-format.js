@@ -73,11 +73,13 @@
   function normEmail(s) { return str(s).trim(); }
   function emailOk(s) { var v = normEmail(s); return v === '' || validEmail(v); }
 
-  // Continue unlocks once phone and business name both have something in them.
-  // Email never gates it. What they hold is checked on tap (checkForm).
+  // Continue unlocks once the phone is a whole US number and the business name
+  // isn't blank (AFMBP-2150; it used to unlock on anything typed). Email never
+  // gates it. The rest is checked on tap (checkForm), which is also what a tap
+  // on the grey button shows.
   function formComplete(v) {
     v = v || {};
-    return str(v.phone).trim() !== '' && str(v.business).trim() !== '';
+    return validPhone(str(v.phone)) && str(v.business).trim() !== '';
   }
 
   // What a tap on Continue finds wrong, in priority order: missing required ->

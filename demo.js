@@ -154,11 +154,11 @@
   function isMobile() { return window.matchMedia('(max-width:768px)').matches; }
   function mk(t) { return h('span', { class: 'demo-mk', text: t }); }
   // Transcript meta icon ('assistant' | 'caller'): desktop keeps its artwork;
-  // mobile (<=768px) gets the mobile node's icons (Figma 2633:919) through a
+  // mobile (<=768px) gets the phone node's icons (Figma 2441:811) through a
   // standard <picture> source, so the browser picks + paints it reliably.
   function chatIcon(who) {
     return h('picture', { class: 'demo-chatmeta__pic' }, [
-      h('source', { media: '(max-width:768px)', srcset: 'assets/demo-m-icon-' + who + '.svg' }),
+      h('source', { media: '(max-width:768px)', srcset: 'assets/demo-m-chat-' + who + '.svg' }),
       h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-icon-' + who + '.svg', alt: '' })
     ]);
   }
@@ -179,17 +179,19 @@
     document.body.appendChild(backdrop);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
   }
-  // Warm the mobile node art (brush underlines, OS lockups, watermark,
-  // chat icons) when the modal opens, so the calling / recap / failure screens
-  // later paint complete instead of popping the strokes in on a slow connection.
-  var MOBILE_ART = ['demo-m-ul-rightnow', 'demo-m-ul-allset', 'demo-m-ul-done', 'demo-m-ul-never',
-    'demo-m-ul-30days', 'demo-m-ul-fail', 'demo-m-checker', 'demo-os-iphone', 'demo-os-android',
-    'demo-m-icon-assistant', 'demo-m-icon-caller'];
+  // Warm the phone node art (the paintbrush watermark, brush underlines, the
+  // "What to expect" icons, OS lockups, chat icons, the in-card logo) when the
+  // modal opens, so every later screen paints complete instead of popping the
+  // art in on a slow connection (AFMBP-2150).
+  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-ul-pocket.svg', 'demo-m-ul-code.svg', 'demo-m-ul-rightnow.svg',
+    'demo-m-ul-never.svg', 'demo-m-star-lg.svg', 'demo-m-dot.svg', 'demo-m-ico-chat.svg', 'demo-m-ico-ask.svg',
+    'demo-m-ico-route.svg', 'demo-m-chat-assistant.svg', 'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg',
+    'demo-m-lockup-android.svg', 'logo.png'];
   var artWarmed = false;
   function warmMobileArt() {
     if (artWarmed || !isMobile()) return;
     artWarmed = true;
-    MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n + '.svg'; });
+    MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n; });
   }
   // The modal opens on the choice between the two demos (AFMBP-2083); `entry`
   // 'form' skips it for the "We'll call you" form (/?talk=form). A call this tab
@@ -253,7 +255,29 @@
   function unbusy(btn, label) { btn.disabled = false; btn.textContent = label; }
 
   // "What to expect" steps, shared by both calling cards (step 4 is DONE!).
+  // Desktop only since AFMBP-2150; phones show expectRows() below.
   var EXPECT = ['She’ll act like your receptionist', 'Describe an issue or potential project', 'Share fake details to schedule'];
+
+  // ---------- phone vs desktop copy (AFMBP-2150) ----------
+  // The phone screens were redrawn for readability (Figma 2670:952 / 2672:2064 /
+  // 2670:1124 / 2657:1639 / 2670:1317 / 2676:1272 / 2442:1191 / 2441:811 /
+  // 2676:1163) with copy of their own; desktop keeps its nodes' words. Both are
+  // in the page and CSS shows one (.demo-d desktop, .demo-m phones), so a
+  // rotation or resize across the breakpoint never leaves stale words behind.
+  function dm(d, m) {
+    return [h('span', { class: 'demo-d', text: d }), h('span', { class: 'demo-m', text: m })];
+  }
+  // "What to expect" on the phone calling cards (2672:2064 / 2442:1191): three
+  // rows, each an icon (drawn by CSS) and its words. `who` is the business the
+  // assistant answers as: Bolt Services on the demo line, the visitor's own
+  // business when we call them (the call is set up with the name they typed).
+  function expectRows(who) {
+    return h('ul', { class: 'demo-xm demo-mb' }, [
+      h('li', { class: 'demo-xm__row demo-xm__row--chat', text: 'Receptionist for ' + who }),
+      h('li', { class: 'demo-xm__row demo-xm__row--ask', text: 'She’ll ask about your issue or project' }),
+      h('li', { class: 'demo-xm__row demo-xm__row--route', text: 'Share fake details for her to schedule' })
+    ]);
+  }
 
   // ---------- screen: two ways to try it — Figma desktop 2670:896 / mobile 2670:952 ----------
   // "Call now" = the visitor calls Bolt's demo line ("You call us", AFMBP-2083);
@@ -261,15 +285,11 @@
   // line here (owner): calling us sends nothing to the visitor's phone, and the
   // form keeps its own disclosure. The desktop node still shows that line; it is
   // left out on both breakpoints, as agreed.
-  // AFMBP-2090: the phone node was redrawn for conversion — the rating and its
-  // quote, "Available now", "Make a call", and a line under each way in. Desktop
-  // keeps its own node (owner); CSS shows each breakpoint's own pieces.
-  function callLabel() {
-    return [
-      h('span', { class: 'demo-choice__lbl-d', text: 'Call now' }),
-      h('span', { class: 'demo-choice__lbl-m', text: 'Make a call' })
-    ];
-  }
+  // AFMBP-2150: the phone node was redrawn again for readability — the pitch,
+  // the logo and "Available now", the rating and its quote, "You call us" /
+  // "We call you" with the wait time under the first. Desktop keeps its own
+  // node (owner); CSS shows each breakpoint's own pieces.
+  function callLabel() { return dm('Call now', 'You call us'); }
   function renderChoice() {
     clearResend();
     stopRecap();
@@ -279,7 +299,7 @@
     // A real link from the first paint: iOS hands a tel: link to the dialer only
     // from the tap itself, so the code is fetched now, before anyone taps.
     var call = h('a', { class: 'demo-btn demo-choice__btn demo-choice__call', href: '#' }, callLabel());
-    var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button', text: 'Get a call' });
+    var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button' }, dm('Get a call', 'We call you'));
     var waiting = false;
     call.addEventListener('click', function (e) {
       var s = inboundUsable(inbound) ? inbound : null;
@@ -312,37 +332,41 @@
       renderPhone();
     });
     setBody([
-      // Desktop reads "Two ways to", mobile "2 ways to" (the nodes); CSS shows one.
-      h('h2', { class: 'demo-choice__h demo-mk' }, [
+      // Desktop (2670:896): the marker title and the sub.
+      h('h2', { class: 'demo-choice__h demo-mk demo-db' }, [
         h('span', { class: 'demo-choice__l1' }, [
           h('span', { class: 'demo-choice__two', text: 'Two' }),
-          h('span', { class: 'demo-choice__2', text: '2' }),
-          // The nodes' line ends in a space, which centres the words half a
+          // The node's line ends in a space, which centres the words half a
           // space left of the line's middle; a no-break space keeps it.
           ' ways to\u00A0'
         ]),
         h('span', { class: 'demo-choice__l2' }, [
           'talk to an assistant',
-          // Desktop (2670:896) ends "…now"; the redrawn phone node drops it.
           h('span', { class: 'demo-choice__now', text: ' now' })
         ])
       ]),
-      h('p', { class: 'demo-choice__sub', text: 'Call us or we’ll call you' }),
-      // Phone only (2670:952): the rating with its quote, and "Available now".
-      // The stars and the dot are drawn and hidden from screen readers; the
-      // words say it.
-      h('div', { class: 'demo-choice__proof' }, [
-        h('span', { class: 'demo-choice__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
-        h('p', { class: 'demo-choice__score', text: '4.9/5' }),
-        h('p', { class: 'demo-choice__quote', text: '“Professional and helpful”' }),
-        h('p', { class: 'demo-choice__live', text: 'Available now' })
+      h('p', { class: 'demo-choice__sub demo-db', text: 'Call us or we’ll call you' }),
+      // Phone (2670:952): the logo and "Available now", the pitch, and the rating
+      // with its quote. The logo, stars and dot are drawn and hidden from screen
+      // readers; the words say it.
+      h('div', { class: 'demo-cm demo-mb' }, [
+        h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
+        h('p', { class: 'demo-cm__live', text: 'Available now' }),
+        h('h2', { class: 'demo-cm__h' }, [
+          'Answering one call can put hundreds to thousands of ',
+          h('span', { class: 'demo-mk demo-cm__mk', text: 'Dollars in your pocket' })
+        ]),
+        h('p', { class: 'demo-cm__sub', text: 'Talk with a real assistant to see how Bolt helps book customers while you keep on working' }),
+        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
+        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
+        h('p', { class: 'demo-cm__quote', text: '“Smart & very professional”' })
       ]),
       h('div', { class: 'demo-choice__btns' }, [
         call,
-        h('p', { class: 'demo-choice__when demo-choice__when--call' }, ['Average time to connect: ', h('b', { text: '3 seconds' })]),
-        h('p', { class: 'demo-choice__or', text: 'OR' }),
-        get,
-        h('p', { class: 'demo-choice__when demo-choice__when--get' }, ['Your assistant will call you ', h('b', { text: 'right now' })])
+        // Phone only: the wait under "You call us", and the OR between the two.
+        h('p', { class: 'demo-choice__when demo-mb' }, ['Avg. wait time: ', h('b', { text: '3 seconds' })]),
+        h('p', { class: 'demo-choice__or demo-mk demo-mb', text: 'OR' }),
+        get
       ]),
       helpLine()
     ], 'choice');
@@ -455,7 +479,9 @@
   // ---------- screen: You call us, call in progress — Figma mobile 2672:2064 / desktop 2670:924 ----------
   // The mobile node is the code and "What to expect". Desktop adds the number to
   // call (owner, AFMBP-2083: the desktop node has no code block yet); mobile
-  // shows it only when no dialer took the tap (demo-incall--manual).
+  // shows it only when no dialer took the tap (demo-incall--manual; kept by the
+  // owner on 10-08 though the node has no such line). Phones list what to
+  // expect as the node's icon rows; desktop keeps its numbered list.
   function renderInboundCall(s, opts) {
     opts = opts || {};
     clearResend();
@@ -471,8 +497,9 @@
         ]),
         h('p', { class: 'demo-incall__dial' }, ['Call ', tel]),
         h('p', { class: 'demo-incall__expect demo-mk', text: 'What to expect:' }),
-        h('ol', { class: 'demo-incall__list' }, EXPECT.map(function (t) { return h('li', {}, [t]); })
-          .concat([h('li', {}, ['​', done])]))
+        h('ol', { class: 'demo-incall__list demo-db' }, EXPECT.map(function (t) { return h('li', {}, [t]); })
+          .concat([h('li', {}, ['​', done])])),
+        expectRows('Bolt Services')
       ])
     ], 'inbound-call');
   }
@@ -580,14 +607,56 @@
     step = 'inbound_failed';
     var btn = h('button', { class: 'demo-btn demo-ifail__btn', type: 'button', text: 'Continue' });
     btn.addEventListener('click', function () { renderChoice(); });
+    // Phones set the title on two lines and drop the first sentence (2670:1124).
     setBody([
       h('div', { class: 'demo-ifail' }, [
-        h('p', { class: 'demo-ifail__title demo-mk', text: 'Sorry... that didn’t work' }),
-        h('p', { class: 'demo-ifail__body' }, ['We weren’t able to connect.', h('br'), 'Please try your call again later.']),
+        // Desktop keeps the title as one run of text (splitting it changes
+        // how the line is shaped); phones set it as two lines.
+        h('p', { class: 'demo-ifail__title demo-mk' }, [
+          h('span', { class: 'demo-d', text: 'Sorry... that didn’t work' }),
+          h('span', { class: 'demo-m' }, [
+            h('span', { class: 'demo-ifail__t1', text: 'Sorry... ' }),
+            h('span', { class: 'demo-ifail__t2', text: 'that didn’t work' })
+          ])
+        ]),
+        h('p', { class: 'demo-ifail__body' }, [
+          h('span', { class: 'demo-d' }, ['We weren’t able to connect.', h('br')]),
+          'Please try your call again later.'
+        ]),
         btn
       ])
     ], 'inbound-fail');
   }
+
+  // ---------- phones: keep the field being typed in above the keyboard ----------
+  // The demo is a fixed overlay that scrolls on its own (.demo-backdrop). iOS
+  // Safari pans the page to show a focused field but never scrolls an inner
+  // scroller, so a field low on a tall card, or the error message tied to it,
+  // could sit behind the keyboard. Once the keyboard has settled (on focus, and
+  // whenever the visible area changes while the field has focus) the overlay
+  // scrolls just enough to show the field and its message (aria-describedby).
+  // The app's rule (AFMBP-2098), on the site's demo form (AFMBP-2150).
+  var kvTimer = null;
+  function keepVisible(el) {
+    if (!backdrop || !isMobile()) return;
+    clearTimeout(kvTimer);
+    kvTimer = setTimeout(function () {
+      if (document.activeElement !== el || !isOpen()) return;
+      var vv = window.visualViewport;
+      var top = vv ? vv.offsetTop : 0;
+      var bottom = top + (vv ? vv.height : window.innerHeight);
+      var r = el.getBoundingClientRect(), lo = r.top, hi = r.bottom;
+      var id = el.getAttribute('aria-describedby'), msg = id && document.getElementById(id);
+      if (msg && msg.offsetParent) { var m = msg.getBoundingClientRect(); lo = Math.min(lo, m.top); hi = Math.max(hi, m.bottom); }
+      var pad = 12;
+      if (hi + pad > bottom) backdrop.scrollTop += Math.max(0, Math.min(hi + pad - bottom, lo - pad - top));
+      else if (lo - pad < top) backdrop.scrollTop -= top + pad - lo;
+    }, 200);
+  }
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () {
+    var a = document.activeElement;
+    if (a && a.classList && a.classList.contains('demo-input')) keepVisible(a);
+  });
 
   // ---------- screen: phone entry ----------
   // `label` is text or a list of nodes; `required` marks the field required to
@@ -597,8 +666,12 @@
       class: 'demo-input', id: id, type: type || 'text', placeholder: ph, value: val || '',
       required: required ? '' : null, 'aria-required': required ? 'true' : null,
       autocomplete: id === 'demo-phone' ? 'tel' : (id === 'demo-email' ? 'email' : 'organization'),
-      inputmode: id === 'demo-phone' ? 'tel' : null
+      inputmode: id === 'demo-phone' ? 'tel' : null,
+      // Phones: the keyboard's key reads "done" and closes it (see renderPhone).
+      // Set before focus, as iOS reads it only when focus begins.
+      enterkeyhint: isMobile() ? 'done' : null
     });
+    input.addEventListener('focus', function () { keepVisible(input); });
     // demo-field--{phone,business,email}: the nodes space the three fields
     // unevenly, so each wrapper is addressable in CSS.
     var key = id.replace('demo-', '');
@@ -607,13 +680,14 @@
   function renderPhone(opts) {
     opts = opts || {};
     step = opts.limit ? 'limit' : 'details';
-    // Labels = Figma 2657:1639 on both breakpoints, except the business label
-    // ("What’s your business called?", owner, AFMBP-2003). Phone + business name
-    // are required; email is optional (AFMBP-2000). The business placeholder is
-    // the owner's "Business name" (AFMBP-2003; node 2664:800), on every page.
+    // Labels: desktop keeps "What’s your business called?" (owner, AFMBP-2003)
+    // and "(optional)"; phones read the redrawn node's "What’s your business
+    // name?" and "(Optional)" (2657:1639, AFMBP-2150). Phone + business name are
+    // required; email is optional (AFMBP-2000). The business placeholder is the
+    // owner's "Business name" (AFMBP-2003; node 2664:800), on every page.
     var phone = field('What’s your phone number?', 'demo-phone', '(555) 555-1212', 'tel', state.display, true);
-    var biz = field('What’s your business called?', 'demo-business', 'Business name', 'text', state.business, true);
-    var email = field(['What’s your email? ', h('span', { class: 'demo-label__opt', text: '(optional)' })],
+    var biz = field(dm('What’s your business called?', 'What’s your business name?'), 'demo-business', 'Business name', 'text', state.business, true);
+    var email = field(['What’s your email? ', h('span', { class: 'demo-label__opt' }, dm('(optional)', '(Optional)'))],
       'demo-email', 'yourname@example.com', 'email', state.email, false);
     var byKey = { phone: phone, business: biz, email: email };
 
@@ -659,8 +733,9 @@
     email.input.addEventListener('input', function () { clearFieldErr(email); });
 
     // The rules live in demo-format.js (unit-tested): Continue greys out until
-    // phone + business name are filled; a tap then checks missing required ->
-    // phone -> business -> email (blank email is fine, a typed one must be valid).
+    // the phone is a whole US number and the business name isn't blank
+    // (AFMBP-2150); a tap then checks missing required -> phone -> business ->
+    // email (blank email is fine, a typed one must be valid).
     function vals() { return { phone: phone.input.value, business: biz.input.value, email: email.input.value }; }
     function validateForm() {
       var bad = DF.checkForm(vals());
@@ -673,10 +748,10 @@
       CONSENT_B
     ]);
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Continue' });
-    // Grey until phone + business name are filled (Figma 2664:800). It stays
-    // tappable: a tap on the grey button shows "Please complete the form to
-    // continue." with the empty fields flagged, so it is aria-disabled, never
-    // `disabled` (which would swallow the tap).
+    // Grey until the form can go (Figma 2657:1639 grey / 2670:1317 blue). It
+    // stays tappable: a tap on the grey button shows "Please complete the form
+    // to continue." with the empty fields flagged (2676:1272), so it is
+    // aria-disabled, never `disabled` (which would swallow the tap).
     function syncBtn() {
       var on = DF.formComplete(vals());
       btn.classList.toggle('demo-btn--off', !on);
@@ -709,9 +784,15 @@
       });
     });
 
-    // Keyboard submission from any field.
+    // Enter in a field: on a phone it only finishes typing (the keyboard's
+    // "done" closes it; Continue sends), the app's rule (AFMBP-2098 / 2150). A
+    // desktop keyboard keeps Enter = Continue.
     [phone, biz, email].forEach(function (f) {
-      f.input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
+      f.input.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+        e.preventDefault();
+        if (isMobile()) f.input.blur(); else btn.click();
+      });
     });
 
     var limitMsg = opts.limit ? h('p', { class: 'demo-limitmsg' }, [
@@ -721,12 +802,13 @@
 
     setBody([
       // Figma desktop 2387:9076 / mobile 2657:1639: one-line marker title (the
-      // mobile node draws its yellow brush under "right now") + the sub, the
-      // node's copy on both breakpoints.
+      // phone node draws its yellow brush under "you now") + the sub; each
+      // breakpoint reads its own node's words (AFMBP-2150).
       h('h2', { class: 'demo-h demo-h--form' }, [
-        'We’ll call you ', h('span', { class: 'demo-h__ul', text: 'right now' })
+        h('span', { class: 'demo-d' }, ['We’ll call you ', h('span', { class: 'demo-h__ul', text: 'right now' })]),
+        h('span', { class: 'demo-m' }, ['We’ll call ', h('span', { class: 'demo-h__ul', text: 'you now' })])
       ]),
-      h('p', { class: 'demo-sub', text: 'Get a one-time passcode' }),
+      h('p', { class: 'demo-sub' }, dm('Get a one-time passcode', 'First, we’ll send a code')),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
       formErr,
@@ -912,20 +994,24 @@
   // (Permanent Marker renders lowercase as small caps); desktop CSS uppercases
   // it. Title + "Calling you now from" are separate spans: inline on desktop,
   // placed on one line at the node's offsets on mobile.
+  // Phones (2442:1191, AFMBP-2150): "ALL Set", "Calling from <number>" and the
+  // icon rows, whose first row names the business the assistant will answer as:
+  // the one typed on the form (the call is set up with it).
   function renderCalling(fromNumber) {
     clearResend();
     var numberEl = h('b', { text: fmtDemoNumber(fromNumber) });
     setBody([
       h('div', { class: 'demo-callcard' }, [
         h('p', { class: 'demo-callcard__head' }, [
-          h('span', { class: 'demo-mk demo-ul demo-callcard__title', text: 'All set!' }),
-          h('span', { class: 'demo-callcard__from' }, [' Calling you now from ', numberEl])
+          h('span', { class: 'demo-mk demo-ul demo-callcard__title' }, dm('All set!', 'ALL Set')),
+          h('span', { class: 'demo-callcard__from' }, dm(' Calling you now from ', 'Calling from ').concat([numberEl]))
         ]),
         h('p', { class: 'demo-callcard__expect demo-mk', text: 'What to expect:' }),
-        h('ol', { class: 'demo-callcard__list' }, EXPECT.map(function (t) { return h('li', {}, [t]); }).concat([
-          // A zero-width space keeps the "4." line when mobile lifts DONE! onto it.
+        h('ol', { class: 'demo-callcard__list demo-db' }, EXPECT.map(function (t) { return h('li', {}, [t]); }).concat([
+          // A zero-width space keeps the "4." line beside DONE!.
           h('li', {}, ['\u200B', h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
-        ]))
+        ])),
+        expectRows(state.business || 'your business')
       ])
     ], 'calling');
     return numberEl;
@@ -1059,19 +1145,22 @@
           document.createTextNode(' '),
           h('span', { class: 'demo-success-rest', text: 'miss a job again' })
         ]),
-        h('p', { class: 'demo-success-sub', text: 'Bolt handles bookings, qualifies leads, takes messages, and more so you can focus on making money!' }),
-        h('p', { class: 'demo-success-tlabel', text: 'Here’s your transcript:' }),
+        // Phones read the redrawn node's pitch and label (AFMBP-2150).
+        h('p', { class: 'demo-success-sub' }, dm('Bolt handles bookings, qualifies leads, takes messages, and more so you can focus on making money!',
+          'Don\'t waste money on receptionists or lose leads to voicemail. Bolt qualifies leads and books jobs for under $3/day.')),
+        h('p', { class: 'demo-success-tlabel' }, dm('Here’s your transcript:', 'Here’s the transcript:')),
         h('div', { class: 'demo-chatwrap' }, [box, bar]),
         // The spaces are their own spans: the node sets them at 19.3px, between
         // the 15.5px words and the 28.6px "30 days".
-        h('p', { class: 'demo-success-trial demo-mk' }, [
+        // Desktop only: the phone node drops this line for the green CTA.
+        h('p', { class: 'demo-success-trial demo-mk demo-db' }, [
           h('span', { class: 'demo-success-trial__sm', text: 'First' }),
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__big demo-ul', text: '30 days' }),
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__sm', text: 'are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start my free trial now'])
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, dm('Start my free trial now', 'Start free 30-day trial'))
       ])
     ], 'recap');
     chatBar(box, bar);
@@ -1106,29 +1195,44 @@
     // The button re-places the call -> back to the "calling you" screen.
     // Copy = Figma 2511:1027 on both breakpoints (AFMBP-2000): "Try again" (blue
     // on mobile per the node; desktop keeps its yellow button).
-    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button', text: 'Try again' });
+    // Phones (2676:1163, AFMBP-2150) read "Continue": the same action, the call
+    // placed again to the number already verified.
+    var btn = h('button', { class: 'demo-btn demo-btn--yellow demo-failcard__btn', type: 'button' }, dm('Try again', 'Continue'));
     btn.addEventListener('click', function () { placeCall(); });
     // Marker copy is lowercase per the nodes (renders as uniform small caps);
-    // desktop CSS re-uppercases it. On mobile each link also carries the
-    // platform lockup (Apple / Android logo) the mobile node shows beside it.
-    function osLink(href, name, logo) {
-      return h('a', { class: 'demo-failcard__link', href: href, target: '_blank', rel: 'noopener' }, [
+    // desktop CSS re-uppercases it. On phones each link also carries the
+    // platform lockup (Apple / Android logo) the node shows beside it. The
+    // help articles are the support center's own (the same URLs the node
+    // carries); a tap is counted by platform (demo_help_clicked, AFMBP-2150).
+    function osLink(href, name, logo, os) {
+      var a = h('a', { class: 'demo-failcard__link', href: href, target: '_blank', rel: 'noopener',
+        'aria-label': name + ': how to turn off spam blockers (opens in a new tab)' }, [
         h('span', { class: 'demo-failcard__osname', text: name }),
         h('img', { class: 'demo-failcard__os', src: logo, alt: '', 'aria-hidden': 'true' })
       ]);
+      a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });
+      return a;
     }
     setBody([
       h('div', { class: 'demo-failcard' }, [
         h('p', { class: 'demo-failcard__head' }, [
-          h('span', { class: 'demo-mk demo-failcard__title' }, ['that didn’t work ', h('span', { class: 'demo-failcard__sad', text: ':(' })])
+          h('span', { class: 'demo-mk demo-failcard__title demo-d' }, ['that didn’t work ', h('span', { class: 'demo-failcard__sad', text: ':(' })]),
+          h('span', { class: 'demo-mk demo-failcard__title2 demo-m' }, [
+            h('span', { class: 'demo-failcard__t1', text: 'Sorry... ' }),
+            h('span', { class: 'demo-failcard__t2', text: 'that didn’t work' })
+          ])
         ]),
-        h('div', { class: 'demo-failcard__body' }, [
+        h('div', { class: 'demo-failcard__body demo-db' }, [
           h('p', {}, [h('b', { text: 'Sometimes Bolt calls get spam blocked.' }), ' Here’s how to temporarily turn off spam blockers.']),
           h('p', {}, [h('b', { text: 'Follow these instructions' }), ', then try again.'])
         ]),
+        h('div', { class: 'demo-failcard__body2 demo-mb' }, [
+          h('p', {}, [h('b', { text: 'Sometimes Bolt calls get spam blocked' }), '. ']),
+          h('p', {}, ['Here’s how to temporarily turn off spam blockers before you try again:'])
+        ]),
         h('div', { class: 'demo-failcard__links' }, [
-          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'assets/demo-os-iphone.svg'),
-          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'assets/demo-os-android.svg')
+          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'assets/demo-m-lockup-iphone.svg', 'ios'),
+          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'assets/demo-m-lockup-android.svg', 'android')
         ]),
         btn
       ])
