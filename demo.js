@@ -213,6 +213,7 @@
   function closeModal() {
     if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
     clearResend();
+    reportClosedWhileFollowing();   // before stopRecap() forgets the call
     stopRecap();
     stopInbound();
     if (inbound) { inbound.open = false; inboundSave(); }
@@ -978,6 +979,9 @@
           // call's real outcome there, even if a browser event never arrives.
           track('demo_call_placed', { call_id: callId || null });
           if (callId) pollRecap(callId);
+          // AFMBP-2130: placed, but with nothing to follow the in-call screen waits
+          // forever. This used to report nothing.
+          else track('demo_call_id_missing', { stage: 'call', reason: 'no_call_id' });
           return;
         }
         track('demo_call_failed', { stage: 'call', reason: reasonOf(c) });
@@ -1031,13 +1035,28 @@
   // Same generation guard as the status checks (AFMBP-2099): a recap answer from
   // a superseded run is neither tracked nor rendered.
   var recapGen = 0;
-  function stopRecap() { recapGen++; if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
+  // The call a recap run is following, while it runs: {callId, since, phase:
+  // 'call_end' | 'transcript', failedChecks: checks in a row that failed on the
+  // network}. Every way a run ends goes through stopRecap(), so null means nothing
+  // is being followed (AFMBP-2130: closing the dialog reports it).
+  var recapWatch = null;
+  function stopRecap() { recapGen++; recapWatch = null; if (recapTimer) { clearTimeout(recapTimer); recapTimer = null; } }
+  // Closing the dialog stops the recap checks. While they were still following a
+  // call (waiting for it to end, or for its transcript), the page never learns how
+  // it went; demo_closed alone did not say so. Closing before a demo-line call
+  // connects loses nothing (reopening picks the same code up) and is not reported.
+  function reportClosedWhileFollowing() {
+    var w = recapWatch;
+    if (!w || !isOpen()) return;
+    track('demo_closed_while_polling', modeProps({ at: step, waiting_for: w.phase, call_id: w.callId, waited_s: Math.round((Date.now() - w.since) / 1000), failed_checks: w.failedChecks }));
+  }
   // opts (the inbound branch; the outbound demo passes none): mode, onFailed
   // (its failure screen), inCallLimitMs (how long to wait for the call to end),
   // transcriptFromEnd (time the transcript wait from the end of the call, not
   // from the first poll), onSettled (the call ended, completed or failed).
   function pollRecap(callId, opts) {
     opts = opts || {};
+    var prev = recapWatch;
     stopRecap();
     var gen = recapGen;
     recapShown = false;
@@ -1047,6 +1066,8 @@
     var inCallLimit = opts.inCallLimitMs || 240000;
     var started = Date.now();
     var endedAt = 0;
+    // A restart for the same call (coming back to the page) keeps when it began.
+    var watch = recapWatch = { callId: callId, since: prev && prev.callId === callId ? prev.since : started, phase: 'call_end', failedChecks: 0 };
     function settled() { if (opts.onSettled) { var fn = opts.onSettled; opts.onSettled = null; fn(); } }
     var url = API + '/api/demo/recap/' + encodeURIComponent(callId);
     (function tick() {
@@ -1054,11 +1075,13 @@
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (d) {
           if (gen !== recapGen) return;   // superseded while it was out
+          watch.failedChecks = 0;
           // Bail if the user closed the modal or moved to another screen.
           if (!backdrop || !backdrop.classList.contains('open')) { stopRecap(); return; }
           if (d && d.status === 'failed') { stopRecap(); track('demo_call_failed', modeProps({ stage: 'call_status', call_id: callId })); settled(); return onFailed(); }
           if (d && d.status === 'completed') {
             if (!endedAt) endedAt = Date.now();
+            watch.phase = 'transcript';
             settled();
             if (finishedFor !== callId) {
               finishedFor = callId;
@@ -1080,7 +1103,14 @@
         })
         .catch(function () {
           if (gen !== recapGen) return;
-          if (Date.now() - started > inCallLimit) { stopRecap(); return; }
+          watch.failedChecks++;
+          if (Date.now() - started > inCallLimit) {
+            // AFMBP-2130: this used to stop without a word, leaving the visitor on the
+            // in-call screen and the funnel with no failure.
+            stopRecap();
+            track('demo_recap_poll_failed', modeProps({ stage: 'recap_poll', reason: 'network', call_id: callId, waiting_for: watch.phase, failed_checks: watch.failedChecks }));
+            return;
+          }
           recapTimer = setTimeout(tick, 4000); // tolerate transient network/CORS blips
         });
     })();
