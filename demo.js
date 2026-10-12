@@ -399,7 +399,12 @@
   function ensureInbound() {
     if (inboundUsable(inbound)) return Promise.resolve(inbound);
     if (inboundReq) return inboundReq;
-    inboundReq = apiPost('/api/demo/inbound/session', { trade: TRADE, voice: VOICE, locale: 'en' }).then(function (r) {
+    // The visitor id lets reporting tie the call to this visit (and its ad)
+    // even if the page never sees the call end (AFMBP-2109), as the outbound
+    // demo's verify body does (AFMBP-2020). A random id; nothing typed.
+    var body = { trade: TRADE, voice: VOICE, locale: 'en' };
+    try { if (window.boltAttr && window.boltAttr.visitorId) body.sessionId = window.boltAttr.visitorId(); } catch (e) {}
+    inboundReq = apiPost('/api/demo/inbound/session', body).then(function (r) {
       inboundReq = null;
       var d = r.data || {};
       if (r.ok && d.sessionId && /^\d{4}$/.test(String(d.code)) && /^tel:/.test(String(d.telUri))) {
