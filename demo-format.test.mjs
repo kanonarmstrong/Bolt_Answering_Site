@@ -145,8 +145,20 @@ test('form: phone and business name still gate Continue', () => {
 });
 
 test('form: an incomplete or invalid phone still blocks, before any email check', () => {
-  assert.equal(DF.formComplete({ phone: '555', business: 'QA Test Co' }), true);
+  assert.equal(DF.formComplete({ phone: '555', business: 'QA Test Co' }), false);
   assert.deepEqual(DF.checkForm({ phone: '555', business: 'QA Test Co', email: 'james' }), { fields: ['phone'], msg: 'Invalid phone number. Please try again.' });
+});
+
+// AFMBP-2150: Continue turns blue only when the form can go — a whole US phone
+// and a business name that isn't blank. Email never gates it (checked on tap).
+test('form: Continue unlocks on a whole phone + a non-blank business name only', () => {
+  assert.equal(DF.formComplete({ phone: '(415) 555-1234', business: 'QA Test Co' }), true);
+  assert.equal(DF.formComplete({ phone: '+1 415 555 1234', business: 'QA Test Co' }), true);
+  assert.equal(DF.formComplete({ phone: '(415) 555-123', business: 'QA Test Co' }), false);   // 9 digits
+  assert.equal(DF.formComplete({ phone: '(415) 555', business: 'QA Test Co' }), false);
+  assert.equal(DF.formComplete({ phone: '24155551234', business: 'QA Test Co' }), false);      // 11 digits, not +1
+  assert.equal(DF.formComplete({ phone: '(415) 555-1234', business: ' \t ' }), false);         // whitespace only
+  assert.equal(DF.formComplete({ phone: '(415) 555-1234', business: 'QA Test Co', email: 'james' }), true);
 });
 
 test('form: a business name with no letters still blocks', () => {
