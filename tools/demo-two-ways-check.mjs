@@ -1,5 +1,6 @@
 // AFMBP-2083 — the demo's two ways in: "Call now" (the visitor calls Bolt's demo line with a
-// one-time code) and "Get a call" (the outbound demo, unchanged). Drives the real modal in
+// one-time code) and "Get a call" (the outbound demo, unchanged); on phones the buttons read
+// "You call us" / "We call you" since AFMBP-2150. Drives the real modal in
 // headless Chrome with real touch taps and mouse clicks against a fake Bolt API, and checks:
 //   - the choice opens first; "Call now" is a real tel: link carrying this browser's code
 //     before anyone taps, and the tap is left to the dialer on a phone (not on a computer);
@@ -217,7 +218,8 @@ try {
   ok(/^[A-Za-z0-9-]{8,64}$/.test(vid || '') && api.visitors[0] === vid, `phone: the code request carries this visit's visitor id, so the call can be tied to the ad (AFMBP-2109) (${api.visitors[0] ? 'sent' : 'missing'})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
   // AFMBP-2090: the redrawn phone node drops "now" (desktop keeps it).
-  ok((await text('.demo-choice__h')) === '2 ways to talk to an assistant', `phone: heading copy (${await text('.demo-choice__h')})`);
+  ok((await text('.demo-cm__h')) === 'Answering one call can put hundreds to thousands of Dollars in your pocket' && !(await visible('.demo-choice__h')), `phone: the phone node's pitch, not the desktop title (${await text('.demo-cm__h')})`);
+  ok((await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `phone: "You call us" / "We call you" (${await text('.demo-choice__call')} / ${await text('.demo-choice__get')})`);
   ok((await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')), 'phone: "OR" shown, "Two" hidden');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-disclosure')")), 'phone: no consent line on the choice');
   await shot('m-choice', '.demo-card');
@@ -346,7 +348,7 @@ try {
   await waitScreen('inbound-call');
   setState('expired');
   ok(await waitScreen('inbound-fail', 6000), 'phone: an expired code shows the failure card');
-  ok((await text('.demo-ifail')) === 'Sorry... that didn’t work We weren’t able to connect. Please try your call again later. Continue', `phone: failure copy (${await text('.demo-ifail')})`);
+  ok((await text('.demo-ifail')) === 'Sorry... that didn’t work Please try your call again later. Continue', `phone: failure copy, the phone node's (${await text('.demo-ifail')})`);
   ok(evs('demo_inbound_failed', (d) => d.reason === 'expired' && d.mode === 'inbound').length === 1, 'events: demo_inbound_failed reason expired');
   await shot('m-fail', '.demo-card');
   await tap('.demo-ifail__btn');
@@ -395,10 +397,12 @@ try {
   ok(await waitScreen('inbound-call'), 'desktop: call card');
   ok(await visible('.demo-incall__dial'), 'desktop: number to call shown');
   ok((await text('.demo-incall__code')) === 'Your code 4321', `desktop: code block (${await text('.demo-incall__code')})`);
+  ok(!(await visible('.demo-xm')) && (await visible('.demo-incall__list')), 'desktop: its numbered "What to expect", not the phone\'s icon rows');
   ok(evs('demo_mode_selected', (d) => d.mode === 'inbound' && d.dial === 'manual').length === 1, 'events: desktop selection is manual dial');
   await shot('d-incall', '.demo-card');
   setState('failed');
   ok(await waitScreen('inbound-fail', 6000), 'desktop: failed -> failure card');
+  ok((await text('.demo-ifail')) === 'Sorry... that didn’t work We weren’t able to connect. Please try your call again later. Continue', `desktop: failure copy unchanged (${await text('.demo-ifail')})`);
   await shot('d-fail', '.demo-card');
 
   console.log('[desktop] outbound demo, end to end: unchanged events');

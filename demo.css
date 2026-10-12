@@ -416,6 +416,15 @@ body.demo-lock{overflow:hidden}
     left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
   }
   .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) :is(.demo-logo,.demo-close){display:none}
+  /* Under 337px of screen the node's words run too close to the card's edges
+     to clip: the whole card scales down instead (zoom keeps every offset in
+     proportion). 320px phones get 94%, a 280px folding phone's cover 83%. */
+  @media (max-width:336px){
+    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.94;left:0}
+  }
+  @media (max-width:316px){
+    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.83}
+  }
   .demo-backdrop:is([data-screen="calling"],[data-screen="recap"]) .demo-ul{background:none;padding-bottom:0}
   /* The older checker-plate art is not in these nodes. */
   .demo-backdrop :is(.demo-incall,.demo-ifail,.demo-callcard,.demo-failcard,.demo-success)::before{display:none}
@@ -482,7 +491,7 @@ body.demo-lock{overflow:hidden}
     position:absolute;left:184.06px;top:324.5px;width:100px;margin:0;font-size:20.897px;font-weight:700;line-height:19.026px;color:var(--navy);text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__quote{
-    position:absolute;left:46.5px;top:351.08px;width:240px;margin:0;font-size:16.717px;font-style:italic;font-weight:400;line-height:19.474px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:46.5px;top:351.58px;width:240px;margin:0;font-size:16.717px;font-style:italic;font-weight:400;line-height:19.474px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
@@ -551,12 +560,12 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="phone"] .demo-card{height:629px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
   .demo-backdrop[data-screen="phone"] .demo-body{height:629px}
   .demo-backdrop[data-screen="phone"] .demo-h--form{
-    position:absolute;left:1px;top:29.025px;width:336px;margin:0;font-family:'Permanent Marker',cursive;font-weight:400;
+    position:absolute;left:.5px;top:29.025px;width:336px;margin:0;font-family:'Permanent Marker',cursive;font-weight:400;
     font-size:25px;line-height:24.95px;color:var(--navy);text-align:center;white-space:nowrap;
   }
   /* Yellow brush under "you now" (vector 2657:1711). */
   .demo-backdrop[data-screen="phone"] .demo-h--form::after{
-    content:"";position:absolute;left:191.33px;top:23.03px;width:106.993px;height:5.242px;pointer-events:none;
+    content:"";position:absolute;left:192px;top:23.03px;width:106.993px;height:5.242px;pointer-events:none;
     background:url('assets/demo-m-ul-rightnow.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="phone"] .demo-sub{
@@ -575,9 +584,9 @@ body.demo-lock{overflow:hidden}
     position:absolute;left:28.4px;width:285.2px;margin:0;padding:0 28.94px 0 5.56px;border:0;border-radius:4.372px;
     box-shadow:inset 0 0 0 .6px #dee2e6;background:#fff;color:var(--navy);font-size:21px;line-height:25px;
   }
-  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-input{top:134.4px;height:36px}
+  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-input{top:134.4px;height:36px;padding-top:1px}
   .demo-backdrop[data-screen="phone"] .demo-field--business .demo-input{top:205.4px;height:35px}
-  .demo-backdrop[data-screen="phone"] .demo-field--email .demo-input{top:282.4px;height:38px;padding:0 6px}
+  .demo-backdrop[data-screen="phone"] .demo-field--email .demo-input{top:282.4px;height:38px;padding:1px 6px 0}
   .demo-backdrop[data-screen="phone"] .demo-input::placeholder{color:#c0c0c0;opacity:1}
   .demo-backdrop[data-screen="phone"] .demo-input:focus{box-shadow:inset 0 0 0 .6px var(--blue),0 0 0 2.13px rgba(43,127,253,.15)}
   /* A field to fix (2676:1272): pink fill, the same grey hairline. */
@@ -627,7 +636,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-card{height:702px;border-radius:9.67px;box-shadow:inset 0 0 0 .537px rgba(0,0,0,.18)}
   .demo-backdrop[data-screen="recap"] .demo-success{height:702px;text-align:left}
   .demo-backdrop[data-screen="recap"] .demo-success-title{
-    position:absolute;left:18.5px;top:41.514px;width:293px;height:12.893px;margin:0;text-align:center;white-space:nowrap;
+    position:absolute;left:18.5px;top:41.914px;width:293px;height:12.893px;margin:0;text-align:center;white-space:nowrap;
     font-family:'Permanent Marker',cursive;font-size:20.413px;font-weight:400;line-height:12.893px;
   }
   .demo-backdrop[data-screen="recap"] .demo-success-never{font-size:28px;line-height:12.893px}
@@ -662,13 +671,13 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-chatrow:last-child{margin-bottom:0}
   .demo-backdrop[data-screen="recap"] .demo-bubble{font-size:15px;line-height:18px}
   .demo-backdrop[data-screen="recap"] .demo-chatrow--assistant .demo-bubble{
-    max-width:175px;margin-left:28px;padding:11px 9px;border-radius:7.209px;background:#f3f3f5;color:#787888;
+    max-width:175px;margin-left:27.5px;padding:11px 9px;border-radius:7.209px;background:#f3f3f5;color:#787888;
   }
   .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-bubble{
-    max-width:177px;margin-right:40px;padding:8px 9px 7px;border-radius:6.408px;background:#e5e5ee;color:var(--navy);
+    max-width:177px;margin-right:40.67px;padding:8px 9px 7px;border-radius:6.408px;background:#e5e5ee;color:var(--navy);
   }
-  .demo-backdrop[data-screen="recap"] .demo-chatmeta{align-items:flex-start;gap:3.13px;margin:6.76px 0 0 10.79px}
-  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta{gap:3.42px;margin:6.36px 26px 0 0}
+  .demo-backdrop[data-screen="recap"] .demo-chatmeta{align-items:flex-start;gap:3.13px;margin:6.76px 0 0 9.96px}
+  .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta{gap:3.42px;margin:6.36px 26.8px 0 0}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__icon{width:16.78px;height:16.783px;flex:0 0 16.78px;margin-top:.46px}
   .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:16px;height:16px;flex-basis:16px;margin-top:.64px}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:12px;line-height:15px}

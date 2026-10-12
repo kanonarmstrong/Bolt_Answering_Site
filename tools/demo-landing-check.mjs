@@ -1,17 +1,19 @@
-// AFMBP-2090 — the demo's first screen, redrawn for conversion on phones (Figma 2670:952):
-// the rating and its quote, "Available now", "Make a call", and a line under each way in.
+// AFMBP-2150 — the demo's first screen on phones, redrawn for readability (Figma 2670:952,
+// after AFMBP-2090): the logo and "Available now", the pitch, the rating and its quote,
+// "You call us" with the wait under it, OR, "We call you", the paintbrush watermark.
 // Desktop keeps its own node (2670:896). Drives the real modal in headless Chrome against a
 // fake Bolt API and checks:
 //   - content: the phone node's copy and art, none of the superseded copy; desktop unchanged;
-//   - geometry: each new piece where the node puts it at 402x753 (card-relative, glyph runs);
-//   - routing: "Make a call" is the tel: link with this browser's code and opens the call
-//     card; "Get a call" opens the outbound form — never swapped;
+//   - geometry: each piece where it sits once matched to the node's 3x export (card-relative);
+//   - routing: "You call us" is the tel: link with this browser's code and opens the call
+//     card; "We call you" opens the outbound form — never swapped;
 //   - attribution: the landing URL's utm_* and click id ride on both selection events;
 //   - analytics: demo_opened once per open, each selection once;
 //   - accessibility: stars hidden from the accessibility tree, the rest in reading order;
 //     both ways in work from the keyboard, with a visible focus ring;
-//   - responsive: phones 320-430, tablet 768, desktop 1024-1920: no horizontal overflow,
-//     both buttons inside the viewport, nothing outside the card.
+//   - responsive: phones 280-430, tablet 768, desktop 1024-1920: no horizontal overflow,
+//     both buttons inside the viewport, every word inside the card (under 337px the card
+//     scales down rather than clip).
 // Run: node tools/demo-landing-check.mjs [siteRoot]
 //      SHOTS=<dir> saves the choice at 402x753 @3x and 1920x1200 @1x (plus each phone size).
 //      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE).
@@ -35,20 +37,22 @@ const cut = (s, from, to) => { if (!s.includes(from)) throw new Error(`NC anchor
 const MUTATE = {
   // The two ways in swap places.
   swap_ctas: ['demo.js', (s) => cut(cut(cut(s, "'demo-btn demo-choice__btn demo-choice__call'", 'TMP_CALL'), "'demo-btn demo-choice__btn demo-choice__get'", "'demo-btn demo-choice__btn demo-choice__call'"), 'TMP_CALL', "'demo-btn demo-choice__btn demo-choice__get'")],
-  // The phone shows the desktop label and title ("Call now", "…assistant now").
-  old_label: ['demo.css', (s) => cut(s, '  .demo-choice__lbl-d,.demo-choice__now{display:none}\n', '')],
+  // The phone shows the desktop labels and title too ("Call now", "Two ways to…").
+  old_label: ['demo.css', (s) => cut(s, '  .demo-backdrop .demo-d,.demo-backdrop .demo-db{display:none}\n', '')],
   // The stars reach screen readers (as text stars, not hidden).
-  noisy_stars: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-choice__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')])", "h('span', { class: 'demo-choice__stars' }, ['★★★★★'])")],
+  noisy_stars: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')])", "h('span', { class: 'demo-cm__stars' }, ['★★★★★'])")],
   // The phone-only pieces leak onto desktop.
-  desktop_leak: ['demo.css', (s) => cut(s, '.demo-choice__lbl-m,.demo-choice__proof,.demo-choice__when{display:none}\n', '')],
+  desktop_leak: ['demo.css', (s) => cut(s, '.demo-backdrop .demo-m,.demo-backdrop .demo-mb{display:none}\n', '')],
   // "Get a call" is counted twice.
   double_select: ['demo.js', (s) => cut(s, "      track('demo_mode_selected', { mode: 'outbound' });\n", "      track('demo_mode_selected', { mode: 'outbound' });\n      track('demo_mode_selected', { mode: 'outbound' });\n")],
-  // The timing line wraps.
-  wrap_when: ['demo.css', (s) => cut(s, '    position:absolute;left:0;width:337px;margin:0;font-size:9.6px;line-height:11.836px;color:#707070;text-align:center;white-space:nowrap;', '    position:absolute;left:100px;width:90px;margin:0;font-size:9.6px;line-height:11.836px;color:#707070;text-align:center;')],
+  // The wait-time line wraps.
+  wrap_when: ['demo.css', (s) => cut(s, '    position:absolute;left:0;top:472.482px;width:333px;margin:0;font-size:14px;line-height:11.836px;color:#707070;text-align:center;white-space:nowrap;', '    position:absolute;left:100px;top:472.482px;width:90px;margin:0;font-size:14px;line-height:11.836px;color:#707070;text-align:center;')],
   // The landing touch is dropped from every event.
   no_attr: ['attribution.js', (s) => cut(s, 'if (touch) data.attr = touch;', '')],
-  // "Make a call" moves off the node.
-  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{top:153px}', '.demo-choice__call{top:158px}')],
+  // "You call us" moves off the node.
+  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{top:413.4px}', '.demo-choice__call{top:418.4px}')],
+  // A narrow phone clips the pitch instead of scaling the card down.
+  no_zoom: ['demo.css', (s) => cut(s, '.demo-card{zoom:.94;left:0}', '.demo-card{left:0}')],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -89,20 +93,21 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0, good = 0;
 const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); } };
 
-// The phone node (2670:952), card-relative CSS px: boxes, and the centres of the text runs.
+// The phone node (2670:952), card-relative CSS px, as matched to its 3x export (iPhone
+// Safari and Chrome at a true 3x, AFMBP-2150): the node's children sit inside its .6px
+// stroke, and Figma draws layers on whole pixels (the buttons at x 81-252, y 414 / 527).
 const NODE = {
-  card: { w: 337, h: 402 },
-  // Figma renders the buttons on whole pixels (x 81-252, y 153 / 260 at 3x): those, not
-  // the node's fractional 80.4 / 152.4, are what the screen must match.
-  call: { x: 81, y: 153, w: 171, h: 49 },
-  get: { x: 81, y: 260, w: 171, h: 49 },
-  stars: { x: 49, y: 109, w: 75, h: 15 },
-  // Text line boxes: the node's centres, each row 1px lower where Figma renders it so.
+  card: { w: 337, h: 663 },
+  call: { x: 81, y: 414, w: 171, h: 49 },
+  get: { x: 81, y: 527, w: 171, h: 49 },
+  stars: { x: 72.18, y: 321, w: 132.345, h: 23.941 },
+  // Centred lines: [the glyph run's centre x, the line box's centre y].
   centres: {
-    '.demo-choice__score': [142.96, 117.167], '.demo-choice__live': [251.5, 117.167], '.demo-choice__quote': [100.4, 132.067],
-    '.demo-choice__when--call': [168.5, 214.067], '.demo-choice__or': [166, 239.067], '.demo-choice__when--get': [168.5, 321.067],
-    '.demo-help': [169.79, 355.1],
+    '.demo-cm__score': [234.66, 334.613], '.demo-cm__live': [267, 50], '.demo-cm__quote': [167.1, 361.917],
+    '.demo-choice__when': [167.1, 479], '.demo-choice__or': [166.6, 506], '.demo-help': [168.85, 626.7],
   },
+  // The pitch: left edge and line count.
+  pitch: { '.demo-cm__h': [28, 3], '.demo-cm__sub': [28, 4] },
 };
 
 try {
@@ -190,8 +195,9 @@ try {
     const { nodes } = await send('Accessibility.getPartialAXTree', { nodeId, fetchRelatives: false });
     return nodes.length ? !!nodes[0].ignored : null;
   };
-  const SUPERSEDED = ['Call now', 'Call us or we', 'assistant now'];
-  let titleCx = 168.5; // the title's card-relative centre at the node's size (measured below)
+  const SUPERSEDED = ['Call now', 'Call us or we', 'assistant now', 'ways to', 'Make a call', 'Get a call', 'Professional and helpful', 'Average time to connect', 'will call you right now'];
+  const PITCH = 'Answering one call can put hundreds to thousands of Dollars in your pocket';
+  const SUB = 'Talk with a real assistant to see how Bolt helps book customers while you keep on working';
 
   // ================= phone, the node's own size =================
   if (ONLY !== 'sizes') {
@@ -204,69 +210,75 @@ try {
   await shot('choice-402x753@3x');
   if (SHOTS) writeFileSync(join(SHOTS, 'card-402x753.json'), JSON.stringify(await rect('.demo-backdrop.open .demo-card')));
   // content
-  ok((await text('.demo-choice__h')) === '2 ways to talk to an assistant', `phone: title (${await text('.demo-choice__h')})`);
-  ok((await text('.demo-choice__call')) === 'Make a call', `phone: "Make a call" (${await text('.demo-choice__call')})`);
-  ok((await text('.demo-choice__get')) === 'Get a call', 'phone: "Get a call"');
-  ok((await text('.demo-choice__score')) === '4.9/5', `phone: rating (${await text('.demo-choice__score')})`);
-  ok((await text('.demo-choice__quote')) === '“Professional and helpful”', `phone: quote (${await text('.demo-choice__quote')})`);
-  ok((await text('.demo-choice__live')) === 'Available now', 'phone: "Available now"');
-  ok((await text('.demo-choice__when--call')) === 'Average time to connect: 3 seconds', `phone: line under "Make a call" (${await text('.demo-choice__when--call')})`);
-  ok((await text('.demo-choice__when--get')) === 'Your assistant will call you right now', `phone: line under "Get a call" (${await text('.demo-choice__when--get')})`);
-  ok((await ev("[].slice.call(document.querySelectorAll('.demo-choice__when b')).map(function(b){return b.textContent+':'+getComputedStyle(b).fontWeight}).join('|')")) === '3 seconds:600|right now:600', 'phone: "3 seconds" / "right now" semibold');
+  ok((await text('.demo-cm__h')) === PITCH, `phone: the pitch (${await text('.demo-cm__h')})`);
+  ok((await text('.demo-cm__sub')) === SUB, `phone: the line under it (${await text('.demo-cm__sub')})`);
+  ok((await text('.demo-choice__call')) === 'You call us', `phone: "You call us" (${await text('.demo-choice__call')})`);
+  ok((await text('.demo-choice__get')) === 'We call you', `phone: "We call you" (${await text('.demo-choice__get')})`);
+  ok((await text('.demo-cm__score')) === '4.9/5', `phone: rating (${await text('.demo-cm__score')})`);
+  ok((await text('.demo-cm__quote')) === '“Smart & very professional”', `phone: quote (${await text('.demo-cm__quote')})`);
+  ok((await text('.demo-cm__live')) === 'Available now', 'phone: "Available now"');
+  ok((await text('.demo-choice__when')) === 'Avg. wait time: 3 seconds', `phone: the wait under "You call us" (${await text('.demo-choice__when')})`);
+  ok((await ev("[].slice.call(document.querySelectorAll('.demo-choice__when b')).map(function(b){return b.textContent+':'+getComputedStyle(b).fontWeight}).join('|')")) === '3 seconds:600', 'phone: "3 seconds" semibold');
   ok((await text('.demo-choice__or')) === 'OR' && (await text('.demo-help')) === 'Need help? Contact support.', 'phone: "OR" and the help line');
   const modalText = await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText");
   ok(SUPERSEDED.every((s) => !modalText.includes(s)), `phone: none of the superseded copy (${SUPERSEDED.filter((s) => modalText.includes(s)).join(', ')})`);
-  ok(!(await visible('.demo-choice__sub')), 'phone: no subtitle');
-  // art: the node's own vectors
-  ok((await ev("document.querySelectorAll('.demo-choice__stars span').length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-choice__stars span')).every(function(s){return /demo-m-star\\.svg/.test(getComputedStyle(s).backgroundImage) && s.getBoundingClientRect().width === 15})")), 'phone: five node stars');
-  ok(/demo-m-ul-assistant\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-card'),'::after').backgroundImage")), 'phone: the node\'s brush under "talk to an assistant"');
-  ok(/demo-m-dot-live\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-choice__live'),'::before').backgroundImage")), 'phone: the node\'s green dot');
+  ok(!(await visible('.demo-choice__sub')) && !(await visible('.demo-choice__h')), 'phone: no desktop title or subtitle');
+  // art: the node's own vectors, the site's logo, and the brush
+  ok((await ev("document.querySelectorAll('.demo-cm__stars span').length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).every(function(s){return /demo-m-star-lg\\.svg/.test(getComputedStyle(s).backgroundImage) && Math.abs(s.getBoundingClientRect().width - 26.469) < .01})")), 'phone: five node stars');
+  ok(/demo-m-ul-pocket\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-cm'),'::before').backgroundImage")), 'phone: the node\'s brush under "Dollars in your pocket"');
+  ok(/demo-m-dot\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__live'),'::before').backgroundImage")), 'phone: the node\'s green dot');
+  ok(/assets\/logo\.png/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__logo')).backgroundImage")), 'phone: the in-card logo is the site\'s logo.png, as the node uses');
+  ok(/demo-m-brush\.svg/.test(await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before');return s.webkitMaskImage||s.maskImage})()")) && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before').transform")) === 'matrix(-1, 0, 0, 1, 0, 0)', 'phone: the paintbrush watermark, mirrored as the node draws it');
   // Figma draws the quote as a slanted roman Inter (double-storey "a"), which is what the
   // browser synthesizes from the site's Inter; Inter 4's true italic has other letterforms.
-  ok((await ev("getComputedStyle(document.querySelector('.demo-choice__quote')).fontStyle")) === 'italic' && /^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-choice__quote')).fontFamily")), 'phone: the quote in italic Inter');
-  ok(/^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-choice__l1')).fontFamily")) && /Permanent Marker/.test(await ev("getComputedStyle(document.querySelector('.demo-choice__l2')).fontFamily")), 'phone: line 1 in Inter, line 2 in the marker (as the node)');
+  ok((await ev("getComputedStyle(document.querySelector('.demo-cm__quote')).fontStyle")) === 'italic' && /^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__quote')).fontFamily")), 'phone: the quote in italic Inter');
+  ok(/^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__h')).fontFamily")) && /Permanent Marker/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__mk')).fontFamily")), 'phone: the pitch in Inter, "Dollars in your pocket" in the marker');
   // geometry, card-relative
   const card = await rect('.demo-backdrop.open .demo-card');
   const rel = (b) => b && { x: b.x - card.x, y: b.y - card.y, w: b.w, h: b.h, cx: b.cx - card.x, cy: b.cy - card.y, lines: b.lines };
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
-  ok(near(card.w, 337, 0.01) && near(card.h, 402, 0.01), `phone: card 337x402 (${card.w}x${card.h})`);
+  ok(near(card.w, 337, 0.01) && near(card.h, 663, 0.01), `phone: card 337x663 (${card.w}x${card.h})`);
+  ok(near(card.y, 24, 0.01), `phone: card where the node puts it, 24px from the top of a 753px screen (${card.y})`);
   for (const k of ['call', 'get', 'stars']) {
-    const sel = k === 'stars' ? '.demo-choice__stars' : `.demo-choice__${k}`;
+    const sel = k === 'stars' ? '.demo-cm__stars' : `.demo-choice__${k}`;
     const b = rel(await rect(sel)), n = NODE[k];
-    ok(!!b && near(b.x, n.x, 0.5) && near(b.y, n.y, 0.5) && near(b.w, n.w, 0.5) && near(b.h, n.h, 0.5), `phone: ${k} box at the node's (${JSON.stringify(b)} vs ${JSON.stringify(n)})`);
+    ok(!!b && near(b.x, n.x, 0.05) && near(b.y, n.y, 0.05) && near(b.w, n.w, 0.05) && near(b.h, n.h, 0.05), `phone: ${k} box where it matches the node (${JSON.stringify(b)} vs ${JSON.stringify(n)})`);
   }
   // Horizontal: the glyph run's centre. Vertical: the line box's (a font's content area is
-  // not its line box; the glyphs themselves are compared with the node's 3x export).
+  // not its line box; the glyphs themselves were compared with the node's 3x export).
   for (const [sel, [cx, cy]] of Object.entries(NODE.centres)) {
     const g = rel(await run(sel)), b = rel(await rect(sel));
-    ok(g && b && near(g.cx, cx, 1) && near(b.cy, cy, 0.5) && g.lines === 1, `phone: ${sel} centred where the node puts it, one line (${g && b && [g.cx.toFixed(2), b.cy.toFixed(2), g.lines]} vs ${cx},${cy})`);
+    ok(g && b && near(g.cx, cx, 0.5) && near(b.cy, cy, 0.05) && g.lines === 1, `phone: ${sel} centred where it matches the node, one line (${g && b && [g.cx.toFixed(2), b.cy.toFixed(3), g.lines]} vs ${cx},${cy})`);
   }
-  titleCx = rel(await run('.demo-choice__h')).cx;
-  // reading order follows the picture: title, rating, quote, availability, call + its line, OR, get + its line, help
-  const order = ['.demo-choice__h', '.demo-choice__score', '.demo-choice__quote', '.demo-choice__live', '.demo-choice__call', '.demo-choice__when--call', '.demo-choice__or', '.demo-choice__get', '.demo-choice__when--get', '.demo-help'];
+  for (const [sel, [x, lines]] of Object.entries(NODE.pitch)) {
+    const g = rel(await run(sel));
+    ok(g && near(g.x, x, 0.05) && g.lines === lines, `phone: ${sel} from x ${x} on ${lines} lines, as the node wraps it (${g && [g.x.toFixed(2), g.lines]})`);
+  }
+  // reading order follows the picture: availability, pitch, rating, quote, call + its wait, OR, we call you, help
+  const order = ['.demo-cm__live', '.demo-cm__h', '.demo-cm__sub', '.demo-cm__score', '.demo-cm__quote', '.demo-choice__call', '.demo-choice__when', '.demo-choice__or', '.demo-choice__get', '.demo-help'];
   ok((await ev(`(function(){var s=${JSON.stringify(order)}.map(function(q){return document.querySelector(q)}); for(var i=1;i<s.length;i++){ if(!(s[i-1].compareDocumentPosition(s[i]) & Node.DOCUMENT_POSITION_FOLLOWING)) return false; } return true;})()`)) === true, 'a11y: reading order matches the picture');
-  ok((await axIgnored('.demo-choice__stars')) === true, 'a11y: the stars are hidden from screen readers');
-  ok((await axIgnored('.demo-choice__score')) === false && (await axIgnored('.demo-choice__quote')) === false && (await axIgnored('.demo-choice__live')) === false, 'a11y: rating, quote and availability are read');
-  ok((await ev("document.querySelector('.demo-choice__h').tagName")) === 'H2', 'a11y: the title stays a heading');
-  // routing: "Make a call" is the call, with this browser's code
-  ok(api.created === 1 && (await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Make a call" is the tel: link with the line, a pause and the code');
+  ok((await axIgnored('.demo-cm__stars')) === true && (await axIgnored('.demo-cm__logo')) === true, 'a11y: the stars and the drawn logo are hidden from screen readers');
+  ok((await axIgnored('.demo-cm__score')) === false && (await axIgnored('.demo-cm__quote')) === false && (await axIgnored('.demo-cm__live')) === false, 'a11y: rating, quote and availability are read');
+  ok((await ev("document.querySelector('.demo-cm__h').tagName")) === 'H2' && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the pitch is the one heading on the phone');
+  // routing: "You call us" is the call, with this browser's code
+  ok(api.created === 1 && (await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "You call us" is the tel: link with the line, a pause and the code');
   await tap('.demo-choice__call');
   const c1 = await lastClick();
   ok(!!c1 && c1.href === 'tel:+18554973151,,4321' && c1.followed === true, `phone: the tap goes to the dialer (${JSON.stringify(c1)})`);
-  ok(await waitScreen('inbound-call'), 'phone: "Make a call" -> the call card');
+  ok(await waitScreen('inbound-call'), 'phone: "You call us" -> the call card');
   ok(evs('demo_opened').length === 1, `events: demo_opened once (${evs('demo_opened').length})`);
   ok(evs('demo_mode_selected', (d) => d.mode === 'inbound').length === 1 && evs('demo_mode_selected').length === 1, `events: one selection, inbound (${JSON.stringify(evs('demo_mode_selected').map((e) => e.data.mode))})`);
   ok(evs('demo_mode_selected', ATTR).length === 1 && evs('demo_opened', ATTR).length === 1, 'attribution: utm_source, utm_campaign and fbclid ride on the open and the selection');
 
-  console.log('[phone] "Get a call" -> the outbound form');
+  console.log('[phone] "We call you" -> the outbound form');
   reset();
   await load('/hvac.html?talk=1&utm_source=qa_src&utm_campaign=qa_camp&fbclid=qa_click');
   ok(await waitScreen('choice'), 'phone: choice again');
   await tap('.demo-choice__get');
-  ok(await waitScreen('phone'), 'phone: "Get a call" -> the outbound form');
-  ok((await text('.demo-h--form')) === 'We’ll call you right now', `phone: outbound form heading unchanged (${await text('.demo-h--form')})`);
+  ok(await waitScreen('phone'), 'phone: "We call you" -> the outbound form');
+  ok((await text('.demo-h--form')) === 'We’ll call you now', `phone: the redrawn form's heading (${await text('.demo-h--form')})`);
   ok(evs('demo_mode_selected', (d) => d.mode === 'outbound').length === 1 && evs('demo_mode_selected').length === 1, `events: one selection, outbound (${evs('demo_mode_selected').length})`);
-  ok(evs('demo_mode_selected', ATTR).length === 1, 'attribution: the touch rides on the "Get a call" selection');
+  ok(evs('demo_mode_selected', ATTR).length === 1, 'attribution: the touch rides on the "We call you" selection');
 
   console.log('[phone] keyboard: both ways in, with a focus ring');
   reset();
@@ -285,22 +297,22 @@ try {
     if (a && a.get) { reached.get = true; ring.get = a.fv && a.ring; }
   }
   ok(reached.call && reached.get, `keyboard: Tab reaches both ways in (${JSON.stringify(reached)}, ${tabs} presses)`);
-  console.log(`  note: Tab reached "Get a call" after ${tabs} presses (focus starts on the page, not in the dialog)`);
+  console.log(`  note: Tab reached "We call you" after ${tabs} presses (focus starts on the page, not in the dialog)`);
   ok(ring.call && ring.get, `keyboard: each shows a focus ring (${JSON.stringify(ring)})`);
   await ev("document.querySelector('.demo-choice__get').focus(); 1");
   await key('Enter', 'Enter', 13);
-  ok(await waitScreen('phone'), 'keyboard: Enter on "Get a call" opens the form');
+  ok(await waitScreen('phone'), 'keyboard: Enter on "We call you" opens the form');
   reset();
   await load('/hvac.html?talk=1');
   ok(await waitScreen('choice'), 'keyboard: choice again');
   await ev("document.querySelector('.demo-choice__call').focus(); 1");
   await key('Enter', 'Enter', 13);
-  ok(await waitScreen('inbound-call'), 'keyboard: Enter on "Make a call" starts the call');
+  ok(await waitScreen('inbound-call'), 'keyboard: Enter on "You call us" starts the call');
 
   }
 
   // ================= sizes =================
-  const SIZES = [[320, 568, 2, true], [360, 740, 3, true], [375, 667, 2, true], [390, 844, 3, true], [412, 915, 2.625, true], [430, 932, 3, true], [768, 1024, 2, true], [1024, 768, 1, false], [1280, 800, 1, false], [1920, 1200, 1, false]];
+  const SIZES = [[280, 653, 2, true], [320, 568, 2, true], [360, 740, 3, true], [375, 667, 2, true], [390, 844, 3, true], [412, 915, 2.625, true], [430, 932, 3, true], [768, 1024, 2, true], [1024, 768, 1, false], [1280, 800, 1, false], [1920, 1200, 1, false]];
   for (const [w, h, dpr, mobile] of SIZES) {
     await view(w, h, dpr, mobile);
     reset();
@@ -320,20 +332,20 @@ try {
     const c = await rect('.demo-backdrop.open .demo-card');
     if (phoneLayout) {
       ok(c.x >= 0 && c.x + c.w <= w, `${w}x${h}: the card inside the viewport (${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
-      for (const sel of ['.demo-choice__h', '.demo-choice__score', '.demo-choice__quote', '.demo-choice__live', '.demo-choice__call', '.demo-choice__when--call', '.demo-choice__or', '.demo-choice__get', '.demo-choice__when--get', '.demo-help']) {
-        const g = await run(sel);
-        ok(g && g.x >= c.x + 4 && g.x + g.w <= c.x + c.w - 4 && g.lines === (sel === '.demo-choice__h' ? 2 : 1), `${w}x${h}: ${sel} on one line, inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]} in ${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
+      const one = ['.demo-cm__score', '.demo-cm__quote', '.demo-cm__live', '.demo-choice__call', '.demo-choice__when', '.demo-choice__or', '.demo-choice__get', '.demo-help'];
+      for (const sel of one.concat(['.demo-cm__h', '.demo-cm__sub'])) {
+        const g = await run(sel), want = sel === '.demo-cm__h' ? 3 : (sel === '.demo-cm__sub' ? 4 : 1);
+        ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]} in ${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
       }
-      const s = await rect('.demo-choice__stars');
+      const s = await rect('.demo-cm__stars');
       ok(s.x >= c.x + 4 && s.x + s.w <= c.x + c.w - 4, `${w}x${h}: the stars inside the card`);
-      // Centred as at the node's size: the same card-relative centre, less half of what the
-      // card lost (it narrows under 369px).
-      const tc = (await run('.demo-choice__h')).cx - c.x, want = titleCx - (337 - c.w) / 2;
-      ok(Math.abs(tc - want) <= 1, `${w}x${h}: the title centred on the card as drawn (${tc.toFixed(2)} vs ${want.toFixed(2)})`);
+      // From 337px the card is the node's own size; under it the card scales down (it must
+      // not clip the pitch, whose lines run within 16px of the card's edges).
+      ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     } else {
       ok((await text('.demo-choice__h')) === 'Two ways to talk to an assistant now', `${w}x${h}: desktop title unchanged (${await text('.demo-choice__h')})`);
-      ok((await text('.demo-choice__call')) === 'Call now' && (await visible('.demo-choice__sub')), `${w}x${h}: desktop "Call now" and the subtitle`);
-      ok(!(await visible('.demo-choice__proof')) && !(await visible('.demo-choice__when--call')) && !(await visible('.demo-choice__when--get')) && !(await visible('.demo-choice__lbl-m')), `${w}x${h}: none of the phone pieces on desktop`);
+      ok((await text('.demo-choice__call')) === 'Call now' && (await text('.demo-choice__get')) === 'Get a call' && (await visible('.demo-choice__sub')), `${w}x${h}: desktop "Call now" / "Get a call" and the subtitle`);
+      ok(!(await visible('.demo-cm')) && !(await visible('.demo-choice__when')) && !(await visible('.demo-choice__or')) && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-m')).every(function(e){return !e.getClientRects().length})")) === true, `${w}x${h}: none of the phone pieces on desktop`);
       if (w === 1920) await shot('d-choice-1920x1200');
     }
   }
