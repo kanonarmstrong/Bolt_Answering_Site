@@ -16,8 +16,9 @@
    What it sends: JavaScript errors only. Never tracing, never session replay:
    it loads Sentry's pinned errors-only bundle with Subresource Integrity, not
    the Loader Script, whose features can be switched on from Sentry's website.
-   No sessions and no client reports either, so a browser is heard from only
-   when an error is sent. Before an error leaves, every URL loses its query
+   No sessions and no client reports either: Sentry's servers hear from a
+   browser only when an error is sent (the bundle itself comes from Sentry's
+   CDN, once per page view). Before an error leaves, every URL loses its query
    string and fragment (they carry ad click ids), phone numbers and email
    addresses are replaced, the Referer header is dropped and no user is set.
    The SDK asks Sentry not to add the visitor's IP address (infer_ip "never");
@@ -25,7 +26,8 @@
    Demo failures that used to report nothing (demo.js) arrive here as
    bolt:track events from attribution.js and go to Sentry as messages tagged
    demo_failure. Their first-party analytics events are sent either way.
-   window.boltSentry says whether it is on in this browser, and if not, why.
+   window.boltSentry says whether it is on in this browser, and if not, why
+   ('not_loaded': the bundle was blocked, often by an ad blocker, or refused).
    ============================================================ */
 (function () {
   'use strict';
@@ -178,6 +180,7 @@
   function giveUp() {
     stopEarly(); early = []; queue = [];
     window.removeEventListener('bolt:track', onTrack);
+    window.boltSentry = { enabled: false, blockedBy: 'not_loaded' };
   }
 
   function start() {

@@ -1044,7 +1044,8 @@
   // Closing the dialog stops the recap checks. While they were still following a
   // call (waiting for it to end, or for its transcript), the page never learns how
   // it went; demo_closed alone did not say so. Closing before a demo-line call
-  // connects loses nothing (reopening picks the same code up) and is not reported.
+  // connects is not reported: there is no call to follow yet, and reopening picks
+  // the same code (and its call) back up.
   function reportClosedWhileFollowing() {
     var w = recapWatch;
     if (!w || !isOpen()) return;
@@ -1105,8 +1106,9 @@
           if (gen !== recapGen) return;
           watch.failedChecks++;
           if (Date.now() - started > inCallLimit) {
-            // AFMBP-2130: this used to stop without a word, leaving the visitor on the
-            // in-call screen and the funnel with no failure.
+            // AFMBP-2130: this used to stop without a word, leaving the visitor waiting
+            // (on the in-call screen, or on a recap with no transcript) and the funnel
+            // with no failure.
             stopRecap();
             track('demo_recap_poll_failed', modeProps({ stage: 'recap_poll', reason: 'network', call_id: callId, waiting_for: watch.phase, failed_checks: watch.failedChecks }));
             return;

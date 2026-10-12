@@ -461,6 +461,7 @@ try {
     const sri = p.st.logs.filter((t) => /integrity/i.test(t));
     ok(p.st.cdn === 1 && (await p.ev('typeof window.Sentry')) === 'undefined' && p.st.envelopes.length === 0, `requested, refused, nothing sent (window.Sentry ${await p.ev('typeof window.Sentry')}, sent ${p.st.envelopes.length})`);
     ok(sri.length > 0, `the browser refused it on the integrity check (${JSON.stringify((sri[0] || '').slice(0, 110))})`);
+    ok((await p.ev('JSON.stringify(window.boltSentry)')) === '{"enabled":false,"blockedBy":"not_loaded"}', `window.boltSentry says it did not load (${await p.ev('JSON.stringify(window.boltSentry)')})`);
     ok((await p.ev("!!document.querySelector('.demo-backdrop.open .demo-choice__get')")) === true, 'the demo still opens');
     const ours = p.st.errors.filter((x) => !x.includes('forced:'));
     ok(ours.length === 0, `no other page errors ${ours.length ? JSON.stringify(ours.slice(0, 2)) : ''}`);
