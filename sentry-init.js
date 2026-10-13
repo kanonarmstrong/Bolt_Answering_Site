@@ -40,8 +40,8 @@
   // Sentry's errors-only CDN bundle at a pinned version, with the Subresource
   // Integrity hash Sentry publishes for it (tools/sentry-check.mjs also checks it
   // against the file). A version bump changes both lines.
-  var BUNDLE = 'https://browser.sentry-cdn.com/11.1.0/bundle.min.js';
-  var INTEGRITY = 'sha384-7jVVfAvaX3y852Rk6WDz/q+lduPMR5XC9J+uN/EqtsaGfvOiHiMtNQuv+kkrguU7';
+  var BUNDLE = 'https://browser.sentry-cdn.com/10.76.2/bundle.min.js';
+  var INTEGRITY = 'sha384-UxIR36IcGoGUfLoGUusrMIf62txfGSt8+2nzkKL3PMw3TFPWZ9JRczoq8o2AfY0e';
   var HOSTS = ['www.boltanswering.com', 'boltanswering.com'];
 
   function blockedBy() {
@@ -192,8 +192,10 @@
         dsn: DSN,
         environment: 'production',
         release: release(),
-        // sendDefaultPii is the name before SDK v11, which ignores it and reads
-        // dataCollection instead (it collects everything when that is left out).
+        // Pinned SDK is v10 (owner, 2026-10-12, same major as the web app): there,
+        // sendDefaultPii is the setting that applies. v11 ignores it and reads
+        // dataCollection instead (and collects everything when that is left out),
+        // so dataCollection stays set too, ready for the v11 move (AFMBP-2152).
         sendDefaultPii: false,
         dataCollection: {
           userInfo: false, // no user and no IP address: the SDK sends infer_ip "never"
