@@ -15,7 +15,7 @@
    Mounts into `.hiwphone` in the How It Works (#band) section. Desktop lets the
    phone overflow into the neighbouring sections; mobile keeps it in-flow. */
 
-import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK } from "./three-phone.js?v=2"
+import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK } from "./three-phone.js?v=3"
 
 ;(function () {
     if (typeof window === "undefined" || typeof document === "undefined") return
