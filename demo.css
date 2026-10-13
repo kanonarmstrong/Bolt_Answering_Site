@@ -21,6 +21,10 @@ body.demo-lock{overflow:hidden}
   padding:38px 44px 30px;
   box-shadow:0 24px 70px rgba(12,12,13,.28);
 }
+/* The dialog takes keyboard focus as it opens (AFMBP-2097). It is not a control, so it
+   draws no ring (iOS Safari would, when an ad link opens it as the page loads); its
+   controls keep theirs. */
+.demo-card:focus{outline:none}
 
 .demo-close{
   position:absolute;top:12px;right:14px;
