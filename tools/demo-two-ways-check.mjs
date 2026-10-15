@@ -217,10 +217,11 @@ try {
   const vid = await ev('window.boltAttr && window.boltAttr.visitorId()');
   ok(/^[A-Za-z0-9-]{8,64}$/.test(vid || '') && api.visitors[0] === vid, `phone: the code request carries this visit's visitor id, so the call can be tied to the ad (AFMBP-2109) (${api.visitors[0] ? 'sent' : 'missing'})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
-  // AFMBP-2090: the redrawn phone node drops "now" (desktop keeps it).
-  ok((await text('.demo-cm__h')) === 'Answering one call can put hundreds to thousands of Dollars in your pocket' && !(await visible('.demo-choice__h')), `phone: the phone node's pitch, not the desktop title (${await text('.demo-cm__h')})`);
+  // AFMBP-2090 / AFMBP-2189: the phone node has its own pitch (desktop keeps its title).
+  ok((await text('.demo-cm__h')) === 'One phone call can turn into real money' && !(await visible('.demo-choice__h')), `phone: the phone node's pitch, not the desktop title (${await text('.demo-cm__h')})`);
   ok((await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `phone: "You call us" / "We call you" (${await text('.demo-choice__call')} / ${await text('.demo-choice__get')})`);
-  ok((await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')), 'phone: "OR" shown, "Two" hidden');
+  // AFMBP-2189: the redrawn node has no "OR" between the two ways in, and a close button.
+  ok(!(await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')) && (await visible('.demo-close')), 'phone: no "OR", no "Two", the close button showing');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-disclosure')")), 'phone: no consent line on the choice');
   await shot('m-choice', '.demo-card');
   await tap('.demo-choice__call');

@@ -391,7 +391,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop .demo-mb{display:block}
 
   /* ---- the frame every phone node screen shares ---- */
-  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:663px;--demo-dx:-1.5px;--demo-dy:-21px;--demo-bw:.6px}
+  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:611px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-call"]{--demo-w:331px;--demo-h:404px;--demo-dx:-.5px;--demo-dy:-13.5px;--demo-bw:.536px}
   .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:268px;--demo-dx:0px;--demo-dy:-93.5px;--demo-bw:0px}
   .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:7px;--demo-bw:.6px}
@@ -419,7 +419,9 @@ body.demo-lock{overflow:hidden}
     position:relative;z-index:1;width:var(--demo-w);min-height:var(--demo-h);
     left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
   }
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) :is(.demo-logo,.demo-close){display:none}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-logo{display:none}
+  /* Of these nodes only the choice draws a close button (2683:1599, AFMBP-2189); see its block. */
+  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}
   /* Under 337px of screen the node's words run too close to the card's edges
      to clip: the whole card scales down instead (zoom keeps every offset in
      proportion). 320px phones get 94%, a 280px folding phone's cover 83%. */
@@ -441,7 +443,8 @@ body.demo-lock{overflow:hidden}
     content:"";position:absolute;z-index:-1;pointer-events:none;background:rgba(24,10,83,.11);
     -webkit-mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;
   }
-  .demo-backdrop:is([data-screen="choice"],[data-screen="phone"]) .demo-body::before{left:-477.455px;top:-.251px;width:829.268px;height:690.133px;transform:scaleX(-1)}
+  .demo-backdrop[data-screen="choice"] .demo-body::before{left:-477.448px;top:-.15px;width:828.071px;height:688.679px;transform:scaleX(-1)}
+  .demo-backdrop[data-screen="phone"] .demo-body::before{left:-477.455px;top:-.251px;width:829.268px;height:690.133px;transform:scaleX(-1)}
   .demo-backdrop[data-screen="inbound-call"] .demo-body::before{left:-406.751px;top:-69.181px;width:829.145px;height:689.992px}
   .demo-backdrop[data-screen="calling"] .demo-body::before{left:-406.751px;top:-59.181px;width:829.145px;height:689.992px}
   .demo-backdrop[data-screen="recap"] .demo-body::before{left:-406.19px;top:-63.171px;width:828.038px;height:688.721px;transform:scaleY(-1);background:rgba(0,154,21,.11)}
@@ -458,64 +461,84 @@ body.demo-lock{overflow:hidden}
   .demo-xm__row--ask::before{left:-54.94px;top:2px;width:43px;height:43px;background-image:url('assets/demo-m-ico-ask.svg')}
   .demo-xm__row--route::before{left:-55.94px;top:3px;width:45px;height:45px;background-image:url('assets/demo-m-ico-route.svg')}
 
-  /* ---- choice (2670:952): card 337x663 ---- */
-  .demo-backdrop[data-screen="choice"] .demo-card{height:663px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="choice"] .demo-body{height:663px}
+  /* ---- choice (2670:952, redrawn 2026-10-15, AFMBP-2189): card 337x611 ----
+     Numbers are body-relative (the body sits inside the node's .6px stroke), each
+     piece where it sits once matched to the node's 3x export. */
+  .demo-backdrop[data-screen="choice"] .demo-card{height:611px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="choice"] .demo-body{height:611px}
+  /* The close button (2683:1599): the node's 13px cross where the node draws it, in
+     a 44px tap target centred on it, above the body (which would take the tap). It
+     closes the demo the way the shade does. */
+  .demo-backdrop[data-screen="choice"] .demo-close{
+    z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);top:21.497px;right:auto;
+    width:44px;height:44px;border-radius:0;background:transparent;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-close:hover{background:transparent}
+  .demo-backdrop[data-screen="choice"] .demo-close svg{display:none}
+  .demo-backdrop[data-screen="choice"] .demo-close::before{
+    content:"";width:12.992px;height:12.993px;pointer-events:none;
+    background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
+  }
   /* The in-card logo is the site's logo.png, cropped as the node crops it (2676:945). */
   .demo-backdrop[data-screen="choice"] .demo-cm__logo{
-    position:absolute;left:26.402px;top:33.4px;width:63.636px;height:29.167px;
+    position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
     background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
   }
+  /* "Available now" (2676:1567), the node's green dot (2676:1568) 15.94px to its left. */
   .demo-backdrop[data-screen="choice"] .demo-cm__live{
-    position:absolute;left:206.4px;top:42.572px;width:120px;margin:0;font-size:16.72px;line-height:13.657px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:137.338px;top:49.4px;width:86px;margin:0;font-size:13.324px;line-height:11px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__live::before{
-    content:"";position:absolute;left:-14px;top:-.172px;width:13px;height:13px;pointer-events:none;
+    content:"";position:absolute;left:-15.938px;top:0;width:10.359px;height:10.359px;pointer-events:none;
     background:url('assets/demo-m-dot.svg') center/100% 100% no-repeat;
   }
+  /* The pitch (2670:1026): Inter 19.032 on 23px lines, "real money" in the marker on
+     a line of its own, then a blank line the node draws 27.6px tall (its zero-width
+     space falls back to another font), then the body. */
   .demo-backdrop[data-screen="choice"] :is(.demo-cm__h,.demo-cm__sub){
-    position:absolute;left:27.4px;width:293px;margin:0;font-size:21px;font-weight:400;line-height:25px;color:var(--navy);
+    position:absolute;left:45.4px;width:265.538px;margin:0;font-size:19.032px;font-weight:400;line-height:23px;color:var(--navy);
   }
-  .demo-backdrop[data-screen="choice"] .demo-cm__h{top:97.4px}
-  .demo-backdrop[data-screen="choice"] .demo-cm__mk{display:block;position:relative;top:-2.33px;font-size:25px;line-height:25px}
-  .demo-backdrop[data-screen="choice"] .demo-cm__sub{top:197.4px}
-  /* Yellow brush under "Dollars in your pocket" (vector 2676:939). */
+  /* Both engines drew the first line .33-.67px below the node's (Chrome at a true 3x,
+     iPhone Safari): set up a third of a pixel. */
+  .demo-backdrop[data-screen="choice"] .demo-cm__h{top:90.07px}
+  /* The marker sits lower in its 23px line than the node draws it; lifted onto it. */
+  .demo-backdrop[data-screen="choice"] .demo-cm__mk{display:block;position:relative;top:-3.34px;font-size:26px;line-height:23px}
+  .demo-backdrop[data-screen="choice"] .demo-cm__sub{top:164px}
+  /* Yellow brush under "real money" (vector 2683:1607). */
   .demo-backdrop[data-screen="choice"] .demo-cm::before{
-    content:"";position:absolute;left:27.4px;top:173.369px;width:281.99px;height:10.205px;pointer-events:none;
-    background:url('assets/demo-m-ul-pocket.svg') center/100% 100% no-repeat;
-  }
-  /* Rating (2676:916): five stars 26.469 apart from x 72.18, each drawn
-     25.17x23.94 .65px into its box; "4.9/5" centred on 234.56/335.18 and the
-     quote on 169/361.65. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__stars{position:absolute;left:71.58px;top:320.4px;display:flex}
-  .demo-backdrop[data-screen="choice"] .demo-cm__stars span{
-    width:26.469px;height:23.941px;background:url('assets/demo-m-star-lg.svg') .648px 0/25.1735px 23.9414px no-repeat;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__score{
-    position:absolute;left:184.06px;top:324.5px;width:100px;margin:0;font-size:20.897px;font-weight:700;line-height:19.026px;color:var(--navy);text-align:center;white-space:nowrap;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__quote{
-    position:absolute;left:46.5px;top:351.58px;width:240px;margin:0;font-size:16.717px;font-style:italic;font-weight:400;line-height:19.474px;color:#707070;text-align:center;white-space:nowrap;
+    content:"";position:absolute;left:43.4px;top:134.509px;width:141.986px;height:8.501px;pointer-events:none;
+    background:url('assets/demo-m-ul-money.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
     position:absolute;left:80.4px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;
     display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;color:#fff;
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:413.4px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:526.4px;padding-right:1px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:287.4px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:390.4px;padding-right:1px}
   /* Every button: the flex-centred label drew .67px above the node's, so the
      padding sets it down onto it. */
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{padding-top:1.33px}
   .demo-backdrop[data-screen="choice"] .demo-choice__when{
-    position:absolute;left:0;top:472.482px;width:333px;margin:0;font-size:14px;line-height:11.836px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:80.4px;top:346.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__when b{font-weight:600}
-  .demo-backdrop[data-screen="choice"] .demo-choice__or{
-    position:absolute;left:15px;top:493.4px;width:302px;margin:0;font-size:20px;line-height:24px;color:var(--navy);text-align:center;
+  /* Rating (2676:916), under the buttons: five stars 21.552 apart from x 84.5, each
+     drawn 20.497x19.494 .528px into its box; "4.9/5" and the quote centred in the
+     node's text boxes. */
+  .demo-backdrop[data-screen="choice"] .demo-cm__stars{position:absolute;left:84.504px;top:471.4px;display:flex}
+  .demo-backdrop[data-screen="choice"] .demo-cm__stars span{
+    width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
   }
+  .demo-backdrop[data-screen="choice"] .demo-cm__score{
+    position:absolute;left:193.918px;top:474.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-cm__quote{
+    position:absolute;left:72.4px;top:496.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+  }
+  /* Set up a third of a pixel, like the first line of the pitch (both engines drew it low). */
   .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:43.5px;top:617.1px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
   }
 
   /* ---- You call us, call in progress (2672:2064): card 331x404 ----
