@@ -5,6 +5,9 @@
      PageView         once the page is actually seen (never a preload or
                       prerender — same rule as site_landed, AFMBP-2010)
      ViewContent      the demo opened (content_category: button / ad_link)
+     Contact          a way into the demo was picked, "You call us" or "We call you"
+                      (content_category: inbound / outbound), once per page (AFMBP-2190):
+                      the demo start the campaigns optimize for
      Lead             the demo phone was verified; its event_id is shared with
                       the server's copy (Conversions API) so Meta counts it once
      DemoCallFinished (custom) the demo call ended (AFMBP-2019) — with Lead and
@@ -94,12 +97,18 @@
     if (p.indexOf('handyman') > -1) return 'handyman';
     return 'general_contracting';
   }
+  // A visitor who goes back and picks again is still one demo start.
+  var contactSent = false;
   function onTrack(e) {
     var d = e && e.detail; if (!d || !window.fbq) return;
     var data = d.data || {};
     var trade = tradeOf(data);
     if (d.event === 'demo_opened') {
       window.fbq('track', 'ViewContent', { content_name: 'demo', content_category: String(data.trigger || 'button'), trade: trade });
+    } else if (d.event === 'demo_mode_selected') {
+      if (contactSent) return;
+      contactSent = true;
+      window.fbq('track', 'Contact', { content_name: 'demo', content_category: String(data.mode || ''), trade: trade });
     } else if (d.event === 'demo_code_verified') {
       if (data.event_id) window.fbq('track', 'Lead', { content_name: 'demo', trade: trade }, { eventID: String(data.event_id) });
       else window.fbq('track', 'Lead', { content_name: 'demo', trade: trade });

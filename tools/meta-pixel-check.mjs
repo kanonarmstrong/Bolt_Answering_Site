@@ -1,6 +1,8 @@
 // AFMBP-2021 — prove the Meta pixel loads only when allowed, sends the right events once, and
-// hands the demo verify call the ids the server's Conversions API copy needs.
+// hands the demo verify call the ids the server's Conversions API copy needs. AFMBP-2190 adds
+// Contact: picking a way into the demo, once per page, whichever way.
 // Run: node tools/meta-pixel-check.mjs [siteRoot]
+//      NC=<name> mutates the SERVED meta-pixel.js only; each must FAIL (see MUTATE).
 // Headless Chrome over CDP. Nothing leaves the machine: Meta's fbevents.js is replaced by a
 // recording stub, the ingest and the demo API are stubbed in-page, and app.boltanswering.com
 // navigations are cancelled.
@@ -11,6 +13,20 @@ import { extname, join, normalize } from 'node:path';
 const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const TEST_ID = '123456789012345';
+const NC = process.env.NC || '';
+const cut = (s, from, to) => { if (!s.includes(from)) throw new Error(`NC anchor missing: ${from}`); return s.split(from).join(to); };
+const MUTATE = {
+  // Picking a way in sends Meta nothing (as before AFMBP-2190).
+  no_contact: (s) => cut(s, "      window.fbq('track', 'Contact', { content_name: 'demo', content_category: String(data.mode || ''), trade: trade });\n", ''),
+  // Every pick counts: going back and picking again sends a second Contact.
+  contact_twice: (s) => cut(s, '      if (contactSent) return;\n', ''),
+  // Contact goes without saying which way in.
+  contact_no_mode: (s) => cut(s, "content_category: String(data.mode || ''), ", ''),
+  // Contact goes out as a custom event, which Ads Manager cannot optimize for directly.
+  contact_custom: (s) => cut(s, "window.fbq('track', 'Contact',", "window.fbq('trackCustom', 'Contact',"),
+};
+if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
+if (NC) { const src = readFileSync(join(ROOT, 'meta-pixel.js'), 'utf8'); if (MUTATE[NC](src) === src) throw new Error(`NC ${NC} leaves meta-pixel.js unchanged`); }
 let pixelId = TEST_ID; // what the served meta-pixel.js carries; scenarios change it
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.json': 'application/json', '.woff2': 'font/woff2' };
 const srv = createServer((req, res) => {
@@ -24,7 +40,7 @@ const srv = createServer((req, res) => {
       // since AFMBP-2019), so a run can never send to the live pixel even if the stub failed.
       const ID_LINE = /var PIXEL_ID = '[0-9]*';/;
       if ((src.match(new RegExp(ID_LINE.source, 'g')) || []).length !== 1) throw new Error('meta-pixel.js must carry exactly one PIXEL_ID line');
-      body = Buffer.from(src.replace(ID_LINE, `var PIXEL_ID = '${pixelId}';`));
+      body = Buffer.from((NC ? MUTATE[NC] : (x) => x)(src.replace(ID_LINE, `var PIXEL_ID = '${pixelId}';`)));
     }
     res.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream' }); res.end(body);
   } catch { res.writeHead(404); res.end(); }
@@ -196,5 +212,41 @@ console.log('[10] signup link tapped');
 const [r10] = await scenario({ name: 'trial click', steps: [{ path: '/hvac.html?utm_source=fb', act: "setTimeout(() => { const a = [...document.querySelectorAll('a')].find(x => /app\\.boltanswering\\.com\\/signup/.test(x.href) && !x.closest('.demo-backdrop')); a && a.click(); }, 1500)", until: "(window.__fbq || []).some(c => c[1] === 'StartTrialClick')" }] });
 ok(tracks(r10, 'StartTrialClick').length === 1, `one StartTrialClick (${JSON.stringify(tracks(r10, 'StartTrialClick')[0]?.[2] ?? null)})`);
 
-console.log(fails ? `\n${fails} FAILED` : '\nALL PASS');
+// AFMBP-2190: picking a way in is the demo start Meta optimizes for (Contact, a standard event).
+// On a computer "Call now" never dials (no dialer to hand it to); the code request fails here, so
+// the card shows its failure, which is after the pick that counts.
+const PICK = (sel) => `(async () => { const w = (t) => new Promise((r) => setTimeout(r, t));
+  for (let i = 0; i < 50 && !document.querySelector('${sel}'); i++) await w(100);
+  document.querySelector('${sel}').click(); return true; })()`;
+const contact = (r) => r.fbq.filter((c) => c[1] === 'Contact');
+console.log('[11] "You call us" (Call now on a computer): one Contact, inbound, with the trade');
+const [r11] = await scenario({ name: 'contact inbound', steps: [{ path: '/handyman.html?talk=1&utm_source=facebook', act: PICK('.demo-choice__call'), until: "(window.__fbq || []).some(c => c[1] === 'Contact')" }] });
+const c11 = contact(r11);
+console.log(`    ${calls(r11)}`);
+ok(c11.length === 1 && c11[0][0] === 'track', `one standard Contact (${JSON.stringify(c11.map((c) => c.slice(0, 2)))})`);
+ok(JSON.stringify(c11[0]?.[2]) === JSON.stringify({ content_name: 'demo', content_category: 'inbound', trade: 'handyman' }), `Contact says the demo, the way in and the trade (${JSON.stringify(c11[0]?.[2])})`);
+ok(r11.sent.filter((e) => e.type === 'demo_mode_selected' && e.data.mode === 'inbound').length === 1, 'the first-party demo_mode_selected still goes to the ingest');
+
+console.log('[12] "We call you", then back out and pick again: still one Contact');
+const AGAIN = `(async () => { const w = (t) => new Promise((r) => setTimeout(r, t));
+  for (let i = 0; i < 50 && !document.querySelector('.demo-choice__get'); i++) await w(100);
+  document.querySelector('.demo-choice__get').click(); await w(400);
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await w(400);
+  var o = [].slice.call(document.querySelectorAll('[data-demo-open], a.btn--blue, button.btn--blue')).filter(function (x) { return x.getBoundingClientRect().width > 0; })[0];
+  o.click();
+  for (let i = 0; i < 50 && !document.querySelector('.demo-backdrop.open .demo-choice__get'); i++) await w(100);
+  document.querySelector('.demo-choice__get').click(); await w(400);
+  window.__picks = (window.__sent || []).filter(function (e) { return e.type === 'demo_mode_selected'; }).length;
+  return true; })()`;
+const [r12] = await scenario({ name: 'contact once', steps: [{ path: '/plumbing.html?talk=1', act: AGAIN, until: 'window.__picks >= 2', probe: 'window.__picks' }] });
+const c12 = contact(r12);
+console.log(`    picks sent to the ingest: ${r12.probe} | ${calls(r12)}`);
+ok(r12.probe === 2, `two picks reached the ingest (${r12.probe})`);
+ok(c12.length === 1 && c12[0][2]?.content_category === 'outbound' && c12[0][2]?.trade === 'plumbing', `one Contact for the visit, the first pick (${JSON.stringify(c12.map((c) => c[2]))})`);
+
+console.log('[13] a pick under Global Privacy Control: nothing to Meta');
+const [r13] = await scenario({ name: 'contact gpc', pre: GPC, steps: [{ path: '/handyman.html?talk=1', act: PICK('.demo-choice__get'), until: "(window.__sent || []).some(e => e.type === 'demo_mode_selected')" }] });
+ok(r13.loads === 0 && r13.fbq.length === 0 && r13.sent.some((e) => e.type === 'demo_mode_selected'), 'no pixel and no Contact; the first-party pick still counts');
+
+console.log(fails ? `\n${fails} FAILED${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
 ws.close(); chrome.kill('SIGKILL'); srv.close(); await sleep(300); rmSync(PROFILE, { recursive: true, force: true }); process.exit(fails ? 1 : 0);
