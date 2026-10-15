@@ -186,7 +186,7 @@
   // "What to expect" icons, OS lockups, chat icons, the in-card logo) when the
   // modal opens, so every later screen paints complete instead of popping the
   // art in on a slow connection (AFMBP-2150).
-  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-ul-pocket.svg', 'demo-m-ul-code.svg', 'demo-m-ul-rightnow.svg',
+  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-ul-money.svg', 'demo-m-close.svg', 'demo-m-ul-code.svg', 'demo-m-ul-rightnow.svg',
     'demo-m-ul-never.svg', 'demo-m-star-lg.svg', 'demo-m-dot.svg', 'demo-m-ico-chat.svg', 'demo-m-ico-ask.svg',
     'demo-m-ico-route.svg', 'demo-m-chat-assistant.svg', 'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg',
     'demo-m-lockup-android.svg', 'logo.png'];
@@ -424,27 +424,29 @@
         ])
       ]),
       h('p', { class: 'demo-choice__sub demo-db', text: 'Call us or we’ll call you' }),
-      // Phone (2670:952): the logo and "Available now", the pitch, and the rating
-      // with its quote. The logo, stars and dot are drawn and hidden from screen
-      // readers; the words say it.
+      // Phone (2670:952): the logo and "Available now", then the pitch. The logo
+      // and dot are drawn and hidden from screen readers; the words say it.
       h('div', { class: 'demo-cm demo-mb' }, [
         h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
         h('p', { class: 'demo-cm__live', text: 'Available now' }),
         h('h2', { class: 'demo-cm__h' }, [
-          'Answering one call can put hundreds to thousands of ',
-          h('span', { class: 'demo-mk demo-cm__mk', text: 'Dollars in your pocket' })
+          'One phone call can turn into ',
+          h('span', { class: 'demo-mk demo-cm__mk', text: 'real money' })
         ]),
-        h('p', { class: 'demo-cm__sub', text: 'Talk with a real assistant to see how Bolt helps book customers while you keep on working' }),
-        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
-        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“Smart & very professional”' })
+        h('p', { class: 'demo-cm__sub', text: 'Bolt books customers while you keep on working, so you never miss an opportunity to make more money. Try it out:' })
       ]),
       h('div', { class: 'demo-choice__btns' }, [
         call,
-        // Phone only: the wait under "You call us", and the OR between the two.
+        // Phone only: the wait under "You call us".
         h('p', { class: 'demo-choice__when demo-mb' }, ['Avg. wait time: ', h('b', { text: '3 seconds' })]),
-        h('p', { class: 'demo-choice__or demo-mk demo-mb', text: 'OR' }),
         get
+      ]),
+      // Phone only: the rating and its quote, under the two ways in. The stars are
+      // drawn and hidden from screen readers; "4.9/5" says it.
+      h('div', { class: 'demo-cr demo-mb' }, [
+        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
+        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
+        h('p', { class: 'demo-cm__quote', text: '“Easy to use & professional”' })
       ]),
       helpLine()
     ], 'choice');
