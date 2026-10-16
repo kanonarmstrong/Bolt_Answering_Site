@@ -1,4 +1,4 @@
-// AFMBP-2250 / AFMBP-2265 / AFMBP-2267 — the home page's Reviews section: the owner's review-card carousel over
+// AFMBP-2250 / AFMBP-2265 / AFMBP-2267 / AFMBP-2269 — the home page's Reviews section: the owner's review-card carousel over
 // the background (3 rows, 33.3s loop: row 2 stops 5s then moves 3.33s, four times; rows 1 and 3
 // half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
 // screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
@@ -8,7 +8,9 @@
 //     screen Gus's card (the first stop) appears within a second;
 //   - layout: the 2000x404 band and the card are centered in the section (to 1px), the page
 //     doesn't scroll sideways, each card stays 24px (desktop) or the page padding (phones)
-//     inside the page even at the top of its bounce;
+//     inside the page, and inside the section, even at the top of its bounce; the section is
+//     404 + 2 x clamp(60px, 7vw, 90px) tall on phones and 70% of that on desktop (409 at 1440),
+//     where the card's peak also stays 40px+ clear of the How It Works phone poking up into it;
 //   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
 //     the band) and run at 406.8 and 474.6 px/s; row 2 has 434x93 cards on the design's line,
 //     moves at ~315.6 px/s and stands still through each stop;
@@ -19,7 +21,7 @@
 //   - copy: names, trade lines, logos' alt and each quote word for word;
 //   - reduced motion: the rows don't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
-//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap
+//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -51,6 +53,8 @@ const MUTATE = {
   nobounce: (f, s) => css(f, s, 'opacity: 1; transform: scale(1.2);', 'opacity: 1; transform: scale(1.15);'),
   // Rows 1 and 3 back on the design's lines, 50.25px from row 2 (before AFMBP-2267).
   rowgap: (f, s) => css(f, s, '--row-gap: 10px;', '--row-gap: 50.25px;'),
+  // The desktop section keeps its full height (before AFMBP-2269).
+  tall: (f, s) => css(f, s, '@media (min-width: 1024px) {\n  .reviews { padding: 0; }', '@media (min-width: 99999px) {\n  .reviews { padding: 0; }'),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -176,6 +180,9 @@ try {
     ok(near(L.band.cy, L.sec.cy, 1) && near(L.inner.cy, L.sec.cy, 1), `${w}: band center ${L.band.cy.toFixed(1)} / stage ${L.inner.cy.toFixed(1)} vs section ${L.sec.cy.toFixed(1)}`);
     ok(near(L.band.cx, w / 2, 1) && near(L.band.w, 2000, 0.5) && near(L.band.h, 404, 0.5), `${w}: band ${L.band.w}x${L.band.h} centered at ${L.band.cx}`);
     ok(L.sw === L.vw, `${w}: page is ${L.sw}px wide in a ${L.vw}px window (sideways scroll)`);
+    // Section height: the frame plus clamp(60px, 7vw, 90px) top and bottom; 30% less on desktop.
+    const fullH = 404 + 2 * Math.min(90, Math.max(60, w * 0.07)), wantH = desktop ? 0.7 * fullH : fullH;
+    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (${desktop ? '70% of ' : ''}${fullH.toFixed(1)})`);
     // Rows: card sizes and center lines.
     ok(near(L.card1.w, 217, 0.5) && near(L.card1.h, 46.5, 0.5) && near(L.card3.w, 217, 0.5) && near(L.card3.h, 46.5, 0.5), `${w}: rows 1/3 cards are ${L.card1.w}x${L.card1.h} / ${L.card3.w}x${L.card3.h}, want 217x46.5`);
     ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5), `${w}: row 2 cards are ${L.card2.w}x${L.card2.h}, want 434x93`);
@@ -195,6 +202,11 @@ try {
       for (const c of [c0, cp, cr, ce]) ok(near(c.r.cx, w / 2, 1) && near(c.r.cy, L.sec.cy, 1), `${w}: quote ${k + 1} centered at ${c.r.cx.toFixed(1)},${c.r.cy.toFixed(1)}; the screen's middle is ${w / 2}, the section's ${L.sec.cy.toFixed(1)}`);
       const m = desktop ? 24 : pad;
       ok(cp.r.x >= m - 0.6 && cp.r.x + cp.r.w <= w - m + 0.6, `${w}: quote ${k + 1} at its peak spans ${cp.r.x.toFixed(1)}-${(cp.r.x + cp.r.w).toFixed(1)}, want inside ${m}-${w - m}`);
+      const top = cp.r.y - L.sec.y, bottom = cp.r.y + cp.r.h - L.sec.y;
+      ok(top >= -0.6 && bottom <= L.sec.h + 0.6, `${w}: quote ${k + 1} at its peak spans y ${top.toFixed(1)}-${bottom.toFixed(1)} of a ${L.sec.h.toFixed(1)}px section (the section crops it)`);
+      // The How It Works 3D phone pokes up to ~40px into the bottom of the section on desktop (its
+      // layout box reaches much higher, but the drawn phone doesn't); keep the card clear of it.
+      if (desktop) ok(L.sec.h - bottom >= 40, `${w}: quote ${k + 1}'s peak ends ${(L.sec.h - bottom).toFixed(1)}px above the section's bottom, want 40+ (room for the How It Works phone)`);
     }
     console.log(`  section ${L.sec.w}x${L.sec.h.toFixed(1)} · band 2000x404 centered · card ${(base * u).toFixed(1)}x${(baseH * u).toFixed(1)}, at rest ${(base * u * 1.15).toFixed(1)}`);
     // Speeds: rows 1 and 3 while row 2 stands still; row 2 mid-move.
