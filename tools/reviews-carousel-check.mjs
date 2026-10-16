@@ -1,4 +1,4 @@
-// AFMBP-2250 / AFMBP-2265 — the home page's Reviews section: the owner's review-card carousel over
+// AFMBP-2250 / AFMBP-2265 / AFMBP-2267 — the home page's Reviews section: the owner's review-card carousel over
 // the background (3 rows, 33.3s loop: row 2 stops 5s then moves 3.33s, four times; rows 1 and 3
 // half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
 // screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
@@ -9,8 +9,9 @@
 //   - layout: the 2000x404 band and the card are centered in the section (to 1px), the page
 //     doesn't scroll sideways, each card stays 24px (desktop) or the page padding (phones)
 //     inside the page even at the top of its bounce;
-//   - rows: 1 and 3 have 217x46.5 cards on their original center lines and run at 406.8 and
-//     474.6 px/s; row 2 has 434x93 cards, moves at ~315.6 px/s and stands still through each stop;
+//   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
+//     the band) and run at 406.8 and 474.6 px/s; row 2 has 434x93 cards on the design's line,
+//     moves at ~315.6 px/s and stands still through each stop;
 //   - timing, every 50ms over the loop: at most one card shows, and only while row 2 is stopped;
 //     card k is fully shown for its whole hold;
 //   - the bounce: 92% at the start, 120% at the top, 115% at rest (of the card's own size), and
@@ -18,7 +19,7 @@
 //   - copy: names, trade lines, logos' alt and each quote word for word;
 //   - reduced motion: the rows don't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
-//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce
+//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -48,6 +49,8 @@ const MUTATE = {
   fullsize: (f, s) => css(f, s, '.rc-track--1 .rc-card, .rc-track--3 .rc-card { zoom: 0.5; }', ''),
   // No bounce: the card goes straight to its resting size.
   nobounce: (f, s) => css(f, s, 'opacity: 1; transform: scale(1.2);', 'opacity: 1; transform: scale(1.15);'),
+  // Rows 1 and 3 back on the design's lines, 50.25px from row 2 (before AFMBP-2267).
+  rowgap: (f, s) => css(f, s, '--row-gap: 10px;', '--row-gap: 50.25px;'),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -176,7 +179,9 @@ try {
     // Rows: card sizes and center lines.
     ok(near(L.card1.w, 217, 0.5) && near(L.card1.h, 46.5, 0.5) && near(L.card3.w, 217, 0.5) && near(L.card3.h, 46.5, 0.5), `${w}: rows 1/3 cards are ${L.card1.w}x${L.card1.h} / ${L.card3.w}x${L.card3.h}, want 217x46.5`);
     ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5), `${w}: row 2 cards are ${L.card2.w}x${L.card2.h}, want 434x93`);
-    ok(near(L.card1.cy - L.band.y, 82.5, 0.5) && near(L.card2.cy - L.band.y, 202.5, 0.5) && near(L.card3.cy - L.band.y, 322.5, 0.5), `${w}: row centers at ${(L.card1.cy - L.band.y).toFixed(1)} / ${(L.card2.cy - L.band.y).toFixed(1)} / ${(L.card3.cy - L.band.y).toFixed(1)}, want 82.5 / 202.5 / 322.5`);
+    ok(near(L.card1.cy - L.band.y, 122.75, 0.5) && near(L.card2.cy - L.band.y, 202.5, 0.5) && near(L.card3.cy - L.band.y, 282.25, 0.5), `${w}: row centers at ${(L.card1.cy - L.band.y).toFixed(2)} / ${(L.card2.cy - L.band.y).toFixed(2)} / ${(L.card3.cy - L.band.y).toFixed(2)}, want 122.75 / 202.5 / 282.25`);
+    const gap12 = L.card2.y - (L.card1.y + L.card1.h), gap23 = L.card3.y - (L.card2.y + L.card2.h);
+    ok(near(gap12, 10, 0.5) && near(gap23, 10, 0.5), `${w}: rows 1/3 sit ${gap12.toFixed(2)} / ${gap23.toFixed(2)}px from row 2, want 10`);
     // Each card: the Figma size, centered, inside the page at the top of its bounce; the bounce.
     const base = desktop ? 919 : 491, baseH = desktop ? 196 : 359;
     const room = desktop ? w - 48 : w - 2 * pad;
