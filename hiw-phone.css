@@ -66,9 +66,11 @@
     overflow: visible;
   }
   /* Desktop title = "More jobs." in Permanent Marker (via the shared .marker
-     class) + "Less hassle." regular, one line, both white (Figma 2251-108).
-     The .marker class supplies the font, uppercase + letter-spacing. */
+     class) + "Less hassle." regular, both white (Figma 2251-108), on two lines
+     like mobile (owner, AFMBP-2266). The .marker class supplies the font,
+     uppercase + letter-spacing. */
   .band__title { font-size: clamp(24px, 2.4vw, 34px); }
+  .band__title .band__title__hl { display: block; }
 }
 
 /* Mobile: phone on TOP, then copy, then CTA (Figma 2613-2612); contained. */
