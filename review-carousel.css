@@ -185,8 +185,7 @@
 
 /* ===== Below 1024px the 919px card doesn't fit: the Figma mobile cards (Mobile Quote 1-4:
    2709:2881, 2709:2817, 2709:2904, 2709:2932; 491x359), scaled evenly to fit the page (--u = one
-   design pixel), with the same centered grow. Mobile Quote 1 carries B. Brooks' logo in Figma;
-   Gus's own CNJ logo sits where the other wide logos do (centered on 334,130 like Quote 4's). ===== */
+   design pixel), with the same centered grow. ===== */
 @media (max-width: 1023px) {
   .rq {
     --u: min(1px, calc((100cqw - 2 * var(--pad)) / 491));
@@ -208,7 +207,7 @@
     left: calc(230 * var(--u)); top: calc(51 * var(--u)); width: auto; white-space: nowrap;
     font-size: calc(14 * var(--u)); line-height: calc(21 * var(--u));
   }
-  .rq--1 .rq__logo { left: calc(222 * var(--u)); top: calc(117 * var(--u)); width: calc(225 * var(--u)); height: calc(27 * var(--u)); }
+  .rq--1 .rq__logo { left: calc(220 * var(--u)); top: calc(115 * var(--u)); width: calc(251 * var(--u)); height: calc(30 * var(--u)); }
   .rq--2 .rq__logo { left: calc(300 * var(--u)); top: calc(91 * var(--u));  width: calc(117 * var(--u)); height: calc(91 * var(--u)); }
   .rq--3 .rq__logo { left: calc(236 * var(--u)); top: calc(113 * var(--u)); width: calc(196 * var(--u)); height: calc(37 * var(--u)); }
   .rq--4 .rq__logo { left: calc(222 * var(--u)); top: calc(117 * var(--u)); width: calc(225 * var(--u)); height: calc(25 * var(--u)); }
