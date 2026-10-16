@@ -46,7 +46,8 @@
   <link rel="stylesheet" href="demo.css?v=25" />
   <link rel="stylesheet" href="hiw-phone.css?v=10" />
   <link rel="stylesheet" href="hero-phone.css?v=4" />
-  <link rel="stylesheet" href="review-carousel.css?v=1" />
+  <link rel="stylesheet" href="review-carousel.css?v=2" />
+  <noscript><style>.reviews .rc-track, .reviews .rq { animation-play-state: running !important; }</style></noscript>
   <!-- AFMBP-2113: fetch the 3D phone's code while the hero picture loads, at low
        priority so the picture (the page's largest paint) still goes first. -->
   <link rel="modulepreload" href="hero-phone.js?v=5" fetchpriority="low" />
@@ -141,9 +142,10 @@
   </section>
 
   <!-- ===================== REVIEWS ===================== -->
-  <!-- AFMBP-2250: the owner's review-card carousel (3 rows, 60s loop; the middle row stops 5s
-       every 10s) plays over the background, and in each stop one Figma quote card (Quote 1-4)
-       grows out of the stopped middle-row card and shrinks back into it. review-carousel.css. -->
+  <!-- AFMBP-2250 / 2265: the owner's review-card carousel (3 rows, 33.3s loop; the middle row
+       stops 5s, then moves 3.3s) plays over the background, starting when the section is on
+       screen, and in each stop one Figma quote card (Quote 1-4) grows in at the center with a
+       small bounce and shrinks away. review-carousel.css + review-carousel.js. -->
   <section class="reviews" id="reviews" data-reveal>
     <div class="reviews__overlay" aria-hidden="true"></div>
     <div class="reviews__inner">
@@ -151,6 +153,12 @@
         <svg class="rc-sprite" width="0" height="0"><symbol id="rc-star" viewBox="0 0 24 24"><path d="M12 1.5l3.1 6.9 7.4.8-5.5 5 1.6 7.4L12 17.8 5.4 21.6 7 14.2 1.5 9.2l7.4-.8z"/></symbol></svg>
         <div class="rc-row rc-row--1">
           <ul class="rc-track rc-track--1">
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
@@ -195,6 +203,13 @@
         </div>
         <div class="rc-row rc-row--3">
           <ul class="rc-track rc-track--3">
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
             <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
@@ -420,6 +435,7 @@
   <script src="script.js?v=27"></script>
   <script src="demo-format.js?v=3"></script>  <script src="demo.js?v=39"></script>
   <script src="reveal.js?v=7"></script>
+  <script src="review-carousel.js?v=1"></script>
   <script src="subscribe.js?v=1"></script>
   <script type="module" src="hero-phone.js?v=5"></script>
   <script type="module" src="hiw-phone.js?v=11"></script>

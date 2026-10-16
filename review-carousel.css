@@ -1,15 +1,19 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250
+   REVIEWS — AFMBP-2250, AFMBP-2265
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
-   Quote 1-4) grows in at the center of the screen, holds, and shrinks away.
+   Quote 1-4) grows in at the center of the screen with a small bounce, holds, and shrinks away.
+   Nothing moves until the section is on screen (review-carousel.js adds .reviews--on), so the
+   first stop, Gus's card, is what a visitor arriving at the section sees.
    ============================================================ */
 
-/* ===== Review carousel: 3 staggered rows, right to left, 60s seamless loop =====
-   Row 1: 136 px/s linear  | Row 2: 105 px/s, stops 5s every 10s (eased) | Row 3: 158 px/s linear
-   Cards are 434x93 with an 18px gap (452px pitch). All loop distances are whole numbers of cards,
-   so the animation restarts invisibly. If you change card width/gap, update the px values below. */
+/* ===== Review carousel: 3 staggered rows, right to left, 33.3s seamless loop =====
+   3x the owner's first speeds (2x, then 1.5x): Row 1 406.8 px/s | Row 3 474.6 px/s | Row 2
+   315.6 px/s while it moves (3.33s, eased start/stop), then stops 5s, x4.
+   Rows 1 and 3 are half size (217x46.5 cards, 9px gap, 226px pitch); row 2 is 434x93 with an
+   18px gap (452px pitch). All loop distances are whole numbers of cards, so the animation
+   restarts invisibly. If you change card width/gap, update the px values below. */
 
 .rc {
   --card-w: 434px;
@@ -37,38 +41,40 @@
 .rc-row--2 { top: 156px; }
 .rc-row--3 { top: 276px; }
 
-/* tracks: negative left sets the horizontal stagger (first card sits at x=17 / 203 / 8) */
+/* tracks: negative left sets the horizontal stagger (first full card sits at x=17 / 203 / 8) */
 .rc-track {
   position: absolute; top: 0; margin: 0; padding: 0; list-style: none;
   display: flex; gap: var(--gap);
   will-change: transform;
 }
-.rc-track--1 { left: -435px; animation: rc-row1 20s linear infinite; }
-.rc-track--2 { left: -249px; animation: rc-row2 60s linear infinite; }
-.rc-track--3 { left: -444px; animation: rc-row3 20s linear infinite; }
+.rc-track--1 { left: -435px; animation: rc-row1 3.33333s linear infinite; }
+.rc-track--2 { left: -249px; animation: rc-row2 33.33333s linear infinite; }
+.rc-track--3 { left: -444px; animation: rc-row3 3.33333s linear infinite; }
 
-/* row 1 and 3: one tile (6 or 7 cards) per 20s, repeated 3x per minute */
-@keyframes rc-row1 { from { transform: translateX(0); } to { transform: translateX(-2712px); } }
-@keyframes rc-row3 { from { transform: translateX(0); } to { transform: translateX(-3164px); } }
+/* rows 1 and 3: half-size cards (owner, AFMBP-2265), centered on the rows' original lines
+   (y 82.5 / 322.5 in the frame); zoom halves each card and everything in it. */
+.rc-track--1, .rc-track--3 { top: 23.25px; gap: 9px; }
+.rc-track--1 .rc-card, .rc-track--3 .rc-card { zoom: 0.5; }
 
-/* row 2 (slowest): move 10s, stop 5s, x4 = 60s. ~0.33s eased start/stop inside each move. */
+/* rows 1 and 3: one tile (6 or 7 half-size cards) per 3.33s */
+@keyframes rc-row1 { from { transform: translateX(0); } to { transform: translateX(-1356px); } }
+@keyframes rc-row3 { from { transform: translateX(0); } to { transform: translateX(-1582px); } }
+
+/* row 2: stop 5s, then move 3.33s (0.11s eased start/stop), x4 = 33.33s. It starts on a stop,
+   so the first quote shows the moment the section starts. */
 @keyframes rc-row2 {
-  0.0% { transform: translateX(-0.000px); animation-timing-function: var(--ease-in); }
-  0.5524% { transform: translateX(-17.431px); animation-timing-function: linear; }
-  16.1143% { transform: translateX(-999.569px); animation-timing-function: var(--ease-out); }
-  16.6667% { transform: translateX(-1017.000px); animation-timing-function: linear; }
-  25.0% { transform: translateX(-1017.000px); animation-timing-function: var(--ease-in); }
-  25.5524% { transform: translateX(-1034.431px); animation-timing-function: linear; }
-  41.1143% { transform: translateX(-2016.569px); animation-timing-function: var(--ease-out); }
-  41.6667% { transform: translateX(-2034.000px); animation-timing-function: linear; }
-  50.0% { transform: translateX(-2034.000px); animation-timing-function: var(--ease-in); }
-  50.5524% { transform: translateX(-2051.431px); animation-timing-function: linear; }
-  66.1143% { transform: translateX(-3033.569px); animation-timing-function: var(--ease-out); }
-  66.6667% { transform: translateX(-3051.000px); animation-timing-function: linear; }
-  75.0% { transform: translateX(-3051.000px); animation-timing-function: var(--ease-in); }
-  75.5524% { transform: translateX(-3068.431px); animation-timing-function: linear; }
-  91.1143% { transform: translateX(-4050.569px); animation-timing-function: var(--ease-out); }
-  91.6667% { transform: translateX(-4068.000px); animation-timing-function: linear; }
+  0%, 15% { transform: translateX(-0.000px); animation-timing-function: var(--ease-in); }
+  15.3314% { transform: translateX(-17.431px); animation-timing-function: linear; }
+  24.6686% { transform: translateX(-999.569px); animation-timing-function: var(--ease-out); }
+  25%, 40% { transform: translateX(-1017.000px); animation-timing-function: var(--ease-in); }
+  40.3314% { transform: translateX(-1034.431px); animation-timing-function: linear; }
+  49.6686% { transform: translateX(-2016.569px); animation-timing-function: var(--ease-out); }
+  50%, 65% { transform: translateX(-2034.000px); animation-timing-function: var(--ease-in); }
+  65.3314% { transform: translateX(-2051.431px); animation-timing-function: linear; }
+  74.6686% { transform: translateX(-3033.569px); animation-timing-function: var(--ease-out); }
+  75%, 90% { transform: translateX(-3051.000px); animation-timing-function: var(--ease-in); }
+  90.3314% { transform: translateX(-3068.431px); animation-timing-function: linear; }
+  99.6686% { transform: translateX(-4050.569px); animation-timing-function: var(--ease-out); }
   100% { transform: translateX(-4068px); }
 }
 
@@ -93,14 +99,21 @@
 .rc-star { width: 13.4px; height: 13.4px; margin-right: 1.2px; flex: none; fill: #fbbd12; }
 .rc-star--sm { width: 10.4px; height: 10.4px; }   /* the "half" star on 4.5 ratings */
 
+/* Until review-carousel.js sees the section, everything waits at its first frame; without
+   JavaScript a <noscript> rule in index.html lets it run from page load instead. */
+.reviews:not(.reviews--on) .rc-track,
+.reviews:not(.reviews--on) .rq { animation-play-state: paused; }
+
 /* ===== Quote cards (Figma Quote 1-4: 919x196, white, 12px radius) =====
    One card per stop of the middle row, centered on the screen:
 
-     stop:  10-15s  25-30s  40-45s  55-60s     (row 2, above)
-     card:  Quote 1 Quote 2 Quote 3 Quote 4    (animation-delay = the stop's start)
+     stop:  0-5s     8.3-13.3s  16.7-21.7s  25-30s    (row 2, above; from the section's start)
+     card:  Quote 1  Quote 2    Quote 3     Quote 4   (animation-delay = the stop's start)
 
-   Within its stop a card grows from 92% for 0.6s (from 0.15s, eased out), holds 3.5s, and
-   shrinks back to 92% for 0.6s (eased in) as it fades, gone 0.15s before the row moves again. */
+   Within its stop a card fades in as it grows from 92% to 120% (0.15s-0.6s, eased out), settles
+   back to 115% (0.6s-0.85s) for a small bounce (owner: "20% larger", then "5% smaller"), holds
+   until 4.25s, and shrinks back to 92% as it fades (eased in), gone 0.15s before the row moves.
+   --u is one Figma pixel, smaller than 1px only where the 120% peak would leave the page. */
 .rq-list {
   position: relative;
   display: grid;
@@ -109,112 +122,107 @@
   list-style: none;
 }
 .rq {
+  --u: min(1px, calc((100cqw - 48px) / 1102.8));   /* the 919px card at 120%, 24px inside the page */
   --rq-s0: 0.92;
   grid-area: 1 / 1;
   position: relative;
-  width: 919px;
-  height: 196px;
+  width: calc(919 * var(--u));
+  height: calc(196 * var(--u));
   background: #fff;
-  border-radius: 12px;
+  border-radius: calc(12 * var(--u));
   box-shadow: var(--shadow-quote);   /* 0 5px 7.5px rgba(0,0,0,.19), as in Figma */
   opacity: 0;
   transform: scale(var(--rq-s0));
-  animation: rq-pop 60s linear infinite backwards;
+  animation: rq-pop 33.33333s linear infinite backwards;
   will-change: transform, opacity;
 }
-.rq--1 { animation-delay: 10s; }
-.rq--2 { animation-delay: 25s; }
-.rq--3 { animation-delay: 40s; }
-.rq--4 { animation-delay: 55s; }
+.rq--1 { animation-delay: 0s; }
+.rq--2 { animation-delay: 8.33333s; }
+.rq--3 { animation-delay: 16.66667s; }
+.rq--4 { animation-delay: 25s; }
 
 @keyframes rq-pop {
-  0%, 0.25% {                          /* 0s-0.15s: hidden */
+  0%, 0.45% {                          /* 0s-0.15s: hidden */
     opacity: 0; transform: scale(var(--rq-s0));
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);      /* grows: eased out */
   }
-  1.25%, 7.0833% {                     /* 0.75s-4.25s: full size */
-    opacity: 1; transform: scale(1);
+  1.8% {                               /* 0.6s: the top of the bounce */
+    opacity: 1; transform: scale(1.2);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);      /* settles: eased in and out */
+  }
+  2.55%, 12.75% {                      /* 0.85s-4.25s: resting size */
+    opacity: 1; transform: scale(1.15);
     animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);      /* shrinks: eased in */
   }
-  8.0833%, 100% {                      /* 4.85s on: hidden */
+  14.55%, 100% {                       /* 4.85s on: hidden */
     opacity: 0; transform: scale(var(--rq-s0));
   }
 }
 
-/* Figma geometry, card-relative */
+/* Figma geometry, card-relative, in Figma pixels (--u) */
 .rq__photo { position: absolute; display: block; object-fit: cover; }
-.rq--1 .rq__photo { left: 37px; top: 10px; width: 161px; height: 161px; border-radius: 41px; }
-.rq--2 .rq__photo { left: 17px; top: 16px; width: 189px; height: 160px; border-radius: 47px; }
-.rq--3 .rq__photo { left: 22px; top: 7px;  width: 161px; height: 167px; border-radius: 26px; }
-.rq--4 .rq__photo { left: 31px; top: 18px; width: 161px; height: 158px; border-radius: 34px; }
+.rq--1 .rq__photo { left: calc(37 * var(--u)); top: calc(10 * var(--u)); width: calc(161 * var(--u)); height: calc(161 * var(--u)); border-radius: calc(41 * var(--u)); }
+.rq--2 .rq__photo { left: calc(17 * var(--u)); top: calc(16 * var(--u)); width: calc(189 * var(--u)); height: calc(160 * var(--u)); border-radius: calc(47 * var(--u)); }
+.rq--3 .rq__photo { left: calc(22 * var(--u)); top: calc(7 * var(--u));  width: calc(161 * var(--u)); height: calc(167 * var(--u)); border-radius: calc(26 * var(--u)); }
+.rq--4 .rq__photo { left: calc(31 * var(--u)); top: calc(18 * var(--u)); width: calc(161 * var(--u)); height: calc(158 * var(--u)); border-radius: calc(34 * var(--u)); }
 
 .rq__who { position: absolute; inset: 0; }
 /* Name and stars share a row: the stars sit at Figma's x (354) unless the name is wider than
    Figma's Roboto renders it (Macs and iPhones fall back to Inter), then 8px after it. The name
    box starts at Figma's y (18; Quote 2: 15), middle-aligned with the stars (y 22). */
-.rq { --rq-name-top: 18px; }
-.rq--2 { --rq-name-top: 15px; }
-.rq__head { position: absolute; left: 260px; top: var(--rq-name-top); margin: 0; display: flex; align-items: flex-start; }
+.rq { --rq-name-top: 18; }
+.rq--2 { --rq-name-top: 15; }
+.rq__head { position: absolute; left: calc(260 * var(--u)); top: calc(var(--rq-name-top) * var(--u)); margin: 0; display: flex; align-items: flex-start; }
 .rq__name {
-  min-width: 86px; height: 34px; margin-right: 8px;
+  min-width: calc(86 * var(--u)); height: calc(34 * var(--u)); margin-right: calc(8 * var(--u));
   display: flex; align-items: center;
-  font-family: 'Roboto', var(--font); font-size: 26px; font-weight: 400; line-height: 20.8px;
+  font-family: 'Roboto', var(--font); font-size: calc(26 * var(--u)); font-weight: 400; line-height: calc(20.8 * var(--u));
   color: var(--navy); white-space: nowrap;
 }
-.rq__stars { display: block; flex: none; margin-top: calc(22px - var(--rq-name-top)); width: 105px; height: 21px; }
+.rq__stars { display: block; flex: none; margin-top: calc((22 - var(--rq-name-top)) * var(--u)); width: calc(105 * var(--u)); height: calc(21 * var(--u)); }
 .rq__meta {
-  position: absolute; left: 259.78px; top: 51px; width: 374px; margin: 0;
-  font-family: var(--poppins); font-size: 14px; line-height: 21px; color: var(--gray);
+  position: absolute; left: calc(259.78 * var(--u)); top: calc(51 * var(--u)); width: calc(374 * var(--u)); margin: 0;
+  font-family: var(--poppins); font-size: calc(14 * var(--u)); line-height: calc(21 * var(--u)); color: var(--gray);
 }
 .rq__logo { position: absolute; object-fit: contain; }
-.rq--1 .rq__logo { left: 618px; top: 20px; width: 251px; height: 30px; }
-.rq--2 .rq__logo { left: 798px; top: 20px; width: 71px;  height: 55px; }
-.rq--3 .rq__logo { left: 694px; top: 20px; width: 175px; height: 33px; }
-.rq--4 .rq__logo { left: 689px; top: 20px; width: 179.785px; height: 20px; }
+.rq--1 .rq__logo { left: calc(618 * var(--u)); top: calc(20 * var(--u)); width: calc(251 * var(--u)); height: calc(30 * var(--u)); }
+.rq--2 .rq__logo { left: calc(798 * var(--u)); top: calc(20 * var(--u)); width: calc(71 * var(--u));  height: calc(55 * var(--u)); }
+.rq--3 .rq__logo { left: calc(694 * var(--u)); top: calc(20 * var(--u)); width: calc(175 * var(--u)); height: calc(33 * var(--u)); }
+.rq--4 .rq__logo { left: calc(689 * var(--u)); top: calc(20 * var(--u)); width: calc(179.785 * var(--u)); height: calc(20 * var(--u)); }
 
 .rq__text {
-  position: absolute; left: 260px; top: 129px; transform: translateY(-50%); margin: 0;
-  font-family: var(--font); font-size: 24px; line-height: 30px; color: var(--gray);
+  position: absolute; left: calc(260 * var(--u)); top: calc(129 * var(--u)); transform: translateY(-50%); margin: 0;
+  font-family: var(--font); font-size: calc(24 * var(--u)); line-height: calc(30 * var(--u)); color: var(--gray);
 }
 .rq__text p { margin: 0; }
 .rq__text strong { font-weight: 600; color: var(--navy); }
-.rq--1 .rq__text { width: 613px; }
-.rq--2 .rq__text { width: 631px; }
-.rq--3 .rq__text { width: 652px; }
-.rq--4 .rq__text { width: 652px; }
+.rq--1 .rq__text { width: calc(613 * var(--u)); }
+.rq--2 .rq__text { width: calc(631 * var(--u)); }
+.rq--3 .rq__text { width: calc(652 * var(--u)); }
+.rq--4 .rq__text { width: calc(652 * var(--u)); }
 
 /* ===== Below 1024px the 919px card doesn't fit: the Figma mobile cards (Mobile Quote 1-4:
-   2709:2881, 2709:2817, 2709:2904, 2709:2932; 491x359), scaled evenly to fit the page (--u = one
-   design pixel), with the same centered grow. ===== */
+   2709:2881, 2709:2817, 2709:2904, 2709:2932; 491x359), scaled evenly so the 120% peak just
+   fits the page's padding, with the same centered bounce. ===== */
 @media (max-width: 1023px) {
   .rq {
-    --u: min(1px, calc((100cqw - 2 * var(--pad)) / 491));
+    --u: min(1px, calc((100cqw - 2 * var(--pad)) / 589.2));   /* the 491px card at 120% */
     width: calc(491 * var(--u));
     height: calc(359 * var(--u));
-    border-radius: calc(12 * var(--u));
   }
   .rq--1 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(161 * var(--u)); border-radius: calc(41 * var(--u)); }
   .rq--2 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(189 * var(--u)); height: calc(160 * var(--u)); border-radius: calc(47 * var(--u)); }
   .rq--3 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(167 * var(--u)); border-radius: calc(26 * var(--u)); }
   .rq--4 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(158 * var(--u)); border-radius: calc(34 * var(--u)); }
-  .rq__head { left: calc(230 * var(--u)); top: calc(14 * var(--u)); }
-  .rq__name {
-    min-width: calc(76 * var(--u)); height: calc(34 * var(--u)); margin-right: calc(8 * var(--u));
-    font-size: calc(26 * var(--u)); line-height: calc(20.8 * var(--u));
-  }
-  .rq__stars { margin-top: calc(8 * var(--u)); width: calc(105 * var(--u)); height: calc(21 * var(--u)); }
-  .rq__meta {
-    left: calc(230 * var(--u)); top: calc(51 * var(--u)); width: auto; white-space: nowrap;
-    font-size: calc(14 * var(--u)); line-height: calc(21 * var(--u));
-  }
+  .rq, .rq--2 { --rq-name-top: 14; }
+  .rq__head { left: calc(230 * var(--u)); }
+  .rq__name { min-width: calc(76 * var(--u)); }
+  .rq__meta { left: calc(230 * var(--u)); width: auto; white-space: nowrap; }
   .rq--1 .rq__logo { left: calc(220 * var(--u)); top: calc(115 * var(--u)); width: calc(251 * var(--u)); height: calc(30 * var(--u)); }
   .rq--2 .rq__logo { left: calc(300 * var(--u)); top: calc(91 * var(--u));  width: calc(117 * var(--u)); height: calc(91 * var(--u)); }
   .rq--3 .rq__logo { left: calc(236 * var(--u)); top: calc(113 * var(--u)); width: calc(196 * var(--u)); height: calc(37 * var(--u)); }
   .rq--4 .rq__logo { left: calc(222 * var(--u)); top: calc(117 * var(--u)); width: calc(225 * var(--u)); height: calc(25 * var(--u)); }
-  .rq .rq__text {
-    left: calc(38 * var(--u)); top: calc(263 * var(--u)); width: calc(424 * var(--u));
-    font-size: calc(24 * var(--u)); line-height: calc(30 * var(--u));
-  }
+  .rq .rq__text { left: calc(38 * var(--u)); top: calc(263 * var(--u)); width: calc(424 * var(--u)); }
 }
 
 /* respect users who prefer less motion: the rows stand still and the quotes only fade */
