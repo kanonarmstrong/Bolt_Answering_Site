@@ -1,5 +1,5 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265
+   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
@@ -11,14 +11,17 @@
 /* ===== Review carousel: 3 staggered rows, right to left, 33.3s seamless loop =====
    3x the owner's first speeds (2x, then 1.5x): Row 1 406.8 px/s | Row 3 474.6 px/s | Row 2
    315.6 px/s while it moves (3.33s, eased start/stop), then stops 5s, x4.
-   Rows 1 and 3 are half size (217x46.5 cards, 9px gap, 226px pitch); row 2 is 434x93 with an
-   18px gap (452px pitch). All loop distances are whole numbers of cards, so the animation
-   restarts invisibly. If you change card width/gap, update the px values below. */
+   Rows 1 and 3 are half size (217x46.5 cards, 9px gap, 226px pitch) and sit 10px above and
+   below row 2; row 2 is 434x93 with an 18px gap (452px pitch). All loop distances are whole
+   numbers of cards, so the animation restarts invisibly. If you change card width/gap, update
+   the px values below. */
 
 .rc {
   --card-w: 434px;
   --card-h: 93px;
+  --small-h: calc(var(--card-h) / 2);   /* rows 1 and 3 */
   --gap: 18px;
+  --row-gap: 10px;                      /* rows 1 and 3 to row 2, edge to edge */
   --card-opacity: 0.5;
   --ease-in: cubic-bezier(0.3333, 0, 0.6667, 0.3333);   /* quadratic ease-in  */
   --ease-out: cubic-bezier(0.3333, 0.6667, 0.6667, 1);  /* quadratic ease-out */
@@ -35,11 +38,13 @@
 }
 .rc-sprite { position: absolute; width: 0; height: 0; }
 
-/* rows: vertical positions from the design (36 / 156 / 276) */
+/* rows: row 2 keeps the design's line (y 156-249 in the frame); rows 1 and 3, half height, sit
+   --row-gap above and below it (owner, AFMBP-2267: 80% closer than the 50.25px the design's
+   lines left once their cards were halved), so they span y 99.5-146 and 259-305.5. */
 .rc-row { position: absolute; left: 0; width: 100%; height: var(--card-h); }
-.rc-row--1 { top: 36px; }
+.rc-row--1 { top: calc(156px - var(--row-gap) - var(--small-h)); height: var(--small-h); }
 .rc-row--2 { top: 156px; }
-.rc-row--3 { top: 276px; }
+.rc-row--3 { top: calc(156px + var(--card-h) + var(--row-gap)); height: var(--small-h); }
 
 /* tracks: negative left sets the horizontal stagger (first full card sits at x=17 / 203 / 8) */
 .rc-track {
@@ -51,9 +56,8 @@
 .rc-track--2 { left: -249px; animation: rc-row2 33.33333s linear infinite; }
 .rc-track--3 { left: -444px; animation: rc-row3 3.33333s linear infinite; }
 
-/* rows 1 and 3: half-size cards (owner, AFMBP-2265), centered on the rows' original lines
-   (y 82.5 / 322.5 in the frame); zoom halves each card and everything in it. */
-.rc-track--1, .rc-track--3 { top: 23.25px; gap: 9px; }
+/* rows 1 and 3: half-size cards (owner, AFMBP-2265); zoom halves each card and everything in it. */
+.rc-track--1, .rc-track--3 { gap: 9px; }
 .rc-track--1 .rc-card, .rc-track--3 .rc-card { zoom: 0.5; }
 
 /* rows 1 and 3: one tile (6 or 7 half-size cards) per 3.33s */
