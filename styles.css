@@ -259,42 +259,17 @@ ul,ol{list-style:none}
   position:relative;
   background:url('assets/reviews-bg.jpg') center/cover no-repeat;
   padding:clamp(60px,7vw,90px) 0;
+  overflow:hidden;               /* AFMBP-2250: crops the 2000px carousel at the page edges */
+  container-type:inline-size;    /* the quote cards stay on the page (cqw, review-carousel.css) */
 }
 .reviews__overlay{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+/* One cell, at least the carousel's 404px: the band and the quote card are centered in it, and
+   the section's equal top/bottom padding centers it in the section. */
 .reviews__inner{
   position:relative;z-index:1;
   max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);
-  display:flex;flex-direction:column;gap:clamp(24px,3vw,40px);
+  display:grid;place-items:center;min-height:404px;
 }
-.quote{
-  background:#fff;border-radius:12px;box-shadow:var(--shadow-quote);
-  padding:clamp(24px,2.4vw,32px) clamp(26px,2.6vw,40px);
-}
-.quote--a{max-width:1039px;align-self:flex-end;display:flex;gap:clamp(16px,2vw,26px);align-items:flex-start}
-.quote--b{max-width:977px;align-self:flex-start}
-.quote__avatar{width:clamp(68px,7.5vw,104px);height:clamp(68px,7.5vw,104px);border-radius:14px;object-fit:cover;object-position:top center;flex-shrink:0}
-.quote__body{flex:1;min-width:0}
-.quote__head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.quote__name{
-  font-family:'Roboto',var(--font);color:var(--navy);
-  font-size:clamp(22px,2vw,26px);font-weight:400;
-}
-.quote__name .nm{color:var(--navy)}
-.stars{display:inline-flex;gap:3px;font-size:18px;line-height:1}
-.star{color:var(--star)}
-.star.s2{opacity:.8}.star.s3{opacity:.6}.star.s4{opacity:.3}
-.star.s5{color:#bbbaba}
-.quote__meta{
-  font-family:var(--poppins);color:var(--gray);
-  font-size:14px;margin:6px 0 14px;
-}
-.quote__text{
-  color:var(--gray);font-weight:400;
-  font-size:clamp(19px,1.6vw,27px);line-height:1.15;position:relative;
-}
-.quote--b .quote__text{font-size:clamp(18px,1.4vw,24px)}
-.quote__text strong{color:var(--navy);font-weight:600}
-.quote__text .q{color:var(--navy);font-weight:700;font-size:1.1em;padding:0 .1em}
 
 /* ============================================================
    BAND
@@ -478,7 +453,6 @@ ul,ol{list-style:none}
   .hero__media{max-width:440px;margin:8px auto 0;align-self:auto}
   .hero__media img{margin:0 auto;max-width:380px}
   .trust__cards{grid-template-columns:1fr;max-width:640px}
-  .quote--a,.quote--b{align-self:stretch;max-width:none}
 }
 
 @media (max-width:768px){
@@ -532,7 +506,6 @@ ul,ol{list-style:none}
 @media (max-width:480px){
   .subscribe__form input{font-size:14px}
   .subscribe__btn{height:44px;padding:0 16px;font-size:14px}
-  .quote__text{font-size:19px}
   .reviews{background-attachment:scroll}
 }
 

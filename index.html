@@ -42,10 +42,11 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
-  <link rel="stylesheet" href="styles.css?v=42" />
+  <link rel="stylesheet" href="styles.css?v=43" />
   <link rel="stylesheet" href="demo.css?v=25" />
   <link rel="stylesheet" href="hiw-phone.css?v=9" />
   <link rel="stylesheet" href="hero-phone.css?v=4" />
+  <link rel="stylesheet" href="review-carousel.css?v=1" />
   <!-- AFMBP-2113: fetch the 3D phone's code while the hero picture loads, at low
        priority so the picture (the page's largest paint) still goes first. -->
   <link rel="modulepreload" href="hero-phone.js?v=5" fetchpriority="low" />
@@ -140,29 +141,115 @@
   </section>
 
   <!-- ===================== REVIEWS ===================== -->
+  <!-- AFMBP-2250: the owner's review-card carousel (3 rows, 60s loop; the middle row stops 5s
+       every 10s) plays over the background, and in each stop one Figma quote card (Quote 1-4)
+       grows out of the stopped middle-row card and shrinks back into it. review-carousel.css. -->
   <section class="reviews" id="reviews" data-reveal>
     <div class="reviews__overlay" aria-hidden="true"></div>
     <div class="reviews__inner">
-      <article class="quote quote--a rv">
-        <img class="quote__avatar" src="assets/review-avatar.png" alt="Gus C." />
-        <div class="quote__body">
-          <div class="quote__head">
-            <span class="quote__name">Gus C.</span>
-            <span class="stars" aria-label="Rated 5 out of 5"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></span>
+      <div class="rc" aria-hidden="true">
+        <svg class="rc-sprite" width="0" height="0"><symbol id="rc-star" viewBox="0 0 24 24"><path d="M12 1.5l3.1 6.9 7.4.8-5.5 5 1.6 7.4L12 17.8 5.4 21.6 7 14.2 1.5 9.2l7.4-.8z"/></symbol></svg>
+        <div class="rc-row rc-row--1">
+          <ul class="rc-track rc-track--1">
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+          </ul>
+        </div>
+        <div class="rc-row rc-row--2">
+          <ul class="rc-track rc-track--2">
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+          </ul>
+        </div>
+        <div class="rc-row rc-row--3">
+          <ul class="rc-track rc-track--3">
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
+          </ul>
+        </div>
+      </div>
+      <ul class="rq-list" aria-label="Reviews from pros">
+        <li class="rq rq--1">
+          <img class="rq__photo" src="assets/reviews/gus.webp" width="161" height="161" alt="" loading="lazy" decoding="async" />
+          <div class="rq__who">
+            <p class="rq__head"><span class="rq__name">Gus C.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
+            <p class="rq__meta">General Contractor, Massachusetts</p>
+            <img class="rq__logo" src="assets/reviews/logo-cnj-construction.png" width="251" height="30" alt="CNJ Construction" loading="lazy" decoding="async" />
           </div>
-          <p class="quote__meta">General Contractor, CNJ Construction, Boston MA</p>
-          <p class="quote__text"><span class="q">&ldquo;</span>I was losing jobs to voicemail every week while my hands were full with another job. <strong>With Bolt, I have not missed one since.</strong><span class="q">&rdquo;</span></p>
-        </div>
-      </article>
-
-      <article class="quote quote--b rv">
-        <div class="quote__head">
-          <span class="quote__name">Mike C.</span>
-          <span class="stars" aria-label="Rated 5 out of 5"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></span>
-        </div>
-        <p class="quote__meta">General Contractor, Albany NY</p>
-        <p class="quote__text"><span class="q">&ldquo;</span>Bolt answered 14 calls last week while I was on jobs. Three turned into <strong>bookings worth $2,800. The thing paid for itself in a day.</strong><span class="q">&rdquo;</span></p>
-      </article>
+          <blockquote class="rq__text"><p>I used to waste time meeting with clients who weren&rsquo;t serious. Bolt qualifies every caller upfront, so <strong>I only spend my time on real opportunities.</strong></p></blockquote>
+        </li>
+        <li class="rq rq--2">
+          <img class="rq__photo" src="assets/reviews/bret.webp" width="189" height="160" alt="" loading="lazy" decoding="async" />
+          <div class="rq__who">
+            <p class="rq__head"><span class="rq__name">Bret B.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
+            <p class="rq__meta">General Contractor, Indiana</p>
+            <img class="rq__logo" src="assets/reviews/logo-b-brooks-builders.png" width="71" height="55" alt="B. Brooks Builders" loading="lazy" decoding="async" />
+          </div>
+          <blockquote class="rq__text"><p>Bolt answered 3 calls last week while I was on jobs. One turned into a project worth $2,800. <strong>The thing paid for itself in a day.</strong></p></blockquote>
+        </li>
+        <li class="rq rq--3">
+          <img class="rq__photo" src="assets/reviews/joe.webp" width="161" height="167" alt="" loading="lazy" decoding="async" />
+          <div class="rq__who">
+            <p class="rq__head"><span class="rq__name">Joe H.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
+            <p class="rq__meta">Handyman, Florida</p>
+            <img class="rq__logo" src="assets/reviews/logo-jhs-handyman.png" width="175" height="33" alt="J&amp;HS Handyman" loading="lazy" decoding="async" />
+          </div>
+          <blockquote class="rq__text"><p>My wife used to spend hours managing my calls and calendar. Now that Bolt handles our scheduling, she can <strong>focus on growing the business.</strong></p></blockquote>
+        </li>
+        <li class="rq rq--4">
+          <img class="rq__photo" src="assets/reviews/josh.webp" width="161" height="158" alt="" loading="lazy" decoding="async" />
+          <div class="rq__who">
+            <p class="rq__head"><span class="rq__name">Josh C.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
+            <p class="rq__meta">Handyman, California</p>
+            <img class="rq__logo" src="assets/reviews/logo-jc-home-services.png" width="180" height="20" alt="JC Home Services, Inc." loading="lazy" decoding="async" />
+          </div>
+          <blockquote class="rq__text"><p>I work in construction full-time, but I&rsquo;m building a business to make extra money on the side. Now, <strong>I can keep working and I know Bolt is going to book the job.</strong></p></blockquote>
+        </li>
+      </ul>
     </div>
   </section>
 
