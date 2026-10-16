@@ -1,5 +1,5 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267
+   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
@@ -15,6 +15,16 @@
    below row 2; row 2 is 434x93 with an 18px gap (452px pitch). All loop distances are whole
    numbers of cards, so the animation restarts invisibly. If you change card width/gap, update
    the px values below. */
+
+/* ===== Section height on desktop (owner, AFMBP-2269): 30% shorter than the 404px frame plus
+   styles.css's clamp(60px, 7vw, 90px) padding (584 -> 409px at 1440), for a tighter fit around
+   the rows and the quote card. The band and the card stay centered; at narrow desktop widths
+   the frame's empty top and bottom edges are cropped (the rows take y 99.5-305.5 of its 404px).
+   Phones and tablets keep the padding: their quote card is too tall for 30% less. */
+@media (min-width: 1024px) {
+  .reviews { padding: 0; }
+  .reviews__inner { min-height: calc(0.7 * (404px + 2 * clamp(60px, 7vw, 90px))); }
+}
 
 .rc {
   --card-w: 434px;
