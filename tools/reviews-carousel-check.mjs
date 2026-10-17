@@ -1,5 +1,5 @@
-// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 — the home page's Reviews section: the owner's review-card carousel over
-// the background (3 rows, 33.3s loop: row 2 stops 5s then moves 3.33s, four times; rows 1 and 3
+// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 / 2284 — the home page's Reviews section: the owner's review-card carousel over
+// the background (3 rows, 28.9s loop: row 2 stops 5s then moves 2.22s, four times; rows 1 and 3
 // half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
 // screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
 // Drives the page's own CSS animations frame by frame (document.getAnimations(), the way the
@@ -14,8 +14,8 @@
 //     card's peak stays 40px+ clear of the How It Works phone poking up into the section; below
 //     1024px the background is the old cover size zoomed in 20% (the section crops it);
 //   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
-//     the band) and run at 406.8 and 474.6 px/s; row 2 has 434x93 cards on the design's line,
-//     moves at ~315.6 px/s and stands still through each stop;
+//     the band) and run at 610.2 and 711.9 px/s; row 2 has 434x93 cards on the design's line,
+//     moves at ~473.3 px/s and stands still through each stop;
 //   - timing, every 50ms over the loop: at most one card shows, and only while row 2 is stopped;
 //     card k is fully shown for its whole hold;
 //   - the bounce: 92% at the start, 120% at the top, 115% at rest (of the card's own size), and
@@ -24,6 +24,7 @@
 //   - reduced motion: the rows don't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
 //      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall | NC=mtall
+//      | NC=slow | NC=oldloop
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -46,7 +47,7 @@ const MUTATE = {
   // The section stops cropping the 2000px frame: the page scrolls sideways.
   uncropped: (f, s) => (f.endsWith('styles.css') ? s.replace('overflow:hidden;               /* AFMBP-2250', 'overflow:visible;               /* AFMBP-2250') : s),
   // Quote 2 sits off-center.
-  offset: (f, s) => css(f, s, '.rq--2 { animation-delay: 8.33333s; }', '.rq--2 { animation-delay: 8.33333s; margin-left: 40px; }'),
+  offset: (f, s) => css(f, s, '.rq--2 { animation-delay: 7.22222s; }', '.rq--2 { animation-delay: 7.22222s; margin-left: 40px; }'),
   // Everything runs from page load, before the section is on screen.
   autostart: (f, s) => css(f, s, '.reviews:not(.reviews--on) .rq { animation-play-state: paused; }', '.reviews:not(.reviews--on) .rq { animation-play-state: running; }'),
   // Rows 1 and 3 keep full-size cards.
@@ -59,6 +60,10 @@ const MUTATE = {
   tall: (f, s) => css(f, s, '@media (min-width: 1024px) {\n  .reviews { padding: 0; }', '@media (min-width: 99999px) {\n  .reviews { padding: 0; }'),
   // Phones and tablets keep their full height and the plain cover background (before AFMBP-2283).
   mtall: (f, s) => css(f, s, '@media (max-width: 1023px) {\n  .reviews {\n    padding: 0;', '@media (max-width: 1px) {\n  .reviews {\n    padding: 0;'),
+  // Rows 1 and 3 at the old speed (before AFMBP-2284).
+  slow: (f, s) => css(f, css(f, s, 'animation: rc-row1 2.22222s', 'animation: rc-row1 3.33333s'), 'animation: rc-row3 2.22222s', 'animation: rc-row3 3.33333s'),
+  // Row 2 on the old 33.3s loop while the cards keep the new schedule (before AFMBP-2284).
+  oldloop: (f, s) => css(f, s, 'animation: rc-row2 28.88889s', 'animation: rc-row2 33.33333s'),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -69,9 +74,9 @@ const QUOTES = [
   { name: 'Joe H.', meta: 'Handyman, Florida', logo: 'J&HS Handyman', text: 'My wife used to spend hours managing my calls and calendar. Now that Bolt handles our scheduling, she can focus on growing the business.', strong: 'focus on growing the business.' },
   { name: 'Josh C.', meta: 'Handyman, California', logo: 'JC Home Services, Inc.', text: 'I work in construction full-time, but I’m building a business to make extra money on the side. Now, I can keep working and I know Bolt is going to book the job.', strong: 'I can keep working and I know Bolt is going to book the job.' },
 ];
-const LOOP = 100000 / 3;                           // 33.333s
-const STOPS = [0, 25 / 3, 50 / 3, 25];             // row 2's stops start (s); each lasts 5s
-const SPEED = { row1: 406.8, row2: 315.6, row3: 474.6 }; // px/s
+const LOOP = 260000 / 9;                           // 28.889s
+const STOPS = [0, 65 / 9, 130 / 9, 65 / 3];        // row 2's stops start (s); each lasts 5s
+const SPEED = { row1: 610.2, row2: 473.3, row3: 711.9 }; // px/s
 const SIZES = [[1440, 900], [1280, 800], [768, 1024], [390, 844]];
 
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
@@ -252,7 +257,7 @@ try {
     ok(holes === 0, `${w}: a card isn't fully shown during its hold at ${holes} samples (${firstBad.join('; ')})`);
     ok(shown > 16000 / STEP, `${w}: cards show at only ${shown} of ${Math.floor(LOOP / STEP) + 1} samples`);
     if (SHOTS) {
-      for (const [label, at] of [['moving', 6.5], ['grow', 8.33333 + 0.35], ['peak', 8.33333 + 0.6], ['rest', 8.33333 + 2.5], ['shrink', 8.33333 + 4.55]]) { await ev(SEEK(at * 1000)); await shot(`reviews-${w}-${label}.png`); }
+      for (const [label, at] of [['moving', 6.1], ['grow', STOPS[1] + 0.35], ['peak', STOPS[1] + 0.6], ['rest', STOPS[1] + 2.5], ['shrink', STOPS[1] + 4.55]]) { await ev(SEEK(at * 1000)); await shot(`reviews-${w}-${label}.png`); }
       for (let k = 0; k < 4; k++) { await ev(SEEK((STOPS[k] + 2.5) * 1000)); await shot(`reviews-${w}-quote${k + 1}.png`); }
     }
     // Reduced motion: rows stand still, cards only fade (and wait for the section too).
