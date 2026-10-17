@@ -20,16 +20,22 @@
 //     and shown again, with no second code fetched.
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=bolt_services |
-//      NC=swap_help | NC=no_help_event — negative controls on the SERVED copy only; each must FAIL.
+//      NC=swap_help | NC=no_help_event | NC=old_rows | NC=old_sub_size | NC=old_sub_color |
+//      NC=old_dy — negative controls on the SERVED copy only; each must FAIL.
+// AFMBP-2274 (the nodes as updated 2026-10-16): the calling cards' rows read "Talk to the “…”
+// receptionist" / "Tell her about your issue or project", the form's sub is #707070 at 18px,
+// and the "You call us" card sits centred (.5px low) as 2672:2064 now puts it.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, resolve } from 'node:path';
 
-const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
+// Absolute, so a served file's path ends in '/<file>' and a negative control applies even when
+// the root is given as '.' (a relative root left every NC unapplied: a false "did NOT bite").
+const ROOT = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
 const NC = process.env.NC || '';
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -47,12 +53,23 @@ const MUTATE = {
   double_send: ['demo.js', (s) => cut(s, "      busy(btn, 'Sending…');\n      // has_email", "      // has_email")],
   // The Calling card names Bolt Services, not the business the call answers as.
   bolt_services: ['demo.js', (s) => cut(s, "expectRows(state.business || 'your business')", "expectRows('Bolt Services')")],
+  // AFMBP-2274: the rows before the nodes' 10-16 update.
+  old_rows: ['demo.js', (s) => cut(cut(s, "text: 'Talk to the “' + who + '” receptionist'", "text: 'Receptionist for ' + who"), "text: 'Tell her about your issue or project'", "text: 'She’ll ask about your issue or project'")],
+  // The form's sub at its old size (20px on 24px lines, the same centre).
+  old_sub_size: ['demo.css', (s) => cut(s, 'top:66.73px;width:278px;max-width:none;margin:0;font-size:18px;line-height:22px;color:#707070;', 'top:65.4px;width:278px;max-width:none;margin:0;font-size:20px;line-height:24px;color:#707070;')],
+  // The form's sub in its old light grey.
+  old_sub_color: ['demo.css', (s) => cut(s, 'font-size:18px;line-height:22px;color:#707070;text-align:center;', 'font-size:18px;line-height:22px;color:#b8b6b9;text-align:center;')],
+  // The "You call us" card back where it sat, 13.5px above the centre.
+  old_dy: ['demo.css', (s) => cut(s, '--demo-h:404px;--demo-dx:-.5px;--demo-dy:.5px;', '--demo-h:404px;--demo-dx:-.5px;--demo-dy:-13.5px;')],
   // The iPhone and Android articles trade places.
   swap_help: ['demo.js', (s) => cut(cut(cut(s, "osLink('/support/hca/disable-ios-spam-blockers'", 'TMP_IOS'), "osLink('/support/hca/disable-android-spam-blockers'", "osLink('/support/hca/disable-ios-spam-blockers'"), 'TMP_IOS', "osLink('/support/hca/disable-android-spam-blockers'")],
   // A help-article tap is not counted.
   no_help_event: ['demo.js', (s) => cut(s, "a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });", '')],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
+// A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
+// file and fake a red run.
+if (NC && MUTATE[NC][1](readFileSync(join(ROOT, MUTATE[NC][0]), 'utf8')) === readFileSync(join(ROOT, MUTATE[NC][0]), 'utf8')) throw new Error(`NC ${NC} leaves ${MUTATE[NC][0]} unchanged`);
 
 const srv = createServer((req, res) => {
   try {
@@ -209,7 +226,10 @@ try {
   ok(['#demo-phone', '#demo-business', '#demo-email'].every(Boolean) && (await ev("['demo-phone','demo-business','demo-email'].every(function(id){return document.getElementById(id).getAttribute('enterkeyhint')==='done'})")), 'form: the keyboard key reads "done" on a phone');
   ok((await ev("document.getElementById('demo-phone').required && document.getElementById('demo-business').required && !document.getElementById('demo-email').required && document.getElementById('demo-email').getAttribute('aria-required')===null")), 'form: phone and business name required, email optional');
   ok((await ev("['demo-phone','demo-business','demo-email'].every(function(id){var e=document.getElementById(id), l=document.querySelector('label[for='+id+']'); return !!l && e.labels && e.labels[0]===l;})")), 'a11y: each field has its label');
-  ok((await css('#demo-phone', 'fontSize')) === '21px' && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px' && (await css('.demo-sub', 'fontSize')) === '20px', 'form: the redrawn sizes (21px fields, 15px labels, 22px Continue, 20px sub; no zoom on focus)');
+  ok((await css('#demo-phone', 'fontSize')) === '21px' && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px' && (await css('.demo-sub', 'fontSize')) === '18px', 'form: the redrawn sizes (21px fields, 15px labels, 22px Continue, 18px sub; no zoom on focus)');
+  ok((await css('.demo-sub', 'color')) === 'rgb(112, 112, 112)', `form: the sub in the node's #707070 (${await css('.demo-sub', 'color')})`);
+  const fs = await cardRel('.demo-sub');
+  ok(fs && near(fs.y, 67.33) && near(fs.h, 22), `form: the sub's line on the node's centre line (y 77.4 + the .6 border, set down a third of a pixel) (${JSON.stringify(fs)})`);
   const fc = await box('.demo-backdrop.open .demo-card');
   ok(near(fc.w, 337) && near(fc.h, 629) && near(fc.y, 69), `form: card 337x629 where the node puts it (${fc.w}x${fc.h} at ${fc.y})`);
   for (const [sel, x, y, w, h] of [['#demo-phone', 29, 135, 285.2, 36], ['#demo-business', 29, 206, 285.2, 35], ['#demo-email', 29, 283, 285.2, 38], ['.demo-backdrop.open .demo-btn', 45, 349, 253, 49]]) {
@@ -325,7 +345,7 @@ try {
   ok(sent('/api/demo/otp/verify').length === 1 && sent('/api/demo/token').length === 1 && sent('/api/demo/call').length === 1, `call: one verify, one token, one call (${['/api/demo/otp/verify', '/api/demo/token', '/api/demo/call'].map((p) => sent(p).length)})`);
   ok((await text('.demo-callcard__title')) === 'ALL Set' && (await css('.demo-callcard__title', 'textTransform')) === 'none', `calling: "ALL Set" as the node sets it (${await text('.demo-callcard__title')})`);
   ok((await text('.demo-callcard__from')) === 'Calling from (415) 555-0123', `calling: the caller id the API returned (${await text('.demo-callcard__from')})`);
-  ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-xm__row')).map(function(e){return e.innerText})")) === JSON.stringify(['Receptionist for QA Test Co', 'She’ll ask about your issue or project', 'Share fake details for her to schedule']), `calling: the rows, naming the business typed on the form (${await text('.demo-xm')})`);
+  ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-xm__row')).map(function(e){return e.innerText})")) === JSON.stringify(['Talk to the “QA Test Co” receptionist', 'Tell her about your issue or project', 'Share fake details for her to schedule']), `calling: the rows, naming the business typed on the form (${await text('.demo-xm')})`);
   ok((await ev("['chat','ask','route'].every(function(k){return new RegExp('demo-m-ico-'+k+'\\\\.svg').test(getComputedStyle(document.querySelector('.demo-xm__row--'+k),'::before').backgroundImage)})")) === true, 'calling: each row\'s node icon');
   ok(!(await visible('.demo-callcard__list')) && (await css('.demo-xm', 'fontSize')) === '21px', 'calling: the phone rows at 21px, not the desktop list');
   const cc = await box('.demo-backdrop.open .demo-card');
@@ -391,8 +411,10 @@ try {
   await tap('.demo-choice__call');
   ok(await waitScreen('inbound-call'), 'inbound: the call card');
   ok((await text('.demo-incall__digits')) === '4321', `inbound: the card shows this session's code (${await text('.demo-incall__digits')})`);
+  const ic = await box('.demo-backdrop.open .demo-card');
+  ok(near(ic.w, 331) && near(ic.y - (753 - ic.h) / 2, 0.5), `inbound: the card centred .5px low, where 2672:2064 now puts it (${ic.w}x${ic.h} at ${ic.y})`);
   ok((await css('.demo-incall__digits', 'fontSize')) === '25px' && (await css('.demo-incall__label', 'fontFamily')).includes('Permanent Marker'), 'inbound: "Your code" in the marker, the code at 25px');
-  ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-xm__row')).map(function(e){return e.innerText})")) === JSON.stringify(['Receptionist for Bolt Services', 'She’ll ask about your issue or project', 'Share fake details for her to schedule']), 'inbound: the rows name Bolt Services (the line answers as it)');
+  ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-xm__row')).map(function(e){return e.innerText})")) === JSON.stringify(['Talk to the “Bolt Services” receptionist', 'Tell her about your issue or project', 'Share fake details for her to schedule']), 'inbound: the rows name Bolt Services (the line answers as it)');
   await ev("window.__vis='hidden'; document.dispatchEvent(new Event('visibilitychange')); 1");
   await sleep(300);
   await ev("window.__vis='visible'; document.dispatchEvent(new Event('visibilitychange')); 1");

@@ -351,8 +351,8 @@
   // business when we call them (the call is set up with the name they typed).
   function expectRows(who) {
     return h('ul', { class: 'demo-xm demo-mb' }, [
-      h('li', { class: 'demo-xm__row demo-xm__row--chat', text: 'Receptionist for ' + who }),
-      h('li', { class: 'demo-xm__row demo-xm__row--ask', text: 'She’ll ask about your issue or project' }),
+      h('li', { class: 'demo-xm__row demo-xm__row--chat', text: 'Talk to the “' + who + '” receptionist' }),
+      h('li', { class: 'demo-xm__row demo-xm__row--ask', text: 'Tell her about your issue or project' }),
       h('li', { class: 'demo-xm__row demo-xm__row--route', text: 'Share fake details for her to schedule' })
     ]);
   }
@@ -433,7 +433,7 @@
           'One phone call can turn into ',
           h('span', { class: 'demo-mk demo-cm__mk', text: 'real money' })
         ]),
-        h('p', { class: 'demo-cm__sub', text: 'Bolt books customers while you keep on working, so you never miss an opportunity to make more money. Try it out:' })
+        h('p', { class: 'demo-cm__sub', text: 'Bolt answers calls and books customers, so you never miss an opportunity to make more money. Try it out:' })
       ]),
       h('div', { class: 'demo-choice__btns' }, [
         call,

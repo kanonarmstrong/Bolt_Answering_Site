@@ -1,5 +1,6 @@
 // AFMBP-2189 — the demo's first screen on phones, redrawn again (Figma 2670:952 as updated
-// 2026-10-15, after AFMBP-2090 and AFMBP-2150): the close button, the logo and "Available
+// 2026-10-15, after AFMBP-2090 and AFMBP-2150; its body text as updated 2026-10-16,
+// AFMBP-2274): the close button, the logo and "Available
 // now", the pitch with "real money" underlined, "You call us" with the wait under it, "We
 // call you", the rating and its quote under them, the paintbrush watermark.
 // Desktop keeps its own node (2670:896). Drives the real modal in headless Chrome against a
@@ -34,9 +35,11 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, resolve } from 'node:path';
 
-const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
+// Absolute, so a served file's path ends in '/<file>' and a negative control applies even when
+// the root is given as '.' (a relative root left every NC unapplied: a false "did NOT bite").
+const ROOT = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
 const NC = process.env.NC || '';
 const SHOTS = process.env.SHOTS || '';
 const ONLY = process.env.ONLY || ''; // 'sizes': only the size sweep (to compare with another root)
@@ -68,6 +71,11 @@ const MUTATE = {
   close_under: ['demo.css', (s) => cut(s, '    z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);', '    left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);')],
   // The close button moves off the node.
   close_off: ['demo.css', (s) => cut(s, '+ 277.896px);top:21.497px;', '+ 267.896px);top:21.497px;')],
+  // AFMBP-2274: the pitch's spacing before the node's 10-16 update (23px lines, body and
+  // brush 5px higher).
+  old_pitch_lines: ['demo.css', (s) => cut(cut(cut(cut(s, '.demo-cm__h{top:90.4px;line-height:26px}', '.demo-cm__h{top:90.07px}'), 'top:-3.34px;font-size:26px;line-height:26px}', 'top:-3.34px;font-size:26px;line-height:23px}'), '.demo-cm__sub{top:169px}', '.demo-cm__sub{top:164px}'), 'left:43.4px;top:139.509px;', 'left:43.4px;top:134.509px;')],
+  // AFMBP-2274: the body text before the node's 10-16 update.
+  old_pitch: ['demo.js', (s) => cut(s, "text: 'Bolt answers calls and books customers, so you never miss an opportunity to make more money. Try it out:'", "text: 'Bolt books customers while you keep on working, so you never miss an opportunity to make more money. Try it out:'")],
   // A narrow phone clips the pitch instead of scaling the card down.
   no_zoom: ['demo.css', (s) => cut(s, '.demo-card{zoom:.94;left:0}', '.demo-card{left:0}')],
   // AFMBP-2097, one piece at a time, then all of it.
@@ -149,6 +157,11 @@ const NODE = {
   },
   // The pitch: left edge and line count.
   pitch: { '.demo-cm__h': [46, 2], '.demo-cm__sub': [46, 4] },
+  // AFMBP-2274 (the node as updated 2026-10-16): the pitch's two lines on 26px lines, the
+  // body on 23px lines 5px lower than before: [line boxes' top, height], inside the stroke.
+  pitchY: { '.demo-cm__h': [91, 52], '.demo-cm__sub': [169.6, 92] },
+  // The yellow brush under "real money", moved down with it.
+  brushTop: '139.509px',
 };
 
 try {
@@ -261,9 +274,9 @@ try {
     return nodes.length ? !!nodes[0].ignored : null;
   };
   const SUPERSEDED = ['Call now', 'Call us or we', 'assistant now', 'ways to', 'Make a call', 'Get a call', 'Professional and helpful', 'Average time to connect', 'will call you right now',
-    'Answering one call', 'Dollars in your pocket', 'Talk with a real assistant', 'Smart & very professional'];
+    'Answering one call', 'Dollars in your pocket', 'Talk with a real assistant', 'Smart & very professional', 'Bolt books customers', 'keep on working'];
   const PITCH = 'One phone call can turn into real money';
-  const SUB = 'Bolt books customers while you keep on working, so you never miss an opportunity to make more money. Try it out:';
+  const SUB = 'Bolt answers calls and books customers, so you never miss an opportunity to make more money. Try it out:';
 
   // ================= phone, the node's own size =================
   if (ONLY !== 'sizes') {
@@ -321,6 +334,12 @@ try {
     const g = rel(await run(sel));
     ok(g && near(g.x, x, 0.05) && g.lines === lines, `phone: ${sel} from x ${x} on ${lines} lines, as the node wraps it (${g && [g.x.toFixed(2), g.lines]})`);
   }
+  for (const [sel, [y, h]] of Object.entries(NODE.pitchY)) {
+    const b = rel(await rect(sel));
+    ok(b && near(b.y, y, 0.05) && near(b.h, h, 0.05), `phone: ${sel} at y ${y}, ${h}px tall, where the 10-16 node sets it (${b && [b.y.toFixed(2), b.h.toFixed(2)]})`);
+  }
+  const brush = await ev("getComputedStyle(document.querySelector('.demo-cm'),'::before').top");
+  ok(brush === NODE.brushTop, `phone: the brush under "real money" at the node's ${NODE.brushTop} (${brush})`);
   // The close button is on top at its own centre: the body (above the card's other children)
   // would otherwise take the tap.
   ok((await ev("(function(){var b=document.querySelector('.demo-close'), r=b.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === b;})()")) === true, 'phone: the close button takes a tap at its centre (nothing on top of it)');
