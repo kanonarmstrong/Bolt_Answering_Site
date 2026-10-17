@@ -1,5 +1,5 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283, AFMBP-2284
+   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283, AFMBP-2284, AFMBP-2285
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
@@ -16,6 +16,12 @@
    numbers of cards, so the animation restarts invisibly. If you change card width/gap, update
    the px values below. */
 
+/* ===== Background, every width (owner: zoomed in 20% on phones, AFMBP-2283, then "desktop too",
+   AFMBP-2285): the photo (1920x1280) keeps its cover size from before the section got shorter
+   (the full width, or the old full height where that's bigger), zoomed in 20% and centered, so
+   the shorter section crops it instead of shrinking it (1728px wide at 1440, 943px at 390). */
+.reviews { background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto; }
+
 /* ===== Section height on desktop (owner, AFMBP-2269): 30% shorter than the 404px frame plus
    styles.css's clamp(60px, 7vw, 90px) padding (584 -> 409px at 1440), for a tighter fit around
    the rows and the quote card. The band and the card stay centered; at narrow desktop widths
@@ -29,14 +35,9 @@
 /* ===== Section height on phones and tablets (owner, AFMBP-2283): 30% shorter as well (524 ->
    367px on a phone) with no card resized: where the mobile quote card at its 120% peak (430.8
    Figma px, --u as in .rq below) plus 24px above and below needs more, the section stops there
-   (479px at 768). The background keeps today's cover size (the 1920x1280 photo over the full
-   old height) zoomed in 20% (owner), centered, so the shorter section crops it instead of
-   shrinking it. */
+   (479px at 768). */
 @media (max-width: 1023px) {
-  .reviews {
-    padding: 0;
-    background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto;
-  }
+  .reviews { padding: 0; }
   .reviews__inner {
     min-height: max(calc(0.7 * (404px + 2 * clamp(60px, 7vw, 90px))),
                     calc(430.8 * min(1px, calc((100cqw - 2 * var(--pad)) / 589.2)) + 48px));

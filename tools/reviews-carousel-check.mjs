@@ -1,4 +1,4 @@
-// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 / 2284 — the home page's Reviews section: the owner's review-card carousel over
+// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 / 2284 / 2285 — the home page's Reviews section: the owner's review-card carousel over
 // the background (3 rows, 28.9s loop: row 2 stops 5s then moves 2.22s, four times; rows 1 and 3
 // half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
 // screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
@@ -11,8 +11,8 @@
 //     inside the page, and inside the section, even at the top of its bounce; the section is 70%
 //     of 404 + 2 x clamp(60px, 7vw, 90px) (409 at 1440, 367 at 390), but below 1024px never
 //     shorter than the quote card's peak + 24px above and below (479 at 768); on desktop the
-//     card's peak stays 40px+ clear of the How It Works phone poking up into the section; below
-//     1024px the background is the old cover size zoomed in 20% (the section crops it);
+//     card's peak stays 40px+ clear of the How It Works phone poking up into the section; at
+//     every width the background is the old cover size zoomed in 20% (the section crops it);
 //   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
 //     the band) and run at 610.2 and 711.9 px/s; row 2 has 434x93 cards on the design's line,
 //     moves at ~473.3 px/s and stands still through each stop;
@@ -24,7 +24,7 @@
 //   - reduced motion: the rows don't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
 //      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall | NC=mtall
-//      | NC=slow | NC=oldloop
+//      | NC=slow | NC=oldloop | NC=nozoom
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -59,7 +59,9 @@ const MUTATE = {
   // The desktop section keeps its full height (before AFMBP-2269).
   tall: (f, s) => css(f, s, '@media (min-width: 1024px) {\n  .reviews { padding: 0; }', '@media (min-width: 99999px) {\n  .reviews { padding: 0; }'),
   // Phones and tablets keep their full height and the plain cover background (before AFMBP-2283).
-  mtall: (f, s) => css(f, s, '@media (max-width: 1023px) {\n  .reviews {\n    padding: 0;', '@media (max-width: 1px) {\n  .reviews {\n    padding: 0;'),
+  mtall: (f, s) => css(f, s, '@media (max-width: 1023px) {\n  .reviews { padding: 0; }', '@media (max-width: 1px) {\n  .reviews { padding: 0; }'),
+  // The background back on plain cover at every width (before AFMBP-2283 / AFMBP-2285).
+  nozoom: (f, s) => css(f, s, '.reviews { background-size: calc(1.2', '.reviews { --nozoom: calc(1.2'),
   // Rows 1 and 3 at the old speed (before AFMBP-2284).
   slow: (f, s) => css(f, css(f, s, 'animation: rc-row1 2.22222s', 'animation: rc-row1 3.33333s'), 'animation: rc-row3 2.22222s', 'animation: rc-row3 3.33333s'),
   // Row 2 on the old 33.3s loop while the cards keep the new schedule (before AFMBP-2284).
@@ -195,14 +197,11 @@ try {
     const cardFloor = desktop ? 0 : 430.8 * Math.min(1, (w - 2 * pad) / 589.2) + 48;
     const wantH = Math.max(0.7 * fullH, cardFloor);
     ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (70% of ${fullH.toFixed(1)}${cardFloor > 0.7 * fullH ? `, raised to fit the card` : ''})`);
-    // Background: cover on desktop; below 1024px the old cover size (fit to the full old height)
-    // zoomed in 20%, so the shorter section crops it rather than shrinking it.
+    // Background, every width: the old cover size (the full width, or the full old height where
+    // that's bigger) zoomed in 20%, so the shorter section crops it rather than shrinking it.
     const bg = await ev("getComputedStyle(document.querySelector('#reviews')).backgroundSize");
-    if (desktop) ok(bg === 'cover', `${w}: background-size is "${bg}", want cover`);
-    else {
-      const bgW = parseFloat(bg), wantBgW = 1.2 * Math.max(w, 1.5 * fullH);
-      ok(/^[\d.]+px auto$/.test(bg) && near(bgW, wantBgW, 0.6) && bgW / 1.5 >= L.sec.h, `${w}: background-size is "${bg}", want ${wantBgW.toFixed(1)}px auto (1.2 x the old cover width), tall enough to cover ${L.sec.h.toFixed(1)}px`);
-    }
+    const bgW = parseFloat(bg), wantBgW = 1.2 * Math.max(w, 1.5 * fullH);
+    ok(/^[\d.]+px auto$/.test(bg) && near(bgW, wantBgW, 0.6) && bgW / 1.5 >= L.sec.h && bgW >= w, `${w}: background-size is "${bg}", want ${wantBgW.toFixed(1)}px auto (1.2 x the old cover width), big enough to cover ${w}x${L.sec.h.toFixed(1)}`);
     // Rows: card sizes and center lines.
     ok(near(L.card1.w, 217, 0.5) && near(L.card1.h, 46.5, 0.5) && near(L.card3.w, 217, 0.5) && near(L.card3.h, 46.5, 0.5), `${w}: rows 1/3 cards are ${L.card1.w}x${L.card1.h} / ${L.card3.w}x${L.card3.h}, want 217x46.5`);
     ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5), `${w}: row 2 cards are ${L.card2.w}x${L.card2.h}, want 434x93`);
