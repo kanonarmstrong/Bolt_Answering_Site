@@ -392,7 +392,7 @@ body.demo-lock{overflow:hidden}
 
   /* ---- the frame every phone node screen shares ---- */
   .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:611px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
-  .demo-backdrop[data-screen="inbound-call"]{--demo-w:331px;--demo-h:404px;--demo-dx:-.5px;--demo-dy:-13.5px;--demo-bw:.536px}
+  .demo-backdrop[data-screen="inbound-call"]{--demo-w:331px;--demo-h:404px;--demo-dx:-.5px;--demo-dy:.5px;--demo-bw:.536px}
   .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:268px;--demo-dx:0px;--demo-dy:-93.5px;--demo-bw:0px}
   .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:7px;--demo-bw:.6px}
   .demo-backdrop[data-screen="calling"]{--demo-w:331px;--demo-h:414px;--demo-dx:-.5px;--demo-dy:-18.5px;--demo-bw:.536px}
@@ -492,21 +492,20 @@ body.demo-lock{overflow:hidden}
     content:"";position:absolute;left:-15.938px;top:0;width:10.359px;height:10.359px;pointer-events:none;
     background:url('assets/demo-m-dot.svg') center/100% 100% no-repeat;
   }
-  /* The pitch (2670:1026): Inter 19.032 on 23px lines, "real money" in the marker on
-     a line of its own, then a blank line the node draws 27.6px tall (its zero-width
-     space falls back to another font), then the body. */
+  /* The pitch (2670:1026, as updated 2026-10-16): Inter 19.032, its two lines on 26px
+     lines with "real money" in the marker on a line of its own, then a blank line the
+     node draws 27.6px tall (its zero-width space falls back to another font), then the
+     body on 23px lines. */
   .demo-backdrop[data-screen="choice"] :is(.demo-cm__h,.demo-cm__sub){
     position:absolute;left:45.4px;width:265.538px;margin:0;font-size:19.032px;font-weight:400;line-height:23px;color:var(--navy);
   }
-  /* Both engines drew the first line .33-.67px below the node's (Chrome at a true 3x,
-     iPhone Safari): set up a third of a pixel. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__h{top:90.07px}
-  /* The marker sits lower in its 23px line than the node draws it; lifted onto it. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__mk{display:block;position:relative;top:-3.34px;font-size:26px;line-height:23px}
-  .demo-backdrop[data-screen="choice"] .demo-cm__sub{top:164px}
+  .demo-backdrop[data-screen="choice"] .demo-cm__h{top:90.4px;line-height:26px}
+  /* The marker sits lower in its line than the node draws it; lifted onto it. */
+  .demo-backdrop[data-screen="choice"] .demo-cm__mk{display:block;position:relative;top:-3.34px;font-size:26px;line-height:26px}
+  .demo-backdrop[data-screen="choice"] .demo-cm__sub{top:169px}
   /* Yellow brush under "real money" (vector 2683:1607). */
   .demo-backdrop[data-screen="choice"] .demo-cm::before{
-    content:"";position:absolute;left:43.4px;top:134.509px;width:141.986px;height:8.501px;pointer-events:none;
+    content:"";position:absolute;left:43.4px;top:139.509px;width:141.986px;height:8.501px;pointer-events:none;
     background:url('assets/demo-m-ul-money.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
@@ -595,8 +594,11 @@ body.demo-lock{overflow:hidden}
     content:"";position:absolute;left:192px;top:23.03px;width:106.993px;height:5.242px;pointer-events:none;
     background:url('assets/demo-m-ul-rightnow.svg') center/100% 100% no-repeat;
   }
+  /* "First, we’ll send a code" (2657:1691, as updated 2026-10-16: #707070 at 18px), on
+     the node's centre line. Both engines drew it .33-.67px above the node's (Chrome at a
+     true 3x, iPhone Safari): set down a third of a pixel. */
   .demo-backdrop[data-screen="phone"] .demo-sub{
-    position:absolute;left:25.5px;top:65.4px;width:278px;max-width:none;margin:0;font-size:20px;line-height:24px;color:#b8b6b9;text-align:center;white-space:nowrap;
+    position:absolute;left:25.5px;top:66.73px;width:278px;max-width:none;margin:0;font-size:18px;line-height:22px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="phone"] .demo-field{position:static;margin:0}
   .demo-backdrop[data-screen="phone"] .demo-label{
