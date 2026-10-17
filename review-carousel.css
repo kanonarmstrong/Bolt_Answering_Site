@@ -1,5 +1,5 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283
+   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283, AFMBP-2284
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
@@ -8,9 +8,9 @@
    first stop, Gus's card, is what a visitor arriving at the section sees.
    ============================================================ */
 
-/* ===== Review carousel: 3 staggered rows, right to left, 33.3s seamless loop =====
-   3x the owner's first speeds (2x, then 1.5x): Row 1 406.8 px/s | Row 3 474.6 px/s | Row 2
-   315.6 px/s while it moves (3.33s, eased start/stop), then stops 5s, x4.
+/* ===== Review carousel: 3 staggered rows, right to left, 28.9s seamless loop =====
+   4.5x the owner's first speeds (2x, 1.5x, then 1.5x again, AFMBP-2284): Row 1 610.2 px/s |
+   Row 3 711.9 px/s | Row 2 473.3 px/s while it moves (2.22s, eased start/stop), then stops 5s, x4.
    Rows 1 and 3 are half size (217x46.5 cards, 9px gap, 226px pitch) and sit 10px above and
    below row 2; row 2 is 434x93 with an 18px gap (452px pitch). All loop distances are whole
    numbers of cards, so the animation restarts invisibly. If you change card width/gap, update
@@ -79,33 +79,33 @@
   display: flex; gap: var(--gap);
   will-change: transform;
 }
-.rc-track--1 { left: -435px; animation: rc-row1 3.33333s linear infinite; }
-.rc-track--2 { left: -249px; animation: rc-row2 33.33333s linear infinite; }
-.rc-track--3 { left: -444px; animation: rc-row3 3.33333s linear infinite; }
+.rc-track--1 { left: -435px; animation: rc-row1 2.22222s linear infinite; }
+.rc-track--2 { left: -249px; animation: rc-row2 28.88889s linear infinite; }
+.rc-track--3 { left: -444px; animation: rc-row3 2.22222s linear infinite; }
 
 /* rows 1 and 3: half-size cards (owner, AFMBP-2265); zoom halves each card and everything in it. */
 .rc-track--1, .rc-track--3 { gap: 9px; }
 .rc-track--1 .rc-card, .rc-track--3 .rc-card { zoom: 0.5; }
 
-/* rows 1 and 3: one tile (6 or 7 half-size cards) per 3.33s */
+/* rows 1 and 3: one tile (6 or 7 half-size cards) per 2.22s */
 @keyframes rc-row1 { from { transform: translateX(0); } to { transform: translateX(-1356px); } }
 @keyframes rc-row3 { from { transform: translateX(0); } to { transform: translateX(-1582px); } }
 
-/* row 2: stop 5s, then move 3.33s (0.11s eased start/stop), x4 = 33.33s. It starts on a stop,
-   so the first quote shows the moment the section starts. */
+/* row 2: stop 5s, then move 2.22s (0.074s eased start/stop over the same 17.4px), x4 = 28.89s.
+   It starts on a stop, so the first quote shows the moment the section starts. */
 @keyframes rc-row2 {
-  0%, 15% { transform: translateX(-0.000px); animation-timing-function: var(--ease-in); }
-  15.3314% { transform: translateX(-17.431px); animation-timing-function: linear; }
-  24.6686% { transform: translateX(-999.569px); animation-timing-function: var(--ease-out); }
-  25%, 40% { transform: translateX(-1017.000px); animation-timing-function: var(--ease-in); }
-  40.3314% { transform: translateX(-1034.431px); animation-timing-function: linear; }
-  49.6686% { transform: translateX(-2016.569px); animation-timing-function: var(--ease-out); }
-  50%, 65% { transform: translateX(-2034.000px); animation-timing-function: var(--ease-in); }
-  65.3314% { transform: translateX(-2051.431px); animation-timing-function: linear; }
-  74.6686% { transform: translateX(-3033.569px); animation-timing-function: var(--ease-out); }
-  75%, 90% { transform: translateX(-3051.000px); animation-timing-function: var(--ease-in); }
-  90.3314% { transform: translateX(-3068.431px); animation-timing-function: linear; }
-  99.6686% { transform: translateX(-4050.569px); animation-timing-function: var(--ease-out); }
+  0%, 17.3077% { transform: translateX(-0.000px); animation-timing-function: var(--ease-in); }
+  17.5626% { transform: translateX(-17.431px); animation-timing-function: linear; }
+  24.7451% { transform: translateX(-999.569px); animation-timing-function: var(--ease-out); }
+  25%, 42.3077% { transform: translateX(-1017.000px); animation-timing-function: var(--ease-in); }
+  42.5626% { transform: translateX(-1034.431px); animation-timing-function: linear; }
+  49.7451% { transform: translateX(-2016.569px); animation-timing-function: var(--ease-out); }
+  50%, 67.3077% { transform: translateX(-2034.000px); animation-timing-function: var(--ease-in); }
+  67.5626% { transform: translateX(-2051.431px); animation-timing-function: linear; }
+  74.7451% { transform: translateX(-3033.569px); animation-timing-function: var(--ease-out); }
+  75%, 92.3077% { transform: translateX(-3051.000px); animation-timing-function: var(--ease-in); }
+  92.5626% { transform: translateX(-3068.431px); animation-timing-function: linear; }
+  99.7451% { transform: translateX(-4050.569px); animation-timing-function: var(--ease-out); }
   100% { transform: translateX(-4068px); }
 }
 
@@ -138,7 +138,7 @@
 /* ===== Quote cards (Figma Quote 1-4: 919x196, white, 12px radius) =====
    One card per stop of the middle row, centered on the screen:
 
-     stop:  0-5s     8.3-13.3s  16.7-21.7s  25-30s    (row 2, above; from the section's start)
+     stop:  0-5s     7.2-12.2s  14.4-19.4s  21.7-26.7s  (row 2, above; from the section's start)
      card:  Quote 1  Quote 2    Quote 3     Quote 4   (animation-delay = the stop's start)
 
    Within its stop a card fades in as it grows from 92% to 120% (0.15s-0.6s, eased out), settles
@@ -164,28 +164,28 @@
   box-shadow: var(--shadow-quote);   /* 0 5px 7.5px rgba(0,0,0,.19), as in Figma */
   opacity: 0;
   transform: scale(var(--rq-s0));
-  animation: rq-pop 33.33333s linear infinite backwards;
+  animation: rq-pop 28.88889s linear infinite backwards;
   will-change: transform, opacity;
 }
 .rq--1 { animation-delay: 0s; }
-.rq--2 { animation-delay: 8.33333s; }
-.rq--3 { animation-delay: 16.66667s; }
-.rq--4 { animation-delay: 25s; }
+.rq--2 { animation-delay: 7.22222s; }
+.rq--3 { animation-delay: 14.44444s; }
+.rq--4 { animation-delay: 21.66667s; }
 
 @keyframes rq-pop {
-  0%, 0.45% {                          /* 0s-0.15s: hidden */
+  0%, 0.5192% {                        /* 0s-0.15s: hidden */
     opacity: 0; transform: scale(var(--rq-s0));
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);      /* grows: eased out */
   }
-  1.8% {                               /* 0.6s: the top of the bounce */
+  2.0769% {                            /* 0.6s: the top of the bounce */
     opacity: 1; transform: scale(1.2);
     animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);      /* settles: eased in and out */
   }
-  2.55%, 12.75% {                      /* 0.85s-4.25s: resting size */
+  2.9423%, 14.7115% {                  /* 0.85s-4.25s: resting size */
     opacity: 1; transform: scale(1.15);
     animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);      /* shrinks: eased in */
   }
-  14.55%, 100% {                       /* 4.85s on: hidden */
+  16.7885%, 100% {                     /* 4.85s on: hidden */
     opacity: 0; transform: scale(var(--rq-s0));
   }
 }
