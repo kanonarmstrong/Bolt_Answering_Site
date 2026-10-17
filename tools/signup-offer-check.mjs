@@ -3,6 +3,8 @@
 // the demo. Drives the real page in headless Chrome against a fake Bolt API and checks:
 //   - content and art: the node's copy, stars, underline, logo, brush and close cross; none of
 //     the demo's ways in, and no "Available now" (the 10-16 node update dropped it);
+//   - weights (the node as updated 10-16): the headline and the whole trial line semibold, the
+//     body regular, the marker at its one weight;
 //   - geometry: each piece where it sits once matched to the node's 3x export (card-relative);
 //   - pricing: "30 days" and "$79" follow the pricing feed whether it answers before or after
 //     the card is built (pricing.js reapply), and fall back when it doesn't answer;
@@ -43,7 +45,7 @@ const MUTATE = {
   // The tap is not logged.
   no_track: ['demo.js', (s) => cut(s, ", onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Get started']", " }, ['Get started']")],
   // The trial length and price are baked text, deaf to the feed.
-  static_price: ['demo.js', (s) => cut(s, "'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',\n          h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'", "'Get your first 30 days free ($79 value). Cancel anytime.'")],
+  static_price: ['demo.js', (s) => cut(s, "'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',\n            h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'", "'Get your first 30 days free ($79 value). Cancel anytime.'")],
   // The card never asks pricing.js for the latest numbers.
   no_reapply: ['demo.js', (s) => cut(s, "    try { if (window.boltPricing) window.boltPricing.reapply(); } catch (e) {}\n", '')],
   // The close button is hidden.
@@ -52,6 +54,12 @@ const MUTATE = {
   off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:364.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:369.4px;width:252px;height:49px;')],
   // A narrow phone clips the card instead of scaling it down.
   no_zoom: ['demo.css', (s) => cut(s, '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }', '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{left:0} }')],
+  // The headline drops back to regular.
+  regular_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:90.4px;line-height:26px;font-weight:600}', '.demo-cm__h{top:90.4px;line-height:26px;font-weight:400}')],
+  // The trial line drops back to regular.
+  regular_offer: ['demo.css', (s) => cut(s, '.demo-cm__sub b{font-weight:600}', '.demo-cm__sub b{font-weight:400}')],
+  // The marker takes the headline's semibold (a faux bold of a one-weight font).
+  heavy_marker: ['demo.css', (s) => cut(s, 'top:-3.33px;font-size:26px;font-weight:400;line-height:26px}', 'top:-3.33px;font-size:26px;font-weight:600;line-height:26px}')],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 const MUTS = !NC ? [] : [MUTATE[NC]];
@@ -195,6 +203,11 @@ try {
   ok(await waitScreen('signup'), 'phone: ?signup=1 opens the sign-up offer');
   await sleep(300);
   ok((await text('.demo-cm__h')) === 'One phone call can turn into real money', `phone: the pitch (${await text('.demo-cm__h')})`);
+  const wt = (sel) => ev(`(function(){var e=document.querySelector('.demo-backdrop.open ${sel}');return e?getComputedStyle(e).fontWeight:null})()`);
+  ok((await wt('.demo-cm__h')) === '600', `phone: the headline semibold (${await wt('.demo-cm__h')})`);
+  ok((await wt('.demo-cm__mk')) === '400', `phone: "real money" at the marker's one weight (${await wt('.demo-cm__mk')})`);
+  ok((await wt('.demo-cm__sub')) === '400', `phone: the body regular (${await wt('.demo-cm__sub')})`);
+  ok((await text('.demo-cm__sub b')) === 'Get your first 30 days free ($79 value). Cancel anytime.' && (await wt('.demo-cm__sub b')) === '600', `phone: the whole trial line semibold (${await text('.demo-cm__sub b')}, ${await wt('.demo-cm__sub b')})`);
   ok((await offer()) === OFFER(30, '$79'), `phone: the offer, the trial and price from the fallback (${await offer()})`);
   ok((await text('.demo-so__cta')) === 'Get started', `phone: "Get started" (${await text('.demo-so__cta')})`);
   ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === '“Pays for itself”' && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.', `phone: rating, quote and the help line (${await text('.demo-backdrop.open .demo-cm__quote')})`);

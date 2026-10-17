@@ -793,14 +793,16 @@ body.demo-lock{overflow:hidden}
 }
 /* The pitch: Inter 19.032 on 26px lines with "real money" in the marker on a
    line of its own, a blank line (the node's zero-width space), then the offer
-   on 23px lines. */
+   on 23px lines. Semibold for the headline and the trial line (the node as
+   updated 2026-10-16); the marker stays at its one weight. */
 .demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-cm__sub){
   position:absolute;left:45.4px;width:266px;margin:0;font-size:19.032px;font-weight:400;color:var(--navy);text-align:left;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__h{top:90.4px;line-height:26px}
+.demo-backdrop[data-screen="signup"] .demo-cm__h{top:90.4px;line-height:26px;font-weight:600}
 /* The marker sits lower in its 26px line than the node draws it; lifted onto it. */
-.demo-backdrop[data-screen="signup"] .demo-cm__mk{display:block;position:relative;top:-3.33px;font-size:26px;line-height:26px}
+.demo-backdrop[data-screen="signup"] .demo-cm__mk{display:block;position:relative;top:-3.33px;font-size:26px;font-weight:400;line-height:26px}
 .demo-backdrop[data-screen="signup"] .demo-cm__sub{top:169px;line-height:23px}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub b{font-weight:600}
 /* Yellow brush under "real money" (vector 2718:3346). */
 .demo-backdrop[data-screen="signup"] .demo-cm::before{
   content:"";position:absolute;left:43.4px;top:139.509px;width:141.986px;height:8.501px;pointer-events:none;

@@ -477,8 +477,10 @@
         h('p', { class: 'demo-cm__sub' }, [
           'Bolt answers calls and books customers, so you never miss an opportunity to make more money.',
           h('br'), h('br'),
-          'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
-          h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'
+          h('b', null, [
+            'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
+            h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'
+          ])
         ])
       ]),
       cta,
