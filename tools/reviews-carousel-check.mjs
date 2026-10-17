@@ -1,4 +1,4 @@
-// AFMBP-2250 / AFMBP-2265 / AFMBP-2267 / AFMBP-2269 — the home page's Reviews section: the owner's review-card carousel over
+// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 — the home page's Reviews section: the owner's review-card carousel over
 // the background (3 rows, 33.3s loop: row 2 stops 5s then moves 3.33s, four times; rows 1 and 3
 // half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
 // screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
@@ -8,9 +8,11 @@
 //     screen Gus's card (the first stop) appears within a second;
 //   - layout: the 2000x404 band and the card are centered in the section (to 1px), the page
 //     doesn't scroll sideways, each card stays 24px (desktop) or the page padding (phones)
-//     inside the page, and inside the section, even at the top of its bounce; the section is
-//     404 + 2 x clamp(60px, 7vw, 90px) tall on phones and 70% of that on desktop (409 at 1440),
-//     where the card's peak also stays 40px+ clear of the How It Works phone poking up into it;
+//     inside the page, and inside the section, even at the top of its bounce; the section is 70%
+//     of 404 + 2 x clamp(60px, 7vw, 90px) (409 at 1440, 367 at 390), but below 1024px never
+//     shorter than the quote card's peak + 24px above and below (479 at 768); on desktop the
+//     card's peak stays 40px+ clear of the How It Works phone poking up into the section; below
+//     1024px the background is the old cover size zoomed in 20% (the section crops it);
 //   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
 //     the band) and run at 406.8 and 474.6 px/s; row 2 has 434x93 cards on the design's line,
 //     moves at ~315.6 px/s and stands still through each stop;
@@ -21,7 +23,7 @@
 //   - copy: names, trade lines, logos' alt and each quote word for word;
 //   - reduced motion: the rows don't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
-//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall
+//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall | NC=mtall
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -55,6 +57,8 @@ const MUTATE = {
   rowgap: (f, s) => css(f, s, '--row-gap: 10px;', '--row-gap: 50.25px;'),
   // The desktop section keeps its full height (before AFMBP-2269).
   tall: (f, s) => css(f, s, '@media (min-width: 1024px) {\n  .reviews { padding: 0; }', '@media (min-width: 99999px) {\n  .reviews { padding: 0; }'),
+  // Phones and tablets keep their full height and the plain cover background (before AFMBP-2283).
+  mtall: (f, s) => css(f, s, '@media (max-width: 1023px) {\n  .reviews {\n    padding: 0;', '@media (max-width: 1px) {\n  .reviews {\n    padding: 0;'),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -180,9 +184,20 @@ try {
     ok(near(L.band.cy, L.sec.cy, 1) && near(L.inner.cy, L.sec.cy, 1), `${w}: band center ${L.band.cy.toFixed(1)} / stage ${L.inner.cy.toFixed(1)} vs section ${L.sec.cy.toFixed(1)}`);
     ok(near(L.band.cx, w / 2, 1) && near(L.band.w, 2000, 0.5) && near(L.band.h, 404, 0.5), `${w}: band ${L.band.w}x${L.band.h} centered at ${L.band.cx}`);
     ok(L.sw === L.vw, `${w}: page is ${L.sw}px wide in a ${L.vw}px window (sideways scroll)`);
-    // Section height: the frame plus clamp(60px, 7vw, 90px) top and bottom; 30% less on desktop.
-    const fullH = 404 + 2 * Math.min(90, Math.max(60, w * 0.07)), wantH = desktop ? 0.7 * fullH : fullH;
-    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (${desktop ? '70% of ' : ''}${fullH.toFixed(1)})`);
+    // Section height: 30% less than the frame plus clamp(60px, 7vw, 90px) top and bottom; below
+    // 1024px never less than the mobile card's peak (359 x 1.2 Figma px) + 24px above and below.
+    const fullH = 404 + 2 * Math.min(90, Math.max(60, w * 0.07));
+    const cardFloor = desktop ? 0 : 430.8 * Math.min(1, (w - 2 * pad) / 589.2) + 48;
+    const wantH = Math.max(0.7 * fullH, cardFloor);
+    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (70% of ${fullH.toFixed(1)}${cardFloor > 0.7 * fullH ? `, raised to fit the card` : ''})`);
+    // Background: cover on desktop; below 1024px the old cover size (fit to the full old height)
+    // zoomed in 20%, so the shorter section crops it rather than shrinking it.
+    const bg = await ev("getComputedStyle(document.querySelector('#reviews')).backgroundSize");
+    if (desktop) ok(bg === 'cover', `${w}: background-size is "${bg}", want cover`);
+    else {
+      const bgW = parseFloat(bg), wantBgW = 1.2 * Math.max(w, 1.5 * fullH);
+      ok(/^[\d.]+px auto$/.test(bg) && near(bgW, wantBgW, 0.6) && bgW / 1.5 >= L.sec.h, `${w}: background-size is "${bg}", want ${wantBgW.toFixed(1)}px auto (1.2 x the old cover width), tall enough to cover ${L.sec.h.toFixed(1)}px`);
+    }
     // Rows: card sizes and center lines.
     ok(near(L.card1.w, 217, 0.5) && near(L.card1.h, 46.5, 0.5) && near(L.card3.w, 217, 0.5) && near(L.card3.h, 46.5, 0.5), `${w}: rows 1/3 cards are ${L.card1.w}x${L.card1.h} / ${L.card3.w}x${L.card3.h}, want 217x46.5`);
     ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5), `${w}: row 2 cards are ${L.card2.w}x${L.card2.h}, want 434x93`);

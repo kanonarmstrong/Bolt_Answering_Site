@@ -1,5 +1,5 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269
+   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283
    The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
    transparent, pure CSS) plays over the section background, and during each of the middle
    row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
@@ -20,10 +20,27 @@
    styles.css's clamp(60px, 7vw, 90px) padding (584 -> 409px at 1440), for a tighter fit around
    the rows and the quote card. The band and the card stay centered; at narrow desktop widths
    the frame's empty top and bottom edges are cropped (the rows take y 99.5-305.5 of its 404px).
-   Phones and tablets keep the padding: their quote card is too tall for 30% less. */
+   Phones and tablets: see the next block. */
 @media (min-width: 1024px) {
   .reviews { padding: 0; }
   .reviews__inner { min-height: calc(0.7 * (404px + 2 * clamp(60px, 7vw, 90px))); }
+}
+
+/* ===== Section height on phones and tablets (owner, AFMBP-2283): 30% shorter as well (524 ->
+   367px on a phone) with no card resized: where the mobile quote card at its 120% peak (430.8
+   Figma px, --u as in .rq below) plus 24px above and below needs more, the section stops there
+   (479px at 768). The background keeps today's cover size (the 1920x1280 photo over the full
+   old height) zoomed in 20% (owner), centered, so the shorter section crops it instead of
+   shrinking it. */
+@media (max-width: 1023px) {
+  .reviews {
+    padding: 0;
+    background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto;
+  }
+  .reviews__inner {
+    min-height: max(calc(0.7 * (404px + 2 * clamp(60px, 7vw, 90px))),
+                    calc(430.8 * min(1px, calc((100cqw - 2 * var(--pad)) / 589.2)) + 48px));
+  }
 }
 
 .rc {
