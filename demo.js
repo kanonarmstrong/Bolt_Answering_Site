@@ -210,6 +210,7 @@
     var s = resumableInbound();
     if (s) resumeInbound(s);
     else if (entry === 'form') renderPhone();
+    else if (entry === 'signup') renderSignupOffer();
     else renderChoice();
     backdrop.classList.add('open');
     document.body.classList.add('demo-lock');
@@ -217,7 +218,8 @@
     // code) moves it on to that field a moment later.
     focusDialog();
     // A reload in the middle of a demo-line call is not a new open.
-    if (trigger !== 'resume') track('demo_opened', { trigger: trigger || 'button' });
+    // The sign-up offer is not a demo: its own event keeps the demo funnel clean.
+    if (trigger !== 'resume') track(entry === 'signup' && !s ? 'signup_offer_opened' : 'demo_opened', { trigger: trigger || 'button' });
   }
   function closeModal(e) {
     if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
@@ -451,6 +453,44 @@
       helpLine()
     ], 'choice');
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
+  }
+  // AFMBP-2273 — the sign-up offer (Figma 2718:3312): the demo card's logo, close
+  // and pitch, the offer, one "Get started" into the sign-up flow, the rating, help.
+  // The same card at every width (no desktop node yet). attribution.js decorates
+  // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
+  // dialog is logged here, as the demo's own trial links are. The trial length
+  // and the price follow the pricing feed (pricing.js hooks, PRICING.md).
+  function renderSignupOffer() {
+    clearResend();
+    stopRecap();
+    stopInbound();
+    inboundFlow = null;
+    step = 'signup_offer';
+    var cta = h('a', { class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Get started']);
+    setBody([
+      h('div', { class: 'demo-cm' }, [
+        h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
+        h('h2', { class: 'demo-cm__h' }, [
+          'One phone call can turn into ',
+          h('span', { class: 'demo-mk demo-cm__mk', text: 'real money' })
+        ]),
+        h('p', { class: 'demo-cm__sub' }, [
+          'Bolt answers calls and books customers, so you never miss an opportunity to make more money.',
+          h('br'), h('br'),
+          'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
+          h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'
+        ])
+      ]),
+      cta,
+      // The stars are drawn and hidden from screen readers; "4.9/5" says it.
+      h('div', { class: 'demo-cr' }, [
+        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
+        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
+        h('p', { class: 'demo-cm__quote', text: '“Pays for itself”' })
+      ]),
+      helpLine()
+    ], 'signup');
+    try { if (window.boltPricing) window.boltPricing.reapply(); } catch (e) {}
   }
 
   // ---------- "You call us" — the demo line (AFMBP-2083) ----------
@@ -1405,8 +1445,11 @@
   // It opens on the choice of the two demos; `talk=form` goes straight to the
   // "We'll call you" form (AFMBP-2083).
   function autoOpen() {
-    if (!/[?&]talk(=|&|$)/.test(window.location.search)) return;
-    var entry = /[?&]talk=form(&|$)/.test(window.location.search) ? 'form' : null;
+    var q = window.location.search;
+    // AFMBP-2273: ?signup=1 (the sign-up test's ad links) opens the sign-up offer
+    // instead of the demo; it wins over ?talk on the same link.
+    var entry = /[?&]signup=1(&|$)/.test(q) ? 'signup' : (/[?&]talk=form(&|$)/.test(q) ? 'form' : null);
+    if (entry !== 'signup' && !/[?&]talk(=|&|$)/.test(q)) return;
     // AFMBP-2010: open (and log `demo_opened`) only once someone is looking at
     // the page. A preloaded or prerendered ad landing is not a demo opened.
     var whenVisible = window.boltAttr && window.boltAttr.whenVisible;

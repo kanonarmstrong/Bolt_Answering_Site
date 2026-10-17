@@ -745,3 +745,86 @@ body.demo-lock{overflow:hidden}
   }
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#1f6fe6}
 }
+
+/* ============================================================
+   AFMBP-2273 — the sign-up offer (Figma 2718:3312): the demo card's frame,
+   logo, close and pitch, the offer, one yellow "Get started", the rating, help.
+   Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
+   these rules sit outside the breakpoints. Numbers are body-relative (the body
+   sits inside the node's .6px stroke), matched to the node's 3x export.
+   ============================================================ */
+.demo-backdrop[data-screen="signup"]{
+  --demo-w:337px;--demo-h:611px;--demo-dx:-1.5px;--demo-dy:-.5px;--demo-bw:.6px;
+  background:rgba(0,0,0,.3);padding:16px clamp(0px,calc((100vw - var(--demo-w)) / 2),16px);
+}
+.demo-backdrop[data-screen="signup"] .demo-card{
+  width:var(--demo-w);max-width:100%;height:611px;min-height:var(--demo-h);padding:0;border:0;background:#fff;
+  border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18);
+  position:relative;left:var(--demo-dx);top:max(var(--demo-dy),min(0px,calc((var(--demo-h) - 100%) / 2)));
+  overflow:hidden;overflow:clip;
+}
+.demo-backdrop[data-screen="signup"] .demo-body{
+  position:relative;z-index:1;width:var(--demo-w);height:611px;min-height:var(--demo-h);
+  left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
+}
+@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }
+@media (max-width:316px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.83} }
+.demo-backdrop[data-screen="signup"] .demo-logo{display:none}
+/* The paintbrush watermark, placed and mirrored as the node places it. */
+.demo-backdrop[data-screen="signup"] .demo-body::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;background:rgba(24,10,83,.11);
+  -webkit-mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;
+  left:-477.448px;top:-.15px;width:828.071px;height:688.679px;transform:scaleX(-1);
+}
+/* The close button: the node's 13px cross in a 44px tap target, above the body. */
+.demo-backdrop[data-screen="signup"] .demo-close{
+  display:flex;z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);top:21.497px;right:auto;
+  width:44px;height:44px;border-radius:0;background:transparent;
+}
+.demo-backdrop[data-screen="signup"] .demo-close:hover{background:transparent}
+.demo-backdrop[data-screen="signup"] .demo-close svg{display:none}
+.demo-backdrop[data-screen="signup"] .demo-close::before{
+  content:"";width:12.992px;height:12.993px;pointer-events:none;
+  background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
+}
+.demo-backdrop[data-screen="signup"] .demo-cm__logo{
+  position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
+  background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
+}
+/* The pitch: Inter 19.032 on 26px lines with "real money" in the marker on a
+   line of its own, a blank line (the node's zero-width space), then the offer
+   on 23px lines. */
+.demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-cm__sub){
+  position:absolute;left:45.4px;width:266px;margin:0;font-size:19.032px;font-weight:400;color:var(--navy);text-align:left;
+}
+.demo-backdrop[data-screen="signup"] .demo-cm__h{top:90.4px;line-height:26px}
+/* The marker sits lower in its 26px line than the node draws it; lifted onto it. */
+.demo-backdrop[data-screen="signup"] .demo-cm__mk{display:block;position:relative;top:-3.33px;font-size:26px;line-height:26px}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub{top:169px;line-height:23px}
+/* Yellow brush under "real money" (vector 2718:3346). */
+.demo-backdrop[data-screen="signup"] .demo-cm::before{
+  content:"";position:absolute;left:43.4px;top:139.509px;width:141.986px;height:8.501px;pointer-events:none;
+  background:url('assets/demo-m-ul-money.svg') center/100% 100% no-repeat;
+}
+/* "Get started" (2718:3350): the site's yellow button, 252x49. */
+.demo-backdrop[data-screen="signup"] .demo-so__cta{
+  position:absolute;left:43.4px;top:364.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;text-decoration:none;
+  /* The flex-centred label drew .67px above the node's; the padding sets it down. */
+  padding-top:1.33px;
+}
+/* Rating (2718:3332), under the button: five stars 21.552 apart from x 84.5,
+   "4.9/5" and the quote centred in the node's text boxes. */
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:454.4px;display:flex}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars span{
+  width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
+}
+.demo-backdrop[data-screen="signup"] .demo-cm__score{
+  position:absolute;left:193.918px;top:457.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+}
+.demo-backdrop[data-screen="signup"] .demo-cm__quote{
+  position:absolute;left:71.9px;top:479.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+}
+.demo-backdrop[data-screen="signup"] .demo-help{
+  position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+}

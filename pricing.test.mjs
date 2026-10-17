@@ -164,3 +164,23 @@ test('every page with a trial CTA loads pricing.js, so the trial length follows 
   assert.ok(pages.length >= 10, `found ${pages.length} CTA pages`);
   for (const f of pages) assert.match(readFileSync(f, 'utf8'), /<script src="\/?pricing\.js\?v=\d+"><\/script>/, f);
 });
+
+test('AFMBP-2273: the retail price in running text (.js-retail) follows the feed, and falls back', () => {
+  const el = { textContent: '$79' };
+  const doc = { readyState: 'complete', querySelectorAll: (sel) => (sel === '.js-retail' ? [el] : []) };
+  P.apply(doc, FEED);
+  assert.equal(el.textContent, '$59.99');
+  P.apply(doc, P.FALLBACK);
+  assert.equal(el.textContent, '$79');
+});
+
+test('AFMBP-2273: reapply writes the LAST numbers applied into hooks added since (the offer card)', () => {
+  const nodes = {};
+  const doc = { readyState: 'complete', querySelectorAll: (sel) => nodes[sel] || [] };
+  P.apply(doc, FEED); // the feed answered before the card existed
+  nodes['.js-td'] = [{ textContent: '30' }];
+  nodes['.js-retail'] = [{ textContent: '$79' }];
+  P.reapply(doc); // the card asks once its hooks are in the page
+  assert.equal(String(nodes['.js-td'][0].textContent), '14');
+  assert.equal(nodes['.js-retail'][0].textContent, '$59.99');
+});

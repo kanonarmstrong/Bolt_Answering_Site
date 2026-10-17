@@ -19,7 +19,12 @@
 (function (factory) {
   var api = factory();
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else if (typeof document !== 'undefined') api.run(document);
+  else if (typeof document !== 'undefined') {
+    api.run(document);
+    // Content built after the page loads (the sign-up offer card, AFMBP-2273)
+    // asks for the latest numbers once its hooks are in the page.
+    window.boltPricing = { reapply: function () { api.reapply(document); } };
+  }
 })(function () {
   'use strict';
 
@@ -59,7 +64,11 @@
     for (var i = 0; i < list.length; i++) fn(list[i]);
   }
 
+  // The numbers last applied (the fallback, then the feed once it answers).
+  var last = FALLBACK;
+
   function apply(doc, p) {
+    last = p;
     var promo = money(num(p.promoPriceUsd, FALLBACK.promoPriceUsd));
     var retail = money(num(p.retailPriceUsd, FALLBACK.retailPriceUsd));
     var perMin = money(num(p.perMinuteUsd, FALLBACK.perMinuteUsd));
@@ -84,6 +93,12 @@
     });
     each(doc, '.js-pm-verb', function (el) {
       el.textContent = months === 1 ? 'is' : 'are';
+    });
+
+    // The retail price in running text (the sign-up offer's "($79 value)",
+    // AFMBP-2273): a bare amount in a <span>.
+    each(doc, '.js-retail', function (el) {
+      el.textContent = retail;
     });
 
     // Visible trial length — the chevron's "N-Day Trial" label (a bare number in
@@ -140,5 +155,10 @@
     return go();
   }
 
-  return { FEED: FEED, FALLBACK: FALLBACK, money: money, monthsWord: monthsWord, apply: apply, run: run };
+  // Apply the latest numbers again, to hooks added since (AFMBP-2273).
+  function reapply(doc) {
+    apply(doc, last);
+  }
+
+  return { FEED: FEED, FALLBACK: FALLBACK, money: money, monthsWord: monthsWord, apply: apply, reapply: reapply, run: run };
 });
