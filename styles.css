@@ -183,11 +183,6 @@ ul,ol{list-style:none}
   font-size:clamp(18px,1.55vw,27px);line-height:1.48;
   margin-bottom:16px;max-width:750px;
 }
-.hero__built{
-  color:var(--navy);font-size:clamp(18px,1.55vw,27px);line-height:1.48;margin-bottom:30px;
-}
-.hero__built .med{font-weight:500}
-.hero__built .bold{font-weight:700}
 .hero__media{position:relative;z-index:2;align-self:start}
 .hero__media img{
   width:100%;max-width:430px;display:block;
@@ -448,6 +443,10 @@ ul,ol{list-style:none}
 @media (max-width:1024px){
   /* Stacked: halved row-gap tightens the copy->phone distance (Figma 2571:1006). */
   .hero__inner{grid-template-columns:1fr;text-align:left;min-height:0;padding-bottom:0;row-gap:clamp(12px,2vw,30px)}
+  /* AFMBP-2292: the stacked hero is shorter by the removed "Built for your truck" line (one
+     1.48-high line of the lead's size + its 30px margin); the background video keeps its old
+     cover size and the shorter hero crops it, centered, instead of shrinking it. */
+  .hero__vidframe{min-height:calc(100% + 1.48 * clamp(18px,1.55vw,27px) + 30px)}
   /* Mobile/tablet: text ABOVE, phone BELOW (Figma 2571:1006). Natural source
      order (copy then media) — no order:-1 flip. */
   .hero__media{max-width:440px;margin:8px auto 0;align-self:auto}
