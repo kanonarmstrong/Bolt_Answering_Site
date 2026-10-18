@@ -1,7 +1,6 @@
-/* AFMBP-2265 — the Reviews carousel starts when the section is on screen: its first frame is a
-   stop with Gus's card, so that card is what a visitor arriving at the section sees, and each
-   later card comes with the middle row's next stop. Until then everything waits at its first
-   frame (review-carousel.css); once started it keeps running. */
+/* AFMBP-2265 / 2310 — the Reviews cards start when the section is on screen: the first one is
+   Gus's, so his card is what a visitor arriving at the section sees. Until then every card waits
+   at its first frame (review-carousel.css); once started they keep running. */
 (function () {
   var sec = document.getElementById('reviews');
   if (!sec) return;

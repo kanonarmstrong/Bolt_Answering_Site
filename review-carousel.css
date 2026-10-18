@@ -1,154 +1,86 @@
 /* ============================================================
-   REVIEWS — AFMBP-2250, AFMBP-2265, AFMBP-2267, AFMBP-2269, AFMBP-2283, AFMBP-2284, AFMBP-2285,
-   AFMBP-2299
-   The owner's review-card carousel (Design artifact "Review Carousel Loop": a 2000x404 frame,
-   transparent, pure CSS) plays over the section background, and during each of the middle
-   row's stops one of the four Figma quote cards (2709:2696, 2709:2736, 2709:2716, 2709:2756 =
-   Quote 1-4) grows in at the center of the screen with a small bounce, holds, and shrinks away.
-   Nothing moves until the section is on screen (review-carousel.js adds .reviews--on), so the
-   first stop, Gus's card, is what a visitor arriving at the section sees.
-   ============================================================ */
+   REVIEWS — AFMBP-2310 (the owner's simpler design; before it: AFMBP-2250, 2265, 2267, 2269, 2283,
+   2284, 2285, 2299)
+   Figma 2251:139 (desktop, 1920x277) and 2778:3435 (mobile, 402x300): "Trusted by pros across the
+   country" over a US-map outline on the dark photo band, and one quote card at a time growing in
+   with a small bounce, holding, and shrinking away — to the right of the title on desktop, below it
+   on phones. Nothing moves until the section is on screen (review-carousel.js adds .reviews--on),
+   so the first card, Gus's, is what a visitor arriving at the section sees.
 
-/* ===== Review carousel: one row (the owner removed the top and bottom rows, AFMBP-2299), right to
-   left, 31.8s seamless loop: it moves 1017px in 1.11s (~947 px/s, eased start/stop), then stops
-   6.85s for a quote card, x4. Cards are 434x93 with an 18px gap (452px pitch); the loop distance
-   is a whole number of cards, so the animation restarts invisibly. If you change card
-   width/gap, update the px values below. */
+   Everything is placed in Figma pixels: --u is one Figma pixel, set on the stage (.reviews__inner).
+     desktop: the title + card group (1481x277, centered), --u <= 1px so it keeps 24px from the
+              page edges (1440: 0.94);
+     phones:  the 402x300 mobile frame, --u = the screen's width / 402, at most 1.5px (tablets).
+   ============================================================ */
 
 /* ===== Background, every width (owner: zoomed in 20% on phones, AFMBP-2283, then "desktop too",
    AFMBP-2285): the photo (1920x1280) keeps its cover size from before the section got shorter
    (the full width, or the old full height where that's bigger), zoomed in 20% and centered, so
-   the shorter section crops it instead of shrinking it (1728px wide at 1440, 943px at 390). */
-.reviews { background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto; }
+   the shorter section crops it instead of shrinking it. The overlay is Figma's 77% black. */
+.reviews { padding: 0; background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto; }
+.reviews__overlay { background: rgba(0, 0, 0, 0.77); }
 
-/* ===== Section height on desktop (owner): 30% shorter than the 404px frame plus styles.css's
-   clamp(60px, 7vw, 90px) padding (AFMBP-2269), then 20% shorter again (AFMBP-2299): 584 -> 409
-   -> 327px at 1440. The row and the quote card stay centered; the frame's empty top and bottom
-   are cropped (the row takes y 156-249 of its 404px), and the card's 120% peak still clears the
-   How It Works phone that pokes up into the bottom of the section. Phones and tablets: see the
-   next block. */
-@media (min-width: 1024px) {
-  .reviews { padding: 0; }
-  .reviews__inner { min-height: calc(0.56 * (404px + 2 * clamp(60px, 7vw, 90px))); }
+/* ===== The stage: the Figma frame (mobile) or the title + card group (desktop) =====
+   It forms no stacking layer of its own (z-index auto, not styles.css's 1), so the cards can sit
+   above the How It Works band below it: see .rq-list. */
+.reviews__inner {
+  --u: min(1px, calc((100cqw - 48px) / 1481));
+  position: relative; z-index: auto;
+  display: block; max-width: none; min-height: 0;
+  width: calc(1481 * var(--u)); height: calc(277 * var(--u));
+  margin: 0 auto; padding: 0;
 }
 
-/* ===== Section height on phones and tablets (owner, AFMBP-2283): 30% shorter as well (524 ->
-   367px on a phone) with no card resized: where the mobile quote card at its 120% peak (430.8
-   Figma px, --u as in .rq below) plus 24px above and below needs more, the section stops there
-   (479px at 768). */
-@media (max-width: 1023px) {
-  .reviews { padding: 0; }
-  .reviews__inner {
-    min-height: max(calc(0.7 * (404px + 2 * clamp(60px, 7vw, 90px))),
-                    calc(430.8 * min(1px, calc((100cqw - 2 * var(--pad)) / 589.2)) + 48px));
-  }
+/* The US-map outline (white at 33%), placed as in Figma and cropped by the section (.reviews
+   overflow): only the band's slice of it shows, behind the title and the card. */
+.rv-map {
+  position: absolute; pointer-events: none; max-width: none;
+  left: calc(-249.98 * var(--u)); top: calc(-97.04 * var(--u));
+  width: calc(1853.97 * var(--u)); height: calc(1045.04 * var(--u));
 }
 
-.rc {
-  --card-w: 434px;
-  --card-h: 93px;
-  --gap: 18px;
-  --card-opacity: 0.5;
-  --ease-in: cubic-bezier(0.3333, 0, 0.6667, 0.3333);   /* quadratic ease-in  */
-  --ease-out: cubic-bezier(0.3333, 0.6667, 0.6667, 1);  /* quadratic ease-out */
-
-  /* The 2000px design frame, centered on the page and vertically in the section; the section
-     crops it at the page edges (.reviews overflow), evenly on both sides. */
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 2000px;
-  height: 404px;
-  margin: -202px 0 0 -1000px;
-  pointer-events: none;
+/* "Trusted by pros / across the country": white Inter, "Trusted" in yellow Permanent Marker, in
+   the font's own mixed case (no uppercase: the marker's lowercase are the small capitals Figma
+   draws). Centered over x 209 of the group. Placed to match the glyphs Figma draws, not its text
+   box: the lines sit Inter's own line height apart (Figma 48px; the 79.5px it lists is the
+   marker's, which therefore takes no line height here), and line 1 keeps Figma's trailing space
+   after "pros" (the &nbsp;), which sets it 6.5px left of line 2. */
+.rv-title {
+  position: absolute; left: calc(209 * var(--u)); top: calc(108 * var(--u)); transform: translateX(-50%);
+  margin: 0; white-space: nowrap; text-align: center;
+  font-family: var(--font); font-weight: 400; color: #fff;
+  font-size: calc(40 * var(--u)); line-height: calc(48 * var(--u));
 }
-.rc-sprite { position: absolute; width: 0; height: 0; }
+.rv-title__hl { font-family: var(--marker); font-weight: 400; color: #fcbd11; font-size: calc(69 * var(--u)); line-height: 0; }
 
-/* the row keeps the design's middle line (y 156-249 in the frame) */
-.rc-row { position: absolute; left: 0; width: 100%; height: var(--card-h); }
-.rc-row--2 { top: 156px; }
+/* ===== Quote cards (Figma Quote 1 2776:3354: 919x196, white, 12px radius) =====
+   One card at a time, 919x196 at x 562 of the group, centered in the band:
 
-/* track: the negative left sets where the first full card sits (x=203) */
-.rc-track {
-  position: absolute; top: 0; margin: 0; padding: 0; list-style: none;
-  display: flex; gap: var(--gap);
-  will-change: transform;
-}
-.rc-track--2 { left: -249px; animation: rc-row2 31.84444s linear infinite; }
+     card:  Quote 1  Quote 2    Quote 3     Quote 4    (animation-delay = its turn's start)
+     turn:  0-7.96s  8.0-15.9s  15.9-23.9s  23.9-31.8s (from the section's start)
 
-/* stop 6.85s, then move 1.11s (owner, AFMBP-2299: 2x faster; 0.037s eased start/stop over the
-   same 17.4px), x4 = 31.84s. It starts on a stop, so the first quote shows the moment the section
-   starts. */
-@keyframes rc-row2 {
-  0%, 21.5108% { transform: translateX(-0.000px); animation-timing-function: var(--ease-in); }
-  21.6264% { transform: translateX(-17.431px); animation-timing-function: linear; }
-  24.8844% { transform: translateX(-999.569px); animation-timing-function: var(--ease-out); }
-  25%, 46.5108% { transform: translateX(-1017.000px); animation-timing-function: var(--ease-in); }
-  46.6264% { transform: translateX(-1034.431px); animation-timing-function: linear; }
-  49.8844% { transform: translateX(-2016.569px); animation-timing-function: var(--ease-out); }
-  50%, 71.5108% { transform: translateX(-2034.000px); animation-timing-function: var(--ease-in); }
-  71.6264% { transform: translateX(-2051.431px); animation-timing-function: linear; }
-  74.8844% { transform: translateX(-3033.569px); animation-timing-function: var(--ease-out); }
-  75%, 96.5108% { transform: translateX(-3051.000px); animation-timing-function: var(--ease-in); }
-  96.6264% { transform: translateX(-3068.431px); animation-timing-function: linear; }
-  99.8844% { transform: translateX(-4050.569px); animation-timing-function: var(--ease-out); }
-  100% { transform: translateX(-4068px); }
-}
+   In its turn a card fades in as it grows from 80% to 104% (0.075s-0.525s, eased out), settles
+   to 100% (to 0.775s) — the owner's "20% larger, then 5% smaller" bounce around the Figma size —
+   holds until 6.175s, and shrinks back to 80% as it fades (eased in): shown 6.7s, then 1.26s
+   before the next one.
 
-/* card: placeholder shapes, blank by design. */
-.rc-card {
-  position: relative; flex: 0 0 var(--card-w); height: var(--card-h);
-  background: #fff; border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  opacity: var(--card-opacity);
-}
-.rc-card > span { position: absolute; background: #dde1e5; }
-.rc-avatar { left: 17px;  top: 8px;   width: 89px;  height: 76px;  border-radius: 24px; }
-.rc-name   { left: 122px; top: 7.5px; width: 38px;  height: 10.5px; border-radius: 6px; }
-.rc-sub    { left: 122px; top: 26px;  width: 190px; height: 9.5px;  border-radius: 5px; }
-.rc-body   { left: 122px; top: 43px;  width: 300px; height: 40px;   border-radius: 9px; }
-
-/* stars (a wrapper span, so it must not inherit the placeholder grey) */
-.rc-card > .rc-stars {
-  left: 168.7px; top: 5.7px; height: 14px; width: auto; background: none;
-  display: flex; align-items: flex-end;
-}
-.rc-star { width: 13.4px; height: 13.4px; margin-right: 1.2px; flex: none; fill: #fbbd12; }
-.rc-star--sm { width: 10.4px; height: 10.4px; }   /* the "half" star on 4.5 ratings */
-
-/* Until review-carousel.js sees the section, everything waits at its first frame; without
-   JavaScript a <noscript> rule in index.html lets it run from page load instead. */
-.reviews:not(.reviews--on) .rc-track,
-.reviews:not(.reviews--on) .rq { animation-play-state: paused; }
-
-/* ===== Quote cards (Figma Quote 1-4: 919x196, white, 12px radius) =====
-   One card per stop of the middle row, centered on the screen:
-
-     stop:  0-6.85s  8.0-14.8s  15.9-22.8s  23.9-30.7s  (the row, above; from the section's start)
-     card:  Quote 1  Quote 2    Quote 3     Quote 4   (animation-delay = the stop's start)
-
-   Within its stop a card fades in as it grows from 92% to 120% (0.075s-0.525s, eased out),
-   settles back to 115% (to 0.775s) for a small bounce (owner: "20% larger", then "5% smaller"),
-   holds until 6.175s, and shrinks back to 92% as it fades (eased in), gone 0.075s before the row
-   moves: shown 6.7s (owner, AFMBP-2299: 2s longer), and 1.26s from one card to the next (half).
-   --u is one Figma pixel, smaller than 1px only where the 120% peak would leave the page. */
+   The list sits above the How It Works band (z-index 4 over its 3, hiw-phone.css; still under the
+   sticky header's 100): on desktop that band's 3D phone pokes up into this section, and between
+   about 1280px and 1440px wide it would otherwise draw over the card's bottom-left corner (up to
+   12px at the top of the bounce). The map and the title stay under the phone, as before. */
 .rq-list {
-  position: relative;
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  position: absolute; z-index: 4; left: calc(562 * var(--u)); top: calc(40.5 * var(--u));
+  display: grid; margin: 0; padding: 0; list-style: none;
 }
 .rq {
-  --u: min(1px, calc((100cqw - 48px) / 1102.8));   /* the 919px card at 120%, 24px inside the page */
-  --rq-s0: 0.92;
+  --rq-s0: 0.8;
   grid-area: 1 / 1;
   position: relative;
   width: calc(919 * var(--u));
   height: calc(196 * var(--u));
   background: #fff;
   border-radius: calc(12 * var(--u));
-  box-shadow: var(--shadow-quote);   /* 0 5px 7.5px rgba(0,0,0,.19), as in Figma */
+  box-shadow: 0 calc(5 * var(--u)) calc(7.5 * var(--u)) rgba(0, 0, 0, 0.19);
   opacity: 0;
   transform: scale(var(--rq-s0));
   animation: rq-pop 31.84444s linear infinite backwards;
@@ -165,11 +97,11 @@
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);      /* grows: eased out */
   }
   1.6486% {                            /* 0.525s: the top of the bounce */
-    opacity: 1; transform: scale(1.2);
+    opacity: 1; transform: scale(1.04348);
     animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);      /* settles: eased in and out */
   }
-  2.4337%, 19.3911% {                  /* 0.775s-6.175s: resting size */
-    opacity: 1; transform: scale(1.15);
+  2.4337%, 19.3911% {                  /* 0.775s-6.175s: the Figma size */
+    opacity: 1; transform: scale(1);
     animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);      /* shrinks: eased in */
   }
   21.2753%, 100% {                     /* 6.775s on: hidden */
@@ -177,7 +109,21 @@
   }
 }
 
-/* Figma geometry, card-relative, in Figma pixels (--u) */
+/* Until review-carousel.js sees the section, every card waits at its first frame; without
+   JavaScript a <noscript> rule in index.html lets them run from page load instead. */
+.reviews:not(.reviews--on) .rq { animation-play-state: paused; }
+
+/* Quote-mark watermarks (navy at 16%, Figma 2776:3384 / 2776:3382: the closing one is the opening
+   glyph mirrored), above the quote like in Figma. */
+.rq::before, .rq::after {
+  content: ""; position: absolute; z-index: 1; pointer-events: none;
+  background: no-repeat center / 100% 100%;
+}
+.rq::before { background-image: url("assets/reviews/quote-open.svg"); left: calc(216 * var(--u)); top: calc(85 * var(--u)); width: calc(58 * var(--u)); height: calc(48 * var(--u)); }
+.rq::after { background-image: url("assets/reviews/quote-close.svg"); left: calc(815 * var(--u)); top: calc(122 * var(--u)); width: calc(56 * var(--u)); height: calc(46 * var(--u)); transform: scaleX(-1); }
+
+/* Figma geometry, card-relative, in Figma pixels (--u). Quote 1 is Figma 2776:3354; Quotes 2-4
+   keep their earlier desktop photo and logo places until the owner draws them. */
 .rq__photo { position: absolute; display: block; object-fit: cover; }
 .rq--1 .rq__photo { left: calc(37 * var(--u)); top: calc(10 * var(--u)); width: calc(161 * var(--u)); height: calc(161 * var(--u)); border-radius: calc(41 * var(--u)); }
 .rq--2 .rq__photo { left: calc(17 * var(--u)); top: calc(16 * var(--u)); width: calc(189 * var(--u)); height: calc(160 * var(--u)); border-radius: calc(47 * var(--u)); }
@@ -185,66 +131,86 @@
 .rq--4 .rq__photo { left: calc(31 * var(--u)); top: calc(18 * var(--u)); width: calc(161 * var(--u)); height: calc(158 * var(--u)); border-radius: calc(34 * var(--u)); }
 
 .rq__who { position: absolute; inset: 0; }
-/* Name and stars share a row: the stars sit at Figma's x (354) unless the name is wider than
-   Figma's Roboto renders it (Macs and iPhones fall back to Inter), then 8px after it. The name
-   box starts at Figma's y (18; Quote 2: 15), middle-aligned with the stars (y 22). */
-.rq { --rq-name-top: 18; }
+/* Name and stars share a row: the stars sit at Figma's x unless the name is wider than Figma's
+   Roboto renders it (Macs and iPhones fall back to Inter), then a gap after it. */
+.rq {
+  --rq-x: 260; --rq-name-top: 18; --rq-name-h: 34; --rq-name-size: 26; --rq-name-lh: 20.8;
+  --rq-name-min: 86; --rq-name-gap: 8; --rq-stars-top: 22; --rq-stars-w: 105; --rq-stars-h: 21;
+}
 .rq--2 { --rq-name-top: 15; }
-.rq__head { position: absolute; left: calc(260 * var(--u)); top: calc(var(--rq-name-top) * var(--u)); margin: 0; display: flex; align-items: flex-start; }
+.rq__head { position: absolute; left: calc(var(--rq-x) * var(--u)); top: calc(var(--rq-name-top) * var(--u)); margin: 0; display: flex; align-items: flex-start; }
 .rq__name {
-  min-width: calc(86 * var(--u)); height: calc(34 * var(--u)); margin-right: calc(8 * var(--u));
+  min-width: calc(var(--rq-name-min) * var(--u)); height: calc(var(--rq-name-h) * var(--u)); margin-right: calc(var(--rq-name-gap) * var(--u));
   display: flex; align-items: center;
-  font-family: 'Roboto', var(--font); font-size: calc(26 * var(--u)); font-weight: 400; line-height: calc(20.8 * var(--u));
+  font-family: 'Roboto', var(--font); font-size: calc(var(--rq-name-size) * var(--u)); font-weight: 400; line-height: calc(var(--rq-name-lh) * var(--u));
   color: var(--navy); white-space: nowrap;
 }
-.rq__stars { display: block; flex: none; margin-top: calc((22 - var(--rq-name-top)) * var(--u)); width: calc(105 * var(--u)); height: calc(21 * var(--u)); }
+.rq__stars { display: block; flex: none; margin-top: calc((var(--rq-stars-top) - var(--rq-name-top)) * var(--u)); width: calc(var(--rq-stars-w) * var(--u)); height: calc(var(--rq-stars-h) * var(--u)); }
 .rq__meta {
-  position: absolute; left: calc(259.78 * var(--u)); top: calc(51 * var(--u)); width: calc(374 * var(--u)); margin: 0;
+  position: absolute; left: calc(259.78 * var(--u)); top: calc(51 * var(--u)); margin: 0; white-space: nowrap;
   font-family: var(--poppins); font-size: calc(14 * var(--u)); line-height: calc(21 * var(--u)); color: var(--gray);
 }
 .rq__logo { position: absolute; object-fit: contain; }
-.rq--1 .rq__logo { left: calc(618 * var(--u)); top: calc(20 * var(--u)); width: calc(251 * var(--u)); height: calc(30 * var(--u)); }
+.rq--1 .rq__logo { left: calc(605 * var(--u)); top: calc(28 * var(--u)); width: calc(268 * var(--u)); height: calc(32.11 * var(--u)); }
 .rq--2 .rq__logo { left: calc(798 * var(--u)); top: calc(20 * var(--u)); width: calc(71 * var(--u));  height: calc(55 * var(--u)); }
-.rq--3 .rq__logo { left: calc(694 * var(--u)); top: calc(20 * var(--u)); width: calc(175 * var(--u)); height: calc(33 * var(--u)); }
 .rq--4 .rq__logo { left: calc(689 * var(--u)); top: calc(20 * var(--u)); width: calc(179.785 * var(--u)); height: calc(20 * var(--u)); }
 
+/* The quote: navy Inter, one phrase in semibold (or, on Gus's desktop card, one word in the yellow
+   marker, which like the title's takes no line height so its line stays 30px like Figma's),
+   centered on y 129. A gap paragraph is a blank line (half a line on desktop). */
 .rq__text {
-  position: absolute; left: calc(260 * var(--u)); top: calc(129 * var(--u)); transform: translateY(-50%); margin: 0;
-  font-family: var(--font); font-size: calc(24 * var(--u)); line-height: calc(30 * var(--u)); color: var(--gray);
+  position: absolute; left: calc(260 * var(--u)); top: calc(129 * var(--u)); width: calc(613 * var(--u)); transform: translateY(-50%); margin: 0;
+  font-family: var(--font); font-size: calc(24 * var(--u)); line-height: calc(30 * var(--u)); color: var(--navy);
 }
 .rq__text p { margin: 0; }
-.rq__text strong { font-weight: 600; color: var(--navy); }
-.rq--1 .rq__text { width: calc(613 * var(--u)); }
-.rq--2 .rq__text { width: calc(631 * var(--u)); }
-.rq--3 .rq__text { width: calc(652 * var(--u)); }
-.rq--4 .rq__text { width: calc(652 * var(--u)); }
+.rq__text strong { font-weight: 600; }
+.rq__text .rq__gap { height: calc(15 * var(--u)); }
+.rq__mk { font-family: var(--marker); font-size: calc(40 * var(--u)); color: #fcbd11; line-height: 0; }
+.rq__m { display: none; }
 
-/* ===== Below 1024px the 919px card doesn't fit: the Figma mobile cards (Mobile Quote 1-4:
-   2709:2881, 2709:2817, 2709:2904, 2709:2932; 491x359), scaled evenly so the 120% peak just
-   fits the page's padding, with the same centered bounce. ===== */
+/* ===== Phones and tablets: the Figma mobile frame (2778:3435, 402x300) and Mobile Quote 1-4
+   (2778:3642, 2778:3795, 2778:3685, 2778:3726: 243.42x177.98), the title on top and the card
+   centered below it. ===== */
 @media (max-width: 1023px) {
-  .rq {
-    --u: min(1px, calc((100cqw - 2 * var(--pad)) / 589.2));   /* the 491px card at 120% */
-    width: calc(491 * var(--u));
-    height: calc(359 * var(--u));
+  .reviews__inner {
+    --u: min(1.5px, calc(100cqw / 402));
+    width: calc(402 * var(--u)); height: calc(300 * var(--u));
   }
-  .rq--1 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(161 * var(--u)); border-radius: calc(41 * var(--u)); }
-  .rq--2 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(189 * var(--u)); height: calc(160 * var(--u)); border-radius: calc(47 * var(--u)); }
-  .rq--3 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(167 * var(--u)); border-radius: calc(26 * var(--u)); }
-  .rq--4 .rq__photo { left: calc(31 * var(--u)); top: calc(16 * var(--u)); width: calc(161 * var(--u)); height: calc(158 * var(--u)); border-radius: calc(34 * var(--u)); }
-  .rq, .rq--2 { --rq-name-top: 14; }
-  .rq__head { left: calc(230 * var(--u)); }
-  .rq__name { min-width: calc(76 * var(--u)); }
-  .rq__meta { left: calc(230 * var(--u)); width: auto; white-space: nowrap; }
-  .rq--1 .rq__logo { left: calc(220 * var(--u)); top: calc(115 * var(--u)); width: calc(251 * var(--u)); height: calc(30 * var(--u)); }
-  .rq--2 .rq__logo { left: calc(300 * var(--u)); top: calc(91 * var(--u));  width: calc(117 * var(--u)); height: calc(91 * var(--u)); }
-  .rq--3 .rq__logo { left: calc(236 * var(--u)); top: calc(113 * var(--u)); width: calc(196 * var(--u)); height: calc(37 * var(--u)); }
-  .rq--4 .rq__logo { left: calc(222 * var(--u)); top: calc(117 * var(--u)); width: calc(225 * var(--u)); height: calc(25 * var(--u)); }
-  .rq .rq__text { left: calc(38 * var(--u)); top: calc(263 * var(--u)); width: calc(424 * var(--u)); }
+  .rv-map { left: calc(-325 * var(--u)); top: calc(-154.47 * var(--u)); width: calc(875.79 * var(--u)); height: calc(493.66 * var(--u)); }
+  .rv-title {
+    left: 50%; top: calc(32 * var(--u));
+    font-size: calc(18.895 * var(--u)); line-height: calc(22.87 * var(--u));
+  }
+  .rv-title__hl { font-size: calc(32.595 * var(--u)); }
+  .rq-list { left: calc(79.29 * var(--u)); top: calc(96.45 * var(--u)); }
+  .rq {
+    width: calc(243.42 * var(--u)); height: calc(177.98 * var(--u));
+    border-radius: calc(5.949 * var(--u));
+    box-shadow: 0 calc(2.479 * var(--u)) calc(3.718 * var(--u)) rgba(0, 0, 0, 0.19);
+    --rq-x: 114.03; --rq-name-top: 6.94; --rq-name-h: 16.856; --rq-name-size: 12.89; --rq-name-lh: 10.312;
+    --rq-name-min: 37.67; --rq-name-gap: 3.97; --rq-stars-top: 10.91; --rq-stars-w: 52.06; --rq-stars-h: 10.41;
+  }
+  .rq::before { left: calc(12.37 * var(--u)); top: calc(100.22 * var(--u)); width: calc(28.75 * var(--u)); height: calc(23.8 * var(--u)); }
+  .rq::after { left: calc(197.79 * var(--u)); top: calc(142.36 * var(--u)); width: calc(27.76 * var(--u)); height: calc(22.81 * var(--u)); }
+  .rq--1 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(80 * var(--u)); height: calc(80 * var(--u)); border-radius: calc(20.33 * var(--u)); }
+  .rq--2 .rq__photo { left: calc(17.85 * var(--u)); top: calc(7.93 * var(--u)); width: calc(98.69 * var(--u)); height: calc(83.26 * var(--u)); border-radius: calc(23.3 * var(--u)); }
+  .rq--3 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(85 * var(--u)); height: calc(88 * var(--u)); border-radius: calc(12.89 * var(--u)); }
+  .rq--4 .rq__photo { left: calc(24 * var(--u)); top: calc(13 * var(--u)); width: calc(80 * var(--u)); height: calc(78 * var(--u)); border-radius: calc(16.86 * var(--u)); }
+  .rq__meta { left: calc(114.03 * var(--u)); top: calc(25.29 * var(--u)); font-size: calc(6.941 * var(--u)); line-height: calc(10.411 * var(--u)); }
+  .rq--1 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58.5 * var(--u)); width: calc(114.52 * var(--u)); height: calc(13.88 * var(--u)); }
+  .rq--2 .rq__logo { left: calc(146 * var(--u)); top: calc(47.55 * var(--u)); width: calc(51 * var(--u)); height: calc(40 * var(--u)); }
+  .rq--4 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58 * var(--u)); width: calc(111.55 * var(--u)); height: calc(12.39 * var(--u)); }
+  .rq__text {
+    left: calc(23.8 * var(--u)); top: calc(130.39 * var(--u)); width: calc(205.25 * var(--u));
+    font-size: calc(11.898 * var(--u)); line-height: calc(14.398 * var(--u));
+  }
+  .rq--4 .rq__text { left: calc(24 * var(--u)); top: calc(130.5 * var(--u)); width: calc(208 * var(--u)); }
+  .rq__text .rq__gap { height: calc(14.398 * var(--u)); }
+  .rq__d { display: none; }
+  .rq__m { display: block; }
 }
 
-/* respect users who prefer less motion: the rows stand still and the quotes only fade */
+/* respect users who prefer less motion: the cards only fade */
 @media (prefers-reduced-motion: reduce) {
-  .rc-track { animation: none; }
   .rq { transform: none !important; }
 }

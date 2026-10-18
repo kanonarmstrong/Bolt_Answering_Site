@@ -46,8 +46,8 @@
   <link rel="stylesheet" href="demo.css?v=28" />
   <link rel="stylesheet" href="hiw-phone.css?v=10" />
   <link rel="stylesheet" href="hero-phone.css?v=4" />
-  <link rel="stylesheet" href="review-carousel.css?v=8" />
-  <noscript><style>.reviews .rc-track, .reviews .rq { animation-play-state: running !important; }</style></noscript>
+  <link rel="stylesheet" href="review-carousel.css?v=9" />
+  <noscript><style>.reviews .rq { animation-play-state: running !important; }</style></noscript>
   <!-- AFMBP-2113: fetch the 3D phone's code while the hero picture loads, at low
        priority so the picture (the page's largest paint) still goes first. -->
   <link rel="modulepreload" href="hero-phone.js?v=5" fetchpriority="low" />
@@ -141,47 +141,28 @@
   </section>
 
   <!-- ===================== REVIEWS ===================== -->
-  <!-- AFMBP-2250 / 2265 / 2284 / 2299: the owner's review-card carousel (one row since 2299,
-       31.8s loop; it stops 6.85s, then moves 1.1s) plays over the background, starting when the
-       section is on screen, and in each stop one Figma quote card (Quote 1-4) grows in at the
-       center with a small bounce and shrinks away. review-carousel.css + review-carousel.js. -->
+  <!-- AFMBP-2310: the owner's simpler Reviews (Figma 2251:139 desktop, 2778:3435 mobile): "Trusted
+       by pros across the country" over a US-map outline on the dark photo band, and one quote card
+       at a time (Quote 1-4) growing in with a small bounce and shrinking away, to the right of the
+       title on desktop and below it on phones; it starts when the section is on screen.
+       review-carousel.css + review-carousel.js. -->
   <section class="reviews" id="reviews" data-reveal>
     <div class="reviews__overlay" aria-hidden="true"></div>
     <div class="reviews__inner">
-      <div class="rc" aria-hidden="true">
-        <svg class="rc-sprite" width="0" height="0"><symbol id="rc-star" viewBox="0 0 24 24"><path d="M12 1.5l3.1 6.9 7.4.8-5.5 5 1.6 7.4L12 17.8 5.4 21.6 7 14.2 1.5 9.2l7.4-.8z"/></symbol></svg>
-        <div class="rc-row rc-row--2">
-          <ul class="rc-track rc-track--2">
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star rc-star--sm"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-            <li class="rc-card"><span class="rc-avatar"></span><span class="rc-name"></span><span class="rc-stars"><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg><svg class="rc-star"><use href="#rc-star"/></svg></span><span class="rc-sub"></span><span class="rc-body"></span></li>
-          </ul>
-        </div>
-      </div>
+      <img class="rv-map" src="assets/reviews/us-map.svg" width="1854" height="1045" alt="" decoding="async" loading="lazy" />
+      <h2 class="rv-title"><span class="rv-title__hl">Trusted</span> by pros&nbsp;<br />across the country</h2>
       <ul class="rq-list" aria-label="Reviews from pros">
         <li class="rq rq--1">
           <img class="rq__photo" src="assets/reviews/gus.webp" width="161" height="161" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Gus C.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
             <p class="rq__meta">General Contractor, Massachusetts</p>
-            <img class="rq__logo" src="assets/reviews/logo-cnj-construction.png" width="251" height="30" alt="CNJ Construction" loading="lazy" decoding="async" />
+            <img class="rq__logo" src="assets/reviews/logo-cnj-construction.png" width="268" height="32" alt="CNJ Construction" loading="lazy" decoding="async" />
           </div>
-          <blockquote class="rq__text"><p>I used to waste time meeting with clients who weren&rsquo;t serious. Bolt qualifies every caller upfront, so <strong>I only spend my time on real opportunities.</strong></p></blockquote>
+          <blockquote class="rq__text">
+            <p class="rq__d">Bolt qualifies every caller upfront, so I only spend my time on <span class="rq__mk">real</span> opportunities and don&rsquo;t waste time meeting with people that aren&rsquo;t serious!</p>
+            <p class="rq__m">Bolt qualifies every caller upfront, so I only spend time on real opportunities and <strong>don&rsquo;t meet with people that aren&rsquo;t serious</strong>!</p>
+          </blockquote>
         </li>
         <li class="rq rq--2">
           <img class="rq__photo" src="assets/reviews/bret.webp" width="189" height="160" alt="" loading="lazy" decoding="async" />
@@ -190,16 +171,21 @@
             <p class="rq__meta">General Contractor, Indiana</p>
             <img class="rq__logo" src="assets/reviews/logo-b-brooks-builders.png" width="71" height="55" alt="B. Brooks Builders" loading="lazy" decoding="async" />
           </div>
-          <blockquote class="rq__text"><p>Bolt answered 3 calls last week while I was on jobs. One turned into a project worth $2,800. <strong>The thing paid for itself in a day.</strong></p></blockquote>
+          <blockquote class="rq__text">
+            <p>Bolt answered 3 calls last week while I was working. One turned into a <strong>project worth $2,800!</strong></p>
+            <p class="rq__gap" aria-hidden="true"></p>
+            <p>The thing paid for itself in a day.</p>
+          </blockquote>
         </li>
         <li class="rq rq--3">
           <img class="rq__photo" src="assets/reviews/joe.webp" width="161" height="167" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Joe H.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
             <p class="rq__meta">Handyman, Florida</p>
-            <img class="rq__logo" src="assets/reviews/logo-jhs-handyman.png" width="175" height="33" alt="J&amp;HS Handyman" loading="lazy" decoding="async" />
           </div>
-          <blockquote class="rq__text"><p>My wife used to spend hours managing my calls and calendar. Now that Bolt handles our scheduling, she can <strong>focus on growing the business.</strong></p></blockquote>
+          <blockquote class="rq__text">
+            <p>My wife used to spend hours taking calls. Now Bolt handles the scheduling and she focuses on <strong>growing our business</strong>.</p>
+          </blockquote>
         </li>
         <li class="rq rq--4">
           <img class="rq__photo" src="assets/reviews/josh.webp" width="161" height="158" alt="" loading="lazy" decoding="async" />
@@ -208,7 +194,11 @@
             <p class="rq__meta">Handyman, California</p>
             <img class="rq__logo" src="assets/reviews/logo-jc-home-services.png" width="180" height="20" alt="JC Home Services, Inc." loading="lazy" decoding="async" />
           </div>
-          <blockquote class="rq__text"><p>I work in construction full-time, but I&rsquo;m building a business to make extra money on the side. Now, <strong>I can keep working and I know Bolt is going to book the job.</strong></p></blockquote>
+          <blockquote class="rq__text">
+            <p>I work full-time and am building a side business.</p>
+            <p class="rq__gap" aria-hidden="true"></p>
+            <p><strong>Bolt books the jobs and I keep working.</strong></p>
+          </blockquote>
         </li>
       </ul>
     </div>
