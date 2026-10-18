@@ -217,7 +217,8 @@ try {
   const STATE = `(() => {
     const r = (e) => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, cx: b.left + b.width / 2, cy: b.top + b.height / 2 }; };
     const cards = [...document.querySelectorAll('.rq')].map((q) => { const cs = getComputedStyle(q); return { o: +cs.opacity, r: r(q), t: cs.transform, w0: parseFloat(cs.width), h0: parseFloat(cs.height) }; });
-    return { cards, sec: r(document.querySelector('#reviews')), inner: r(document.querySelector('.reviews__inner')), title: r(document.querySelector('.rv-title')), vw: innerWidth, sw: document.documentElement.scrollWidth, sy: scrollY };
+    const title = document.querySelector('.rv-title');
+    return { cards, sec: r(document.querySelector('#reviews')), inner: r(document.querySelector('.reviews__inner')), title: title && r(title), vw: innerWidth, sw: document.documentElement.scrollWidth, sy: scrollY };
   })()`;
   const OPS = "[...document.querySelectorAll('.rq')].map((q) => +getComputedStyle(q).opacity)";
   // Card k's parts, relative to the card; the quote marks are its ::before / ::after.
@@ -297,13 +298,15 @@ try {
     ok(mp && F.map.every((v, j) => near(mp[j], U(v), 0.75)), `${w}: the map is at ${fb(mp)}, want ${fb(F.map.map(U))}`);
     // The title.
     const T = await ev(`(() => {
-      const h = document.querySelector('.rv-title'), hl = h.querySelector('.rv-title__hl'), cs = getComputedStyle(h), hs = getComputedStyle(hl);
+      const h = document.querySelector('.rv-title'), hl = h && h.querySelector('.rv-title__hl');
+      if (!h || !hl) return { tag: h ? h.tagName : 'none', text: h ? h.textContent : '', hl: '', font: '', lh: '', color: '', hlFont: '', hlLh: '', hlColor: '', hlCase: '' };
+      const cs = getComputedStyle(h), hs = getComputedStyle(hl);
       return { tag: h.tagName, text: h.textContent.replace(/\\s+/g, ' ').trim(), hl: hl.textContent, font: cs.fontFamily, size: parseFloat(cs.fontSize), lh: cs.lineHeight, color: cs.color, hlFont: hs.fontFamily, hlSize: parseFloat(hs.fontSize), hlLh: hs.lineHeight, hlColor: hs.color, hlCase: hs.textTransform };
     })()`);
     ok(T.tag === 'H2' && T.text === 'Trusted by pros across the country' && T.hl === 'Trusted', `${w}: the title is <${T.tag}> "${T.text}", highlighted "${T.hl}"`);
     ok(/Inter/.test(T.font) && T.color === 'rgb(255, 255, 255)' && near(T.size, U(F.title.size), 0.05) && near(parseFloat(T.lh), U(F.title.lh), 0.05), `${w}: the title is ${T.size}px/${T.lh} ${T.font.split(',')[0]} in ${T.color}, want ${U(F.title.size).toFixed(2)}px/${U(F.title.lh).toFixed(2)}px Inter in white`);
     ok(/Permanent Marker/.test(T.hlFont) && T.hlColor === 'rgb(252, 189, 17)' && near(T.hlSize, U(F.title.hl), 0.05) && T.hlLh === '0px' && T.hlCase === 'none', `${w}: "Trusted" is ${T.hlSize}px ${T.hlFont.split(',')[0]} in ${T.hlColor}, line-height ${T.hlLh}, ${T.hlCase}; want ${U(F.title.hl).toFixed(2)}px Permanent Marker in #fcbd11, no line height, mixed case`);
-    ok(near(L.title.cx - L.inner.x, U(F.title.cx), 0.75) && near(L.title.y - L.inner.y, U(F.title.top), 0.75), `${w}: the title is centered at x ${(L.title.cx - L.inner.x).toFixed(1)}, top ${(L.title.y - L.inner.y).toFixed(1)}; want ${U(F.title.cx).toFixed(1)}, ${U(F.title.top).toFixed(1)}`);
+    ok(L.title && near(L.title.cx - L.inner.x, U(F.title.cx), 0.75) && near(L.title.y - L.inner.y, U(F.title.top), 0.75), `${w}: the title is ${L.title ? `centered at x ${(L.title.cx - L.inner.x).toFixed(1)}, top ${(L.title.y - L.inner.y).toFixed(1)}` : 'missing'}; want ${U(F.title.cx).toFixed(1)}, ${U(F.title.top).toFixed(1)}`);
     // At u = 1 its glyphs land where Figma draws them.
     if (u === 1) {
       const clip = desk ? { x: Math.floor(L.inner.x) - 10, y: Math.round(L.inner.y + L.sy), width: 540, height: 277 } : { x: Math.floor(L.inner.x), y: Math.round(L.inner.y + L.sy), width: 402, height: 92 };
@@ -331,8 +334,8 @@ try {
       ok([c0, cp].every((c) => near(c.r.cx, cr.r.cx, 0.6) && near(c.r.cy, cr.r.cy, 0.6)), `${w}: card ${k + 1} grows around a fixed center (${c0.r.cx.toFixed(1)},${c0.r.cy.toFixed(1)} → ${cp.r.cx.toFixed(1)},${cp.r.cy.toFixed(1)} → ${cr.r.cx.toFixed(1)},${cr.r.cy.toFixed(1)})`);
       const top = cp.r.y - sp.sec.y, bottom = cp.r.y + cp.r.h - sp.sec.y;
       ok(cp.r.x >= -0.6 && cp.r.x + cp.r.w <= w + 0.6 && top >= -0.6 && bottom <= sp.sec.h + 0.6, `${w}: card ${k + 1} at its peak spans x ${cp.r.x.toFixed(1)}-${(cp.r.x + cp.r.w).toFixed(1)}, y ${top.toFixed(1)}-${bottom.toFixed(1)}; want inside the ${w}px page and the ${sp.sec.h.toFixed(1)}px section`);
-      const tb = sp.title, clear = desk ? cp.r.x >= tb.x + tb.w : cp.r.y >= tb.y + tb.h;
-      ok(clear, `${w}: card ${k + 1} at its peak ${desk ? `starts at x ${cp.r.x.toFixed(1)}, the title ends at ${(tb.x + tb.w).toFixed(1)}` : `starts at y ${cp.r.y.toFixed(1)}, the title ends at ${(tb.y + tb.h).toFixed(1)}`}`);
+      const tb = sp.title || { x: 0, y: 0, w: 0, h: 0 }, clear = sp.title && (desk ? cp.r.x >= tb.x + tb.w : cp.r.y >= tb.y + tb.h);
+      ok(clear, `${w}: card ${k + 1} at its peak ${desk ? `starts at x ${cp.r.x.toFixed(1)}, the title ends at ${(tb.x + tb.w).toFixed(1)}` : `starts at y ${cp.r.y.toFixed(1)}, the title ends at ${(tb.y + tb.h).toFixed(1)}`}${sp.title ? '' : ' (no title)'}`);
       // Every part inside the card (at rest).
       const P = await ev(PARTS(k));
       const inside = ['photo', 'name', 'stars', 'meta', 'logo', 'textBox'].filter((n) => P[n]).every((n) => P[n][0] >= -0.6 && P[n][1] >= -0.6 && P[n][0] + P[n][2] <= P.w + 0.6 && P[n][1] + P[n][3] <= P.h + 0.6);
