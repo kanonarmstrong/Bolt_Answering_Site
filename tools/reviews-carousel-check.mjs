@@ -195,7 +195,7 @@ try {
     const fullH = 404 + 2 * Math.min(90, Math.max(60, w * 0.07));
     const cardFloor = desktop ? 0 : 430.8 * Math.min(1, (w - 2 * pad) / 589.2) + 48;
     const share = desktop ? 0.56 : 0.7, wantH = Math.max(share * fullH, cardFloor);
-    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (${share * 100}% of ${fullH.toFixed(1)}${cardFloor > share * fullH ? `, raised to fit the card` : ''})`);
+    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (${Math.round(share * 100)}% of ${fullH.toFixed(1)}${cardFloor > share * fullH ? `, raised to fit the card` : ''})`);
     // Background, every width: the old cover size (the full width, or the full old height where
     // that's bigger) zoomed in 20%, so the shorter section crops it rather than shrinking it.
     const bg = await ev("getComputedStyle(document.querySelector('#reviews')).backgroundSize");
