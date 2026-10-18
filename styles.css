@@ -254,12 +254,11 @@ ul,ol{list-style:none}
   position:relative;
   background:url('assets/reviews-bg.jpg') center/cover no-repeat;
   padding:clamp(60px,7vw,90px) 0;
-  overflow:hidden;               /* AFMBP-2250: crops the 2000px carousel at the page edges */
-  container-type:inline-size;    /* the quote cards stay on the page (cqw, review-carousel.css) */
+  overflow:hidden;               /* crops the US-map outline at the section's edges (AFMBP-2310) */
+  container-type:inline-size;    /* review-carousel.css sizes the section from its width (cqw) */
 }
 .reviews__overlay{position:absolute;inset:0;background:rgba(0,0,0,.5)}
-/* One cell, at least the carousel's 404px: the band and the quote card are centered in it, and
-   the section's equal top/bottom padding centers it in the section. */
+/* The stage; review-carousel.css (AFMBP-2310) lays it out in Figma pixels and drops the padding. */
 .reviews__inner{
   position:relative;z-index:1;
   max-width:var(--maxw);margin:0 auto;padding:0 var(--pad);
