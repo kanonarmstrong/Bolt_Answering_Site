@@ -74,9 +74,9 @@ try {
     const { requestId, request } = msg.params; const u = new URL(request.url);
     if (u.hostname === '127.0.0.1') {
       if (u.pathname.includes('/vendor/three-0.169.0/')) seen.threeLocal++;
-      return send('Fetch.continueRequest', { requestId });
+      return send('Fetch.continueRequest', { requestId }).catch(() => {});
     }
-    const reply = (body, type, code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') });
+    const reply = (body, type, code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') }).catch(() => {});
     if (u.hostname === 'cdn.jsdelivr.net') { seen.jsdelivr++; return reply(vendorThree, 'text/javascript'); } // keeps the page working under NC=jsdelivr
     if (u.hostname === 'bolt-staging.fly.dev') return reply('{"ok":true}', 'application/json');
     return reply('', 'text/plain'); // Google, Meta, Streamable, anything else: nothing leaves

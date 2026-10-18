@@ -87,7 +87,7 @@ try {
   const served = { meta: 0, config: 0, gtag: 0 };
   const ingest = [];
   const CORS = [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' }];
-  const reply = (requestId, body, type = 'application/json', code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') });
+  const reply = (requestId, body, type = 'application/json', code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') }).catch(() => {});
   const bodyOf = (r) => r.postData || (r.postDataEntries || []).map((e) => Buffer.from(e.bytes || '', 'base64').toString('utf8')).join('');
   ws.addEventListener('message', async (m) => {
     const msg = JSON.parse(m.data);
@@ -100,7 +100,7 @@ try {
     }
     if (msg.method !== 'Fetch.requestPaused') return;
     const { requestId, request } = msg.params; const u = new URL(request.url); const host = u.hostname;
-    if (host === '127.0.0.1') return send('Fetch.continueRequest', { requestId });
+    if (host === '127.0.0.1') return send('Fetch.continueRequest', { requestId }).catch(() => {});
     if (isLibrary(u)) {
       if (/fbevents\.js$/.test(u.pathname)) served.meta++;
       if (u.pathname.startsWith('/signals/config/')) served.config++;
@@ -111,7 +111,7 @@ try {
     const body = bodyOf(request);
     sent.push({ via: 'fetch', url: request.url, body });
     if (host === 'bolt-staging.fly.dev') {
-      if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS });
+      if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }).catch(() => {});
       if (u.pathname === '/api/public/analytics/events') { try { ingest.push(...JSON.parse(body).events.map((e) => e.event_type)); } catch {} return reply(requestId, '{"ok":true}'); }
       if (u.pathname === '/api/demo/otp/send' || u.pathname === '/api/demo/otp/verify') return reply(requestId, '{"ok":true}');
       if (u.pathname === '/api/demo/token') return reply(requestId, '{"token":"tok"}');
