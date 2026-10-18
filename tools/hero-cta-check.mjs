@@ -74,9 +74,9 @@ try {
     if (msg.id && pending.has(msg.id)) { const { res, rej } = pending.get(msg.id); pending.delete(msg.id); msg.error ? rej(new Error(msg.error.message)) : res(msg.result); return; }
     if (msg.method !== 'Fetch.requestPaused') return;
     const { requestId, request } = msg.params;
-    if (new URL(request.url).hostname === '127.0.0.1') return send('Fetch.continueRequest', { requestId });
-    if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS });
-    return send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from('{}').toString('base64') });
+    if (new URL(request.url).hostname === '127.0.0.1') return send('Fetch.continueRequest', { requestId }).catch(() => {});
+    if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }).catch(() => {});
+    return send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from('{}').toString('base64') }).catch(() => {});
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });

@@ -72,7 +72,7 @@ try {
   const send = (method, params = {}) => new Promise((res, rej) => { const id = nextId++; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params })); });
   const log = { gtag: 0, fbevents: 0, thirdParty: [], ingest: [], errors: [] };
   const CORS = [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' }];
-  const reply = (requestId, body, type = 'application/json', code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') });
+  const reply = (requestId, body, type = 'application/json', code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') }).catch(() => {});
   ws.addEventListener('message', async (m) => {
     const msg = JSON.parse(m.data);
     if (msg.id && pending.has(msg.id)) { const { res, rej } = pending.get(msg.id); pending.delete(msg.id); msg.error ? rej(new Error(msg.error.message)) : res(msg.result); return; }
@@ -86,7 +86,7 @@ try {
     if (/facebook\.com$/.test(host)) { log.thirdParty.push(request.url + ' ' + body); return reply(requestId, '', 'text/plain'); }
     if (host === 'app.boltanswering.com') return reply(requestId, '<!doctype html><title>app</title>', 'text/html');
     if (host === 'bolt-staging.fly.dev') {
-      if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS });
+      if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }).catch(() => {});
       if (u.pathname === '/api/public/analytics/events') { try { log.ingest.push(...JSON.parse(body).events.map((e) => e.event_type)); } catch {} return reply(requestId, '{"ok":true}'); }
       if (u.pathname === '/api/demo/otp/send' || u.pathname === '/api/demo/otp/verify') return reply(requestId, '{"ok":true}');
       if (u.pathname === '/api/demo/token') return reply(requestId, '{"token":"tok"}');
@@ -94,7 +94,7 @@ try {
       if (u.pathname.startsWith('/api/demo/recap/')) return reply(requestId, JSON.stringify({ status: 'completed', transcript: [{ speaker: 'assistant', text: 'Hi, thanks for calling.' }, { speaker: 'caller', text: 'My AC is out.' }] }));
       return reply(requestId, '{}');
     }
-    return send('Fetch.continueRequest', { requestId });
+    return send('Fetch.continueRequest', { requestId }).catch(() => {});
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });

@@ -96,7 +96,7 @@ async function scenario({ name, steps, pre = '', automated = false, id = TEST_ID
     if (m.method === 'Fetch.requestPaused') {
       const meta = m.params.request.url.startsWith('https://connect.facebook.net/');
       if (meta) fbeventsLoads++;
-      await send('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200, responseHeaders: [{ name: 'content-type', value: meta ? 'text/javascript' : 'text/html' }], body: Buffer.from(meta ? FBEVENTS : '<p>stub</p>').toString('base64') }, sessionId);
+      await send('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200, responseHeaders: [{ name: 'content-type', value: meta ? 'text/javascript' : 'text/html' }], body: Buffer.from(meta ? FBEVENTS : '<p>stub</p>').toString('base64') }, sessionId).catch(() => {});
     }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
   };

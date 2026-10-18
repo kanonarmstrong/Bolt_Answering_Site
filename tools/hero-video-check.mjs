@@ -86,9 +86,9 @@ try {
     if (msg.method !== 'Fetch.requestPaused' || msg.sessionId) return;
     const { requestId, request } = msg.params;
     const host = new URL(request.url).hostname;
-    if (host === '127.0.0.1' || (LIVE && (host === 'streamable.com' || host.endsWith('.streamable.com')))) return send('Fetch.continueRequest', { requestId });
-    if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS });
-    return send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from('{}').toString('base64') });
+    if (host === '127.0.0.1' || (LIVE && (host === 'streamable.com' || host.endsWith('.streamable.com')))) return send('Fetch.continueRequest', { requestId }).catch(() => {});
+    if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }).catch(() => {});
+    return send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from('{}').toString('base64') }).catch(() => {});
   });
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Network.setCacheDisabled', { cacheDisabled: true });
