@@ -1,30 +1,29 @@
-// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 / 2284 / 2285 — the home page's Reviews section: the owner's review-card carousel over
-// the background (3 rows, 28.9s loop: row 2 stops 5s then moves 2.22s, four times; rows 1 and 3
-// half size), one Figma quote card per stop (Quote 1-4) that grows in at the center of the
-// screen with a small bounce and shrinks away, and nothing moving until the section is on screen.
-// Drives the page's own CSS animations frame by frame (document.getAnimations(), the way the
-// owner's carousel video was rendered) at 1440x900, 1280x800, 768x1024 and 390x844, and checks:
+// AFMBP-2250 / 2265 / 2267 / 2269 / 2283 / 2284 / 2285 / 2299 — the home page's Reviews section: the
+// owner's review-card carousel over the background (one row since 2299, 31.8s loop: it stops 6.85s
+// then moves 1.11s, four times), one Figma quote card per stop (Quote 1-4) that grows in at the
+// center of the screen with a small bounce and shrinks away, and nothing moving until the section
+// is on screen. Drives the page's own CSS animations frame by frame (document.getAnimations(), the
+// way the owner's carousel video was rendered) at 1440x900, 1280x800, 768x1024 and 390x844:
 //   - start: with the section off screen everything waits at its first frame; once it's on
 //     screen Gus's card (the first stop) appears within a second;
 //   - layout: the 2000x404 band and the card are centered in the section (to 1px), the page
 //     doesn't scroll sideways, each card stays 24px (desktop) or the page padding (phones)
-//     inside the page, and inside the section, even at the top of its bounce; the section is 70%
-//     of 404 + 2 x clamp(60px, 7vw, 90px) (409 at 1440, 367 at 390), but below 1024px never
-//     shorter than the quote card's peak + 24px above and below (479 at 768); on desktop the
-//     card's peak stays 40px+ clear of the How It Works phone poking up into the section; at
-//     every width the background is the old cover size zoomed in 20% (the section crops it);
-//   - rows: 1 and 3 have 217x46.5 cards 10px above and below row 2 (centers 122.75 / 282.25 in
-//     the band) and run at 610.2 and 711.9 px/s; row 2 has 434x93 cards on the design's line,
-//     moves at ~473.3 px/s and stands still through each stop;
-//   - timing, every 50ms over the loop: at most one card shows, and only while row 2 is stopped;
-//     card k is fully shown for its whole hold;
+//     inside the page, and inside the section, even at the top of its bounce; the section is
+//     56% of 404 + 2 x clamp(60px, 7vw, 90px) on desktop (327 at 1440) and 70% on phones (367 at
+//     390), but below 1024px never shorter than the quote card's peak + 24px above and below (479
+//     at 768); on desktop the card's peak stays 40px+ clear of the How It Works phone poking up
+//     into the section; at every width the background is the old cover size zoomed in 20%;
+//   - the row: just one (434x93 cards on the design's middle line), still through each stop and
+//     ~946.7 px/s while it moves;
+//   - timing, every 50ms over the loop: at most one card shows, and only while the row is
+//     stopped; card k is fully shown for its whole hold (0.775s-6.175s into its stop);
 //   - the bounce: 92% at the start, 120% at the top, 115% at rest (of the card's own size), and
 //     each card is the Figma 919x196 (desktop) or the Figma mobile 491x359, scaled to fit;
 //   - copy: names, trade lines, logos' alt and each quote word for word;
-//   - reduced motion: the rows don't move and the cards only fade.
+//   - reduced motion: the row doesn't move and the cards only fade.
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500 samples coarser.
-//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=fullsize | NC=nobounce | NC=rowgap | NC=tall | NC=mtall
-//      | NC=slow | NC=oldloop | NC=nozoom
+//      NC=late | NC=offcenter | NC=uncropped | NC=offset | NC=autostart | NC=nobounce | NC=tall | NC=mtall
+//      | NC=oldloop | NC=nozoom | NC=d80 | NC=tworows
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -47,25 +46,23 @@ const MUTATE = {
   // The section stops cropping the 2000px frame: the page scrolls sideways.
   uncropped: (f, s) => (f.endsWith('styles.css') ? s.replace('overflow:hidden;               /* AFMBP-2250', 'overflow:visible;               /* AFMBP-2250') : s),
   // Quote 2 sits off-center.
-  offset: (f, s) => css(f, s, '.rq--2 { animation-delay: 7.22222s; }', '.rq--2 { animation-delay: 7.22222s; margin-left: 40px; }'),
+  offset: (f, s) => css(f, s, '.rq--2 { animation-delay: 7.96111s; }', '.rq--2 { animation-delay: 7.96111s; margin-left: 40px; }'),
   // Everything runs from page load, before the section is on screen.
   autostart: (f, s) => css(f, s, '.reviews:not(.reviews--on) .rq { animation-play-state: paused; }', '.reviews:not(.reviews--on) .rq { animation-play-state: running; }'),
-  // Rows 1 and 3 keep full-size cards.
-  fullsize: (f, s) => css(f, s, '.rc-track--1 .rc-card, .rc-track--3 .rc-card { zoom: 0.5; }', ''),
   // No bounce: the card goes straight to its resting size.
   nobounce: (f, s) => css(f, s, 'opacity: 1; transform: scale(1.2);', 'opacity: 1; transform: scale(1.15);'),
-  // Rows 1 and 3 back on the design's lines, 50.25px from row 2 (before AFMBP-2267).
-  rowgap: (f, s) => css(f, s, '--row-gap: 10px;', '--row-gap: 50.25px;'),
   // The desktop section keeps its full height (before AFMBP-2269).
   tall: (f, s) => css(f, s, '@media (min-width: 1024px) {\n  .reviews { padding: 0; }', '@media (min-width: 99999px) {\n  .reviews { padding: 0; }'),
   // Phones and tablets keep their full height and the plain cover background (before AFMBP-2283).
   mtall: (f, s) => css(f, s, '@media (max-width: 1023px) {\n  .reviews { padding: 0; }', '@media (max-width: 1px) {\n  .reviews { padding: 0; }'),
   // The background back on plain cover at every width (before AFMBP-2283 / AFMBP-2285).
   nozoom: (f, s) => css(f, s, '.reviews { background-size: calc(1.2', '.reviews { --nozoom: calc(1.2'),
-  // Rows 1 and 3 at the old speed (before AFMBP-2284).
-  slow: (f, s) => css(f, css(f, s, 'animation: rc-row1 2.22222s', 'animation: rc-row1 3.33333s'), 'animation: rc-row3 2.22222s', 'animation: rc-row3 3.33333s'),
-  // Row 2 on the old 33.3s loop while the cards keep the new schedule (before AFMBP-2284).
-  oldloop: (f, s) => css(f, s, 'animation: rc-row2 28.88889s', 'animation: rc-row2 33.33333s'),
+  // The row on the old 28.9s loop while the cards keep the new schedule (before AFMBP-2299).
+  oldloop: (f, s) => css(f, s, 'animation: rc-row2 31.84444s', 'animation: rc-row2 28.88889s'),
+  // The desktop section back at 70% (before AFMBP-2299).
+  d80: (f, s) => css(f, s, 'min-height: calc(0.56 *', 'min-height: calc(0.7 *'),
+  // A second carousel row comes back (before AFMBP-2299 there were three).
+  tworows: (f, s) => (f.endsWith('index.html') ? s.replace('<div class="rc-row rc-row--2">', '<div class="rc-row rc-row--1"><ul class="rc-track rc-track--1"><li class="rc-card"></li></ul></div><div class="rc-row rc-row--2">') : s),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -76,9 +73,11 @@ const QUOTES = [
   { name: 'Joe H.', meta: 'Handyman, Florida', logo: 'J&HS Handyman', text: 'My wife used to spend hours managing my calls and calendar. Now that Bolt handles our scheduling, she can focus on growing the business.', strong: 'focus on growing the business.' },
   { name: 'Josh C.', meta: 'Handyman, California', logo: 'JC Home Services, Inc.', text: 'I work in construction full-time, but I’m building a business to make extra money on the side. Now, I can keep working and I know Bolt is going to book the job.', strong: 'I can keep working and I know Bolt is going to book the job.' },
 ];
-const LOOP = 260000 / 9;                           // 28.889s
-const STOPS = [0, 65 / 9, 130 / 9, 65 / 3];        // row 2's stops start (s); each lasts 5s
-const SPEED = { row1: 610.2, row2: 473.3, row3: 711.9 }; // px/s
+const STOP_LEN = 6.85, CYCLE = 6.85 + 10 / 9;       // the row stops 6.85s, then moves 1.11s
+const LOOP = 4 * CYCLE * 1000;                     // 31.844s
+const STOPS = [0, 1, 2, 3].map((k) => k * CYCLE); // the stops start (s)
+const CARD = { in: 75, peak: 525, rest: 775, out: 6175, gone: 6775 }; // ms into its stop
+const SPEED = 946.7;                               // px/s while the row moves
 const SIZES = [[1440, 900], [1280, 800], [768, 1024], [390, 844]];
 
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
@@ -149,10 +148,10 @@ try {
   const STATE = `(() => {
     const r = (e) => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height, cx: b.left + b.width / 2, cy: b.top + b.height / 2 }; };
     const tx = (e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).m41;
-    const rows = [1, 2, 3].map((n) => tx(document.querySelector('.rc-track--' + n)));
+    const row = tx(document.querySelector('.rc-track--2')), tracks = document.querySelectorAll('.rc-track').length;
     const cards = [...document.querySelectorAll('.rq')].map((q) => ({ o: +getComputedStyle(q).opacity, r: r(q), t: getComputedStyle(q).transform, w0: q.offsetWidth, h0: q.offsetHeight }));
     const rowCard = (n) => r(document.querySelector('.rc-track--' + n + ' .rc-card'));
-    return { rows, cards, card1: rowCard(1), card2: rowCard(2), card3: rowCard(3), sec: r(document.querySelector('#reviews')), inner: r(document.querySelector('.reviews__inner')), band: r(document.querySelector('.rc')), vw: innerWidth, sw: document.documentElement.scrollWidth };
+    return { row, tracks, cards, card2: rowCard(2), sec: r(document.querySelector('#reviews')), inner: r(document.querySelector('.reviews__inner')), band: r(document.querySelector('.rc')), vw: innerWidth, sw: document.documentElement.scrollWidth };
   })()`;
   const shot = async (file) => {
     if (!SHOTS) return;
@@ -171,12 +170,12 @@ try {
     await open(w, h, 'no-preference');
     await sleep(1500);
     const off = await ev(`(() => { const as = ${ANIMS}; return { n: as.length, paused: as.filter((a) => a.playState === 'paused').length, t: Math.max(...as.map((a) => +a.currentTime || 0)), o: +getComputedStyle(document.querySelector('.rq--1')).opacity, on: document.querySelector('#reviews').classList.contains('reviews--on') }; })()`);
-    ok(off.n === 7 && off.paused === 7 && off.t === 0 && off.o === 0 && !off.on, `${w}: before the section is on screen ${off.paused} of ${off.n} animations wait, furthest at ${off.t}ms, Gus at opacity ${off.o}`);
+    ok(off.n === 5 && off.paused === 5 && off.t === 0 && off.o === 0 && !off.on, `${w}: before the section is on screen ${off.paused} of ${off.n} animations wait, furthest at ${off.t}ms, Gus at opacity ${off.o}`);
     const imgs = await toSection();
     ok(imgs === 12, `${w}: ${imgs} of 12 quote images decoded`);
     await sleep(700);
     const on = await ev(`(() => { const as = ${ANIMS}; return { running: as.filter((a) => a.playState === 'running').length, o: +getComputedStyle(document.querySelector('.rq--1')).opacity }; })()`);
-    ok(on.running === 7 && on.o > 0.5, `${w}: after scrolling to the section ${on.running} of 7 animations run, Gus at opacity ${on.o.toFixed(2)}`);
+    ok(on.running === 5 && on.o > 0.5, `${w}: after scrolling to the section ${on.running} of 5 animations run, Gus at opacity ${on.o.toFixed(2)}`);
     // Copy.
     const copy = await ev(`[...document.querySelectorAll('.rq')].map((q) => ({ name: q.querySelector('.rq__name').textContent.trim(), meta: q.querySelector('.rq__meta').textContent.trim(), logo: q.querySelector('.rq__logo').alt, stars: q.querySelector('.rq__stars').alt, text: q.querySelector('.rq__text').textContent.replace(/\\s+/g, ' ').trim(), strong: q.querySelector('.rq__text strong').textContent.trim() }))`);
     ok(copy.length === 4, `${w}: ${copy.length} quote cards, want 4`);
@@ -195,19 +194,16 @@ try {
     // 1024px never less than the mobile card's peak (359 x 1.2 Figma px) + 24px above and below.
     const fullH = 404 + 2 * Math.min(90, Math.max(60, w * 0.07));
     const cardFloor = desktop ? 0 : 430.8 * Math.min(1, (w - 2 * pad) / 589.2) + 48;
-    const wantH = Math.max(0.7 * fullH, cardFloor);
-    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (70% of ${fullH.toFixed(1)}${cardFloor > 0.7 * fullH ? `, raised to fit the card` : ''})`);
+    const share = desktop ? 0.56 : 0.7, wantH = Math.max(share * fullH, cardFloor);
+    ok(near(L.sec.h, wantH, 0.6), `${w}: section is ${L.sec.h.toFixed(1)}px tall, want ${wantH.toFixed(1)} (${Math.round(share * 100)}% of ${fullH.toFixed(1)}${cardFloor > share * fullH ? `, raised to fit the card` : ''})`);
     // Background, every width: the old cover size (the full width, or the full old height where
     // that's bigger) zoomed in 20%, so the shorter section crops it rather than shrinking it.
     const bg = await ev("getComputedStyle(document.querySelector('#reviews')).backgroundSize");
     const bgW = parseFloat(bg), wantBgW = 1.2 * Math.max(w, 1.5 * fullH);
     ok(/^[\d.]+px auto$/.test(bg) && near(bgW, wantBgW, 0.6) && bgW / 1.5 >= L.sec.h && bgW >= w, `${w}: background-size is "${bg}", want ${wantBgW.toFixed(1)}px auto (1.2 x the old cover width), big enough to cover ${w}x${L.sec.h.toFixed(1)}`);
-    // Rows: card sizes and center lines.
-    ok(near(L.card1.w, 217, 0.5) && near(L.card1.h, 46.5, 0.5) && near(L.card3.w, 217, 0.5) && near(L.card3.h, 46.5, 0.5), `${w}: rows 1/3 cards are ${L.card1.w}x${L.card1.h} / ${L.card3.w}x${L.card3.h}, want 217x46.5`);
-    ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5), `${w}: row 2 cards are ${L.card2.w}x${L.card2.h}, want 434x93`);
-    ok(near(L.card1.cy - L.band.y, 122.75, 0.5) && near(L.card2.cy - L.band.y, 202.5, 0.5) && near(L.card3.cy - L.band.y, 282.25, 0.5), `${w}: row centers at ${(L.card1.cy - L.band.y).toFixed(2)} / ${(L.card2.cy - L.band.y).toFixed(2)} / ${(L.card3.cy - L.band.y).toFixed(2)}, want 122.75 / 202.5 / 282.25`);
-    const gap12 = L.card2.y - (L.card1.y + L.card1.h), gap23 = L.card3.y - (L.card2.y + L.card2.h);
-    ok(near(gap12, 10, 0.5) && near(gap23, 10, 0.5), `${w}: rows 1/3 sit ${gap12.toFixed(2)} / ${gap23.toFixed(2)}px from row 2, want 10`);
+    // The row: just one, 434x93 cards on the design's middle line.
+    ok(L.tracks === 1, `${w}: ${L.tracks} carousel rows, want 1 (the top and bottom rows are gone)`);
+    ok(near(L.card2.w, 434, 0.5) && near(L.card2.h, 93, 0.5) && near(L.card2.cy - L.band.y, 202.5, 0.5), `${w}: row cards are ${L.card2.w}x${L.card2.h} centered at ${(L.card2.cy - L.band.y).toFixed(2)}, want 434x93 at 202.5`);
     // Each card: the Figma size, centered, inside the page at the top of its bounce; the bounce.
     const base = desktop ? 919 : 491, baseH = desktop ? 196 : 359;
     const room = desktop ? w - 48 : w - 2 * pad;
@@ -215,7 +211,7 @@ try {
     for (let k = 0; k < 4; k++) {
       const S = STOPS[k] * 1000;
       const at = async (ms) => { await ev(SEEK(S + ms)); return (await ev(STATE)).cards[k]; };
-      const c0 = await at(150), cp = await at(600), cr = await at(2500), ce = await at(4850);
+      const c0 = await at(CARD.in), cp = await at(CARD.peak), cr = await at(2500), ce = await at(CARD.gone);
       ok(near(cr.w0, base * u, 0.6) && near(cr.h0, baseH * u, 0.6), `${w}: quote ${k + 1} is ${cr.w0}x${cr.h0} before scaling, want ${(base * u).toFixed(1)}x${(baseH * u).toFixed(1)}`);
       ok(near(c0.r.w / cr.w0, 0.92, 0.003) && near(cp.r.w / cr.w0, 1.2, 0.003) && near(cr.r.w / cr.w0, 1.15, 0.003), `${w}: quote ${k + 1} bounce ${(c0.r.w / cr.w0).toFixed(3)} → ${(cp.r.w / cr.w0).toFixed(3)} → ${(cr.r.w / cr.w0).toFixed(3)}, want 0.92 → 1.2 → 1.15`);
       for (const c of [c0, cp, cr, ce]) ok(near(c.r.cx, w / 2, 1) && near(c.r.cy, L.sec.cy, 1), `${w}: quote ${k + 1} centered at ${c.r.cx.toFixed(1)},${c.r.cy.toFixed(1)}; the screen's middle is ${w / 2}, the section's ${L.sec.cy.toFixed(1)}`);
@@ -228,11 +224,11 @@ try {
       if (desktop) ok(L.sec.h - bottom >= 40, `${w}: quote ${k + 1}'s peak ends ${(L.sec.h - bottom).toFixed(1)}px above the section's bottom, want 40+ (room for the How It Works phone)`);
     }
     console.log(`  section ${L.sec.w}x${L.sec.h.toFixed(1)} · band 2000x404 centered · card ${(base * u).toFixed(1)}x${(baseH * u).toFixed(1)}, at rest ${(base * u * 1.15).toFixed(1)}`);
-    // Speeds: rows 1 and 3 while row 2 stands still; row 2 mid-move.
-    await ev(SEEK(1000)); const a = await ev(STATE); await ev(SEEK(2000)); const b = await ev(STATE);
-    ok(near(a.rows[0] - b.rows[0], SPEED.row1, 4) && near(a.rows[2] - b.rows[2], SPEED.row3, 4) && near(a.rows[1], b.rows[1], 0.01), `${w}: rows move ${(a.rows[0] - b.rows[0]).toFixed(1)} / ${(a.rows[1] - b.rows[1]).toFixed(1)} / ${(a.rows[2] - b.rows[2]).toFixed(1)} px/s during a stop, want ${SPEED.row1} / 0 / ${SPEED.row3}`);
-    await ev(SEEK(6000)); const c = await ev(STATE); await ev(SEEK(7000)); const d = await ev(STATE);
-    ok(near(c.rows[1] - d.rows[1], SPEED.row2, 4), `${w}: row 2 moves ${(c.rows[1] - d.rows[1]).toFixed(1)} px/s between stops, want ${SPEED.row2}`);
+    // Speed: the row stands still through a stop and moves ~946.7 px/s between stops.
+    await ev(SEEK(1000)); const a = await ev(STATE); await ev(SEEK(6000)); const b = await ev(STATE);
+    ok(near(a.row, b.row, 0.01), `${w}: the row moves ${(a.row - b.row).toFixed(2)}px during a stop, want 0`);
+    await ev(SEEK(STOP_LEN * 1000 + 100)); const c = await ev(STATE); await ev(SEEK(STOP_LEN * 1000 + 900)); const d = await ev(STATE);
+    ok(near((c.row - d.row) / 0.8, SPEED, 4), `${w}: the row moves ${((c.row - d.row) / 0.8).toFixed(1)} px/s between stops, want ${SPEED}`);
     // Timing over the loop.
     let shown = 0, overlap = 0, moving = 0, holes = 0;
     const firstBad = [];
@@ -245,10 +241,10 @@ try {
         shown++;
         await ev(SEEK(ms + 40));
         const S2 = await ev(STATE);
-        if (!near(S2.rows[1], S.rows[1], 0.01)) { moving++; if (firstBad.length < 3) firstBad.push(`${ms.toFixed(0)}ms: card ${vis[0] + 1} up while row 2 moves`); }
+        if (!near(S2.row, S.row, 0.01)) { moving++; if (firstBad.length < 3) firstBad.push(`${ms.toFixed(0)}ms: card ${vis[0] + 1} up while row 2 moves`); }
       }
       // Hold: from the end of the bounce to the start of the shrink, the stop's card is fully shown.
-      const k = STOPS.findIndex((s) => ms >= s * 1000 + 850 && ms <= s * 1000 + 4250);
+      const k = STOPS.findIndex((s) => ms >= s * 1000 + CARD.rest && ms <= s * 1000 + CARD.out);
       if (k >= 0 && !(S.cards[k].o > 0.999 && vis.length === 1 && vis[0] === k)) { holes++; if (firstBad.length < 3) firstBad.push(`${ms.toFixed(0)}ms: card ${k + 1} opacity ${S.cards[k].o}`); }
     }
     ok(overlap === 0, `${w}: two cards at once at ${overlap} samples (${firstBad.join('; ')})`);
@@ -256,7 +252,7 @@ try {
     ok(holes === 0, `${w}: a card isn't fully shown during its hold at ${holes} samples (${firstBad.join('; ')})`);
     ok(shown > 16000 / STEP, `${w}: cards show at only ${shown} of ${Math.floor(LOOP / STEP) + 1} samples`);
     if (SHOTS) {
-      for (const [label, at] of [['moving', 6.1], ['grow', STOPS[1] + 0.35], ['peak', STOPS[1] + 0.6], ['rest', STOPS[1] + 2.5], ['shrink', STOPS[1] + 4.55]]) { await ev(SEEK(at * 1000)); await shot(`reviews-${w}-${label}.png`); }
+      for (const [label, at] of [['moving', STOP_LEN + 0.55], ['grow', STOPS[1] + 0.3], ['peak', STOPS[1] + CARD.peak / 1000], ['rest', STOPS[1] + 2.5], ['shrink', STOPS[1] + 6.475]]) { await ev(SEEK(at * 1000)); await shot(`reviews-${w}-${label}.png`); }
       for (let k = 0; k < 4; k++) { await ev(SEEK((STOPS[k] + 2.5) * 1000)); await shot(`reviews-${w}-quote${k + 1}.png`); }
     }
     // Reduced motion: rows stand still, cards only fade (and wait for the section too).
@@ -266,7 +262,7 @@ try {
     await ev(SEEK(2500));
     const R = await ev(STATE);
     const rowAnims = await ev("document.getAnimations().filter((a) => a.effect.target.classList.contains('rc-track')).length");
-    ok(rowAnims === 0 && R.rows.every((x) => x === 0), `${w}: reduced motion: ${rowAnims} row animations, rows at ${R.rows.join(', ')}`);
+    ok(rowAnims === 0 && R.row === 0, `${w}: reduced motion: ${rowAnims} row animations, the row at ${R.row}`);
     ok(R.cards[0].o > 0.999 && R.cards[0].t === 'none', `${w}: reduced motion: quote 1 opacity ${R.cards[0].o}, transform ${R.cards[0].t}`);
     await ev(SEEK(300));
     const R2 = await ev(STATE);
