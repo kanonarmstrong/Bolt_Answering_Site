@@ -42,11 +42,11 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
-  <link rel="stylesheet" href="styles.css?v=45" />
+  <link rel="stylesheet" href="styles.css?v=46" />
   <link rel="stylesheet" href="demo.css?v=28" />
   <link rel="stylesheet" href="hiw-phone.css?v=10" />
   <link rel="stylesheet" href="hero-phone.css?v=4" />
-  <link rel="stylesheet" href="review-carousel.css?v=11" />
+  <link rel="stylesheet" href="review-carousel.css?v=12" />
   <noscript><style>.reviews .rq { animation-play-state: running !important; }</style></noscript>
   <!-- AFMBP-2113: fetch the 3D phone's code while the hero picture loads, at low
        priority so the picture (the page's largest paint) still goes first. -->
@@ -142,7 +142,7 @@
 
   <!-- ===================== REVIEWS ===================== -->
   <!-- AFMBP-2310: the owner's simpler Reviews (Figma 2251:139 desktop, 2778:3435 mobile): "Trusted
-       by pros across the country" over a US-map outline on the dark photo band, and one quote card
+       by pros across the country" over a US-map outline on a dark band (no photo since AFMBP-2345), and one quote card
        at a time (Quote 1-4) growing in with a small bounce and shrinking away, to the right of the
        title on desktop and below it on phones; it starts when the section is on screen.
        review-carousel.css + review-carousel.js. -->
@@ -156,48 +156,44 @@
           <img class="rq__photo" src="assets/reviews/gus.webp" width="161" height="161" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Gus C.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
-            <p class="rq__meta">General Contractor, Massachusetts</p>
+            <p class="rq__meta"><span class="rq__trade">General Contractor</span><span class="rq__sep">, </span><span class="rq__state">Massachusetts</span></p>
             <img class="rq__logo" src="assets/reviews/logo-cnj-construction.png" width="268" height="32" alt="CNJ Construction" loading="lazy" decoding="async" />
           </div>
           <blockquote class="rq__text">
             <p class="rq__d">Bolt qualifies every caller upfront, so I only spend my time on <span class="rq__mk">real</span> opportunities and don&rsquo;t waste time meeting with people that aren&rsquo;t serious!</p>
-            <p class="rq__m">Bolt qualifies every caller upfront, so I only spend time on real opportunities and <strong>don&rsquo;t meet with people that aren&rsquo;t serious</strong>!</p>
+            <p class="rq__m">It qualifies every caller, so I only spend time on <strong class="rq__b">real opportunities</strong>!</p>
           </blockquote>
         </li>
         <li class="rq rq--2">
           <img class="rq__photo" src="assets/reviews/bret.webp" width="189" height="160" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Bret B.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
-            <p class="rq__meta">General Contractor, Indiana</p>
+            <p class="rq__meta"><span class="rq__trade">General Contractor</span><span class="rq__sep">, </span><span class="rq__state">Indiana</span></p>
             <img class="rq__logo" src="assets/reviews/logo-b-brooks-builders.png" width="71" height="55" alt="B. Brooks Builders" loading="lazy" decoding="async" />
           </div>
           <blockquote class="rq__text">
-            <p>Bolt answered 3 calls last week while I was working. One turned into a <strong>project worth $2,800!</strong></p>
-            <p class="rq__gap" aria-hidden="true"></p>
-            <p>The thing paid for itself in a day.</p>
+            <p>Bolt answered 3 calls last week. One turned into a <strong>project worth $2,800!</strong> It paid for itself in a day.</p>
           </blockquote>
         </li>
         <li class="rq rq--3">
           <img class="rq__photo" src="assets/reviews/joe.webp" width="161" height="167" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Joe H.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
-            <p class="rq__meta">Handyman, Florida</p>
+            <p class="rq__meta"><span class="rq__trade">Handyman</span><span class="rq__sep">, </span><span class="rq__state">Florida</span></p>
           </div>
           <blockquote class="rq__text">
-            <p>My wife used to spend hours taking calls. Now Bolt handles the scheduling and she focuses on <strong>growing our business</strong>.</p>
+            <p>My wife used to take calls. Now Bolt handles the calls and she focuses on <strong>growing our business</strong>.</p>
           </blockquote>
         </li>
         <li class="rq rq--4">
           <img class="rq__photo" src="assets/reviews/josh.webp" width="161" height="158" alt="" loading="lazy" decoding="async" />
           <div class="rq__who">
             <p class="rq__head"><span class="rq__name">Josh C.</span> <img class="rq__stars" src="assets/reviews/stars-5.svg" width="105" height="21" alt="Rated 5 out of 5" /></p>
-            <p class="rq__meta">Handyman, California</p>
+            <p class="rq__meta"><span class="rq__trade">Handyman</span><span class="rq__sep">, </span><span class="rq__state">California</span></p>
             <img class="rq__logo" src="assets/reviews/logo-jc-home-services.png" width="180" height="20" alt="JC Home Services, Inc." loading="lazy" decoding="async" />
           </div>
           <blockquote class="rq__text">
-            <p>I work full-time and am building a side business.</p>
-            <p class="rq__gap" aria-hidden="true"></p>
-            <p><strong>Bolt books the jobs and I keep working.</strong></p>
+            <p>I work full-time and am building a side business. <strong>Bolt books the jobs and I keep working.</strong></p>
           </blockquote>
         </li>
       </ul>

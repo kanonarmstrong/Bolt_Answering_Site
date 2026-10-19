@@ -19,11 +19,10 @@
    needs the room; the stage grows with the tallest card.
    ============================================================ */
 
-/* ===== Background, every width (owner: zoomed in 20% on phones, AFMBP-2283, then "desktop too",
-   AFMBP-2285): the photo (1920x1280) keeps its cover size from before the section got shorter
-   (the full width, or the old full height where that's bigger), zoomed in 20% and centered, so
-   the shorter section crops it instead of shrinking it. The overlay is Figma's 77% black. */
-.reviews { padding: 0; background-size: calc(1.2 * max(100vw, 1.5 * (404px + 2 * clamp(60px, 7vw, 90px)))) auto; }
+/* ===== Background, every width (AFMBP-2345, owner: "removed the background image"): no photo.
+   styles.css fills the section with #1E1E1E and Figma's 77% black overlay takes it to #070707; the
+   US-map outline is all that shows behind the title and the card. */
+.reviews { padding: 0; }
 .reviews__overlay { background: rgba(0, 0, 0, 0.77); }
 
 /* ===== The stage: the Figma frame (mobile) or the title + card group (desktop) =====
@@ -39,11 +38,12 @@
   margin: 0 auto; padding: calc(40.5 * var(--u)) 0;
 }
 
-/* The US-map outline (white at 33%), placed as in Figma and cropped by the section (.reviews
-   overflow): only the band's slice of it shows, behind the title and the card. */
+/* The US-map outline (white at 33%), cropped by the section (.reviews overflow). Desktop: centered
+   on the band (AFMBP-2345, owner: "the outline of the united states centered"); phones: Figma's
+   place (2778:3435). */
 .rv-map {
   position: absolute; pointer-events: none; max-width: none;
-  left: calc(-249.98 * var(--u)); top: calc(-97.04 * var(--u));
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: calc(1853.97 * var(--u)); height: calc(1045.04 * var(--u));
 }
 
@@ -182,8 +182,8 @@
 }
 .rq__text p { margin: 0; }
 .rq__text strong { font-weight: 600; }
-.rq__text .rq__gap { height: 0.7em; }
 .rq__mk { font-family: var(--marker); font-size: 1.6667em; color: #fcbd11; line-height: 0; }
+.rq__text .rq__b { font-weight: 700; }   /* Gus's phone quote: Figma sets "real opportunities" in Inter Bold */
 .rq__m { display: none; }
 
 /* ===== Phones and tablets: the Figma mobile frame (2778:3435, 402x300) and Mobile Quote 1-4
@@ -198,7 +198,7 @@
     width: calc(402 * var(--u)); min-height: calc(300 * var(--u));
     padding: calc(14 * var(--u)) 0 calc(25.57 * var(--u));
   }
-  .rv-map { left: calc(-325 * var(--u)); top: calc(-154.47 * var(--u)); width: calc(875.79 * var(--u)); height: calc(493.66 * var(--u)); }
+  .rv-map { left: calc(-325 * var(--u)); top: calc(-154.47 * var(--u)); transform: none; width: calc(875.79 * var(--u)); height: calc(493.66 * var(--u)); }
   .reviews .rv-title { position: relative; left: auto; top: auto; transform: none; }
   .rq-list { margin: calc(14 * var(--u)) 0 0; align-items: start; }   /* every card's top stays put */
   /* The quote between the photo (99.8 from the top) and 17 from the bottom, centered on Figma's
@@ -217,12 +217,23 @@
   .rq--2 .rq__photo { left: calc(17.85 * var(--u)); top: calc(7.93 * var(--u)); width: calc(98.69 * var(--u)); height: calc(83.26 * var(--u)); border-radius: calc(23.3 * var(--u)); }
   .rq--3 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(85 * var(--u)); height: calc(88 * var(--u)); border-radius: calc(12.89 * var(--u)); }
   .rq--4 .rq__photo { left: calc(24 * var(--u)); top: calc(13 * var(--u)); width: calc(80 * var(--u)); height: calc(78 * var(--u)); border-radius: calc(16.86 * var(--u)); }
-  .rq__meta { left: calc(114.03 * var(--u)); top: calc(25.29 * var(--u)); max-width: calc((243.42 - 114.03 - 14.37) * var(--u)); font-size: calc(6.941 * var(--u) + 2px); }
-  .rq--1 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58.5 * var(--u)); width: calc(114.52 * var(--u)); height: calc(13.88 * var(--u)); }
-  .rq--2 .rq__logo { left: calc(146 * var(--u)); top: calc(47.55 * var(--u)); width: calc(51 * var(--u)); height: calc(40 * var(--u)); }
+  /* AFMBP-2345 (Mobile Quote 1-4, 10-19): the trade over the state, Inter 10 / 9, no comma; the
+     stars at Figma's fixed place (x 161, y 9, 66.33 x 13.27; here from the name row at 114.03,
+     6.94, and free of the global img max-width, which would squeeze them to that row's width),
+     not after the name. */
+  .rq__meta { left: calc(114.03 * var(--u)); top: calc(25.29 * var(--u)); max-width: none; white-space: nowrap; }
+  .rq__meta .rq__trade, .rq__meta .rq__state { display: block; }
+  .rq__meta .rq__sep { display: none; }
+  .rq__trade { font-size: calc(10 * var(--u)); line-height: calc(10.411 * var(--u)); }
+  .rq__state { font-size: calc(9 * var(--u)); line-height: calc(13 * var(--u)); }
+  .rq__stars { position: absolute; margin: 0; max-width: none; left: calc((161 - 114.03) * var(--u)); top: calc((9 - 6.94) * var(--u)); width: calc(66.33 * var(--u)); height: calc(13.266 * var(--u)); }
+  .rq--1 .rq__logo { left: calc(114.03 * var(--u)); top: calc(68.5 * var(--u)); width: calc(114.52 * var(--u)); height: calc(13.88 * var(--u)); }
+  .rq--2 .rq__logo { left: calc(146 * var(--u)); top: calc(53.55 * var(--u)); width: calc(51 * var(--u)); height: calc(40 * var(--u)); }
   .rq--4 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58 * var(--u)); width: calc(111.55 * var(--u)); height: calc(12.39 * var(--u)); }
   .rq--4 { padding-left: calc(24 * var(--u)); padding-right: calc(11.42 * var(--u)); }
-  .rq__text .rq__gap { height: 1.4em; }
+  /* The quote at Figma's 12.5 (scaling with the frame like the rest of the card, AFMBP-2345: the
+     owner's phone cards replace AFMBP-2324's 18px here), normal line height; it fits Figma's card. */
+  .rq__text { font-size: calc(12.5 * var(--u)); line-height: normal; }
   .rq__d { display: none; }
   .rq__m { display: block; }
 }
