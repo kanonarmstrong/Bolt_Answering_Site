@@ -11,6 +11,12 @@
      desktop: the title + card group (1481x277, centered), --u <= 1px so it keeps 24px from the
               page edges (1440: 0.94);
      phones:  the 402x300 mobile frame, --u = the screen's width / 402, at most 1.5px (tablets).
+
+   AFMBP-2324 (owner): the title's type is the How It Works band title's ("More jobs. Less
+   hassle.": the band__title classes, so it follows that title's sizes at every width), and the
+   quotes are 18px / 1.4 like the cards' body text ("You worked your ass off all day..."). Text no
+   longer scales with --u, so each card is at least its Figma size and grows taller when its quote
+   needs the room; the stage grows with the tallest card.
    ============================================================ */
 
 /* ===== Background, every width (owner: zoomed in 20% on phones, AFMBP-2283, then "desktop too",
@@ -22,13 +28,15 @@
 
 /* ===== The stage: the Figma frame (mobile) or the title + card group (desktop) =====
    It forms no stacking layer of its own (z-index auto, not styles.css's 1), so the cards can sit
-   above the How It Works band below it: see .rq-list. */
+   above the How It Works band below it: see .rq-list. Desktop: the Figma band, 277 tall, with the
+   card list 40.5 from its top and bottom and centered between them; a card taller than Figma's
+   makes the band taller by as much. */
 .reviews__inner {
   --u: min(1px, calc((100cqw - 48px) / 1481));
   position: relative; z-index: auto;
-  display: block; max-width: none; min-height: 0;
-  width: calc(1481 * var(--u)); height: calc(277 * var(--u));
-  margin: 0 auto; padding: 0;
+  display: flex; align-items: center; max-width: none;
+  width: calc(1481 * var(--u)); min-height: calc(277 * var(--u)); height: auto;
+  margin: 0 auto; padding: calc(40.5 * var(--u)) 0;
 }
 
 /* The US-map outline (white at 33%), placed as in Figma and cropped by the section (.reviews
@@ -39,22 +47,21 @@
   width: calc(1853.97 * var(--u)); height: calc(1045.04 * var(--u));
 }
 
-/* "Trusted by pros / across the country": white Inter, "Trusted" in yellow Permanent Marker, in
-   the font's own mixed case (no uppercase: the marker's lowercase are the small capitals Figma
-   draws). Centered over x 209 of the group. Placed to match the glyphs Figma draws, not its text
-   box: the lines sit Inter's own line height apart (Figma 48px; the 79.5px it lists is the
-   marker's, which therefore takes no line height here), and line 1 keeps Figma's trailing space
-   after "pros" (the &nbsp;), which sets it 6.5px left of line 2. */
-.rv-title {
-  position: absolute; left: calc(209 * var(--u)); top: calc(108 * var(--u)); transform: translateX(-50%);
+/* "Trusted by pros / across the country" (AFMBP-2324): the type is the How It Works band
+   title's — the band__title / marker band__title__hl classes in index.html give it that title's
+   sizes at every width (hiw-phone.css) and "TRUSTED" in the marker's capitals like "MORE JOBS.".
+   This keeps the Reviews look: "Trusted" in yellow and inline, so the title stays two lines, and
+   its place: centered over x 209 of the group and in the band's height (desktop), centered on
+   top (phones). Line 1 keeps Figma's trailing space after "pros" (the &nbsp;). */
+.reviews .rv-title {
+  position: absolute; left: calc(209 * var(--u)); top: 50%; transform: translate(-50%, -50%);
   margin: 0; white-space: nowrap; text-align: center;
-  font-family: var(--font); font-weight: 400; color: #fff;
-  font-size: calc(40 * var(--u)); line-height: calc(48 * var(--u));
 }
-.rv-title__hl { font-family: var(--marker); font-weight: 400; color: #fcbd11; font-size: calc(69 * var(--u)); line-height: 0; }
+.reviews .rv-title .rv-title__hl { display: inline; margin: 0; color: #fcbd11; }
 
 /* ===== Quote cards (Figma Quote 1 2776:3354: 919x196, white, 12px radius) =====
-   One card at a time, 919x196 at x 562 of the group, centered in the band:
+   One card at a time, 919 wide and at least 196 tall (taller when its quote needs it), at x 562 of
+   the group, centered in the band:
 
      card:  Quote 1  Quote 2    Quote 3     Quote 4    (animation-delay = its turn's start)
      turn:  0-7.96s  8.0-15.9s  15.9-23.9s  23.9-31.8s (from the section's start)
@@ -69,15 +76,19 @@
    about 1280px and 1440px wide it would otherwise draw over the card's bottom-left corner (up to
    12px at the top of the bounce). The map and the title stay under the phone, as before. */
 .rq-list {
-  position: absolute; z-index: 4; left: calc(562 * var(--u)); top: calc(40.5 * var(--u));
-  display: grid; margin: 0; padding: 0; list-style: none;
+  position: relative; z-index: 4; margin: 0 0 0 calc(562 * var(--u)); padding: 0; list-style: none;
+  display: grid; align-items: center;
 }
 .rq {
   --rq-s0: 0.8;
   grid-area: 1 / 1;
   position: relative;
+  /* The quote is the card's one in-flow child, centered between the header (84 from the top)
+     and 22 from the bottom like Figma's (on y 129); a longer quote makes the card taller. */
+  display: flex; flex-direction: column; justify-content: center;
   width: calc(919 * var(--u));
-  height: calc(196 * var(--u));
+  min-height: calc(196 * var(--u));
+  padding: calc(84 * var(--u)) calc(46 * var(--u)) calc(22 * var(--u)) calc(260 * var(--u));
   background: #fff;
   border-radius: calc(12 * var(--u));
   box-shadow: 0 calc(5 * var(--u)) calc(7.5 * var(--u)) rgba(0, 0, 0, 0.19);
@@ -114,13 +125,14 @@
 .reviews:not(.reviews--on) .rq { animation-play-state: paused; }
 
 /* Quote-mark watermarks (navy at 16%, Figma 2776:3384 / 2776:3382: the closing one is the opening
-   glyph mirrored), above the quote like in Figma. */
+   glyph mirrored), above the quote like in Figma; the closing one keeps its distance from the
+   card's bottom, so it stays by the quote's end when the card grows. */
 .rq::before, .rq::after {
   content: ""; position: absolute; z-index: 1; pointer-events: none;
   background: no-repeat center / 100% 100%;
 }
 .rq::before { background-image: url("assets/reviews/quote-open.svg"); left: calc(216 * var(--u)); top: calc(85 * var(--u)); width: calc(58 * var(--u)); height: calc(48 * var(--u)); }
-.rq::after { background-image: url("assets/reviews/quote-close.svg"); left: calc(815 * var(--u)); top: calc(122 * var(--u)); width: calc(56 * var(--u)); height: calc(46 * var(--u)); transform: scaleX(-1); }
+.rq::after { background-image: url("assets/reviews/quote-close.svg"); left: calc(815 * var(--u)); bottom: calc(28 * var(--u)); width: calc(56 * var(--u)); height: calc(46 * var(--u)); transform: scaleX(-1); }
 
 /* Figma geometry, card-relative, in Figma pixels (--u). Quote 1 is Figma 2776:3354; Quotes 2-4
    keep their earlier desktop photo and logo places until the owner draws them. */
@@ -155,43 +167,47 @@
 .rq--2 .rq__logo { left: calc(798 * var(--u)); top: calc(20 * var(--u)); width: calc(71 * var(--u));  height: calc(55 * var(--u)); }
 .rq--4 .rq__logo { left: calc(689 * var(--u)); top: calc(20 * var(--u)); width: calc(179.785 * var(--u)); height: calc(20 * var(--u)); }
 
-/* The quote: navy Inter, one phrase in semibold (or, on Gus's desktop card, one word in the yellow
-   marker, which like the title's takes no line height so its line stays 30px like Figma's),
-   centered on y 129. A gap paragraph is a blank line (half a line on desktop). */
+/* The quote (AFMBP-2324): 18px / 1.4 navy Inter, the size of the cards' body text (.card__body,
+   styles.css) at every width; one phrase in semibold or, on Gus's desktop card, one word in the
+   yellow marker (Figma's 40:24, and no line height so its line keeps the others' spacing). A gap
+   paragraph is a blank line (half a line on desktop). */
 .rq__text {
-  position: absolute; left: calc(260 * var(--u)); top: calc(129 * var(--u)); width: calc(613 * var(--u)); transform: translateY(-50%); margin: 0;
-  font-family: var(--font); font-size: calc(24 * var(--u)); line-height: calc(30 * var(--u)); color: var(--navy);
+  position: relative; margin: 0;
+  font-family: var(--font); font-size: 18px; line-height: 1.4; color: var(--navy);
 }
 .rq__text p { margin: 0; }
 .rq__text strong { font-weight: 600; }
-.rq__text .rq__gap { height: calc(15 * var(--u)); }
-.rq__mk { font-family: var(--marker); font-size: calc(40 * var(--u)); color: #fcbd11; line-height: 0; }
+.rq__text .rq__gap { height: 0.7em; }
+.rq__mk { font-family: var(--marker); font-size: 1.6667em; color: #fcbd11; line-height: 0; }
 .rq__m { display: none; }
 
 /* ===== Phones and tablets: the Figma mobile frame (2778:3435, 402x300) and Mobile Quote 1-4
    (2778:3642, 2778:3795, 2778:3685, 2778:3726: 243.42x177.98), the title on top and the card
    centered below it. ===== */
 @media (max-width: 1023px) {
+  /* The title on top (14 down), the card 14 below it, 25.57 to the bottom like Figma's; the frame
+     is at least Figma's 300 tall and grows with the tallest card. */
   .reviews__inner {
     --u: min(1.5px, calc(100cqw / 402));
-    width: calc(402 * var(--u)); height: calc(300 * var(--u));
+    flex-direction: column; align-items: center;
+    width: calc(402 * var(--u)); min-height: calc(300 * var(--u));
+    padding: calc(14 * var(--u)) 0 calc(25.57 * var(--u));
   }
   .rv-map { left: calc(-325 * var(--u)); top: calc(-154.47 * var(--u)); width: calc(875.79 * var(--u)); height: calc(493.66 * var(--u)); }
-  .rv-title {
-    left: 50%; top: calc(32 * var(--u));
-    font-size: calc(18.895 * var(--u)); line-height: calc(22.87 * var(--u));
-  }
-  .rv-title__hl { font-size: calc(32.595 * var(--u)); }
-  .rq-list { left: calc(79.29 * var(--u)); top: calc(96.45 * var(--u)); }
+  .reviews .rv-title { position: relative; left: auto; top: auto; transform: none; }
+  .rq-list { margin: calc(14 * var(--u)) 0 0; align-items: start; }   /* every card's top stays put */
+  /* The quote between the photo (99.8 from the top) and 17 from the bottom, centered on Figma's
+     y 130.4 when it fits. */
   .rq {
-    width: calc(243.42 * var(--u)); height: calc(177.98 * var(--u));
+    width: calc(243.42 * var(--u)); min-height: calc(177.98 * var(--u));
+    padding: calc(99.8 * var(--u)) calc(14.37 * var(--u)) calc(17 * var(--u)) calc(23.8 * var(--u));
     border-radius: calc(5.949 * var(--u));
     box-shadow: 0 calc(2.479 * var(--u)) calc(3.718 * var(--u)) rgba(0, 0, 0, 0.19);
     --rq-x: 114.03; --rq-name-top: 6.94; --rq-name-h: 16.856; --rq-name-size: 12.89; --rq-name-lh: 10.312;
     --rq-name-min: 37.67; --rq-name-gap: 3.97; --rq-stars-top: 10.91; --rq-stars-w: 52.06; --rq-stars-h: 10.41;
   }
   .rq::before { left: calc(12.37 * var(--u)); top: calc(100.22 * var(--u)); width: calc(28.75 * var(--u)); height: calc(23.8 * var(--u)); }
-  .rq::after { left: calc(197.79 * var(--u)); top: calc(142.36 * var(--u)); width: calc(27.76 * var(--u)); height: calc(22.81 * var(--u)); }
+  .rq::after { left: calc(197.79 * var(--u)); bottom: calc(12.81 * var(--u)); width: calc(27.76 * var(--u)); height: calc(22.81 * var(--u)); }
   .rq--1 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(80 * var(--u)); height: calc(80 * var(--u)); border-radius: calc(20.33 * var(--u)); }
   .rq--2 .rq__photo { left: calc(17.85 * var(--u)); top: calc(7.93 * var(--u)); width: calc(98.69 * var(--u)); height: calc(83.26 * var(--u)); border-radius: calc(23.3 * var(--u)); }
   .rq--3 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(85 * var(--u)); height: calc(88 * var(--u)); border-radius: calc(12.89 * var(--u)); }
@@ -200,12 +216,8 @@
   .rq--1 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58.5 * var(--u)); width: calc(114.52 * var(--u)); height: calc(13.88 * var(--u)); }
   .rq--2 .rq__logo { left: calc(146 * var(--u)); top: calc(47.55 * var(--u)); width: calc(51 * var(--u)); height: calc(40 * var(--u)); }
   .rq--4 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58 * var(--u)); width: calc(111.55 * var(--u)); height: calc(12.39 * var(--u)); }
-  .rq__text {
-    left: calc(23.8 * var(--u)); top: calc(130.39 * var(--u)); width: calc(205.25 * var(--u));
-    font-size: calc(11.898 * var(--u)); line-height: calc(14.398 * var(--u));
-  }
-  .rq--4 .rq__text { left: calc(24 * var(--u)); top: calc(130.5 * var(--u)); width: calc(208 * var(--u)); }
-  .rq__text .rq__gap { height: calc(14.398 * var(--u)); }
+  .rq--4 { padding-left: calc(24 * var(--u)); padding-right: calc(11.42 * var(--u)); }
+  .rq__text .rq__gap { height: 1.4em; }
   .rq__d { display: none; }
   .rq__m { display: block; }
 }
