@@ -158,9 +158,14 @@
   color: var(--navy); white-space: nowrap;
 }
 .rq__stars { display: block; flex: none; margin-top: calc((var(--rq-stars-top) - var(--rq-name-top)) * var(--u)); width: calc(var(--rq-stars-w) * var(--u)); height: calc(var(--rq-stars-h) * var(--u)); }
+/* The trade, state line: Inter, 2px (2pt) larger than Figma's Poppins size (owner, AFMBP-2327). At
+   that size a long one ("General Contractor, Massachusetts") no longer fits on one line of a phone
+   card, so it wraps inside the card: on desktop before the logo (605), on phones at the quote's
+   right inset. */
 .rq__meta {
-  position: absolute; left: calc(259.78 * var(--u)); top: calc(51 * var(--u)); margin: 0; white-space: nowrap;
-  font-family: var(--poppins); font-size: calc(14 * var(--u)); line-height: calc(21 * var(--u)); color: var(--gray);
+  position: absolute; left: calc(259.78 * var(--u)); top: calc(51 * var(--u)); margin: 0;
+  max-width: calc((605 - 259.78 - 16) * var(--u));
+  font-family: var(--font); font-size: calc(14 * var(--u) + 2px); line-height: 1.5; color: var(--gray);
 }
 .rq__logo { position: absolute; object-fit: contain; }
 .rq--1 .rq__logo { left: calc(605 * var(--u)); top: calc(28 * var(--u)); width: calc(268 * var(--u)); height: calc(32.11 * var(--u)); }
@@ -212,7 +217,7 @@
   .rq--2 .rq__photo { left: calc(17.85 * var(--u)); top: calc(7.93 * var(--u)); width: calc(98.69 * var(--u)); height: calc(83.26 * var(--u)); border-radius: calc(23.3 * var(--u)); }
   .rq--3 .rq__photo { left: calc(18 * var(--u)); top: calc(8 * var(--u)); width: calc(85 * var(--u)); height: calc(88 * var(--u)); border-radius: calc(12.89 * var(--u)); }
   .rq--4 .rq__photo { left: calc(24 * var(--u)); top: calc(13 * var(--u)); width: calc(80 * var(--u)); height: calc(78 * var(--u)); border-radius: calc(16.86 * var(--u)); }
-  .rq__meta { left: calc(114.03 * var(--u)); top: calc(25.29 * var(--u)); font-size: calc(6.941 * var(--u)); line-height: calc(10.411 * var(--u)); }
+  .rq__meta { left: calc(114.03 * var(--u)); top: calc(25.29 * var(--u)); max-width: calc((243.42 - 114.03 - 14.37) * var(--u)); font-size: calc(6.941 * var(--u) + 2px); }
   .rq--1 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58.5 * var(--u)); width: calc(114.52 * var(--u)); height: calc(13.88 * var(--u)); }
   .rq--2 .rq__logo { left: calc(146 * var(--u)); top: calc(47.55 * var(--u)); width: calc(51 * var(--u)); height: calc(40 * var(--u)); }
   .rq--4 .rq__logo { left: calc(114.03 * var(--u)); top: calc(58 * var(--u)); width: calc(111.55 * var(--u)); height: calc(12.39 * var(--u)); }
