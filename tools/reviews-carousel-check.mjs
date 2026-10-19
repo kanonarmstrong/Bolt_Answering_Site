@@ -25,6 +25,8 @@
 //     Gus; mobile Quote 2, Bret) photo, name, stars, trade line, logo and quote marks at their Figma
 //     places (the closing mark from the card's bottom); the bounce (80% -> 104.3% -> 100%) around a
 //     fixed center; at its peak still inside the page and the section and clear of the title;
+//   - the trade line (AFMBP-2327): Inter at Figma's size + 2px, inside the card and clear of the photo,
+//     name, stars and logo (it wraps on phones);
 //   - copy: names, trade lines, logos (Joe has none) and each quote word for word with its emphasis —
 //     Gus's desktop and phone wordings each shown only at their size;
 //   - timing, every 50ms over the 31.8s loop (at 1440 and 390): at most one card shows; card k only
@@ -36,6 +38,7 @@
 //      samples coarser; SIZES=1440x900,390x844 runs only those sizes.
 //      NC=carousel | NC=overlay50 | NC=nomap | NC=autostart | NC=late | NC=nobounce | NC=cardpos | NC=tall
 //      | NC=phoneover | NC=figmatitle | NC=threelines | NC=smallquote | NC=fixedcard | NC=centered
+//      | NC=poppinsmeta | NC=nowrapmeta
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -81,6 +84,10 @@ const MUTATE = {
   fixedcard: ['review-carousel.css', 'width: calc(243.42 * var(--u)); min-height: calc(177.98 * var(--u));', 'width: calc(243.42 * var(--u)); height: calc(177.98 * var(--u)); min-height: 0;'],
   // Phone cards centered on each other instead of under the title: shorter cards' tops move.
   centered: ['review-carousel.css', 'align-items: start; }   /* every card', 'align-items: center; }   /* every card'],
+  // The trade line back in Figma's Poppins at Figma's size (before AFMBP-2327).
+  poppinsmeta: ['review-carousel.css', 'font-family: var(--font); font-size: calc(14 * var(--u) + 2px); line-height: 1.5; color: var(--gray);', 'font-family: var(--poppins); font-size: calc(14 * var(--u)); line-height: 1.5; color: var(--gray);'],
+  // The bigger trade line kept on one line on phones: it runs out of the card.
+  nowrapmeta: ['review-carousel.css', 'max-width: calc((243.42 - 114.03 - 14.37) * var(--u)); ', 'white-space: nowrap; '],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -107,13 +114,13 @@ const CARDS = [
 const FIG = {
   // Section - Reviews 2251:139: the title + card group 2776:3378 (1481x277) is the stage; the card list
   // sits 40.5 from its top and bottom.
-  d: { stage: [1481, 277], pad: 40.5, map: [-249.98, -97.04, 1853.97, 1045.04], titleCx: 209,
+  d: { stage: [1481, 277], pad: 40.5, metaSize: 14, map: [-249.98, -97.04, 1853.97, 1045.04], titleCx: 209,
     listX: 562, card: [919, 196], radius: 12, k: 0, // Quote 1 (Gus) 2776:3354:
     parts: { photo: [37, 10, 161, 161], name: [260, 18, 86, 8], stars: [354, 22, 105, 21], meta: [259.78, 51], logo: [605, 28, 268, 32.11], open: [216, 85, 58, 48], closeB: [815, 28, 56, 46] },
     text: { left: [260, 260, 260, 260], right: [46, 46, 46, 46], top: 84, bottom: 22, center: 129 } },
   // Section - Reviews 2778:3435: the 402x300 frame is the stage: the title 14 from the top, the cards 14
   // below it, 25.57 to the bottom.
-  m: { stage: [402, 300], titleTop: 14, gap: 14, bottom: 25.57, map: [-325, -154.47, 875.79, 493.66],
+  m: { stage: [402, 300], metaSize: 6.941, titleTop: 14, gap: 14, bottom: 25.57, map: [-325, -154.47, 875.79, 493.66],
     card: [243.42, 177.98], radius: 5.949, k: 1, // Mobile Quote 2 (Bret) 2778:3466:
     parts: { photo: [17.85, 7.93, 98.69, 83.26], name: [114.03, 6.94, 37.67, 3.97], stars: [155.67, 10.91, 52.06, 10.41], meta: [113.91, 25.29], logo: [146, 47.55, 51, 40], open: [12.37, 100.22, 28.75, 23.8], closeB: [197.79, 12.81, 27.76, 22.81] },
     text: { left: [23.8, 23.8, 23.8, 24], right: [14.37, 14.37, 14.37, 11.42], top: 99.8, bottom: 17, center: 130.39 } },
@@ -362,6 +369,18 @@ try {
       const qb = P.textBox, ft = F.text;
       ok(qb && near(qb[0], U(ft.left[k]), pad) && qb[0] + qb[2] <= P.w - U(ft.right[k]) + pad && qb[1] >= U(ft.top) - pad && qb[1] + qb[3] <= P.h - U(ft.bottom) + pad,
         `${w}: card ${k + 1}'s quote spans ${fb(qb)} in ${f1(P.w)}x${f1(P.h)}; want it from x ${f1(U(ft.left[k]))} to ${f1(U(ft.right[k]))} from the right, at least ${f1(U(ft.top))} from the top and ${f1(U(ft.bottom))} from the bottom`);
+      // The trade line (AFMBP-2327): Inter at Figma's size + 2px, clear of the photo, name, stars and logo.
+      // Its drawn lines (not its box, which is as wide as its wrap width) must stay clear of the name,
+      // stars and logo; Figma's own photo box already reaches under the text column.
+      const MT = await ev(`(() => {
+        const q = document.querySelectorAll('.rq')[${k}], e = q.querySelector('.rq__meta'), c = getComputedStyle(e), cr = q.getBoundingClientRect(), rg = document.createRange();
+        rg.selectNodeContents(e);
+        return { ff: c.fontFamily, fs: parseFloat(c.fontSize), lines: [...rg.getClientRects()].map((b) => [b.left - cr.left, b.top - cr.top, b.width, b.height]) };
+      })()`);
+      ok(/^"?Inter/.test(MT.ff) && near(MT.fs, U(F.metaSize) + 2, 0.05), `${w}: card ${k + 1}'s trade line is ${MT.fs}px ${MT.ff.split(',')[0]}, want ${f1(U(F.metaSize) + 2)}px Inter (Figma's ${f1(U(F.metaSize))} + 2)`);
+      const hit = (a, b) => a && b && a[0] < b[0] + b[2] - 0.5 && b[0] < a[0] + a[2] - 0.5 && a[1] < b[1] + b[3] - 0.5 && b[1] < a[1] + a[3] - 0.5;
+      const clash = ['name', 'stars', 'logo'].filter((n) => MT.lines.some((l) => hit(l, P[n])));
+      ok(MT.lines.length && clash.length === 0, `${w}: card ${k + 1}'s trade line (${MT.lines.length} line${MT.lines.length === 1 ? '' : 's'}: ${MT.lines.map(fb).join(' ')}) overlaps its ${clash.map((n) => `${n} ${fb(P[n])}`).join(', ') || '?'}`);
       if (qb && near(P.h, U(F.card[1]), 0.6)) ok(near(qb[1] + qb[3] / 2, U(ft.center), 1), `${w}: card ${k + 1}'s quote is centered on y ${f1(qb[1] + qb[3] / 2)}, want Figma's ${f1(U(ft.center))} (the card is Figma's height)`);
       // Figma's own card: every part at its Figma place.
       if (k === F.k) {

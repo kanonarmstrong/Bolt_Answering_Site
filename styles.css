@@ -65,10 +65,13 @@ ul,ol{list-style:none}
   transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
   white-space:nowrap;
 }
+/* The "Start my free 30-day trial" buttons (the only .btn--yellow) are the size of the "Talk to your
+   new assistant" button (.btn--blue, owner AFMBP-2327): its font size, padding and height, and at
+   least its width (that label is 12.4em of Inter 500, plus the padding). */
 .btn--yellow{
   background:var(--yellow);color:var(--navy);
-  font-size:clamp(13px,1.4vw,16px);
-  padding:0 20px;height:30px;box-shadow:var(--shadow-btn);
+  font-size:clamp(15px,1.4vw,16px);
+  padding:0 22px;height:49px;min-width:calc(12.4em + 44px);box-shadow:var(--shadow-btn);
 }
 .btn--blue{
   background:var(--blue);color:var(--offwhite);
@@ -275,7 +278,7 @@ ul,ol{list-style:none}
 }
 .band__copy{color:#fff;flex:1;text-align:center}
 .band__title{font-weight:400;font-size:clamp(28px,3vw,40px);line-height:1.15;margin-bottom:12px}
-.band__sub{color:rgba(255,255,255,.5);font-size:clamp(16px,1.35vw,25px);line-height:1.4;max-width:660px;margin:0 auto}
+.band__sub{color:rgba(255,255,255,.5);font-size:clamp(16px,1.1vw,20px);line-height:1.4;max-width:660px;margin:0 auto}   /* the pricing line's size (.section__sub--sm), AFMBP-2327 */
 .band .btn--blue{flex-shrink:0}
 
 /* ============================================================
@@ -366,6 +369,7 @@ ul,ol{list-style:none}
 /* Reduce gap between title and subtitle */
 .pricing .section__sub {
   margin-top: 0px; /* Reduces default top margin (adjust or use negative value like -8px if needed) */
+  color: var(--navy); /* "Our pros say it pays for itself…" in #180A53 (owner, AFMBP-2327) */
 }
 .pricing__title{
   font-weight:500;text-transform:capitalize;color:var(--navy);
@@ -518,7 +522,8 @@ ul,ol{list-style:none}
     display:inline-flex;
     position:fixed;right:16px;z-index:200;
     top:calc(76px + 10px);                       /* start: 10px below the header bar */
-    height:35px;font-weight:700;                  /* 5px taller + bolder than the base yellow btn */
+    /* the size of every trial button (AFMBP-2327: as the Talk button; no longer bold, so it is
+       exactly as wide) */
     transition:top .5s cubic-bezier(.34,.01,.2,1);
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
