@@ -138,7 +138,11 @@ const ct = (v) => ({ name: 'Content-Type', value: v });
 async function route(st, S, p) {
   const { requestId, request, resourceType, networkId } = p;
   const u = new URL(request.url), host = u.hostname;
-  const fulfill = (code, headers, body = '') => S('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: headers, body: Buffer.from(body).toString('base64') });
+  // Chrome rejects an answer to a request it has already finished or dropped (a navigation, a closed
+  // context): "Invalid InterceptionId." or "Invalid state for continueInterceptedRequest". That's the
+  // harness racing the page, not a page error, so it never reaches st.errors (AFMBP-2326; the other
+  // tools catch theirs the same way since AFMBP-2301).
+  const fulfill = (code, headers, body = '') => S('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: headers, body: Buffer.from(body).toString('base64') }).catch(() => {});
   const bodyOf = async () => {
     if (request.postData) return request.postData;
     if (request.postDataEntries) return request.postDataEntries.map((e) => Buffer.from(e.bytes || '', 'base64').toString('utf8')).join('');
@@ -174,7 +178,7 @@ async function route(st, S, p) {
     if (u.pathname === '/api/demo/call') return json(st.call);
     if (u.pathname.startsWith('/api/demo/recap/')) {
       st.recapChecks++;
-      if (st.recap === 'network') return S('Fetch.failRequest', { requestId, errorReason: 'InternetDisconnected' });
+      if (st.recap === 'network') return S('Fetch.failRequest', { requestId, errorReason: 'InternetDisconnected' }).catch(() => {});
       return json(st.recap);
     }
     if (u.pathname === '/api/demo/inbound/session') return json({ error: 'stubbed' }, 503);
