@@ -18,9 +18,8 @@
 //     "Trusted" in yellow, inline, on two lines; centered over x 209 and in the band's height (desktop)
 //     or centered 14 from the top (phones);
 //   - the quotes: desktop the size and line height of the cards' body text on the same page ("You
-//     worked your ass off all day…", AFMBP-2324), Gus's marker word at 40:24 of it; phones Figma's
-//     12.5 with a normal line height (AFMBP-2345), the cards exactly Figma's height; bold phrases
-//     semibold, Gus's phone one bold;
+//     worked your ass off all day…", AFMBP-2324); phones Figma's 12.5 with a normal line height
+//     (AFMBP-2345), the cards exactly Figma's height; bold phrases semibold, Gus's bold;
 //   - each card: Figma's width and at least Figma's height, every part inside it and the quote inside
 //     its padding (centered on Figma's line when the card is Figma's height); desktop at x 562 and
 //     centered in the band, phones centered 14 below the title; on Figma's own cards (desktop Quote 1,
@@ -29,8 +28,8 @@
 //     fixed center; at its peak still inside the page and the section and clear of the title;
 //   - the trade line: desktop Inter at Figma's size + 2px (AFMBP-2327); phones the trade over the state,
 //     Inter 10 / 9 (AFMBP-2345); inside the card, its drawn lines clear of the name, stars and logo;
-//   - copy: names, trade lines, logos (Joe has none) and each quote word for word with its emphasis —
-//     Gus's desktop and phone wordings each shown only at their size;
+//   - copy: names, trade lines, logos (Joe has none) and each quote word for word with its emphasis,
+//     the same at every width (the owner: "fix the desktop quotes"), with no marker word;
 //   - timing, every 50ms over the 31.8s loop (at 1440 and 390): at most one card shows; card k only
 //     from 0.075s to 6.775s into its turn, and fully from 0.775s to 6.175s;
 //   - desktop 1250-1500px (1440, 1280): the How It Works 3D phone, which pokes up into the section,
@@ -40,7 +39,7 @@
 //      samples coarser; SIZES=1440x900,390x844 runs only those sizes.
 //      NC=carousel | NC=overlay50 | NC=nomap | NC=autostart | NC=late | NC=nobounce | NC=cardpos | NC=tall
 //      | NC=phoneover | NC=figmatitle | NC=threelines | NC=smallquote | NC=fixedcard | NC=poppinsmeta
-//      | NC=bgphoto | NC=mapcorner | NC=bigquote | NC=starsflow | NC=onelinemeta
+//      | NC=bgphoto | NC=mapcorner | NC=bigquote | NC=starsflow | NC=onelinemeta | NC=oldgusquote
 //      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -96,19 +95,20 @@ const MUTATE = {
   starsflow: ['review-carousel.css', '  .rq__stars { position: absolute; margin: 0; max-width: none;', '  .rq__stars { position: static; margin: 0; max-width: none;'],
   // Phone trade and state on one line again.
   onelinemeta: ['review-carousel.css', '  .rq__meta .rq__trade, .rq__meta .rq__state { display: block; }', '  .rq__meta .rq__trade, .rq__meta .rq__state { display: inline; }'],
+  // Gus's card back at his old desktop wording, "real" in the marker (before "fix the desktop quotes").
+  oldgusquote: ['index.html', '<p>It qualifies every caller, so I only spend time on <strong class="rq__b">real opportunities</strong>!</p>', '<p>Bolt qualifies every caller upfront, so I only spend my time on <span class="rq__mk">real</span> opportunities and don&rsquo;t waste time meeting with people that aren&rsquo;t serious!</p>'],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
   if (!readFileSync(join(ROOT, MUTATE[NC][0]), 'utf8').includes(MUTATE[NC][1])) throw new Error(`NC ${NC}: its text is no longer in ${MUTATE[NC][0]}`);
 }
 
-// What each card says, typed here as plain text (Figma 2776:3354, and Mobile Quote 1-4 as re-drawn
-// 2026-10-19: 2778:3642, 2778:3795, 2778:3685, 2778:3726; Bret, Joe and Josh say the same on desktop).
-// Gus's quote has a desktop wording (one word in the marker) and a phone wording (a phrase in bold).
+// What each card says, typed here as plain text: Mobile Quote 1-4 as re-drawn 2026-10-19 (2778:3642,
+// 2778:3795, 2778:3685, 2778:3726). Every card says the same on desktop (the owner, 2026-10-19: "fix
+// the desktop quotes"; Gus's old desktop wording from 2776:3354 is gone). Gus's phrase is bold.
 const CARDS = [
   { name: 'Gus C.', meta: 'General Contractor, Massachusetts', logo: 'CNJ Construction',
-    d: { text: 'Bolt qualifies every caller upfront, so I only spend my time on real opportunities and don’t waste time meeting with people that aren’t serious!', strong: '', mk: 'real' },
-    m: { text: 'It qualifies every caller, so I only spend time on real opportunities!', strong: 'real opportunities', mk: '', weight: '700' } },
+    text: 'It qualifies every caller, so I only spend time on real opportunities!', strong: 'real opportunities', mk: '', weight: '700' },
   { name: 'Bret B.', meta: 'General Contractor, Indiana', logo: 'B. Brooks Builders',
     text: 'Bolt answered 3 calls last week. One turned into a project worth $2,800! It paid for itself in a day.', strong: 'project worth $2,800!', mk: '' },
   { name: 'Joe H.', meta: 'Handyman, Florida', logo: null,
@@ -292,7 +292,7 @@ try {
         mk: [...q.querySelectorAll('.rq__mk')].filter(shown).map((s) => s.textContent.trim() + ' / ' + getComputedStyle(s).fontFamily + ' / ' + getComputedStyle(s).color).join('|') };
     })`);
     CARDS.forEach((want, i) => {
-      const c = copy[i] || {}, v = want.d ? (desk ? want.d : want.m) : want;
+      const c = copy[i] || {}, v = want;
       ok(c.name === want.name && c.meta === want.meta && c.logo === want.logo && c.stars === 'Rated 5 out of 5', `${w}: card ${i + 1} is ${c.name} / ${c.meta} / logo ${c.logo} / ${c.stars}`);
       ok(c.text === v.text, `${w}: card ${i + 1} reads "${c.text}"`);
       ok(c.strong === v.strong, `${w}: card ${i + 1} sets "${c.strong}" in semibold, want "${v.strong}"`);
@@ -341,16 +341,14 @@ try {
       return { ref: rs ? { size: parseFloat(rs.fontSize), lh: parseFloat(rs.lineHeight) } : null,
         cards: [...document.querySelectorAll('.rq')].map((q) => ({
           ps: [...q.querySelectorAll('.rq__text p:not(.rq__gap)')].filter(shown).map((p) => { const c = getComputedStyle(p); return [parseFloat(c.fontSize), parseFloat(c.lineHeight), c.lineHeight]; }),
-          strong: [...q.querySelectorAll('.rq__text strong')].filter(shown).map((e) => getComputedStyle(e).fontWeight),
-          mk: [...q.querySelectorAll('.rq__mk')].filter(shown).map((e) => parseFloat(getComputedStyle(e).fontSize)) })) };
+          strong: [...q.querySelectorAll('.rq__text strong')].filter(shown).map((e) => getComputedStyle(e).fontWeight) })) };
     })()`);
     ok(Q.ref, `${w}: the "You worked…" card text to compare the quotes with is missing`);
     Q.cards.forEach((c, i) => {
-      const want = CARDS[i].d ? (desk ? CARDS[i].d : CARDS[i].m) : CARDS[i];
+      const want = CARDS[i];
       if (desk) ok(Q.ref && c.ps.length && c.ps.every(([sz, lh]) => near(sz, Q.ref.size, 0.05) && near(lh, Q.ref.lh, 0.05)), `${w}: card ${i + 1}'s quote is ${c.ps.map(([sz, lh]) => `${sz}px/${f1(lh)}px`).join(', ')}; the card text is ${Q.ref ? `${Q.ref.size}px/${f1(Q.ref.lh)}px` : 'missing'}`);
       else ok(c.ps.length && c.ps.every(([sz, , raw]) => near(sz, U(F.quote), 0.05) && raw === 'normal'), `${w}: card ${i + 1}'s quote is ${c.ps.map(([sz, , raw]) => `${sz}px/${raw}`).join(', ')}, want Figma's ${f1(U(F.quote))}px with a normal line height`);
       ok(c.strong.every((wt) => wt === (want.weight || '600')), `${w}: card ${i + 1}'s bold phrase is weight ${c.strong.join(', ')}, want ${want.weight || '600'}`);
-      ok(c.mk.every((sz) => Q.ref && near(sz, Q.ref.size * 1.6667, 0.1)), `${w}: card ${i + 1}'s marker word is ${c.mk.join(', ')}px, want ${Q.ref ? f1(Q.ref.size * 1.6667) : '?'} (Figma's 40:24 of the quote)`);
     });
 
     // Each card: Figma's width and at least Figma's height, its place at rest, the quote inside its

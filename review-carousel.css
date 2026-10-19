@@ -173,18 +173,16 @@
 .rq--4 .rq__logo { left: calc(689 * var(--u)); top: calc(20 * var(--u)); width: calc(179.785 * var(--u)); height: calc(20 * var(--u)); }
 
 /* The quote (AFMBP-2324): 18px / 1.4 navy Inter, the size of the cards' body text (.card__body,
-   styles.css) at every width; one phrase in semibold or, on Gus's desktop card, one word in the
-   yellow marker (Figma's 40:24, and no line height so its line keeps the others' spacing). A gap
-   paragraph is a blank line (half a line on desktop). */
+   styles.css); phones Figma's 12.5 (below). One phrase in semibold; Gus's in bold, as his phone card
+   draws it. Every card says the same at every width (AFMBP-2345: the owner, "fix the desktop
+   quotes"). */
 .rq__text {
   position: relative; margin: 0;
   font-family: var(--font); font-size: 18px; line-height: 1.4; color: var(--navy);
 }
 .rq__text p { margin: 0; }
 .rq__text strong { font-weight: 600; }
-.rq__mk { font-family: var(--marker); font-size: 1.6667em; color: #fcbd11; line-height: 0; }
-.rq__text .rq__b { font-weight: 700; }   /* Gus's phone quote: Figma sets "real opportunities" in Inter Bold */
-.rq__m { display: none; }
+.rq__text .rq__b { font-weight: 700; }   /* Gus: Figma sets "real opportunities" in Inter Bold */
 
 /* ===== Phones and tablets: the Figma mobile frame (2778:3435, 402x300) and Mobile Quote 1-4
    (2778:3642, 2778:3795, 2778:3685, 2778:3726: 243.42x177.98), the title on top and the card
@@ -234,8 +232,6 @@
   /* The quote at Figma's 12.5 (scaling with the frame like the rest of the card, AFMBP-2345: the
      owner's phone cards replace AFMBP-2324's 18px here), normal line height; it fits Figma's card. */
   .rq__text { font-size: calc(12.5 * var(--u)); line-height: normal; }
-  .rq__d { display: none; }
-  .rq__m { display: block; }
 }
 
 /* respect users who prefer less motion: the cards only fade */
