@@ -522,8 +522,8 @@ ul,ol{list-style:none}
     display:inline-flex;
     position:fixed;right:16px;z-index:200;
     top:calc(76px + 10px);                       /* start: 10px below the header bar */
-    /* the size of every trial button (AFMBP-2327: as the Talk button; no longer bold, so it is
-       exactly as wide) */
+    font-weight:700;                              /* bolder than the other trial buttons; the */
+    /* size of every one (AFMBP-2327: as the Talk button; the bold label fits its width) */
     transition:top .5s cubic-bezier(.34,.01,.2,1);
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;

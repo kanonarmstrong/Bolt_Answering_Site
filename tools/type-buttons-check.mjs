@@ -2,14 +2,14 @@
 // the support page, at 1920x1080, 1440x900, 1024x768, 800x900 and 390x844:
 //   - every "Start my free 30-day trial" button (.btn--yellow: the header's, the pricing section's and,
 //     on phones, the floating one) is the size of the page's "Talk to your new assistant" button
-//     (.btn--blue; on a page without one, the home page's at the same width): the same width, height,
-//     font size and weight;
+//     (.btn--blue; on a page without one, the home page's at the same width): the same width, height
+//     and font size (the floating one stays bold);
 //   - the pricing line ("Our pros say it pays for itself…") is #180A53;
 //   - home page: the band's subtitle ("See why pros hire our assistants…") is the pricing line's size;
 //   - the header's trial button stays inside the header bar and the window; on phones the floating one
 //     shows wherever the page has it (the support pages don't).
 // Run: node tools/type-buttons-check.mjs [siteRoot]
-//      NC=oldtrial | NC=boldfloat | NC=bandsub | NC=graysub — negative controls on the SERVED copy; each must FAIL.
+//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
@@ -27,8 +27,8 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 const MUTATE = {
   // The trial buttons back at their old 30px.
   oldtrial: ['styles.css', 'padding:0 22px;height:49px;min-width:calc(12.4em + 44px);box-shadow', 'padding:0 20px;height:30px;box-shadow'],
-  // The floating phone button bold again: wider than the Talk button.
-  boldfloat: ['styles.css', '    /* the size of every trial button (AFMBP-2327:', '    font-weight:700;\n    /* the size of every trial button (AFMBP-2327:'],
+  // The trial buttons without the Talk button's width: their own label is narrower.
+  nominwidth: ['styles.css', 'height:49px;min-width:calc(12.4em + 44px);box-shadow', 'height:49px;box-shadow'],
   // The band subtitle back at its old size.
   bandsub: ['styles.css', 'font-size:clamp(16px,1.1vw,20px);line-height:1.4;max-width:660px', 'font-size:clamp(16px,1.35vw,25px);line-height:1.4;max-width:660px'],
   // The pricing line back in gray.
@@ -114,7 +114,7 @@ try {
       else if (S.hasFloat) ok(S.trial.some((b) => /floating-cta/.test(b.cls)), `${where}: the floating trial button isn't shown on a phone`);
       if (ref) for (const b of S.trial) {
         const which = /nav__cta/.test(b.cls) ? 'header' : /floating-cta/.test(b.cls) ? 'floating' : 'pricing';
-        ok(near(b.w, ref.w, 0.6) && near(b.h, ref.h, 0.6) && near(b.fs, ref.fs, 0.05) && b.fw === ref.fw,
+        ok(near(b.w, ref.w, 0.6) && near(b.h, ref.h, 0.6) && near(b.fs, ref.fs, 0.05) && (which === 'floating' ? b.fw === '700' : b.fw === ref.fw),
           `${where}: the ${which} trial button is ${b.w.toFixed(1)}x${b.h.toFixed(1)} at ${b.fs}px weight ${b.fw}; "Talk to your new assistant" is ${ref.w.toFixed(1)}x${ref.h.toFixed(1)} at ${ref.fs}px weight ${ref.fw}`);
       }
       // The header's trial button stays inside the header bar and the window.
