@@ -1,24 +1,30 @@
-// AFMBP-2310 (before it: 2250 / 2265 / 2267 / 2269 / 2283 / 2284 / 2285 / 2299) — the home page's
-// Reviews section in the owner's simpler design (Figma 2251:139 desktop, 2778:3435 mobile): "Trusted by
-// pros across the country" over a US-map outline on the dark photo band, and one quote card at a time
-// (Quote 1-4) growing in with a small bounce, holding and shrinking away — right of the title on
-// desktop, below it on phones — with nothing moving until the section is on screen. Drives the page's
-// own CSS animations frame by frame (document.getAnimations()) at 1920x1080, 1440x900, 1280x800,
+// AFMBP-2310 / 2324 (before them: 2250 / 2265 / 2267 / 2269 / 2283 / 2284 / 2285 / 2299) — the home
+// page's Reviews section in the owner's simpler design (Figma 2251:139 desktop, 2778:3435 mobile):
+// "Trusted by pros across the country" over a US-map outline on the dark photo band, and one quote card
+// at a time (Quote 1-4) growing in with a small bounce, holding and shrinking away — right of the title
+// on desktop, below it on phones — with nothing moving until the section is on screen. Drives the
+// page's own CSS animations frame by frame (document.getAnimations()) at 1920x1080, 1440x900, 1280x800,
 // 1024x768, 768x1024, 402x874 and 390x844:
 //   - start: off screen every card waits at its first frame; on screen Gus's card shows within a second;
 //   - the old carousel is gone, the overlay is Figma's 77% black, and the map is drawn at its Figma
 //     place with the section cropping it (the page doesn't scroll sideways);
 //   - the stage, in Figma pixels times u: desktop u = min(1, (width - 48) / 1481), the 1481x277 title
-//     + card group, centered; phones u = min(1.5, width / 402), the 402x300 frame. The section is the
-//     stage's height (260.3 at 1440, 291 at 390, 450 at 768); the background is unchanged (the old
-//     cover size zoomed in 20%, AFMBP-2283 / 2285);
-//   - the title: its words, fonts, sizes and place and, at u = 1 (1920 and 402), its drawn glyphs
-//     within 1.5px of Figma's (the lines Inter's own line height apart, line 1 shifted left by Figma's
-//     trailing space after "pros");
-//   - each card: the Figma size and place, every part inside it; on Figma's own cards (desktop Quote 1,
-//     Gus; mobile Quote 2, Bret) every part — photo, name, stars, trade line, logo, quote, quote marks —
-//     at its Figma place; the bounce (80% -> 104.3% -> 100%) around a fixed center; at its peak still
-//     inside the page and the section and clear of the title;
+//     + card group, centered; phones u = min(1.5, width / 402), the 402x300 frame. It is at least that
+//     tall and grows with the tallest card (desktop: 40.5 above and below it; phones: the title 14 from
+//     the top, the card 14 below it, 25.57 to the bottom), and the section is its height. The
+//     background is unchanged (the old cover size zoomed in 20%, AFMBP-2283 / 2285);
+//   - the title (AFMBP-2324): its words, and the type of the How It Works band title on the same page
+//     ("More jobs. Less hassle.": the same sizes and line height, "Trusted" in the marker's case) with
+//     "Trusted" in yellow, inline, on two lines; centered over x 209 and in the band's height (desktop)
+//     or centered 14 from the top (phones);
+//   - the quotes (AFMBP-2324): the size and line height of the cards' body text on the same page
+//     ("You worked your ass off all day…"), the bold phrase semibold, Gus's marker word at 40:24 of it;
+//   - each card: Figma's width and at least Figma's height, every part inside it and the quote inside
+//     its padding (centered on Figma's line when the card is Figma's height); desktop at x 562 and
+//     centered in the band, phones centered 14 below the title; on Figma's own cards (desktop Quote 1,
+//     Gus; mobile Quote 2, Bret) photo, name, stars, trade line, logo and quote marks at their Figma
+//     places (the closing mark from the card's bottom); the bounce (80% -> 104.3% -> 100%) around a
+//     fixed center; at its peak still inside the page and the section and clear of the title;
 //   - copy: names, trade lines, logos (Joe has none) and each quote word for word with its emphasis —
 //     Gus's desktop and phone wordings each shown only at their size;
 //   - timing, every 50ms over the 31.8s loop (at 1440 and 390): at most one card shows; card k only
@@ -29,7 +35,8 @@
 // Run: node tools/reviews-carousel-check.mjs [siteRoot]      SHOTS=<dir> also saves frames; STEP=500
 //      samples coarser; SIZES=1440x900,390x844 runs only those sizes.
 //      NC=carousel | NC=overlay50 | NC=nomap | NC=autostart | NC=late | NC=nobounce | NC=cardpos | NC=tall
-//      | NC=oldtitle | NC=phoneover — negative controls on the SERVED copy; each must FAIL.
+//      | NC=phoneover | NC=figmatitle | NC=threelines | NC=smallquote | NC=fixedcard | NC=centered
+//      — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -59,13 +66,21 @@ const MUTATE = {
   // No bounce: the card grows straight to its Figma size.
   nobounce: ['review-carousel.css', 'opacity: 1; transform: scale(1.04348);', 'opacity: 1; transform: scale(1);'],
   // The desktop card off its Figma place.
-  cardpos: ['review-carousel.css', 'left: calc(562 * var(--u)); top: calc(40.5', 'left: calc(600 * var(--u)); top: calc(40.5'],
+  cardpos: ['review-carousel.css', 'position: relative; z-index: 4; margin: 0 0 0 calc(562 * var(--u));', 'position: relative; z-index: 4; margin: 0 0 0 calc(600 * var(--u));'],
   // The desktop section taller than Figma's.
-  tall: ['review-carousel.css', 'height: calc(277 * var(--u));', 'height: calc(327 * var(--u));'],
-  // The title's lines back 79.5px apart (the first build, before matching Figma's drawn glyphs).
-  oldtitle: ['review-carousel.css', 'font-size: calc(40 * var(--u)); line-height: calc(48 * var(--u));', 'font-size: calc(40 * var(--u)); line-height: calc(79.5 * var(--u));'],
+  tall: ['review-carousel.css', 'width: calc(1481 * var(--u)); min-height: calc(277 * var(--u));', 'width: calc(1481 * var(--u)); min-height: calc(327 * var(--u));'],
   // The cards back under the How It Works band: its phone draws over the card at 1280-1440.
-  phoneover: ['review-carousel.css', 'position: absolute; z-index: 4; left: calc(562', 'position: absolute; z-index: auto; left: calc(562'],
+  phoneover: ['review-carousel.css', 'position: relative; z-index: 4; margin: 0 0 0 calc(562', 'position: relative; z-index: auto; margin: 0 0 0 calc(562'],
+  // The title back at Figma's size instead of the band title's (before AFMBP-2324).
+  figmatitle: ['review-carousel.css', '.reviews .rv-title .rv-title__hl { display: inline; margin: 0; color: #fcbd11; }', '.reviews .rv-title .rv-title__hl { display: inline; margin: 0; color: #fcbd11; } .reviews .rv-title { font-size: calc(40 * var(--u)); }'],
+  // "Trusted" on its own line, as the band title's desktop rule would put it.
+  threelines: ['review-carousel.css', '.reviews .rv-title .rv-title__hl { display: inline;', '.reviews .rv-title .rv-title__hl { display: block;'],
+  // The quotes back at Figma's size (before AFMBP-2324).
+  smallquote: ['review-carousel.css', 'font-family: var(--font); font-size: 18px; line-height: 1.4; color: var(--navy);', 'font-family: var(--font); font-size: calc(24 * var(--u)); line-height: 1.25; color: var(--navy);'],
+  // Phone cards back at a fixed Figma height: the bigger quotes spill out.
+  fixedcard: ['review-carousel.css', 'width: calc(243.42 * var(--u)); min-height: calc(177.98 * var(--u));', 'width: calc(243.42 * var(--u)); height: calc(177.98 * var(--u)); min-height: 0;'],
+  // Phone cards centered on each other instead of under the title: shorter cards' tops move.
+  centered: ['review-carousel.css', 'align-items: start; }   /* every card', 'align-items: center; }   /* every card'],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -86,20 +101,22 @@ const CARDS = [
   { name: 'Josh C.', meta: 'Handyman, California', logo: 'JC Home Services, Inc.',
     text: 'I work full-time and am building a side business. Bolt books the jobs and I keep working.', strong: 'Bolt books the jobs and I keep working.', mk: '' },
 ];
-// Figma geometry in Figma pixels (times u on the page). Boxes are [x, y, w, h]; text is [x, center y, w];
-// the name is [x, y, the room Figma's Roboto name takes, the gap before the stars].
+// Figma geometry in Figma pixels (times u on the page). Boxes are [x, y, w, h]; the closing quote mark is
+// [x, from the card's bottom, w, h]; the name is [x, y, the room Figma's Roboto name takes, the gap before
+// the stars]; text is the quote's insets in the card (per card where they differ) and Figma's center line.
 const FIG = {
-  // Section - Reviews 2251:139: the title + card group 2776:3378 (1481x277) is the stage.
-  d: { stage: [1481, 277], map: [-249.98, -97.04, 1853.97, 1045.04], title: { cx: 209, top: 108, size: 40, lh: 48, hl: 69 },
-    list: [562, 40.5], card: [919, 196], radius: 12, k: 0, // Quote 1 (Gus) 2776:3354:
-    parts: { photo: [37, 10, 161, 161], name: [260, 18, 86, 8], stars: [354, 22, 105, 21], meta: [259.78, 51], logo: [605, 28, 268, 32.11], text: [260, 129, 613], open: [216, 85, 58, 48], close: [815, 122, 56, 46] },
-    // The title's glyphs as Figma draws them (u = 1, stage pixels): [x0, y0, x1, y1].
-    glyphs: { yellow: [1, 96, 252, 147], line1: [269, 117, 403, 153], line2: [34, 165, 383, 201] } },
-  // Section - Reviews 2778:3435: the 402x300 frame is the stage.
-  m: { stage: [402, 300], map: [-325, -154.47, 875.79, 493.66], title: { cx: 201, top: 32, size: 18.895, lh: 22.87, hl: 32.595 },
-    list: [79.29, 96.45], card: [243.42, 177.98], radius: 5.949, k: 1, // Mobile Quote 2 (Bret) 2778:3466:
-    parts: { photo: [17.85, 7.93, 98.69, 83.26], name: [114.03, 6.94, 37.67, 3.97], stars: [155.67, 10.91, 52.06, 10.41], meta: [113.91, 25.29], logo: [146, 47.55, 51, 40], text: [23.8, 130.39, 205.25], open: [12.37, 100.22, 28.75, 23.8], close: [197.79, 142.36, 27.76, 22.81] },
-    glyphs: { yellow: [103, 25, 221, 49], line1: [229, 36, 292, 52], line2: [119, 59, 283, 75] } },
+  // Section - Reviews 2251:139: the title + card group 2776:3378 (1481x277) is the stage; the card list
+  // sits 40.5 from its top and bottom.
+  d: { stage: [1481, 277], pad: 40.5, map: [-249.98, -97.04, 1853.97, 1045.04], titleCx: 209,
+    listX: 562, card: [919, 196], radius: 12, k: 0, // Quote 1 (Gus) 2776:3354:
+    parts: { photo: [37, 10, 161, 161], name: [260, 18, 86, 8], stars: [354, 22, 105, 21], meta: [259.78, 51], logo: [605, 28, 268, 32.11], open: [216, 85, 58, 48], closeB: [815, 28, 56, 46] },
+    text: { left: [260, 260, 260, 260], right: [46, 46, 46, 46], top: 84, bottom: 22, center: 129 } },
+  // Section - Reviews 2778:3435: the 402x300 frame is the stage: the title 14 from the top, the cards 14
+  // below it, 25.57 to the bottom.
+  m: { stage: [402, 300], titleTop: 14, gap: 14, bottom: 25.57, map: [-325, -154.47, 875.79, 493.66],
+    card: [243.42, 177.98], radius: 5.949, k: 1, // Mobile Quote 2 (Bret) 2778:3466:
+    parts: { photo: [17.85, 7.93, 98.69, 83.26], name: [114.03, 6.94, 37.67, 3.97], stars: [155.67, 10.91, 52.06, 10.41], meta: [113.91, 25.29], logo: [146, 47.55, 51, 40], open: [12.37, 100.22, 28.75, 23.8], closeB: [197.79, 12.81, 27.76, 22.81] },
+    text: { left: [23.8, 23.8, 23.8, 24], right: [14.37, 14.37, 14.37, 11.42], top: 99.8, bottom: 17, center: 130.39 } },
 };
 const LOOP = 31844.44;                                                // ms: four turns
 const TURN = LOOP / 4;                                                // a new card every 7.96s
@@ -145,21 +162,6 @@ function decodePng(buf) {
 }
 // How many pixels differ between two same-size screenshots.
 const diffPx = (A, B) => { let n = 0; for (let o = 0; o < A.px.length; o += A.bpp) if (Math.abs(A.px[o] - B.px[o]) + Math.abs(A.px[o + 1] - B.px[o + 1]) + Math.abs(A.px[o + 2] - B.px[o + 2]) > 60) n++; return n; };
-// The title's ink in a screenshot: the yellow marker word, and the white words split into two lines.
-function titleInk(P) {
-  const yel = [], wht = [];
-  for (let y = 0; y < P.h; y++) for (let x = 0; x < P.w; x++) {
-    const o = (y * P.w + x) * P.bpp, R = P.px[o], G = P.px[o + 1], B = P.px[o + 2];
-    if (R > 180 && G > 110 && B < 110 && R - B > 110) yel.push([x, y]);
-    else if (R > 185 && G > 185 && B > 185 && Math.max(R, G, B) - Math.min(R, G, B) < 30) wht.push([x, y]);
-  }
-  const box = (pts) => pts.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [1e9, 1e9, -1, -1]);
-  const rows = [...new Set(wht.map((q) => q[1]))].sort((a, b) => a - b);
-  let split = rows[0] ?? 0, gap = 0;
-  for (let j = 0; j + 1 < rows.length; j++) if (rows[j + 1] - rows[j] > gap) { gap = rows[j + 1] - rows[j]; split = rows[j]; }
-  return { yellow: box(yel), line1: box(wht.filter((q) => q[1] <= split)), line2: box(wht.filter((q) => q[1] > split)), n: yel.length + wht.length };
-}
-
 const PROFILE = mkdtempSync(join(tmpdir(), 'cdp-2310-'));
 const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', '--use-angle=metal', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -282,12 +284,15 @@ try {
       ok(v.mk ? /^real \/ .*Permanent Marker.* \/ rgb\(252, 189, 17\)$/.test(c.mk) : c.mk === '', `${w}: card ${i + 1}'s marker word: "${c.mk}"${v.mk ? `, want "${v.mk}" in yellow Permanent Marker` : ', want none'}`);
     });
 
-    // The stage and the section (Gus at rest, 2.5s into his turn).
+    // The stage and the section (Gus at rest, 2.5s into his turn). The stage is at least Figma's size and
+    // grows with the tallest card: desktop 40.5 above and below it; phones the title 14 from the top, the
+    // card 14 below it and 25.57 to the bottom.
     await ev(SEEK(2500));
     const L = await ev(STATE);
-    const SH = U(F.stage[1]);
-    ok(near(L.sec.h, SH, 0.6), `${w}: the section is ${L.sec.h.toFixed(2)}px tall, want ${SH.toFixed(2)} (${F.stage[1]} Figma px)`);
-    ok(near(L.inner.w, U(F.stage[0]), 0.6) && near(L.inner.h, SH, 0.6) && near(L.inner.cx, w / 2, 0.6) && near(L.inner.y, L.sec.y, 0.6), `${w}: the stage is ${L.inner.w.toFixed(1)}x${L.inner.h.toFixed(1)} centered at ${L.inner.cx.toFixed(1)}, want ${U(F.stage[0]).toFixed(1)}x${SH.toFixed(1)} at ${w / 2}`);
+    const tallest = Math.max(...L.cards.map((c) => c.h0));
+    const wantH = desk ? Math.max(U(F.stage[1]), tallest + 2 * U(F.pad)) : Math.max(U(F.stage[1]), U(F.titleTop) + (L.title ? L.title.h : 0) + U(F.gap) + tallest + U(F.bottom));
+    ok(near(L.sec.h, wantH, 0.75), `${w}: the section is ${L.sec.h.toFixed(2)}px tall, want ${wantH.toFixed(2)} (at least ${F.stage[1]} Figma px, grown to fit the ${tallest.toFixed(1)}px tallest card)`);
+    ok(near(L.inner.w, U(F.stage[0]), 0.6) && near(L.inner.h, L.sec.h, 0.6) && near(L.inner.cx, w / 2, 0.6) && near(L.inner.y, L.sec.y, 0.6), `${w}: the stage is ${L.inner.w.toFixed(1)}x${L.inner.h.toFixed(1)} centered at ${L.inner.cx.toFixed(1)}, want ${U(F.stage[0]).toFixed(1)} wide, the section's height, centered at ${w / 2}`);
     ok(L.sw === L.vw, `${w}: the page is ${L.sw}px wide in a ${L.vw}px window (sideways scroll)`);
     // Background, every width: the old cover size (the full width, or the full old height where that's
     // bigger) zoomed in 20%, so the short section crops it rather than shrinking it (AFMBP-2283 / 2285).
@@ -296,39 +301,52 @@ try {
     // The map at its Figma place.
     const mp = await ev("(() => { const m = document.querySelector('.rv-map'), i = document.querySelector('.reviews__inner'); if (!m) return null; const a = m.getBoundingClientRect(), b = i.getBoundingClientRect(); return [a.left - b.left, a.top - b.top, a.width, a.height]; })()");
     ok(mp && F.map.every((v, j) => near(mp[j], U(v), 0.75)), `${w}: the map is at ${fb(mp)}, want ${fb(F.map.map(U))}`);
-    // The title.
+    // The title: the How It Works band title's type (AFMBP-2324), compared with that title on this page.
     const T = await ev(`(() => {
       const h = document.querySelector('.rv-title'), hl = h && h.querySelector('.rv-title__hl');
-      if (!h || !hl) return { tag: h ? h.tagName : 'none', text: h ? h.textContent : '', hl: '', font: '', lh: '', color: '', hlFont: '', hlLh: '', hlColor: '', hlCase: '' };
-      const cs = getComputedStyle(h), hs = getComputedStyle(hl);
-      return { tag: h.tagName, text: h.textContent.replace(/\\s+/g, ' ').trim(), hl: hl.textContent, font: cs.fontFamily, size: parseFloat(cs.fontSize), lh: cs.lineHeight, color: cs.color, hlFont: hs.fontFamily, hlSize: parseFloat(hs.fontSize), hlLh: hs.lineHeight, hlColor: hs.color, hlCase: hs.textTransform };
+      const bt = document.querySelector('#band .band__title'), bh = bt && bt.querySelector('.band__title__hl');
+      if (!h || !hl || !bt || !bh) return null;
+      const cs = getComputedStyle(h), hs = getComputedStyle(hl), bs = getComputedStyle(bt), bhs = getComputedStyle(bh);
+      return { tag: h.tagName, text: h.textContent.replace(/\\s+/g, ' ').trim(), hl: hl.textContent, font: cs.fontFamily, size: parseFloat(cs.fontSize), lh: parseFloat(cs.lineHeight), color: cs.color,
+        hlFont: hs.fontFamily, hlSize: parseFloat(hs.fontSize), hlColor: hs.color, hlCase: hs.textTransform, hlDisplay: hs.display,
+        band: { size: parseFloat(bs.fontSize), lh: parseFloat(bs.lineHeight), hlSize: parseFloat(bhs.fontSize), hlCase: bhs.textTransform } };
     })()`);
-    ok(T.tag === 'H2' && T.text === 'Trusted by pros across the country' && T.hl === 'Trusted', `${w}: the title is <${T.tag}> "${T.text}", highlighted "${T.hl}"`);
-    ok(/Inter/.test(T.font) && T.color === 'rgb(255, 255, 255)' && near(T.size, U(F.title.size), 0.05) && near(parseFloat(T.lh), U(F.title.lh), 0.05), `${w}: the title is ${T.size}px/${T.lh} ${T.font.split(',')[0]} in ${T.color}, want ${U(F.title.size).toFixed(2)}px/${U(F.title.lh).toFixed(2)}px Inter in white`);
-    ok(/Permanent Marker/.test(T.hlFont) && T.hlColor === 'rgb(252, 189, 17)' && near(T.hlSize, U(F.title.hl), 0.05) && T.hlLh === '0px' && T.hlCase === 'none', `${w}: "Trusted" is ${T.hlSize}px ${T.hlFont.split(',')[0]} in ${T.hlColor}, line-height ${T.hlLh}, ${T.hlCase}; want ${U(F.title.hl).toFixed(2)}px Permanent Marker in #fcbd11, no line height, mixed case`);
-    ok(L.title && near(L.title.cx - L.inner.x, U(F.title.cx), 0.75) && near(L.title.y - L.inner.y, U(F.title.top), 0.75), `${w}: the title is ${L.title ? `centered at x ${(L.title.cx - L.inner.x).toFixed(1)}, top ${(L.title.y - L.inner.y).toFixed(1)}` : 'missing'}; want ${U(F.title.cx).toFixed(1)}, ${U(F.title.top).toFixed(1)}`);
-    // At u = 1 its glyphs land where Figma draws them.
-    if (u === 1) {
-      const clip = desk ? { x: Math.floor(L.inner.x) - 10, y: Math.round(L.inner.y + L.sy), width: 540, height: 277 } : { x: Math.floor(L.inner.x), y: Math.round(L.inner.y + L.sy), width: 402, height: 92 };
-      const { data } = await send('Page.captureScreenshot', { format: 'png', clip: { ...clip, scale: 1 } });
-      const ink = titleInk(decodePng(Buffer.from(data, 'base64')));
-      const dx = clip.x - L.inner.x, dy = clip.y - L.sy - L.inner.y;
-      for (const part of ['yellow', 'line1', 'line2']) {
-        const got = ink[part][2] < 0 ? null : [ink[part][0] + dx, ink[part][1] + dy, ink[part][2] + dx, ink[part][3] + dy];
-        ok(got && F.glyphs[part].every((v, j) => near(got[j], v, 1.5)), `${w}: the title's ${part === 'yellow' ? '"Trusted"' : part === 'line1' ? '"by pros"' : '"across the country"'} glyphs span ${fb(got)}, Figma draws ${fb(F.glyphs[part])}`);
-      }
+    ok(T && T.tag === 'H2' && T.text === 'Trusted by pros across the country' && T.hl === 'Trusted', `${w}: the title is ${T ? `<${T.tag}> "${T.text}", highlighted "${T.hl}"` : 'missing (or the band title is)'}`);
+    if (T) {
+      ok(/Inter/.test(T.font) && T.color === 'rgb(255, 255, 255)' && near(T.size, T.band.size, 0.05) && near(T.lh, T.band.lh, 0.05), `${w}: the title is ${T.size}px/${f1(T.lh)}px ${T.font.split(',')[0]} in ${T.color}; the band title ("Less hassle.") is ${T.band.size}px/${f1(T.band.lh)}px — want the same, in white Inter`);
+      ok(/Permanent Marker/.test(T.hlFont) && T.hlColor === 'rgb(252, 189, 17)' && near(T.hlSize, T.band.hlSize, 0.05) && T.hlCase === T.band.hlCase && T.hlDisplay === 'inline', `${w}: "Trusted" is ${T.hlSize}px ${T.hlFont.split(',')[0]} ${T.hlCase} in ${T.hlColor}, ${T.hlDisplay}; "More jobs." is ${T.band.hlSize}px ${T.band.hlCase} — want the same, in #fcbd11, inline`);
+      ok(L.title && L.title.h < 2.6 * T.lh, `${w}: the title is ${L.title ? f1(L.title.h) : '?'}px tall, want two lines (under ${f1(2.6 * T.lh)})`);
     }
+    ok(L.title && (desk ? near(L.title.cx - L.inner.x, U(F.titleCx), 0.75) && near(L.title.cy, L.inner.cy, 0.75) : near(L.title.cx, w / 2, 0.75) && near(L.title.y - L.inner.y, U(F.titleTop), 0.75)),
+      `${w}: the title is ${L.title ? `centered at x ${f1(L.title.cx - L.inner.x)} of the stage, top ${f1(L.title.y - L.inner.y)}, middle ${f1(L.title.cy - L.inner.y)}` : 'missing'}; want ${desk ? `x ${f1(U(F.titleCx))}, middle ${f1(L.inner.h / 2)}` : `centered, top ${f1(U(F.titleTop))}`}`);
+    // The quotes: the cards' body text on this page ("You worked your ass off all day…", .card__body).
+    const Q = await ev(`(() => {
+      const ref = [...document.querySelectorAll('.card__body')].find((p) => p.textContent.startsWith('You worked'));
+      const rs = ref && getComputedStyle(ref), shown = (e) => e.getClientRects().length > 0;
+      return { ref: rs ? { size: parseFloat(rs.fontSize), lh: parseFloat(rs.lineHeight) } : null,
+        cards: [...document.querySelectorAll('.rq')].map((q) => ({
+          ps: [...q.querySelectorAll('.rq__text p:not(.rq__gap)')].filter(shown).map((p) => { const c = getComputedStyle(p); return [parseFloat(c.fontSize), parseFloat(c.lineHeight)]; }),
+          strong: [...q.querySelectorAll('.rq__text strong')].filter(shown).map((e) => getComputedStyle(e).fontWeight),
+          mk: [...q.querySelectorAll('.rq__mk')].filter(shown).map((e) => parseFloat(getComputedStyle(e).fontSize)) })) };
+    })()`);
+    ok(Q.ref, `${w}: the "You worked…" card text to compare the quotes with is missing`);
+    Q.cards.forEach((c, i) => {
+      ok(Q.ref && c.ps.length && c.ps.every(([sz, lh]) => near(sz, Q.ref.size, 0.05) && near(lh, Q.ref.lh, 0.05)), `${w}: card ${i + 1}'s quote is ${c.ps.map(([sz, lh]) => `${sz}px/${f1(lh)}px`).join(', ')}; the card text is ${Q.ref ? `${Q.ref.size}px/${f1(Q.ref.lh)}px` : 'missing'}`);
+      ok(c.strong.every((wt) => wt === '600'), `${w}: card ${i + 1}'s bold phrase is weight ${c.strong.join(', ')}, want 600`);
+      ok(c.mk.every((sz) => Q.ref && near(sz, Q.ref.size * 1.6667, 0.1)), `${w}: card ${i + 1}'s marker word is ${c.mk.join(', ')}px, want ${Q.ref ? f1(Q.ref.size * 1.6667) : '?'} (Figma's 40:24 of the quote)`);
+    });
 
-    // Each card: its size and place at rest, the bounce, and its peak inside the page and the section.
+    // Each card: Figma's width and at least Figma's height, its place at rest, the quote inside its
+    // padding, the bounce, and its peak inside the page and the section and clear of the title.
     const pad = 0.75;
     for (let k = 0; k < 4; k++) {
       const S = k * TURN;
       const at = async (ms) => { await ev(SEEK(S + ms)); return ev(STATE); };
       const s0 = await at(CARD.in), sp = await at(CARD.peak), sr = await at(2500);
       const c0 = s0.cards[k], cp = sp.cards[k], cr = sr.cards[k];
-      ok(near(cr.w0, U(F.card[0]), 0.6) && near(cr.h0, U(F.card[1]), 0.6), `${w}: card ${k + 1} is ${cr.w0.toFixed(1)}x${cr.h0.toFixed(1)}, want ${U(F.card[0]).toFixed(1)}x${U(F.card[1]).toFixed(1)}`);
-      ok(near(cr.r.x - sr.inner.x, U(F.list[0]), pad) && near(cr.r.y - sr.inner.y, U(F.list[1]), pad), `${w}: card ${k + 1} rests at ${(cr.r.x - sr.inner.x).toFixed(1)},${(cr.r.y - sr.inner.y).toFixed(1)} of the stage, want ${U(F.list[0]).toFixed(1)},${U(F.list[1]).toFixed(1)}`);
-      ok(desk ? near(cr.r.cy, sr.sec.cy, 0.6) : near(cr.r.cx, w / 2, 0.6), `${w}: card ${k + 1} is centered ${desk ? `in the band's height (${cr.r.cy.toFixed(1)} vs ${sr.sec.cy.toFixed(1)})` : `on the screen (${cr.r.cx.toFixed(1)} vs ${w / 2})`}`);
+      ok(near(cr.w0, U(F.card[0]), 0.6) && cr.h0 >= U(F.card[1]) - 0.6, `${w}: card ${k + 1} is ${cr.w0.toFixed(1)}x${cr.h0.toFixed(1)}, want ${U(F.card[0]).toFixed(1)} wide and at least ${U(F.card[1]).toFixed(1)} tall`);
+      if (desk) ok(near(cr.r.x - sr.inner.x, U(F.listX), pad) && near(cr.r.cy, sr.inner.cy, pad), `${w}: card ${k + 1} rests at x ${f1(cr.r.x - sr.inner.x)} of the stage, middle ${f1(cr.r.cy - sr.inner.y)}; want x ${f1(U(F.listX))}, centered in the band (${f1(sr.inner.h / 2)})`);
+      else ok(near(cr.r.cx, w / 2, pad) && sr.title && near(cr.r.y - (sr.title.y + sr.title.h), U(F.gap), pad), `${w}: card ${k + 1} rests ${sr.title ? f1(cr.r.y - (sr.title.y + sr.title.h)) : '?'}px below the title, centered at ${f1(cr.r.cx)}; want ${f1(U(F.gap))} below it, centered at ${w / 2}`);
       ok(sr.cards.every((c, j) => (j === k ? c.o > 0.999 : c.o < 0.01)), `${w}: at rest only card ${k + 1} shows (opacities ${sr.cards.map((c) => c.o.toFixed(2)).join(', ')})`);
       ok(near(c0.r.w / c0.w0, BOUNCE.in, 0.003) && near(cp.r.w / cp.w0, BOUNCE.peak, 0.003) && near(cr.r.w / cr.w0, BOUNCE.rest, 0.003), `${w}: card ${k + 1} bounce ${(c0.r.w / c0.w0).toFixed(3)} → ${(cp.r.w / cp.w0).toFixed(3)} → ${(cr.r.w / cr.w0).toFixed(3)}, want 0.8 → 1.043 → 1`);
       ok([c0, cp].every((c) => near(c.r.cx, cr.r.cx, 0.6) && near(c.r.cy, cr.r.cy, 0.6)), `${w}: card ${k + 1} grows around a fixed center (${c0.r.cx.toFixed(1)},${c0.r.cy.toFixed(1)} → ${cp.r.cx.toFixed(1)},${cp.r.cy.toFixed(1)} → ${cr.r.cx.toFixed(1)},${cr.r.cy.toFixed(1)})`);
@@ -336,10 +354,15 @@ try {
       ok(cp.r.x >= -0.6 && cp.r.x + cp.r.w <= w + 0.6 && top >= -0.6 && bottom <= sp.sec.h + 0.6, `${w}: card ${k + 1} at its peak spans x ${cp.r.x.toFixed(1)}-${(cp.r.x + cp.r.w).toFixed(1)}, y ${top.toFixed(1)}-${bottom.toFixed(1)}; want inside the ${w}px page and the ${sp.sec.h.toFixed(1)}px section`);
       const tb = sp.title || { x: 0, y: 0, w: 0, h: 0 }, clear = sp.title && (desk ? cp.r.x >= tb.x + tb.w : cp.r.y >= tb.y + tb.h);
       ok(clear, `${w}: card ${k + 1} at its peak ${desk ? `starts at x ${cp.r.x.toFixed(1)}, the title ends at ${(tb.x + tb.w).toFixed(1)}` : `starts at y ${cp.r.y.toFixed(1)}, the title ends at ${(tb.y + tb.h).toFixed(1)}`}${sp.title ? '' : ' (no title)'}`);
-      // Every part inside the card (at rest).
+      // Every part inside the card, and the quote inside the card's padding (at rest).
+      await ev(SEEK(S + 2500));
       const P = await ev(PARTS(k));
       const inside = ['photo', 'name', 'stars', 'meta', 'logo', 'textBox'].filter((n) => P[n]).every((n) => P[n][0] >= -0.6 && P[n][1] >= -0.6 && P[n][0] + P[n][2] <= P.w + 0.6 && P[n][1] + P[n][3] <= P.h + 0.6);
       ok(inside, `${w}: a part of card ${k + 1} sticks out of it: ${['photo', 'name', 'stars', 'meta', 'logo', 'textBox'].map((n) => `${n} ${fb(P[n])}`).join(' · ')} in ${P.w.toFixed(1)}x${P.h.toFixed(1)}`);
+      const qb = P.textBox, ft = F.text;
+      ok(qb && near(qb[0], U(ft.left[k]), pad) && qb[0] + qb[2] <= P.w - U(ft.right[k]) + pad && qb[1] >= U(ft.top) - pad && qb[1] + qb[3] <= P.h - U(ft.bottom) + pad,
+        `${w}: card ${k + 1}'s quote spans ${fb(qb)} in ${f1(P.w)}x${f1(P.h)}; want it from x ${f1(U(ft.left[k]))} to ${f1(U(ft.right[k]))} from the right, at least ${f1(U(ft.top))} from the top and ${f1(U(ft.bottom))} from the bottom`);
+      if (qb && near(P.h, U(F.card[1]), 0.6)) ok(near(qb[1] + qb[3] / 2, U(ft.center), 1), `${w}: card ${k + 1}'s quote is centered on y ${f1(qb[1] + qb[3] / 2)}, want Figma's ${f1(U(ft.center))} (the card is Figma's height)`);
       // Figma's own card: every part at its Figma place.
       if (k === F.k) {
         const fp = F.parts, chk = (n, got, want, tol) => ok(got && want.every((v, j) => near(got[j], U(v), tol)), `${w}: card ${k + 1}'s ${n} is at ${fb(got)}, Figma ${fb(want.map(U))}`);
@@ -350,13 +373,13 @@ try {
         ok(st0 && nm[2] >= U(fp.name[2]) - 0.6 && near(st0[0], afterName, pad) && st0[0] >= U(fp.stars[0]) - pad && fp.stars.slice(1).every((v, j) => near(st0[j + 1], U(v), pad)),
           `${w}: card ${k + 1}'s stars are at ${fb(st0)} after a ${f1(nm[2])}px name; want Figma's ${fb(fp.stars.map(U))}, or ${f1(U(fp.name[3]))}px after a wider name`);
         if (st0[0] > U(fp.stars[0]) + pad) console.log(`  note: card ${k + 1}'s stars sit ${f1(st0[0] - U(fp.stars[0]))}px right of Figma's: the name is ${f1(nm[2])}px in the fallback font, Figma's Roboto takes ${f1(U(fp.name[2]))}`);
-        chk('trade line', P.meta && P.meta.slice(0, 2), fp.meta, pad); chk('logo', P.logo, fp.logo, pad); chk('quote', P.text, fp.text, pad);
-        chk('opening quote mark', P.open, fp.open, pad); chk('closing quote mark', P.close, fp.close, pad);
+        chk('trade line', P.meta && P.meta.slice(0, 2), fp.meta, pad); chk('logo', P.logo, fp.logo, pad);
+        chk('opening quote mark', P.open, fp.open, pad);
+        chk('closing quote mark (x, from the bottom, size)', P.close && [P.close[0], P.h - P.close[1] - P.close[3], P.close[2], P.close[3]], fp.closeB, pad);
       }
       if (SHOTS) { await ev(SEEK(S + 2500)); await shot(`reviews-${w}-quote${k + 1}.png`); if (k === 0) { await ev(SEEK(S + CARD.peak)); await shot(`reviews-${w}-quote1-peak.png`); } }
     }
-    const rest = U(F.card[0]).toFixed(1) + 'x' + U(F.card[1]).toFixed(1);
-    console.log(`  section ${w}x${L.sec.h.toFixed(1)} · stage ${L.inner.w.toFixed(1)}x${L.inner.h.toFixed(1)} centered · card ${rest} at rest`);
+    console.log(`  section ${w}x${L.sec.h.toFixed(1)} · stage ${L.inner.w.toFixed(1)} wide, centered · cards ${U(F.card[0]).toFixed(1)} wide, ${L.cards.map((c) => c.h0.toFixed(1)).join(' / ')} tall · title ${T ? `${T.size}px, "Trusted" ${T.hlSize}px` : '?'} · quotes ${Q.ref ? Q.ref.size : '?'}px`);
 
     // Desktop 1250-1500: the How It Works band's 3D phone pokes up into this section right under the
     // card; it must draw under the card, not over it. Scroll so the band's top sits at 42% of the
