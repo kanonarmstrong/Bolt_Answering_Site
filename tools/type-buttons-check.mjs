@@ -7,9 +7,12 @@
 //   - the pricing line ("Our pros say it pays for itself…") is #180A53;
 //   - home page: the band's subtitle ("See why pros hire our assistants…") is the pricing line's size;
 //   - the header's trial button stays inside the header bar and the window; on phones the floating one
-//     shows wherever the page has it (the support pages don't).
+//     shows wherever the page has it (the support pages don't);
+//   - on phones the floating one hides (can't be seen or tapped) while the pricing section's trial button
+//     is on screen, even just its top edge, and is back once the page scrolls away from it (AFMBP-2348).
 // Run: node tools/type-buttons-check.mjs [siteRoot]
-//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub — negative controls on the SERVED copy; each must FAIL.
+//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck — negative controls on
+//      the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
@@ -33,6 +36,10 @@ const MUTATE = {
   bandsub: ['styles.css', 'font-size:clamp(16px,1.1vw,20px);line-height:1.4;max-width:660px', 'font-size:clamp(16px,1.35vw,25px);line-height:1.4;max-width:660px'],
   // The pricing line back in gray.
   graysub: ['styles.css', '  color: var(--navy); /* "Our pros say', '  color: var(--gray); /* "Our pros say'],
+  // The floating button no longer hides at the pricing section (before AFMBP-2348).
+  nohide: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", 'void es;'],
+  // The floating button hides and never comes back.
+  stuck: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", "cta.classList.add('cta-hide');"],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -122,6 +129,23 @@ try {
       if (navCta && S.nav) ok(navCta.top >= S.nav.top - 0.5 && navCta.bottom <= S.nav.bottom + 0.5 && navCta.right <= S.vw + 0.5, `${where}: the header's trial button spans y ${navCta.top.toFixed(1)}-${navCta.bottom.toFixed(1)}, right ${navCta.right.toFixed(1)}; the header bar is ${S.nav.top.toFixed(1)}-${S.nav.bottom.toFixed(1)} in a ${S.vw}px window`);
       if (page !== '/support/') ok(S.pricing && S.pricing.color === NAVY, `${where}: the pricing line ("Our pros say it pays for itself…") is ${S.pricing ? S.pricing.color : 'missing'}, want #180A53 (${NAVY})`);
       if (page === '/') ok(S.bandSub && S.pricing && near(S.bandSub.fs, S.pricing.fs, 0.05), `${where}: the band subtitle is ${S.bandSub ? S.bandSub.fs : '?'}px, the pricing line ${S.pricing ? S.pricing.fs : '?'}px — want the same`);
+      // AFMBP-2348: on phones the floating button gets out of the way of the pricing section's own trial
+      // button: hidden and untappable while any of it is on screen, back once the page scrolls away.
+      if (w <= 768 && S.hasFloat) {
+        const FLOAT = `(() => {
+          const f = document.querySelector('.floating-cta'), c = getComputedStyle(f), b = f.getBoundingClientRect();
+          const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+          const p = document.querySelector('#pricing a.btn--yellow'), pb = p && p.getBoundingClientRect();
+          return { vis: c.visibility, op: parseFloat(c.opacity), onTop: !!hit && f.contains(hit), pOn: !!pb && pb.bottom > 0 && pb.top < innerHeight };
+        })()`;
+        const at = async (js) => { await ev(`(() => { ${js}; return true; })()`); await sleep(700); return ev(FLOAT); };
+        const mid = await at("document.querySelector('#pricing a.btn--yellow').scrollIntoView({ block: 'center', behavior: 'instant' })");
+        ok(mid.pOn && mid.vis === 'hidden' && mid.op === 0 && !mid.onTop, `${where}: with the pricing trial button on screen the floating one is ${mid.vis} at opacity ${mid.op}${mid.onTop ? ' and still tappable' : ''}; want it hidden`);
+        const edge = await at("scrollTo(0, document.querySelector('#pricing a.btn--yellow').getBoundingClientRect().top + scrollY - innerHeight + 10)");
+        ok(edge.pOn && edge.vis === 'hidden' && !edge.onTop, `${where}: with only the pricing button's top 10px on screen (where the floating one rests) it is ${edge.vis}; want it hidden`);
+        const away = await at("scrollTo(0, Math.max(30, document.querySelector('#pricing').getBoundingClientRect().top + scrollY - 2 * innerHeight))");
+        ok(!away.pOn && away.vis === 'visible' && away.op === 1 && away.onTop, `${where}: away from the pricing section the floating button is ${away.vis} at opacity ${away.op}${away.onTop ? '' : ', not tappable'}; want it back`);
+      }
     }
     console.log(`${page}: ${SIZES.map(([w]) => w).join(', ')} checked`);
   }
