@@ -756,7 +756,10 @@ ul,ol{list-style:none}
 .tpfeat--mediaright .tpfeat__copy{order:1}
 
 /* ---------- "Heroes don't always wear capes" ---------- */
-.tpcapes{position:relative;overflow:visible;z-index:2;background:#2a2f34 center/cover no-repeat}
+/* overflow-x:clip crops the tilted phone at the window's edge: its rotated box reached 26-35px past
+   it, so the page was wider than the window (AFMBP-2346). overflow-y stays visible, so the phone
+   still pokes ~100px into the sections above and below; clip (unlike hidden) allows that. */
+.tpcapes{position:relative;overflow:visible;overflow-x:clip;z-index:2;background:#2a2f34 center/cover no-repeat}
 .tpcapes__overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:0}
 .tpcapes__inner{
   position:relative;z-index:1;
@@ -773,7 +776,7 @@ ul,ol{list-style:none}
   filter:drop-shadow(0 16px 32px rgba(12,12,13,.4));
 }
 /* Scroll-zoom background layer (capes-zoom.js): a clipped pseudo-element that
-   scales ONLY the bg image 1.0 -> 1.2. The section stays overflow:visible so the
+   scales ONLY the bg image 1.0 -> 1.2. The section stays overflow-y:visible so the
    phone can still overflow; the overlay/inner/copy are untouched. z-index:0 keeps
    it below the overlay. --capes-img is set inline per page. */
 .tpcapes__bg{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
