@@ -255,7 +255,7 @@ ul,ol{list-style:none}
    ============================================================ */
 .reviews{
   position:relative;
-  background:url('assets/reviews-bg.jpg') center/cover no-repeat;
+  background:#1e1e1e;            /* AFMBP-2345: no photo; under the 77% overlay, Figma's #070707 */
   padding:clamp(60px,7vw,90px) 0;
   overflow:hidden;               /* crops the US-map outline at the section's edges (AFMBP-2310) */
   container-type:inline-size;    /* review-carousel.css sizes the section from its width (cqw) */
@@ -508,7 +508,6 @@ ul,ol{list-style:none}
 @media (max-width:480px){
   .subscribe__form input{font-size:14px}
   .subscribe__btn{height:44px;padding:0 16px;font-size:14px}
-  .reviews{background-attachment:scroll}
 }
 
 .floating-cta{display:none}
