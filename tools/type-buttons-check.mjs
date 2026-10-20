@@ -11,8 +11,8 @@
 //   - on phones the floating one hides (can't be seen or tapped) while the pricing section's trial button
 //     is on screen, even just its top edge, and is back once the page scrolls away from it (AFMBP-2348).
 // Run: node tools/type-buttons-check.mjs [siteRoot]
-//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide — negative controls on the SERVED
-//      copy; each must FAIL.
+//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck — negative controls on
+//      the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
@@ -38,6 +38,8 @@ const MUTATE = {
   graysub: ['styles.css', '  color: var(--navy); /* "Our pros say', '  color: var(--gray); /* "Our pros say'],
   // The floating button no longer hides at the pricing section (before AFMBP-2348).
   nohide: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", 'void es;'],
+  // The floating button hides and never comes back.
+  stuck: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", "cta.classList.add('cta-hide');"],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
