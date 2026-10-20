@@ -62,6 +62,14 @@
   update();
   window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
+  // Hidden while the pricing section's own trial button is on screen, so the two never stack
+  // (AFMBP-2348). Older browsers without IntersectionObserver keep the button as before.
+  var priced = document.querySelector('#pricing a.btn--yellow');
+  if (priced && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (es) {
+      cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);
+    }).observe(priced);
+  }
 })();
 
 // Hero confetti video — nudge muted autoplay (some browsers/panes don't auto-start)

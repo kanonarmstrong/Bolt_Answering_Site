@@ -523,10 +523,12 @@ ul,ol{list-style:none}
     top:calc(76px + 10px);                       /* start: 10px below the header bar */
     font-weight:700;                              /* bolder than the other trial buttons; the */
     /* size of every one (AFMBP-2327: as the Talk button; the bold label fits its width) */
-    transition:top .5s cubic-bezier(.34,.01,.2,1);
+    transition:top .5s cubic-bezier(.34,.01,.2,1),opacity .2s,visibility .2s;
     box-shadow:0 8px 22px rgba(12,12,13,.28);
     animation:cta-glow 2.6s ease-out infinite;
   }
+  /* AFMBP-2348: out of the way while the pricing section's trial button is on screen (script.js) */
+  .floating-cta.cta-hide{opacity:0;visibility:hidden;pointer-events:none}
   .floating-cta.cta-down{                        /* on scroll: fall to bottom-right */
     top:calc(100vh - 100px);
     top:calc(100dvh - 100px);
@@ -534,7 +536,7 @@ ul,ol{list-style:none}
   .nav__cta{display:none}   /* remove the copy stuck in the hamburger */
 }
 @media (prefers-reduced-motion:reduce){
-  .floating-cta{animation:none}
+  .floating-cta{animation:none;transition:top .5s cubic-bezier(.34,.01,.2,1)}  /* no fade when it hides */
 }
 
 @media (max-width:768px){
