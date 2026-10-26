@@ -277,7 +277,7 @@ try {
         title: [...document.querySelectorAll('h2')].some((e) => /Trusted/.test(e.textContent) && shown(e)),
         cards: [...document.querySelectorAll('.rq')].filter(shown).length,
         gap: p && n ? n.getBoundingClientRect().top - p.getBoundingClientRect().bottom : null,
-        fetched: performance.getEntriesByType('resource').map((e) => e.name).filter((u) => /\/assets\/reviews\//.test(u) && !/stars-5\.svg/.test(u)).map((u) => u.split('/').pop()) };
+        fetched: performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.includes('/assets/reviews/') && !u.endsWith('stars-5.svg')).map((u) => u.split('/').pop()) };
     })()`);
     ok(H.exists && H.display === 'none' && H.h === 0, `${w}: the Reviews section is ${H.exists ? `display ${H.display}, ${H.h}px tall` : 'missing'}; want it hidden (display none, no height)`);
     ok(!H.title && H.cards === 0, `${w}: ${H.title ? 'the "Trusted by pros" title' : ''}${H.title && H.cards ? ' and ' : ''}${H.cards ? `${H.cards} review cards` : ''} shown; want nothing from the section`);
