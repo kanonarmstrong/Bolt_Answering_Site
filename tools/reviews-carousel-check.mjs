@@ -41,6 +41,10 @@
 //      | NC=phoneover | NC=figmatitle | NC=threelines | NC=smallquote | NC=fixedcard | NC=poppinsmeta
 //      | NC=bgphoto | NC=mapcorner | NC=bigquote | NC=starsflow | NC=onelinemeta | NC=oldgusquote
 //      — negative controls on the SERVED copy; each must FAIL.
+// AFMBP-2410 (owner 2026-10-26: "hide the reviews band on desktop and mobile"): while REVIEWS_HIDDEN is true the
+// run only proves the section hidden at every size (not shown, no height, nothing from it drawn or fetched, the
+// sections above and below it meeting); NC=shown (the section back) must FAIL. The other NCs only bite again
+// once the section is back.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -53,6 +57,9 @@ const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
 const NC = process.env.NC || '';
 const SHOTS = process.env.SHOTS || '';
 const STEP = +process.env.STEP || 50; // ms between timing samples (STEP=500 for a quick pass)
+// AFMBP-2410: the owner hid the section (review-carousel.css `#reviews { display: none; }`). To bring it back, delete
+// that rule and set this to false: every check below then runs again.
+const REVIEWS_HIDDEN = true;
 const SIZES = (process.env.SIZES || '1920x1080,1440x900,1280x800,1024x768,768x1024,402x874,390x844').split(',').map((s) => s.split('x').map(Number));
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2' };
 // Negative controls: [served file, text, replacement].
@@ -96,6 +103,8 @@ const MUTATE = {
   // Phone trade and state on one line again.
   onelinemeta: ['review-carousel.css', '  .rq__meta .rq__trade, .rq__meta .rq__state { display: block; }', '  .rq__meta .rq__trade, .rq__meta .rq__state { display: inline; }'],
   // Gus's card back at his old desktop wording, "real" in the marker (before "fix the desktop quotes").
+  // The section shown again (AFMBP-2410 hid it).
+  shown: ['review-carousel.css', '#reviews { display: none; }', '#reviews { }'],
   oldgusquote: ['index.html', '<p>It qualifies every caller, so I only spend time on <strong class="rq__b">real opportunities</strong>!</p>', '<p>Bolt qualifies every caller upfront, so I only spend my time on <span class="rq__mk">real</span> opportunities and don&rsquo;t waste time meeting with people that aren&rsquo;t serious!</p>'],
 };
 if (NC) {
@@ -255,7 +264,28 @@ try {
   };
   if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
-  for (const [w, h] of SIZES) {
+  // AFMBP-2410: the section is hidden. Each size: it isn't displayed and takes no room, nothing of it (title,
+  // cards) is shown, the sections above and below it meet, and its lazy images (map, photos, logos) aren't fetched.
+  if (REVIEWS_HIDDEN) for (const [w, h] of SIZES) {
+    await open(w, h, 'no-preference');
+    await ev("(() => { scrollTo(0, document.body.scrollHeight); return true; })()");
+    await sleep(600);
+    const H = await ev(`(() => {
+      const s = document.querySelector('#reviews'), r = s && s.getBoundingClientRect(), shown = (e) => e.getClientRects().length > 0;
+      const p = s && s.previousElementSibling, n = s && s.nextElementSibling;
+      return { exists: !!s, display: s ? getComputedStyle(s).display : null, h: r ? r.height : -1,
+        title: [...document.querySelectorAll('h2')].some((e) => /Trusted/.test(e.textContent) && shown(e)),
+        cards: [...document.querySelectorAll('.rq')].filter(shown).length,
+        gap: p && n ? n.getBoundingClientRect().top - p.getBoundingClientRect().bottom : null,
+        fetched: performance.getEntriesByType('resource').map((e) => e.name).filter((u) => /\/assets\/reviews\//.test(u) && !/stars-5\.svg/.test(u)).map((u) => u.split('/').pop()) };
+    })()`);
+    ok(H.exists && H.display === 'none' && H.h === 0, `${w}: the Reviews section is ${H.exists ? `display ${H.display}, ${H.h}px tall` : 'missing'}; want it hidden (display none, no height)`);
+    ok(!H.title && H.cards === 0, `${w}: ${H.title ? 'the "Trusted by pros" title' : ''}${H.title && H.cards ? ' and ' : ''}${H.cards ? `${H.cards} review cards` : ''} shown; want nothing from the section`);
+    ok(H.gap !== null && Math.abs(H.gap) < 0.5, `${w}: the sections above and below Reviews are ${H.gap}px apart; want them meeting (no empty band)`);
+    ok(H.fetched.length === 0, `${w}: the hidden section still fetched ${H.fetched.join(', ')}`);
+    console.log(`${w}x${h}: Reviews hidden (${H.display}, ${H.h}px; neighbours ${H.gap}px apart; ${H.fetched.length} of its images fetched)`);
+  }
+  for (const [w, h] of (REVIEWS_HIDDEN ? [] : SIZES)) {
     const desk = w >= 1024, F = desk ? FIG.d : FIG.m;
     const u = desk ? Math.min(1, (w - 48) / 1481) : Math.min(1.5, w / 402);
     const U = (v) => v * u;

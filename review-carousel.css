@@ -19,6 +19,11 @@
    needs the room; the stage grows with the tallest card.
    ============================================================ */
 
+/* ===== AFMBP-2410 (owner 2026-10-26: "hide the reviews band on desktop and mobile"): the whole
+   section is hidden on every width. Delete this rule to bring it back as it was (and set
+   REVIEWS_HIDDEN to false in tools/reviews-carousel-check.mjs). */
+#reviews { display: none; }
+
 /* ===== Background, every width (AFMBP-2345, owner: "removed the background image"): no photo.
    styles.css fills the section with #1E1E1E and Figma's 77% black overlay takes it to #070707; the
    US-map outline is all that shows behind the title and the card. */
