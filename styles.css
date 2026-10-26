@@ -789,6 +789,9 @@ ul,ol{list-style:none}
   will-change:transform;backface-visibility:hidden;
 }
 @media (prefers-reduced-motion:reduce){.tpcapes__bg::before{transform:none}}
+/* Where Subscribe comes right after this section (hvac, handyman), the phone's lower corner reaches
+   the form at 769-1280px: the form draws above it, so the phone tucks behind (AFMBP-2377). */
+.tpcapes + .subscribe .subscribe__form{position:relative;z-index:3}
 
 /* ---------- Photo spacer band ---------- */
 .tpband{
@@ -808,7 +811,7 @@ ul,ol{list-style:none}
   .tpfeat__inner{grid-template-columns:1fr;gap:28px}
   .tpfeat__media{order:-1}
   .tpfeat--mediaright .tpfeat__media{order:-1}
-  .tpcapes__inner{grid-template-columns:1fr}
+  .tpcapes__inner{grid-template-columns:minmax(0,1fr) 240px}   /* copy left, phone right, as on desktop: 240px is the tilted 220px phone's footprint, so the copy never runs under it (AFMBP-2377) */
 }
 
 @media (max-width:768px){
