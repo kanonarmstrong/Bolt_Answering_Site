@@ -747,8 +747,9 @@ body.demo-lock{overflow:hidden}
 }
 
 /* ============================================================
-   AFMBP-2273 — the sign-up offer (Figma 2718:3312): the demo card's frame,
-   logo, close and pitch, the offer, one yellow "Get started", the rating, help.
+   AFMBP-2273 — the sign-up offer (Figma 2718:3312, as updated 2026-10-28 for
+   AFMBP-2446): the demo card's frame, logo, close, headline and pitch, the
+   trial line, one yellow "Start now", the rating, help.
    Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
    these rules sit outside the breakpoints. Numbers are body-relative (the body
    sits inside the node's .6px stroke), matched to the node's 3x export.
@@ -791,41 +792,40 @@ body.demo-lock{overflow:hidden}
   position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
   background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
 }
-/* The pitch: Inter 19.032 on 26px lines with "real money" in the marker on a
-   line of its own, a blank line (the node's zero-width space), then the offer
-   on 23px lines. Semibold for the headline and the trial line (the node as
-   updated 2026-10-16); the marker stays at its one weight. */
-.demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-cm__sub){
-  position:absolute;left:45.4px;width:266px;margin:0;font-size:19.032px;font-weight:400;color:var(--navy);text-align:left;
+/* The pitch (2718:3340): Inter 19.032, the semibold headline on 26px lines, a
+   blank line (the node's zero-width space), then the body on the node's
+   "normal" lines (23px in its layout). The trial line (2796:3104) is its own
+   semibold block, centred in the same 266px column. */
+.demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-cm__sub,.demo-so__trial){
+  position:absolute;left:45.6px;width:266px;margin:0;font-size:19.032px;font-weight:400;color:var(--navy);text-align:left;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__h{top:90.4px;line-height:26px;font-weight:600}
-/* The marker sits lower in its 26px line than the node draws it; lifted onto it. */
-.demo-backdrop[data-screen="signup"] .demo-cm__mk{display:block;position:relative;top:-3.33px;font-size:26px;font-weight:400;line-height:26px}
-.demo-backdrop[data-screen="signup"] .demo-cm__sub{top:169px;line-height:23px}
-.demo-backdrop[data-screen="signup"] .demo-cm__sub b{font-weight:600}
-/* Yellow brush under "real money" (vector 2718:3346). */
-.demo-backdrop[data-screen="signup"] .demo-cm::before{
-  content:"";position:absolute;left:43.4px;top:139.509px;width:141.986px;height:8.501px;pointer-events:none;
-  background:url('assets/demo-m-ul-money.svg') center/100% 100% no-repeat;
-}
-/* "Get started" (2718:3350): the site's yellow button, 252x49. */
+/* Set to the node's glyphs (its outlined export) in Chrome at a true 3x and in iPhone Safari:
+   the column .2px right of the node's 45.4 (Safari then lands exactly, Chrome within .2px);
+   the body 3.6px lower than 26+26+23 would put it (the node's blank line is taller than an
+   Inter line); the trial line .4px above its box. The headline's whole-pixel step falls at
+   the same place in both engines, so it keeps the node's 107.4: exact in Safari, Chrome
+   draws it .33px high. */
+.demo-backdrop[data-screen="signup"] .demo-cm__h{top:107.4px;line-height:26px;font-weight:600}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub{top:186px;line-height:23px}
+.demo-backdrop[data-screen="signup"] .demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:center}
+/* "Start now" (2718:3350): the site's yellow button, 252x49. */
 .demo-backdrop[data-screen="signup"] .demo-so__cta{
-  position:absolute;left:43.4px;top:364.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
+  position:absolute;left:43.4px;top:394.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
   display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;text-decoration:none;
   /* The flex-centred label drew .67px above the node's; the padding sets it down. */
   padding-top:1.33px;
 }
 /* Rating (2718:3332), under the button: five stars 21.552 apart from x 84.5,
    "4.9/5" and the quote centred in the node's text boxes. */
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:454.4px;display:flex}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:484.4px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
   width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:193.918px;top:457.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:193.918px;top:487.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:71.9px;top:479.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+  position:absolute;left:71.9px;top:509.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-help{
   position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
