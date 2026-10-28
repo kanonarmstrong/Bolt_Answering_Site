@@ -748,8 +748,8 @@ body.demo-lock{overflow:hidden}
 
 /* ============================================================
    AFMBP-2273 — the sign-up offer (Figma 2718:3312, as updated 2026-10-28 for
-   AFMBP-2446): the demo card's frame, logo, close, headline and pitch, the
-   trial line, one yellow "Start now", the rating, help.
+   AFMBP-2446): the demo card's frame, logo, close, the headline on its purple
+   pill, the pitch, the trial line, one yellow "Start now", the rating, help.
    Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
    these rules sit outside the breakpoints. Numbers are body-relative (the body
    sits inside the node's .6px stroke), matched to the node's 3x export.
@@ -792,10 +792,15 @@ body.demo-lock{overflow:hidden}
   position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
   background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
 }
-/* The pitch (2718:3340): Inter 19.032, the semibold headline on 26px lines, a
-   blank line (the node's zero-width space), then the body on the node's
-   "normal" lines (23px in its layout). The trial line (2796:3104) is its own
-   semibold block, centred in the same 266px column. */
+/* The pitch (2718:3340): Inter 19.032, the semibold headline in white on 26px
+   lines over its purple pill (2798:3107), a blank line (the node's zero-width
+   space), then the body on the node's "normal" lines (23px in its layout), its
+   first word "Bolt" semibold. The trial line (2796:3104) is its own semibold
+   block, centred in the same 266px column. */
+.demo-backdrop[data-screen="signup"] .demo-so__pill{
+  position:absolute;left:26.4px;top:99.4px;width:289px;height:69px;border-radius:23px;background:#5644a1;
+  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
+}
 .demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-cm__sub,.demo-so__trial){
   position:absolute;left:45.6px;width:266px;margin:0;font-size:19.032px;font-weight:400;color:var(--navy);text-align:left;
 }
@@ -805,27 +810,28 @@ body.demo-lock{overflow:hidden}
    Inter line); the trial line .4px above its box. The headline's whole-pixel step falls at
    the same place in both engines, so it keeps the node's 107.4: exact in Safari, Chrome
    draws it .33px high. */
-.demo-backdrop[data-screen="signup"] .demo-cm__h{top:107.4px;line-height:26px;font-weight:600}
+.demo-backdrop[data-screen="signup"] .demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}
 .demo-backdrop[data-screen="signup"] .demo-cm__sub{top:186px;line-height:23px}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub b{font-weight:600}
 .demo-backdrop[data-screen="signup"] .demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:center}
 /* "Start now" (2718:3350): the site's yellow button, 252x49. */
 .demo-backdrop[data-screen="signup"] .demo-so__cta{
-  position:absolute;left:43.4px;top:394.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
+  position:absolute;left:43.4px;top:389.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
   display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;text-decoration:none;
   /* The flex-centred label drew .67px above the node's; the padding sets it down. */
   padding-top:1.33px;
 }
 /* Rating (2718:3332), under the button: five stars 21.552 apart from x 84.5,
    "4.9/5" and the quote centred in the node's text boxes. */
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:484.4px;display:flex}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:475.4px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
   width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:193.918px;top:487.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:193.918px;top:478.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:71.9px;top:509.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+  position:absolute;left:71.9px;top:500.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-help{
   position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;

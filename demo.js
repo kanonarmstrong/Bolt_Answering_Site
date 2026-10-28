@@ -455,8 +455,9 @@
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
   }
   // AFMBP-2273 — the sign-up offer (Figma 2718:3312; copy and layout as updated
-  // 2026-10-28, AFMBP-2446): the demo card's logo, close, headline and pitch, the
-  // trial line, one "Start now" into the sign-up flow, the rating, help.
+  // 2026-10-28, AFMBP-2446): the demo card's logo, close, the headline on its
+  // purple pill, the pitch, the trial line, one "Start now" into the sign-up flow,
+  // the rating, help.
   // The same card at every width (no desktop node yet). attribution.js decorates
   // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
   // dialog is logged here, as the demo's own trial links are. The trial length
@@ -471,8 +472,9 @@
     setBody([
       h('div', { class: 'demo-cm' }, [
         h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
+        h('span', { class: 'demo-so__pill', 'aria-hidden': 'true' }),
         h('h2', { class: 'demo-cm__h', text: 'One phone call can make or break your business.' }),
-        h('p', { class: 'demo-cm__sub', text: 'Bolt is a receptionist in your pocket that answers calls and books customers, so you never miss a call.' }),
+        h('p', { class: 'demo-cm__sub' }, [h('b', { text: 'Bolt' }), ' is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a call.']),
         h('p', { class: 'demo-so__trial' }, [
           'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
           h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'

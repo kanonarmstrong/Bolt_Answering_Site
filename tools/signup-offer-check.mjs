@@ -2,10 +2,10 @@
 // card's frame with the offer and one yellow "Start now" into the sign-up flow, instead of
 // the demo. Drives the real page in headless Chrome against a fake Bolt API and checks:
 //   - content and art (the node as updated 2026-10-28, AFMBP-2446): the node's copy, stars,
-//     logo, brush and close cross; no marker or underline (the update dropped "real money");
-//     none of the demo's ways in, and no "Available now" (the 10-16 update dropped it);
-//   - weights: the headline and the trial line semibold, the body regular; the trial line
-//     centred, on its own;
+//     logo, brush, close cross and the headline's purple pill; no marker or underline (the
+//     update dropped "real money"); none of the demo's ways in, and no "Available now";
+//   - weights and colour: the headline semibold and white on the pill, the body regular with
+//     "Bolt" semibold, the trial line semibold and centred, on its own;
 //   - geometry: each piece where it sits once matched to the node's glyphs (card-relative);
 //   - pricing: "30 days" and "$79" follow the pricing feed whether it answers before or after
 //     the card is built (pricing.js reapply), and fall back when it doesn't answer;
@@ -54,11 +54,17 @@ const MUTATE = {
   // The close button is hidden.
   close_hidden: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:flex;', '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:none;')],
   // "Start now" moves off the node.
-  off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:394.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:399.4px;width:252px;height:49px;')],
+  off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:389.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:394.4px;width:252px;height:49px;')],
   // A narrow phone clips the card instead of scaling it down.
   no_zoom: ['demo.css', (s) => cut(s, '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }', '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{left:0} }')],
   // The headline drops back to regular.
-  regular_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:400}')],
+  regular_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:400;color:#fff}')],
+  // The headline stays navy on the purple pill.
+  navy_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600}')],
+  // The headline's pill is not drawn.
+  no_pill: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  display:none;position:absolute;')],
+  // "Bolt" at the start of the body drops back to regular.
+  regular_bolt: ['demo.css', (s) => cut(s, '.demo-cm__sub b{font-weight:600}', '.demo-cm__sub b{font-weight:400}')],
   // The trial line drops back to regular.
   regular_trial: ['demo.css', (s) => cut(s, '.demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:center}', '.demo-so__trial{top:307px;line-height:23px;font-weight:400;text-align:center}')],
   // The trial line sits flush left, as the body does.
@@ -111,14 +117,16 @@ const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); 
 
 // The node (2718:3312, as updated 2026-10-28), card-relative CSS px, as matched to its glyphs
 // (Chrome at a true 3x and iPhone Safari): the card's children sit inside its .6px stroke
-// ("Start now" at 44, 395). The 10-28 update moved the button and the rating 30px down.
+// ("Start now" at 44, 390). The 10-28 update moved the button 25px down and the rating 21px
+// down, and put the headline on a purple pill (2798:3107).
 const NODE = {
   card: { w: 337, h: 611 },
-  cta: { x: 44, y: 395, w: 252, h: 49 },
-  stars: { x: 85.104, y: 485, w: 107.76, h: 21.552 },
+  cta: { x: 44, y: 390, w: 252, h: 49 },
+  stars: { x: 85.104, y: 476, w: 107.76, h: 21.552 },
   close: { x: 278.496, y: 21.497, w: 44, h: 44 },
+  pill: { x: 27, y: 100, w: 289, h: 69 },
   // Centred lines: [the glyph run's centre x, the line box's centre y].
-  centres: { '.demo-cm__score': [216.99, 496.391], '.demo-cm__quote': [163.98, 517.938], '.demo-help': [168.73, 566.656] },
+  centres: { '.demo-cm__score': [216.99, 487.391], '.demo-cm__quote': [163.98, 508.938], '.demo-help': [168.73, 566.656] },
   // Left edge, top and line count: the headline on 2 lines, the body on 4 (the column sits
   // .2px right of the node's 46 so both engines draw it on the node's glyphs; demo.css).
   pitch: { '.demo-cm__h': [46.2, 108, 2], '.demo-cm__sub': [46.2, 186.6, 4] },
@@ -200,7 +208,7 @@ try {
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dpr, mobile });
   };
   const HEAD = 'One phone call can make or break your business.';
-  const BODY = 'Bolt is a receptionist in your pocket that answers calls and books customers, so you never miss a call.';
+  const BODY = 'Bolt is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a call.';
   const offer = () => text('.demo-so__trial');
   const OFFER = (days, price) => `Get your first ${days} days free (${price} value). Cancel anytime.`;
   const isClose = (f) => /^button\.demo-close /.test(f.desc);
@@ -217,7 +225,12 @@ try {
   ok((await text('.demo-cm__sub')) === BODY, `phone: the body (${await text('.demo-cm__sub')})`);
   const wt = (sel) => ev(`(function(){var e=document.querySelector('.demo-backdrop.open ${sel}');return e?getComputedStyle(e).fontWeight:null})()`);
   ok((await wt('.demo-cm__h')) === '600', `phone: the headline semibold (${await wt('.demo-cm__h')})`);
-  ok((await wt('.demo-cm__sub')) === '400', `phone: the body regular (${await wt('.demo-cm__sub')})`);
+  const hc = await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__h')).color");
+  ok(hc === 'rgb(255, 255, 255)', `phone: the headline white, on its pill (${hc})`);
+  ok((await wt('.demo-cm__sub')) === '400' && (await text('.demo-cm__sub b')) === 'Bolt' && (await wt('.demo-cm__sub b')) === '600', `phone: the body regular, its first word "Bolt" semibold (${await wt('.demo-cm__sub')}, ${await text('.demo-cm__sub b')} ${await wt('.demo-cm__sub b')})`);
+  const pill = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__pill'); if(!e) return null; var s=getComputedStyle(e); return {bg:s.backgroundColor, radius:s.borderRadius, shadow:s.boxShadow, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
+  ok(!!pill && pill.shown && pill.bg === 'rgb(86, 68, 161)' && pill.radius === '23px' && pill.shadow === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 2px' && pill.hidden === 'true', `phone: the headline's pill, the node's purple, 23px corners and its two shadows, hidden from screen readers (${JSON.stringify(pill)})`);
+  ok((await ev("(function(){var p=document.querySelector('.demo-backdrop.open .demo-so__pill'), h=document.querySelector('.demo-backdrop.open .demo-cm__h'); if(!p||!h) return false; var r=p.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === h;})()")) === true, 'phone: the headline sits on top of its pill');
   ok((await wt('.demo-so__trial')) === '600' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__trial')).textAlign")) === 'center', `phone: the trial line semibold and centred (${await wt('.demo-so__trial')})`);
   ok((await offer()) === OFFER(30, '$79'), `phone: the trial line, its length and price from the fallback (${await offer()})`);
   ok((await text('.demo-so__cta')) === 'Start now', `phone: "Start now" (${await text('.demo-so__cta')})`);
@@ -236,7 +249,7 @@ try {
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
   ok(near(card.w, 337, 0.01) && near(card.h, 611, 0.01), `phone: card 337x611 (${card.w}x${card.h})`);
   ok(near(card.y, 73, 0.01), `phone: card where the node puts it, 73px from the top of a 758px screen (${card.y})`);
-  for (const [k, sel] of [['cta', '.demo-so__cta'], ['stars', '.demo-backdrop.open .demo-cm__stars'], ['close', '.demo-close']]) {
+  for (const [k, sel] of [['cta', '.demo-so__cta'], ['stars', '.demo-backdrop.open .demo-cm__stars'], ['close', '.demo-close'], ['pill', '.demo-backdrop.open .demo-so__pill']]) {
     const b = rel(await rect(sel)), n = NODE[k];
     ok(!!b && near(b.x, n.x, 0.05) && near(b.y, n.y, 0.05) && near(b.w, n.w, 0.05) && near(b.h, n.h, 0.05), `phone: ${k} box where it matches the node (${JSON.stringify(b)} vs ${JSON.stringify(n)})`);
   }
@@ -358,6 +371,8 @@ try {
     ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     const b = await rect('.demo-so__cta');
     ok(b && b.x >= c.x && b.x + b.w <= c.x + c.w && b.y >= 0 && b.y + b.h <= h, `${w}x${h}: "Start now" inside the card and on screen (${JSON.stringify(b)})`);
+    const pb = await rect('.demo-backdrop.open .demo-so__pill');
+    ok(!!pb && pb.x >= c.x && pb.x + pb.w <= c.x + c.w && pb.w > 0, `${w}x${h}: the headline's pill inside the card (${pb && [pb.x.toFixed(1), (pb.x + pb.w).toFixed(1)]})`);
     const x = await rect('.demo-close');
     ok(!!x && (await visible('.demo-close')) && x.x >= c.x && x.x + x.w <= c.x + c.w && x.y >= 0 && x.w >= 36, `${w}x${h}: the close button inside the card and on screen, at least 36px`);
     for (const [sel, want] of [['.demo-cm__h', 2], ['.demo-cm__sub', 4], ['.demo-so__trial', 2], ['.demo-cm__score', 1], ['.demo-cm__quote', 1], ['.demo-help', 1], ['.demo-so__cta', 1]]) {
