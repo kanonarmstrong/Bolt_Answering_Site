@@ -63,6 +63,8 @@ const MUTATE = {
   navy_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600}')],
   // The headline's pill is not drawn.
   no_pill: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  display:none;position:absolute;')],
+  // "Start now" loses its shadow.
+  flat_button: ['demo.css', (s) => cut(s, '  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);\n  display:flex;', '  display:flex;')],
   // "Bolt" at the start of the body drops back to regular.
   regular_bolt: ['demo.css', (s) => cut(s, '.demo-cm__sub b{font-weight:600}', '.demo-cm__sub b{font-weight:400}')],
   // The trial line drops back to regular.
@@ -243,6 +245,8 @@ try {
   ok(/demo-m-brush\.svg/.test(await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before');return s.webkitMaskImage||s.maskImage})()")) && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before').transform")) === 'matrix(-1, 0, 0, 1, 0, 0)', 'phone: the paintbrush watermark, mirrored as the node draws it');
   ok((await visible('.demo-close')) && /demo-m-close\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-close'),'::before').backgroundImage")), 'phone: the close button shows, drawn with the node\'s own cross');
   ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(252, 189, 17)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(24, 10, 83)', 'phone: "Start now" is the node\'s yellow with navy words');
+  const cs = await ev("getComputedStyle(document.querySelector('.demo-so__cta')).boxShadow");
+  ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start now" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
   ok((await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__quote')).fontStyle")) === 'italic', 'phone: the quote in italic');
   const card = (await rect('.demo-backdrop.open .demo-card')) || { x: 0, y: 0, w: 0, h: 0 };
   const rel = (b) => b && { x: b.x - card.x, y: b.y - card.y, w: b.w, h: b.h, cx: b.cx - card.x, cy: b.cy - card.y, lines: b.lines };
