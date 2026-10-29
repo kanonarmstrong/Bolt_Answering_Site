@@ -210,7 +210,7 @@ try {
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dpr, mobile });
   };
   const HEAD = 'One phone call can make or break your business.';
-  const BODY = 'Bolt is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a call.';
+  const BODY = 'Bolt is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a job.';
   const offer = () => text('.demo-so__trial');
   const OFFER = (days, price) => `Get your first ${days} days free (${price} value). Cancel anytime.`;
   const isClose = (f) => /^button\.demo-close /.test(f.desc);
