@@ -74,6 +74,8 @@ const MUTATE = {
   no_bubble: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__bubble{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__bubble{\n  display:none;position:absolute;')],
   // The paintbrush watermark is not drawn.
   no_brush: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-body::before{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-body::before{\n  content:none;')],
+  // The "tm" beside the logo is not drawn.
+  no_tm: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__tm{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__tm{\n  display:none;position:absolute;')],
   // The help line comes back under the rating.
   help_line: ['demo.js', (s) => cut(s, "      ])\n    ], 'signup');", "      ]),\n      helpLine()\n    ], 'signup');")],
   // "Bolt" at the start of the body drops back to regular.
@@ -136,19 +138,20 @@ const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); 
 const NODE = {
   card: { w: 337, h: 629, y: 65 },
   cta: { x: 44, y: 390, w: 252, h: 49 },
-  stars: { x: 94, y: 490.73, w: 107.76, h: 20.723 },
+  stars: { x: 94, y: 484.73, w: 107.76, h: 20.723 },
   close: { x: 278.496, y: 21.497, w: 44, h: 44 },
   pill: { x: 27, y: 100, w: 289, h: 69 },
-  bubble: { x: 15, y: 476, w: 312, h: 127.119 },
+  bubble: { x: 15, y: 470, w: 312, h: 127.119 },
+  tm: { x: 111, y: 32.7 },
   // Centred lines: [the glyph run's centre x, the line box's centre y].
-  centres: { '.demo-cm__score': [225.886, 502.002] },
+  centres: { '.demo-cm__score': [225.886, 496.002] },
   // Left edge, top and line count: the headline on 2 lines, the body on 4 (the column sits
   // .2px right of the node's 46 so both engines draw it on the node's glyphs; demo.css).
   pitch: { '.demo-cm__h': [46.2, 108, 2], '.demo-cm__sub': [46.2, 186.6, 4] },
   // The trial line and the testimonial, centred in their columns [run centre x, top, lines].
   trial: [179.2, 307.6, 2],
   // (The testimonial's column sits 1px left of the node's: browsers slant italics more; demo.css.)
-  quote: [170, 516.424, 3],
+  quote: [170, 510.424, 3],
 };
 
 try {
@@ -264,6 +267,8 @@ try {
   ok((await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).every(function(s){return /demo-m-star-lg\\.svg/.test(getComputedStyle(s).backgroundImage) && Math.abs(s.getBoundingClientRect().width - 21.552) < .01})")), 'phone: five node stars');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__mk, .demo-backdrop.open .demo-mk')")) && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm'),'::before').backgroundImage")) === 'none', 'phone: no marker words and no underline (the 10-28 node dropped "real money")');
   ok(/assets\/logo\.png/.test(await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__logo')).backgroundImage")), 'phone: the in-card logo');
+  const tm = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__tm'); if(!e) return null; var s=getComputedStyle(e), r=e.getBoundingClientRect(), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(); return {text:e.textContent, font:s.fontFamily, size:s.fontSize, color:s.color, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'&&r.width>0, x:r.left-k.left, y:r.top-k.top};})()");
+  ok(!!tm && tm.shown && tm.text === 'tm' && /Permanent Marker/.test(tm.font) && tm.size === '10.658px' && tm.color === 'rgb(24, 10, 83)' && tm.hidden === 'true' && Math.abs(tm.x - NODE.tm.x) < 0.05 && Math.abs(tm.y - NODE.tm.y) < 0.05, `phone: the marker "tm" beside the logo, where the node puts it, hidden from screen readers (${JSON.stringify(tm)})`);
   const brush = await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before');return {content:s.content, display:s.display, mask:s.webkitMaskImage||s.maskImage, transform:s.transform, box:[s.left,s.top,s.width,s.height].join(' '), bg:s.backgroundColor};})()");
   ok(brush.content !== 'none' && brush.content !== 'normal' && brush.display !== 'none' && /demo-m-brush\.svg/.test(brush.mask) && brush.transform === 'matrix(-1, 0, 0, 1, 0, 0)' && brush.box.split(' ').map(parseFloat).every((v, i) => Math.abs(v - [-477.448, -0.15, 828.071, 688.679][i]) < 0.02) && brush.bg === 'rgba(24, 10, 83, 0.11)', `phone: the paintbrush watermark is drawn, mirrored and placed as the node draws it (${JSON.stringify(brush)})`);
   ok((await visible('.demo-close')) && /demo-m-close\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-close'),'::before').backgroundImage")), 'phone: the close button shows, drawn with the node\'s own cross');

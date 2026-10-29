@@ -793,6 +793,12 @@ body.demo-lock{overflow:hidden}
   position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
   background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
 }
+/* The "tm" beside the logo (2806:3129): the marker at 10.658px, set .52px below
+   the node's box because Chrome and Safari both drew it that much high. */
+.demo-backdrop[data-screen="signup"] .demo-so__tm{
+  position:absolute;left:110.4px;top:32.1px;margin:0;font-family:'Permanent Marker',cursive;font-size:10.658px;font-weight:400;
+  line-height:14.56px;color:var(--navy);white-space:nowrap;pointer-events:none;
+}
 /* The pitch (2718:3340): Inter 19.032, the semibold headline in white on 26px
    lines over its purple pill (2798:3107), a blank line (the node's zero-width
    space), then the body on the node's "normal" lines (23px in its layout), its
@@ -834,16 +840,16 @@ body.demo-lock{overflow:hidden}
    browsers slant the synthesized italic more than Figma's Inter Italic does,
    which pushed the ink ~1px right. */
 .demo-backdrop[data-screen="signup"] .demo-so__bubble{
-  position:absolute;left:14.4px;top:475.4px;width:312px;height:127.119px;pointer-events:none;
+  position:absolute;left:14.4px;top:469.4px;width:312px;height:127.119px;pointer-events:none;
   background:url('assets/demo-so-bubble.svg') 0 0/100% 100% no-repeat;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:93.4px;top:490.13px;display:flex}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:93.4px;top:484.13px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
   width:21.552px;height:20.723px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 18.744px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:202.814px;top:493.402px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:202.814px;top:487.402px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:36.4px;top:515.824px;width:266px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:var(--navy);text-align:center;
+  position:absolute;left:36.4px;top:509.824px;width:266px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:var(--navy);text-align:center;
 }
