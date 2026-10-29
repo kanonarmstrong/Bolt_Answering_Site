@@ -454,8 +454,10 @@
     ], 'choice');
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
   }
-  // AFMBP-2273 — the sign-up offer (Figma 2718:3312): the demo card's logo, close
-  // and pitch, the offer, one "Get started" into the sign-up flow, the rating, help.
+  // AFMBP-2273 — the sign-up offer (Figma 2718:3312; copy and layout as updated
+  // 2026-10-28, AFMBP-2446): the demo card's logo, close, the headline on its
+  // purple pill, the pitch, the trial line, one "Start now" into the sign-up flow,
+  // and the rating with a testimonial in a speech bubble (no help line).
   // The same card at every width (no desktop node yet). attribution.js decorates
   // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
   // dialog is logged here, as the demo's own trial links are. The trial length
@@ -466,31 +468,27 @@
     stopInbound();
     inboundFlow = null;
     step = 'signup_offer';
-    var cta = h('a', { class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Get started']);
+    var cta = h('a', { class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Start now']);
     setBody([
       h('div', { class: 'demo-cm' }, [
         h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
-        h('h2', { class: 'demo-cm__h' }, [
-          'One phone call can turn into ',
-          h('span', { class: 'demo-mk demo-cm__mk', text: 'real money' })
-        ]),
-        h('p', { class: 'demo-cm__sub' }, [
-          'Bolt answers calls and books customers, so you never miss an opportunity to make more money.',
-          h('br'), h('br'),
-          h('b', null, [
-            'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
-            h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'
-          ])
+        h('span', { class: 'demo-so__tm', 'aria-hidden': 'true', text: 'tm' }),
+        h('span', { class: 'demo-so__pill', 'aria-hidden': 'true' }),
+        h('h2', { class: 'demo-cm__h', text: 'One phone call can make or break your business.' }),
+        h('p', { class: 'demo-cm__sub' }, [h('b', { text: 'Bolt' }), ' is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a job.']),
+        h('p', { class: 'demo-so__trial' }, [
+          'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',
+          h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'
         ])
       ]),
       cta,
-      // The stars are drawn and hidden from screen readers; "4.9/5" says it.
+      // The bubble and stars are drawn and hidden from screen readers; "4.9/5" says it.
       h('div', { class: 'demo-cr' }, [
+        h('span', { class: 'demo-so__bubble', 'aria-hidden': 'true' }),
         h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“Pays for itself”' })
-      ]),
-      helpLine()
+        h('p', { class: 'demo-cm__quote', text: '“I was paying $250 a week for someone to answer my phone and book work. Bolt booked a job and paid for itself in a day.”' })
+      ])
     ], 'signup');
     try { if (window.boltPricing) window.boltPricing.reapply(); } catch (e) {}
   }
