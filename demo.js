@@ -457,7 +457,7 @@
   // AFMBP-2273 — the sign-up offer (Figma 2718:3312; copy and layout as updated
   // 2026-10-28, AFMBP-2446): the demo card's logo, close, the headline on its
   // purple pill, the pitch, the trial line, one "Start now" into the sign-up flow,
-  // the rating, help.
+  // and the rating with a testimonial in a speech bubble (no help line).
   // The same card at every width (no desktop node yet). attribution.js decorates
   // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
   // dialog is logged here, as the demo's own trial links are. The trial length
@@ -481,13 +481,13 @@
         ])
       ]),
       cta,
-      // The stars are drawn and hidden from screen readers; "4.9/5" says it.
+      // The bubble and stars are drawn and hidden from screen readers; "4.9/5" says it.
       h('div', { class: 'demo-cr' }, [
+        h('span', { class: 'demo-so__bubble', 'aria-hidden': 'true' }),
         h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“I was paying $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”' })
-      ]),
-      helpLine()
+        h('p', { class: 'demo-cm__quote', text: '“I was paying $250 a week for someone to answer my phone and book work. Bolt booked a job and paid for itself in a day.”' })
+      ])
     ], 'signup');
     try { if (window.boltPricing) window.boltPricing.reapply(); } catch (e) {}
   }

@@ -749,23 +749,24 @@ body.demo-lock{overflow:hidden}
 /* ============================================================
    AFMBP-2273 — the sign-up offer (Figma 2718:3312, as updated 2026-10-28 for
    AFMBP-2446): the demo card's frame, logo, close, the headline on its purple
-   pill, the pitch, the trial line, one yellow "Start now", the rating, help.
+   pill, the pitch, the trial line, one yellow "Start now", and the rating with
+   a testimonial in a speech bubble (the node has no help line).
    Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
    these rules sit outside the breakpoints. Numbers are body-relative (the body
    sits inside the node's .6px stroke), matched to the node's 3x export.
    ============================================================ */
 .demo-backdrop[data-screen="signup"]{
-  --demo-w:337px;--demo-h:611px;--demo-dx:-1.5px;--demo-dy:-.5px;--demo-bw:.6px;
+  --demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:.5px;--demo-bw:.6px;
   background:rgba(0,0,0,.3);padding:16px clamp(0px,calc((100vw - var(--demo-w)) / 2),16px);
 }
 .demo-backdrop[data-screen="signup"] .demo-card{
-  width:var(--demo-w);max-width:100%;height:611px;min-height:var(--demo-h);padding:0;border:0;background:#fff;
+  width:var(--demo-w);max-width:100%;height:629px;min-height:var(--demo-h);padding:0;border:0;background:#fff;
   border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18);
   position:relative;left:var(--demo-dx);top:max(var(--demo-dy),min(0px,calc((var(--demo-h) - 100%) / 2)));
   overflow:hidden;overflow:clip;
 }
 .demo-backdrop[data-screen="signup"] .demo-body{
-  position:relative;z-index:1;width:var(--demo-w);height:611px;min-height:var(--demo-h);
+  position:relative;z-index:1;width:var(--demo-w);height:629px;min-height:var(--demo-h);
   left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
 }
 @media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }
@@ -824,22 +825,25 @@ body.demo-lock{overflow:hidden}
   /* The flex-centred label drew .67px above the node's; the padding sets it down. */
   padding-top:1.33px;
 }
-/* Rating (2718:3332), under the button: five stars 21.552 apart from x 84.5,
-   "4.9/5" centred in its text box, then the testimonial centred in the 266px
-   column on 3 lines. Figma sets its baselines on whole pixels 16px apart (its
-   15.857 line height, rounded), so 16px lines land on them in both engines.
-   The column sits 1px left of the node's 38.4: browsers slant the synthesized
-   italic more than Figma's Inter Italic does, which pushed the ink ~1px right. */
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:455.4px;display:flex}
+/* Rating (2718:3332), under the button, in a white speech bubble: the node's
+   own union of the bubble and its tail with both shadows (2806:3127, exported
+   with its shadow box), five stars 21.552 apart at the node's 20.723 height,
+   "4.9/5", then the navy testimonial centred in a 266px column on 3 lines.
+   Figma lays those lines 16px apart (its 15.857 line height, rounded), so 16px
+   lines land on them in both engines. The column sits 1px left of the node's:
+   browsers slant the synthesized italic more than Figma's Inter Italic does,
+   which pushed the ink ~1px right. */
+.demo-backdrop[data-screen="signup"] .demo-so__bubble{
+  position:absolute;left:14.4px;top:475.4px;width:312px;height:127.119px;pointer-events:none;
+  background:url('assets/demo-so-bubble.svg') 0 0/100% 100% no-repeat;
+}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:93.4px;top:490.13px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
-  width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
+  width:21.552px;height:20.723px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 18.744px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:193.918px;top:458.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:202.814px;top:493.402px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:37.4px;top:489.4px;width:266px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;
-}
-.demo-backdrop[data-screen="signup"] .demo-help{
-  position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+  position:absolute;left:36.4px;top:515.824px;width:266px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:var(--navy);text-align:center;
 }
