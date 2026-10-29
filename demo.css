@@ -825,16 +825,20 @@ body.demo-lock{overflow:hidden}
   padding-top:1.33px;
 }
 /* Rating (2718:3332), under the button: five stars 21.552 apart from x 84.5,
-   "4.9/5" and the quote centred in the node's text boxes. */
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:475.4px;display:flex}
+   "4.9/5" centred in its text box, then the testimonial centred in the 266px
+   column on 3 lines. Figma sets its baselines on whole pixels 16px apart (its
+   15.857 line height, rounded), so 16px lines land on them in both engines.
+   The column sits 1px left of the node's 38.4: browsers slant the synthesized
+   italic more than Figma's Inter Italic does, which pushed the ink ~1px right. */
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:84.504px;top:455.4px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
   width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:193.918px;top:478.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:193.918px;top:458.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:71.9px;top:500.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+  position:absolute;left:37.4px;top:489.4px;width:266px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;
 }
 .demo-backdrop[data-screen="signup"] .demo-help{
   position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;

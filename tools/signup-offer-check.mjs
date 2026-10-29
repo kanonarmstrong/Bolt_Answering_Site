@@ -65,6 +65,8 @@ const MUTATE = {
   no_pill: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  display:none;position:absolute;')],
   // "Start now" loses its shadow.
   flat_button: ['demo.css', (s) => cut(s, '  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);\n  display:flex;', '  display:flex;')],
+  // The testimonial is kept on one line.
+  nowrap_quote: ['demo.css', (s) => cut(s, 'line-height:16px;color:#707070;text-align:center;\n}', 'line-height:16px;color:#707070;text-align:center;white-space:nowrap;\n}')],
   // "Bolt" at the start of the body drops back to regular.
   regular_bolt: ['demo.css', (s) => cut(s, '.demo-cm__sub b{font-weight:600}', '.demo-cm__sub b{font-weight:400}')],
   // The trial line drops back to regular.
@@ -119,21 +121,23 @@ const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); 
 
 // The node (2718:3312, as updated 2026-10-28), card-relative CSS px, as matched to its glyphs
 // (Chrome at a true 3x and iPhone Safari): the card's children sit inside its .6px stroke
-// ("Start now" at 44, 390). The 10-28 update moved the button 25px down and the rating 21px
-// down, and put the headline on a purple pill (2798:3107).
+// ("Start now" at 44, 390). The 10-28 updates moved the button 25px down and the stars 1px
+// down, put the headline on a purple pill (2798:3107) and made the quote a 3-line testimonial.
 const NODE = {
   card: { w: 337, h: 611 },
   cta: { x: 44, y: 390, w: 252, h: 49 },
-  stars: { x: 85.104, y: 476, w: 107.76, h: 21.552 },
+  stars: { x: 85.104, y: 456, w: 107.76, h: 21.552 },
   close: { x: 278.496, y: 21.497, w: 44, h: 44 },
   pill: { x: 27, y: 100, w: 289, h: 69 },
   // Centred lines: [the glyph run's centre x, the line box's centre y].
-  centres: { '.demo-cm__score': [216.99, 487.391], '.demo-cm__quote': [163.98, 508.938], '.demo-help': [168.73, 566.656] },
+  centres: { '.demo-cm__score': [216.99, 467.391], '.demo-help': [168.73, 566.656] },
   // Left edge, top and line count: the headline on 2 lines, the body on 4 (the column sits
   // .2px right of the node's 46 so both engines draw it on the node's glyphs; demo.css).
   pitch: { '.demo-cm__h': [46.2, 108, 2], '.demo-cm__sub': [46.2, 186.6, 4] },
-  // The trial line: centred in the same column [run centre x, top, lines].
+  // The trial line and the testimonial, centred in their columns [run centre x, top, lines].
   trial: [179.2, 307.6, 2],
+  // (The testimonial's column sits 1px left of the node's: browsers slant italics more; demo.css.)
+  quote: [171, 490, 3],
 };
 
 try {
@@ -210,6 +214,7 @@ try {
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dpr, mobile });
   };
   const HEAD = 'One phone call can make or break your business.';
+  const QUOTE = '“I was paying $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”';
   const BODY = 'Bolt is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a job.';
   const offer = () => text('.demo-so__trial');
   const OFFER = (days, price) => `Get your first ${days} days free (${price} value). Cancel anytime.`;
@@ -236,7 +241,7 @@ try {
   ok((await wt('.demo-so__trial')) === '600' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__trial')).textAlign")) === 'center', `phone: the trial line semibold and centred (${await wt('.demo-so__trial')})`);
   ok((await offer()) === OFFER(30, '$79'), `phone: the trial line, its length and price from the fallback (${await offer()})`);
   ok((await text('.demo-so__cta')) === 'Start now', `phone: "Start now" (${await text('.demo-so__cta')})`);
-  ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === '“Pays for itself”' && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.', `phone: rating, quote and the help line (${await text('.demo-backdrop.open .demo-cm__quote')})`);
+  ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === QUOTE && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.', `phone: rating, quote and the help line (${await text('.demo-backdrop.open .demo-cm__quote')})`);
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__live')")) && !(await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Available now') >= 0")), 'phone: no "Available now" or green dot (the node dropped them)');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-choice__call, .demo-backdrop.open .demo-choice__get, .demo-backdrop.open .demo-choice__when')")), 'phone: none of the demo\'s ways in');
   ok((await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).every(function(s){return /demo-m-star-lg\\.svg/.test(getComputedStyle(s).backgroundImage) && Math.abs(s.getBoundingClientRect().width - 21.552) < .01})")), 'phone: five node stars');
@@ -265,10 +270,10 @@ try {
     const g = rel(await run(`.demo-backdrop.open ${sel}`)), b = rel(await rect(`.demo-backdrop.open ${sel}`));
     ok(g && b && near(g.x, x, 0.05) && near(b.y, y, 0.05) && g.lines === lines, `phone: ${sel} from x ${x}, top ${y}, on ${lines} lines, as the node wraps it (${g && b && [g.x.toFixed(2), b.y.toFixed(2), g.lines]})`);
   }
-  {
-    const [cx, y, lines] = NODE.trial;
-    const g = rel(await run('.demo-backdrop.open .demo-so__trial')), b = rel(await rect('.demo-backdrop.open .demo-so__trial'));
-    ok(g && b && near(g.cx, cx, 0.5) && near(b.y, y, 0.05) && g.lines === lines, `phone: the trial line centred at ${cx}, top ${y}, on ${lines} lines, as the node wraps it (${g && b && [g.cx.toFixed(2), b.y.toFixed(2), g.lines]})`);
+  for (const [name, sel] of [['trial', '.demo-so__trial'], ['quote', '.demo-cm__quote']]) {
+    const [cx, y, lines] = NODE[name];
+    const g = rel(await run(`.demo-backdrop.open ${sel}`)), b = rel(await rect(`.demo-backdrop.open ${sel}`));
+    ok(g && b && near(g.cx, cx, 0.5) && near(b.y, y, 0.05) && g.lines === lines, `phone: the ${name === 'trial' ? 'trial line' : 'testimonial'} centred at ${cx}, top ${y}, on ${lines} lines, as the node wraps it (${g && b && [g.cx.toFixed(2), b.y.toFixed(2), g.lines]})`);
   }
   ok((await ev("(function(){var b=document.querySelector('.demo-close'), r=b.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === b;})()")) === true, 'phone: the close button takes a tap at its centre (nothing on top of it)');
   ok((await ev("document.querySelector('.demo-backdrop.open h2').textContent")) === HEAD && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the headline is the one heading');
@@ -379,7 +384,7 @@ try {
     ok(!!pb && pb.x >= c.x && pb.x + pb.w <= c.x + c.w && pb.w > 0, `${w}x${h}: the headline's pill inside the card (${pb && [pb.x.toFixed(1), (pb.x + pb.w).toFixed(1)]})`);
     const x = await rect('.demo-close');
     ok(!!x && (await visible('.demo-close')) && x.x >= c.x && x.x + x.w <= c.x + c.w && x.y >= 0 && x.w >= 36, `${w}x${h}: the close button inside the card and on screen, at least 36px`);
-    for (const [sel, want] of [['.demo-cm__h', 2], ['.demo-cm__sub', 4], ['.demo-so__trial', 2], ['.demo-cm__score', 1], ['.demo-cm__quote', 1], ['.demo-help', 1], ['.demo-so__cta', 1]]) {
+    for (const [sel, want] of [['.demo-cm__h', 2], ['.demo-cm__sub', 4], ['.demo-so__trial', 2], ['.demo-cm__score', 1], ['.demo-cm__quote', 3], ['.demo-help', 1], ['.demo-so__cta', 1]]) {
       const g = await run(`.demo-backdrop.open ${sel}`);
       ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]})`);
     }

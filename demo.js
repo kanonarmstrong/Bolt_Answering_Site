@@ -485,7 +485,7 @@
       h('div', { class: 'demo-cr' }, [
         h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“Pays for itself”' })
+        h('p', { class: 'demo-cm__quote', text: '“I was paying $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”' })
       ]),
       helpLine()
     ], 'signup');
