@@ -19,7 +19,6 @@ function fakeDoc() {
     '.js-pm-unit': [el('month')],
     '.js-pm-verb': [el('is')],
     '.js-td': [el('30')],
-    '.js-cta-trial': [el('Start my free 30-day trial'), el('Start my free 30-day trial')],
     '.mchev__fine': [{ querySelectorAll: () => li }],
     '.chev-mobile': [el('')],
   };
@@ -38,7 +37,6 @@ test('the feed reaches every hook: price, promo LENGTH, trial, allowances, aria'
   assert.equal(text(doc, '.mchev__amt'), '$39.99');
   assert.equal(String(text(doc, '.js-pm')), '6');
   assert.equal(String(text(doc, '.js-td')), '14');
-  assert.equal(text(doc, '.js-cta-trial', 1), 'Start my free 14-day trial');
   assert.equal(doc.li[0].textContent, 'After promo period, price increases to $59.99 / month');
   assert.equal(
     doc.li[1].textContent,
@@ -159,10 +157,17 @@ test('every visible "for first N months" is the .js-pm hook, never a baked numbe
   }
 });
 
-test('every page with a trial CTA loads pricing.js, so the trial length follows the feed', () => {
-  const pages = htmlFiles().filter((f) => readFileSync(f, 'utf8').includes('js-cta-trial'));
-  assert.ok(pages.length >= 10, `found ${pages.length} CTA pages`);
-  for (const f of pages) assert.match(readFileSync(f, 'utf8'), /<script src="\/?pricing\.js\?v=\d+"><\/script>/, f);
+test('AFMBP-2482: every trial button reads "Get started now" (owner, 2026-10-31), and pricing.js writes no trial length into one', () => {
+  const buttons = [];
+  for (const f of htmlFiles()) {
+    const html = readFileSync(f, 'utf8');
+    for (const m of html.matchAll(/<a href="https:\/\/app\.boltanswering\.com\/signup" class="btn btn--yellow[^"]*">([\s\S]*?)<\/a>/g)) buttons.push([f, m[1].trim()]);
+    assert.ok(!/Start my free|free 30-day trial/i.test(html), `${f} still has an old trial label`);
+  }
+  assert.ok(buttons.length >= 22, `found ${buttons.length} trial buttons`);
+  for (const [f, label] of buttons) assert.equal(label, 'Get started now', f);
+  const src = readFileSync(new URL('./pricing.js', import.meta.url), 'utf8');
+  assert.ok(!/js-cta-trial|Start my free/.test(src), 'pricing.js still rewrites a trial button');
 });
 
 test('AFMBP-2273: the retail price in running text (.js-retail) follows the feed, and falls back', () => {

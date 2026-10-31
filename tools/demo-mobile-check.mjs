@@ -65,6 +65,8 @@ const MUTATE = {
   swap_help: ['demo.js', (s) => cut(cut(cut(s, "osLink('/support/hca/disable-ios-spam-blockers'", 'TMP_IOS'), "osLink('/support/hca/disable-android-spam-blockers'", "osLink('/support/hca/disable-ios-spam-blockers'"), 'TMP_IOS', "osLink('/support/hca/disable-android-spam-blockers'")],
   // A help-article tap is not counted.
   no_help_event: ['demo.js', (s) => cut(s, "a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });", '')],
+  // AFMBP-2482: the end-of-call button keeps its old labels.
+  old_recap_label: ['demo.js', (s) => cut(s, "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Get started now'])", "modeProps({ from: 'recap', call_id: finishedFor })); } }, dm('Start my free trial now', 'Start free 30-day trial'))")],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 // A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
@@ -361,7 +363,7 @@ try {
   ok((await text('.demo-success-sub')) === "Don't waste money on receptionists or lose leads to voicemail. Bolt qualifies leads and books jobs for under $3/day.", `success: the node's pitch (${await text('.demo-success-sub')})`);
   ok((await text('.demo-success-tlabel')) === 'Here’s the transcript:', 'success: "Here’s the transcript:"');
   ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-chat .demo-bubble')).map(function(e){return e.innerText})")) === JSON.stringify(TRANSCRIPT.map((t) => t.content)), 'success: the call\'s own transcript, not the node\'s sample');
-  ok((await text('.demo-success-cta')) === 'Start free 30-day trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(0, 154, 21)' && (await attr('.demo-success-cta', 'href')) === 'https://app.boltanswering.com/signup', 'success: the green "Start free 30-day trial" to sign-up');
+  ok((await text('.demo-success-cta')) === 'Get started now' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(0, 154, 21)' && (await attr('.demo-success-cta', 'href')) === 'https://app.boltanswering.com/signup', 'success: the green "Get started now" to sign-up');
   ok(!(await visible('.demo-success-trial')), 'success: no desktop "First 30 days" line');
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'out-1').length === 1 && evs('demo_call_finished').length === 1, `events: demo_transcript_shown and demo_call_finished once each (${evs('demo_transcript_shown').length}, ${evs('demo_call_finished').length})`);
   await tap('.demo-success-cta');
@@ -422,7 +424,7 @@ try {
   ok((await text('.demo-incall__digits')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-incall__digits')}, ${api.sessions})`);
   api.inState = 'connected'; api.inCallId = 'in-1'; api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'inbound: the linked call ends on the same success card');
-  ok((await text('.demo-success-title')) === 'NEVER miss a job again' && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
+  ok((await text('.demo-success-title')) === 'NEVER miss a job again' && (await text('.demo-success-cta')) === 'Get started now', 'inbound: one shared success (same card, same copy)');
   await sleep(3500);
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'in-1' && d.mode === 'inbound').length === 1, 'events: inbound success counted once, mode inbound');
 

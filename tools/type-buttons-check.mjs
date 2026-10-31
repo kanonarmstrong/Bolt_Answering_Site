@@ -1,9 +1,10 @@
 // AFMBP-2327 — the owner's type + button pass, site-wide: on the home page, the five trade pages and
 // the support page, at 1920x1080, 1440x900, 1024x768, 800x900 and 390x844:
-//   - every "Start my free 30-day trial" button (.btn--yellow: the header's, the pricing section's and,
+//   - every trial button, reading "Get started now" (AFMBP-2482; it was "Start my free 30-day trial"), (.btn--yellow: the header's, the pricing section's and,
 //     on phones, the floating one) is the size of the page's "Talk to your new assistant" button
-//     (.btn--blue; on a page without one, the home page's at the same width): the same width, height
-//     and font size (the floating one stays bold);
+//     (.btn--blue; on a page without one, the home page's at the same width): the same width and
+//     height, never wider (owner: "do not widen the buttons"), with its label 15% larger than the
+//     Talk button's (AFMBP-2482; the floating one stays bold);
 //   - the pricing line ("Our pros say it pays for itself…") is #180A53;
 //   - home page: the band's subtitle ("See why pros hire our assistants…") is the pricing line's size;
 //   - the header's trial button stays inside the header bar and the window; on phones the floating one
@@ -11,7 +12,7 @@
 //   - on phones the floating one hides (can't be seen or tapped) while the pricing section's trial button
 //     is on screen, even just its top edge, and is back once the page scrolls away from it (AFMBP-2348).
 // Run: node tools/type-buttons-check.mjs [siteRoot]
-//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck — negative controls on
+//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck | NC=oldlabel | NC=samefont | NC=widened — negative controls on
 //      the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -29,9 +30,13 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/ja
 // Negative controls: [served file, text, replacement].
 const MUTATE = {
   // The trial buttons back at their old 30px.
-  oldtrial: ['styles.css', 'padding:0 22px;height:49px;min-width:calc(12.4em + 44px);box-shadow', 'padding:0 20px;height:30px;box-shadow'],
+  oldtrial: ['styles.css', 'padding:0 22px;height:49px;min-width:calc(12.4em / 1.15 + 44px);box-shadow', 'padding:0 20px;height:30px;box-shadow'],
   // The trial buttons without the Talk button's width: their own label is narrower.
-  nominwidth: ['styles.css', 'height:49px;min-width:calc(12.4em + 44px);box-shadow', 'height:49px;box-shadow'],
+  nominwidth: ['styles.css', 'height:49px;min-width:calc(12.4em / 1.15 + 44px);box-shadow', 'height:49px;box-shadow'],
+  // AFMBP-2482: the label back at the Talk button's size.
+  samefont: ['styles.css', 'font-size:clamp(17.25px,1.61vw,18.4px);', 'font-size:clamp(15px,1.4vw,16px);'],
+  // The bigger label widens the buttons (the minimum width still in the larger em).
+  widened: ['styles.css', 'min-width:calc(12.4em / 1.15 + 44px)', 'min-width:calc(12.4em + 44px)'],
   // The band subtitle back at its old size.
   bandsub: ['styles.css', 'font-size:clamp(16px,1.1vw,20px);line-height:1.4;max-width:660px', 'font-size:clamp(16px,1.35vw,25px);line-height:1.4;max-width:660px'],
   // The pricing line back in gray.
@@ -40,6 +45,8 @@ const MUTATE = {
   nohide: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", 'void es;'],
   // The floating button hides and never comes back.
   stuck: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", "cta.classList.add('cta-hide');"],
+  // AFMBP-2482: the home page's floating button keeps the old label.
+  oldlabel: ['index.html', 'class="btn btn--yellow floating-cta">Get started now</a>', 'class="btn btn--yellow floating-cta">Start my free 30-day trial</a>'],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -116,12 +123,12 @@ try {
       const where = `${page} ${w}`;
       ok(ref, `${where}: no "Talk to your new assistant" button to compare with`);
       // (The support pages have only the header's trial button, which phones hide, and no floating one.)
-      ok((S.trial.length >= 1 || (w <= 768 && !S.hasFloat)) && S.trial.every((b) => /Start my free/.test(b.text)), `${where}: ${S.trial.length} trial buttons shown (${S.trial.map((b) => b.text).join(' | ')})`);
+      ok((S.trial.length >= 1 || (w <= 768 && !S.hasFloat)) && S.trial.every((b) => b.text.trim() === 'Get started now'), `${where}: ${S.trial.length} trial buttons shown (${S.trial.map((b) => b.text).join(' | ')})`);
       if (w > 768) ok(S.trial.some((b) => /nav__cta/.test(b.cls)), `${where}: the header's trial button isn't shown`);
       else if (S.hasFloat) ok(S.trial.some((b) => /floating-cta/.test(b.cls)), `${where}: the floating trial button isn't shown on a phone`);
       if (ref) for (const b of S.trial) {
         const which = /nav__cta/.test(b.cls) ? 'header' : /floating-cta/.test(b.cls) ? 'floating' : 'pricing';
-        ok(near(b.w, ref.w, 0.6) && near(b.h, ref.h, 0.6) && near(b.fs, ref.fs, 0.05) && (which === 'floating' ? b.fw === '700' : b.fw === ref.fw),
+        ok(near(b.w, ref.w, 0.6) && near(b.h, ref.h, 0.6) && near(b.fs, ref.fs * 1.15, 0.05) && (which === 'floating' ? b.fw === '700' : b.fw === ref.fw),
           `${where}: the ${which} trial button is ${b.w.toFixed(1)}x${b.h.toFixed(1)} at ${b.fs}px weight ${b.fw}; "Talk to your new assistant" is ${ref.w.toFixed(1)}x${ref.h.toFixed(1)} at ${ref.fs}px weight ${ref.fw}`);
       }
       // The header's trial button stays inside the header bar and the window.

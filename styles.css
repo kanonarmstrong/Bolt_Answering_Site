@@ -65,13 +65,15 @@ ul,ol{list-style:none}
   transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
   white-space:nowrap;
 }
-/* The "Start my free 30-day trial" buttons (the only .btn--yellow) are the size of the "Talk to your
-   new assistant" button (.btn--blue, owner AFMBP-2327): its font size, padding and height, and at
-   least its width (that label is 12.4em of Inter 500, plus the padding). */
+/* The "Get started now" trial buttons (the only .btn--yellow) are the size of the "Talk to your new
+   assistant" button (.btn--blue, owner AFMBP-2327): its padding and height, and at least its width
+   (that label is 12.4em of Inter 500 at the Talk button's size, plus the padding). Their label is 15%
+   larger than the Talk button's (owner, AFMBP-2482: "increase the size of the 'get started now' font
+   15%", "do not widen the buttons"), so the minimum width divides the 15% back out of the em. */
 .btn--yellow{
   background:var(--yellow);color:var(--navy);
-  font-size:clamp(15px,1.4vw,16px);
-  padding:0 22px;height:49px;min-width:calc(12.4em + 44px);box-shadow:var(--shadow-btn);
+  font-size:clamp(17.25px,1.61vw,18.4px);
+  padding:0 22px;height:49px;min-width:calc(12.4em / 1.15 + 44px);box-shadow:var(--shadow-btn);
 }
 .btn--blue{
   background:var(--blue);color:var(--offwhite);
