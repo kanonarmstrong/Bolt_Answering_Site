@@ -11,6 +11,11 @@
      - Off once the visitor switches it off: localStorage `bolt_optout` = '1',
        the same key meta-pixel.js and the Google loader read (also set by
        ?bolt_optout=1, cleared by ?bolt_optout=0).
+     - The choice reaches the web app too (AFMBP-2480): its sign-up pages carry
+       the Meta Pixel, and localStorage is per origin, so an opted-out browser
+       also keeps a `bolt_optout=1` cookie on the whole boltanswering.com domain,
+       refreshed on every page and cleared on opt-in. The signup link carries it
+       as well (attribution.js).
    Bolt's own anonymous funnel events (attribution.js) keep running either
    way: they are first-party and never go to an ad platform.
 
@@ -37,9 +42,33 @@
   var KEY = 'bolt_optout';
 
   function readOptOut() { try { return window.localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+  // The domain-wide copy of the choice for the web app (AFMBP-2480). Host-only
+  // anywhere but boltanswering.com (local test servers).
+  function cookieAttrs() {
+    var attrs = '; Path=/; SameSite=Lax';
+    try {
+      if (/(^|\.)boltanswering\.com$/.test(window.location.hostname)) attrs += '; Domain=.boltanswering.com';
+      if (window.location.protocol === 'https:') attrs += '; Secure';
+    } catch (e) {}
+    return attrs;
+  }
+  function syncCookie() {
+    try {
+      if (readOptOut()) document.cookie = KEY + '=1; Max-Age=31536000' + cookieAttrs();
+      else if (/(?:^|;\s*)bolt_optout=1(?:;|$)/.test(document.cookie)) document.cookie = KEY + '=; Max-Age=0' + cookieAttrs();
+    } catch (e) {}
+  }
   function writeAllowed(on) {
     try { if (on) window.localStorage.removeItem(KEY); else window.localStorage.setItem(KEY, '1'); } catch (e) {}
+    syncCookie();
   }
+  // ?bolt_optout=1 / =0 work on every page, not only those with the pixel.
+  try {
+    var q = new URLSearchParams(window.location.search).get(KEY);
+    if (q === '1') window.localStorage.setItem(KEY, '1');
+    else if (q === '0') window.localStorage.removeItem(KEY);
+  } catch (e) {}
+  syncCookie();
   function gpc() { try { return window.navigator.globalPrivacyControl === true; } catch (e) { return false; } }
   function allowed() { return !gpc() && !readOptOut(); }
 
