@@ -157,7 +157,7 @@ test('every visible "for first N months" is the .js-pm hook, never a baked numbe
   }
 });
 
-test('AFMBP-2482: every trial button reads "Start now" (owner, 2026-10-31), and pricing.js writes no trial length into one', () => {
+test('AFMBP-2482: every trial button reads "Get started now" (owner, 2026-10-31), and pricing.js writes no trial length into one', () => {
   const buttons = [];
   for (const f of htmlFiles()) {
     const html = readFileSync(f, 'utf8');
@@ -165,7 +165,7 @@ test('AFMBP-2482: every trial button reads "Start now" (owner, 2026-10-31), and 
     assert.ok(!/Start my free|free 30-day trial/i.test(html), `${f} still has an old trial label`);
   }
   assert.ok(buttons.length >= 22, `found ${buttons.length} trial buttons`);
-  for (const [f, label] of buttons) assert.equal(label, 'Start now', f);
+  for (const [f, label] of buttons) assert.equal(label, 'Get started now', f);
   const src = readFileSync(new URL('./pricing.js', import.meta.url), 'utf8');
   assert.ok(!/js-cta-trial|Start my free/.test(src), 'pricing.js still rewrites a trial button');
 });
