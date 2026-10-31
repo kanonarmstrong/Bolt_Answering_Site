@@ -107,12 +107,8 @@
       el.textContent = days;
     });
 
-    // CTA buttons are inline-flex, which trims whitespace around child flex
-    // items — so a partial span would drop the space ("free21-day"). Wrap the
-    // WHOLE label in one span and rewrite it from a template instead.
-    each(doc, '.js-cta-trial', function (el) {
-      el.textContent = 'Start my free ' + days + '-day trial';
-    });
+    // The trial buttons read "Start now" (owner, 2026-10-31, AFMBP-2482): no
+    // trial length in the label, so nothing to write there any more.
 
     // Mobile fine print (two lines).
     each(doc, '.mchev__fine', function (ul) {

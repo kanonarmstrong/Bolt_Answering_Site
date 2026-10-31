@@ -1311,7 +1311,7 @@
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__sm', text: 'are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, dm('Start my free trial now', 'Start free 30-day trial'))
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start now'])
       ])
     ], 'recap');
     chatBar(box, bar);

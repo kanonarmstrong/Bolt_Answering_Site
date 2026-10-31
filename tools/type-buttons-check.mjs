@@ -1,6 +1,6 @@
 // AFMBP-2327 — the owner's type + button pass, site-wide: on the home page, the five trade pages and
 // the support page, at 1920x1080, 1440x900, 1024x768, 800x900 and 390x844:
-//   - every "Start my free 30-day trial" button (.btn--yellow: the header's, the pricing section's and,
+//   - every trial button, reading "Start now" (AFMBP-2482; it was "Start my free 30-day trial"), (.btn--yellow: the header's, the pricing section's and,
 //     on phones, the floating one) is the size of the page's "Talk to your new assistant" button
 //     (.btn--blue; on a page without one, the home page's at the same width): the same width, height
 //     and font size (the floating one stays bold);
@@ -11,7 +11,7 @@
 //   - on phones the floating one hides (can't be seen or tapped) while the pricing section's trial button
 //     is on screen, even just its top edge, and is back once the page scrolls away from it (AFMBP-2348).
 // Run: node tools/type-buttons-check.mjs [siteRoot]
-//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck — negative controls on
+//      NC=oldtrial | NC=nominwidth | NC=bandsub | NC=graysub | NC=nohide | NC=stuck | NC=oldlabel — negative controls on
 //      the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
@@ -40,6 +40,8 @@ const MUTATE = {
   nohide: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", 'void es;'],
   // The floating button hides and never comes back.
   stuck: ['script.js', "cta.classList.toggle('cta-hide', es[es.length - 1].isIntersecting);", "cta.classList.add('cta-hide');"],
+  // AFMBP-2482: the home page's floating button keeps the old label.
+  oldlabel: ['index.html', 'class="btn btn--yellow floating-cta">Start now</a>', 'class="btn btn--yellow floating-cta">Start my free 30-day trial</a>'],
 };
 if (NC) {
   if (!MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -116,7 +118,7 @@ try {
       const where = `${page} ${w}`;
       ok(ref, `${where}: no "Talk to your new assistant" button to compare with`);
       // (The support pages have only the header's trial button, which phones hide, and no floating one.)
-      ok((S.trial.length >= 1 || (w <= 768 && !S.hasFloat)) && S.trial.every((b) => /Start my free/.test(b.text)), `${where}: ${S.trial.length} trial buttons shown (${S.trial.map((b) => b.text).join(' | ')})`);
+      ok((S.trial.length >= 1 || (w <= 768 && !S.hasFloat)) && S.trial.every((b) => b.text.trim() === 'Start now'), `${where}: ${S.trial.length} trial buttons shown (${S.trial.map((b) => b.text).join(' | ')})`);
       if (w > 768) ok(S.trial.some((b) => /nav__cta/.test(b.cls)), `${where}: the header's trial button isn't shown`);
       else if (S.hasFloat) ok(S.trial.some((b) => /floating-cta/.test(b.cls)), `${where}: the floating trial button isn't shown on a phone`);
       if (ref) for (const b of S.trial) {
