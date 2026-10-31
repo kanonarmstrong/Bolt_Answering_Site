@@ -809,7 +809,6 @@ ul,ol{list-style:none}
 
 /* ---------- Trade responsive ---------- */
 @media (max-width:1024px){
-  .tphero__copy{max-width:100%}
   .tpfeat__inner{grid-template-columns:1fr;gap:28px}
   .tpfeat__media{order:-1}
   .tpfeat--mediaright .tpfeat__media{order:-1}
@@ -846,6 +845,19 @@ ul,ol{list-style:none}
 }
 @media (max-width:1024px){
   .tphero__dash--panel{max-width:52%}
+}
+/* 769-1279px: the copy column ends where the dashboard begins, so no hero text runs under it (AFMBP-2485;
+   below 1025px the copy used to run the full width). The panel is at most 52% wide and hangs 3vw past the
+   right edge, so it starts at 51% of the hero or further right; the copy starts at the 5vw pad, and 51% of
+   its box less 24px ends left of that. (Above 1024px the hero's height keeps the panel near 51% today; the
+   cap holds if longer copy makes the hero taller.) Plumbing's full-width picture (no --panel) put a bigger
+   phone further left; here it takes the panels' size and place: the same phone on a 1920px canvas, so
+   131.4% = 52% x 1920/760, and -5.7vw = the panel's -3vw plus the canvas's extra 39px on the right.
+   tools/hero-dash-check.mjs keeps every line of hero text 16px clear of the dashboard. */
+@media (min-width:769px) and (max-width:1279px){
+  .tphero__copy{max-width:min(560px,calc(51% - 24px))}
+  .tphero__dash--panel{max-width:52%}
+  .tphero__dash:not(.tphero__dash--panel){left:auto;right:-5.7vw;width:auto;max-width:131.4%;object-fit:contain;object-position:right bottom}
 }
 @media (max-width:768px){
   .tphero__dash--panel{
