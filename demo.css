@@ -179,7 +179,8 @@ body.demo-lock{overflow:hidden}
 .demo-success-cta{
   max-width:340px;margin:2px auto 0;height:56px;
   display:flex;align-items:center;justify-content:center;text-decoration:none;
-  font-size:clamp(18px,2.4vw,22px);
+  /* "Get started now", 15% larger (owner, AFMBP-2482); the button itself is unchanged. */
+  font-size:clamp(20.7px,2.76vw,25.3px);
 }
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
 
@@ -713,7 +714,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:15px;line-height:18px;color:#787888;padding:130px 16px}
   .demo-backdrop[data-screen="recap"] .demo-success-cta{
     position:absolute;left:39.4px;top:628.46px;width:253px;max-width:none;height:49px;margin:0;padding:0;border-radius:6px;
-    background:#009a15;color:#fff;font-size:21px;font-weight:400;line-height:21px;box-shadow:none;
+    background:#009a15;color:#fff;font-size:24.15px;font-weight:400;line-height:24.15px;box-shadow:none; /* 21px + 15% (AFMBP-2482) */
   }
   .demo-backdrop[data-screen="recap"] .demo-success-cta:hover{background:#00820f}
 
