@@ -7,7 +7,9 @@
      seen (AFMBP-2010: a preloaded, prerendered or background page logs
      nothing);
    - hands both to the app on every signup link (?bvid=…&utm_*=…), so a
-     person's demo and signup join up in Bolt's analytics;
+     person's demo and signup join up in Bolt's analytics, plus the visitor's
+     "Your Privacy Choices" opt-out (?bolt_optout=1, AFMBP-2480) so the app's
+     pixel stays off for them too;
    - exposes window.boltAttr.track() for the demo flow (demo.js), and
      announces each event as a `bolt:track` window event (meta-pixel.js).
    Events go to Bolt's own ingest with source 'site'. No personal data,
@@ -161,6 +163,9 @@
       // Our own test browsers stay test browsers in the app (AFMBP-2021: the app's
       // pixel and analytics leave QA out the same way the site does).
       if (isQa()) u.searchParams.set('bolt_qa', '1');
+      // Opted out under "Your Privacy Choices": the app keeps it for its own origin.
+      if (get('bolt_optout') === '1') u.searchParams.set('bolt_optout', '1');
+      else u.searchParams.delete('bolt_optout');
       return u.toString();
     } catch (e) { return href; }
   }

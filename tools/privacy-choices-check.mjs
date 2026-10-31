@@ -3,6 +3,10 @@
 // Control, come back on opt-in; the pixel's events carry the trade, the demo's call-finished step
 // is sent, and nothing typed into the demo reaches Meta or Google. Bolt's own funnel keeps going.
 // Our own test visits (?bolt_qa=1) load neither Meta nor Google unless ?bolt_pixel_debug=1 (AFMBP-2039).
+// AFMBP-2480: the choice reaches the web app (app.boltanswering.com, whose sign-up pages carry the
+// pixel): an opted-out browser keeps a bolt_optout=1 cookie on the whole boltanswering.com domain
+// (set, refreshed on every page, cleared on opt-in) and the signup link carries ?bolt_optout=1. The
+// test browser maps www.boltanswering.com to this server, so the real cookie domain is exercised.
 // Run: node tools/privacy-choices-check.mjs [siteRoot]
 //      NC=<name> node tools/privacy-choices-check.mjs   — one negative control (see MUTATE)
 // Headless Chrome. Nothing leaves the machine: Google's and Meta's scripts and endpoints, Bolt's
@@ -29,6 +33,14 @@ const MUTATE = {
   no_call_finished: (f, s) => (f.endsWith('meta-pixel.js') ? s.replace("window.fbq('trackCustom', 'DemoCallFinished'", "void ('DemoCallFinished'") : s),
   no_footer_link: (f, s) => (f.endsWith('.html') ? s.split(' data-privacy-choices>Your Privacy Choices').join('>Your Privacy Choices') : s),
   no_qa_google: (f, s) => (f.endsWith('.html') ? s.split('if (qa && !debug) off = true;').join(';') : s),
+  // AFMBP-2480: the opt-out never becomes a cookie.
+  no_cookie: (f, s) => (f.endsWith('privacy-choices.js') ? s.replace("if (readOptOut()) document.cookie = KEY + '=1; Max-Age=31536000' + cookieAttrs();", 'if (readOptOut()) void 0;') : s),
+  // The cookie stays on www only, so the app can't see it.
+  host_cookie: (f, s) => (f.endsWith('privacy-choices.js') ? s.replace("attrs += '; Domain=.boltanswering.com';", 'void 0;') : s),
+  // Opting back in leaves the cookie behind.
+  stale_cookie: (f, s) => (f.endsWith('privacy-choices.js') ? s.replace("document.cookie = KEY + '=; Max-Age=0' + cookieAttrs();", 'void 0;') : s),
+  // The signup link drops the opt-out.
+  no_link_optout: (f, s) => (f.endsWith('attribution.js') ? s.replace("if (get('bolt_optout') === '1') u.searchParams.set('bolt_optout', '1');", 'if (false) void 0;') : s),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 
@@ -50,7 +62,7 @@ const srv = createServer((req, res) => {
 }).listen(PORT, '127.0.0.1');
 
 const PROFILE = mkdtempSync(join(tmpdir(), 'cdp-2019-')); // removed at exit
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', '--host-resolver-rules=MAP www.boltanswering.com 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'PASS' : 'FAIL'} ${m}`); if (!c) bad++; };
@@ -70,7 +82,7 @@ try {
   await new Promise((r) => ws.addEventListener('open', r, { once: true }));
   let nextId = 1; const pending = new Map();
   const send = (method, params = {}) => new Promise((res, rej) => { const id = nextId++; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params })); });
-  const log = { gtag: 0, fbevents: 0, thirdParty: [], ingest: [], errors: [] };
+  const log = { gtag: 0, fbevents: 0, thirdParty: [], ingest: [], errors: [], appUrls: [] };
   const CORS = [{ name: 'Access-Control-Allow-Origin', value: '*' }, { name: 'Access-Control-Allow-Headers', value: '*' }, { name: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' }];
   const reply = (requestId, body, type = 'application/json', code = 200) => send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: type }], body: Buffer.from(body).toString('base64') }).catch(() => {});
   ws.addEventListener('message', async (m) => {
@@ -84,7 +96,7 @@ try {
     if (/google|doubleclick/.test(host)) { log.thirdParty.push(request.url + ' ' + body); return reply(requestId, '', 'text/plain', 204); }
     if (host === 'connect.facebook.net') { if (/fbevents\.js$/.test(u.pathname)) { log.fbevents++; return reply(requestId, FB_STUB, 'text/javascript'); } return reply(requestId, '', 'text/javascript'); }
     if (/facebook\.com$/.test(host)) { log.thirdParty.push(request.url + ' ' + body); return reply(requestId, '', 'text/plain'); }
-    if (host === 'app.boltanswering.com') return reply(requestId, '<!doctype html><title>app</title>', 'text/html');
+    if (host === 'app.boltanswering.com') { log.appUrls.push(request.url); return reply(requestId, '<!doctype html><title>app</title>', 'text/html'); }
     if (host === 'bolt-staging.fly.dev') {
       if (request.method === 'OPTIONS') return send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }).catch(() => {});
       if (u.pathname === '/api/public/analytics/events') { try { log.ingest.push(...JSON.parse(body).events.map((e) => e.event_type)); } catch {} return reply(requestId, '{"ok":true}'); }
@@ -237,6 +249,57 @@ try {
   ok(log.gtag === g0, `?demoqa=1: no Google tag (google +${log.gtag - g0})`);
   await reset(); g0 = log.gtag; await nav('/hvac.html?bolt_qa=1&bolt_pixel_debug=1');
   ok(log.gtag === g0 + 1, `?bolt_pixel_debug=1 loads it for a test visit (google +${log.gtag - g0})`);
+
+  // [9] AFMBP-2480: the choice reaches the web app. Run on the real host name (mapped to this server)
+  // so the domain-wide cookie is the one a phone would get; the app page is answered locally.
+  console.log('[9] the choice reaches the web app');
+  const WWW = `http://www.boltanswering.com:${PORT}`;
+  const appCookie = async () => ((await send('Network.getCookies', { urls: ['https://app.boltanswering.com/signup'] })).cookies || []).find((c) => c.name === 'bolt_optout') || null;
+  const navWww = async (path) => {
+    await send('Page.navigate', { url: WWW + path });
+    await until(async () => (await ev("document.readyState === 'complete' && !!window.boltPrivacyChoices")) === true, 15000);
+    await sleep(600);
+  };
+  const linkOptout = async () => (await ev("new URL(window.boltAttr.decorate('https://app.boltanswering.com/signup')).searchParams.get('bolt_optout')")) ;
+  await send('Network.clearBrowserCookies'); await send('Storage.clearDataForOrigin', { origin: WWW, storageTypes: 'all' });
+  await navWww('/hvac.html');
+  ok((await appCookie()) === null && (await linkOptout()) === null, 'default: no opt-out cookie, the signup link carries no opt-out');
+  await navWww('/hvac.html?bolt_optout=1');
+  let ck = await appCookie();
+  ok(!!ck && ck.value === '1' && ck.domain === '.boltanswering.com' && ck.path === '/' && ck.expires > Date.now() / 1000 + 300 * 86400, `?bolt_optout=1: a year-long bolt_optout=1 cookie on .boltanswering.com, sent to the app (${JSON.stringify(ck && { domain: ck.domain, path: ck.path, days: Math.round((ck.expires - Date.now() / 1000) / 86400) })})`);
+  ok((await linkOptout()) === '1', 'the signup link carries bolt_optout=1');
+  await send('Page.navigate', { url: 'https://app.boltanswering.com/signup' });
+  await until(async () => (await ev("document.readyState === 'complete'")) === true, 8000);
+  ok(/(^|;\s*)bolt_optout=1(;|$)/.test((await ev('document.cookie')) || ''), `the app's page can read it (${await ev('document.cookie')})`);
+  await send('Network.deleteCookies', { name: 'bolt_optout', domain: '.boltanswering.com', path: '/' });
+  await navWww('/plumbing.html');
+  ok(((await appCookie()) || {}).value === '1', 'refreshed on the next page while the browser stays opted out');
+  await navWww('/hvac.html?bolt_optout=0');
+  ok((await appCookie()) === null && (await linkOptout()) === null, '?bolt_optout=0: cookie cleared, the signup link carries no opt-out');
+  await openPanel();
+  await ev("document.getElementById('pc-switch').click(), document.querySelector('.pc-save').click(), 1");
+  await sleep(300);
+  ok(((await appCookie()) || {}).value === '1', 'switched off in the panel: the cookie is set at once (no reload)');
+  await ev("document.querySelector('.pc-close').click(), 1");
+  log.appUrls = [];
+  await ev("(function(){var a=[].slice.call(document.querySelectorAll('a[href^=\"https://app.boltanswering.com/signup\"]'))[0]; a.click(); return a.getAttribute('href')})()");
+  await sleep(300);
+  const tapped = await ev("([].slice.call(document.querySelectorAll('a[href^=\"https://app.boltanswering.com/signup\"]'))[0]||{}).getAttribute('href')");
+  ok(/[?&]bolt_optout=1(&|$)/.test(tapped || ''), `a tapped signup link leaves with bolt_optout=1 (${tapped})`);
+  await openPanel();
+  await ev("document.getElementById('pc-switch').click(), document.querySelector('.pc-save').click(), 1");
+  await sleep(1500);
+  await until(async () => (await ev("document.readyState === 'complete' && !!window.boltPrivacyChoices")) === true, 15000);
+  await sleep(600);
+  ok((await appCookie()) === null && (await linkOptout()) === null, 'switched back on: cookie cleared, link clean');
+  await navWww('/terms/?bolt_optout=1');
+  ok(((await appCookie()) || {}).value === '1', 'a page without the pixel (/terms/) takes ?bolt_optout=1 too');
+  await navWww('/terms/?bolt_optout=0');
+  ok((await appCookie()) === null, '...and ?bolt_optout=0');
+  await send('Network.clearBrowserCookies');
+  await reset(); await nav('/hvac.html?bolt_optout=1');
+  const local = ((await send('Network.getCookies', { urls: [ORIGIN + '/'] })).cookies || []).find((c) => c.name === 'bolt_optout');
+  ok(!!local && local.domain === '127.0.0.1', `on any other host the cookie is host-only (${local && local.domain})`);
 
   console.log(bad ? `\n${bad} FAILED${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
   ws.close();
