@@ -4,7 +4,8 @@
 // img{max-width:100%} gives the logo image no minimum width, while .logo img keeps its height, so the logo
 // is drawn squeezed sideways or not at all. The trade and support pages showed a "How it works" link (to the
 // home page's section that is hidden while under construction), and with it the row needs about 776px: at
-// 769-861px the logo was 0-66px wide instead of 66.6px. For the home page, the 5 trade pages, the support page
+// 769-861px the logo was 0-66px wide instead of 66.6px; those links now stay hidden, as on the home page. For the
+// home page, the 5 trade pages, the support page
 // and its 3 articles at 769, 780, 800, 820, 834, 850, 861, 862, 900, 1000, 1024, 1025, 1100, 1180, 1280,
 // 1366 and 1440 (1x, 900 tall), with Inter loaded, this proves that:
 //   - the logo image's box has the picture's own shape: its width is its height x naturalWidth/naturalHeight;
@@ -12,10 +13,12 @@
 //     its natural width for its height, within 2px each way;
 //   - the row fits: the links and the button end inside the bar's padding, the page is no wider than the
 //     window, and the logo ends before the links begin;
-//   - the links are one row and each link is one line.
+//   - the links are one row and each link is one line;
+//   - while the home page's "How it works" section is hidden, no page shows a link to it (nav or footer):
+//     checked once per page.
 // Phones (768px and narrower) show the menu button instead of the links, so they aren't measured here.
 // Run: node tools/nav-logo-check.mjs [siteRoot]      PAGES=hvac.html WIDTHS=769,800 runs only those.
-//      NC=main | NC=shrink | NC=squeeze | NC=clip | NC=wrap — negative controls on the SERVED copy; each must FAIL.
+//      NC=main | NC=footer | NC=shrink | NC=squeeze | NC=clip | NC=wrap — negative controls on the SERVED copy; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1; every other request is answered locally.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
@@ -35,11 +38,16 @@ const SLACK = 2;      // px the drawn logo may differ from the picture's ink box
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
 const LOGO = '.logo img{height:clamp(30px,3.375vw,42px);width:auto;display:block}';
 const HOW = (href) => [`<li style="display:none"><a href="${href}">How it works</a></li><!-- under construction -->`, `<li><a href="${href}">How it works</a></li>`];
+const FOOT = ['<a href="index.html#how" style="display:none">How it works</a><!-- under construction -->', '<a href="index.html#how">How it works</a>'];
 // Negative controls: [served file, text, replacement] — each text must be in its file exactly once.
-const MAIN = [...TRADES.map((f) => [f, ...HOW('index.html#how')]), ...SUPPORT.map((f) => [f, ...HOW('/#how')])];
+const FOOTER = TRADES.map((f) => [f, ...FOOT]);
+const MAIN = [...TRADES.map((f) => [f, ...HOW('index.html#how')]), ...SUPPORT.map((f) => [f, ...HOW('/#how')]), ...FOOTER];
 const MUTATE = {
-  // Main before AFMBP-2488: the trade and support pages show "How it works" again; the logo gives way.
+  // Main before AFMBP-2488: the trade and support pages show "How it works" again (nav, and the trade footers);
+  // the logo gives way.
   main: MAIN,
+  // Only the trade footers' link back: a link to a hidden section, nothing else.
+  footer: FOOTER,
   // Main plus the logo held at its size (.logo{flex-shrink:0}): the logo is whole, but the row runs past the bar.
   shrink: [...MAIN, ['styles.css', '.logo{display:inline-flex;align-items:center;line-height:0}', '.logo{display:inline-flex;align-items:center;line-height:0;flex-shrink:0}']],
   // A logo box narrower than its picture: drawn squeezed on every page at every width.
@@ -167,13 +175,23 @@ try {
     };
   })()`;
   const logoVis = (v) => ev(`(() => { document.querySelector('.nav .logo img').style.setProperty('visibility', '${v}', 'important'); return true; })()`);
+  // Links shown on the page (nav, footer or anywhere) to the home page's "How it works" section.
+  const HOWLINKS = `[...document.querySelectorAll('a[href]')].filter((a) => { const u = new URL(a.href); return (u.pathname === '/' || u.pathname === '/index.html') && u.hash === '#how' && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden'; })
+    .map((a) => (a.closest('footer') ? 'footer' : a.closest('.nav') ? 'nav' : 'page') + ' "' + a.textContent.trim() + '"')`;
+  const load = async (page, w) => {
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: H, deviceScaleFactor: 1, mobile: false });
+    await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/${page}?bolt_qa=1` });
+    for (let i = 0; i < 100; i++) { if ((await ev("document.readyState === 'complete'")) === true) break; await sleep(100); }
+  };
+  // Is that section hidden (under construction)? Then a link to it lands at the top of the home page.
+  await load('index.html', 1280);
+  const howHidden = await ev("(() => { const s = document.getElementById('how'); return !s || getComputedStyle(s).display === 'none'; })()");
+  console.log(`home page "How it works" section: ${howHidden ? 'hidden' : 'shown'}`);
 
   for (const page of PAGES) {
     for (const w of WIDTHS) {
       const tag = `${page.replace(/(^|\/)index\.html$/, '$1') || 'index.html'} ${w}`;
-      await send('Emulation.setDeviceMetricsOverride', { width: w, height: H, deviceScaleFactor: 1, mobile: false });
-      await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/${page}?bolt_qa=1` });
-      for (let i = 0; i < 100; i++) { if ((await ev("document.readyState === 'complete'")) === true) break; await sleep(100); }
+      await load(page, w);
       await ev('document.fonts.ready.then(() => true)');
       await ev(`Promise.race([document.querySelector('.nav .logo img').decode().catch(() => {}), new Promise((r) => setTimeout(r, 3000))]).then(() => true)`);
       await ev(PAINT);
@@ -193,6 +211,10 @@ try {
       ok(fits, `${tag}: the nav row fits: links and button end at ${M.menu.r.toFixed(1)} / ${M.cta.r.toFixed(1)}, want <= ${M.edge.toFixed(1)}; page ${M.docW}px wide; logo ends at ${M.logo.r.toFixed(1)}, links begin at ${M.menu.l.toFixed(1)}`);
       const mids = M.links.map((l) => l.mid), wrapped = M.links.filter((l) => l.lines !== 1).map((l) => l.text);
       ok(M.links.length >= 5 && Math.max(...mids) - Math.min(...mids) <= 2 && !wrapped.length, `${tag}: the ${M.links.length} links are one row (text centered at ${Math.min(...mids).toFixed(1)}-${Math.max(...mids).toFixed(1)}), each one line${wrapped.length ? ` (more than one: ${wrapped.join(', ')})` : ''}`);
+      if (w === WIDTHS[0]) {
+        const how = await ev(HOWLINKS);
+        ok(!howHidden || !how.length, `${tag}: ${how.length} link(s) shown to the home page's hidden "How it works" section: ${how.join(', ')}`);
+      }
       console.log(`${tag}: logo ${I.w.toFixed(1)}x${I.h.toFixed(1)} (want ${natW.toFixed(1)} wide), drawn ${D ? `${D.r - D.l}x${D.b - D.t}` : 'nowhere'} (ink ${(want.r - want.l).toFixed(1)}x${(want.b - want.t).toFixed(1)}, ${off.toFixed(1)}px off); row ends ${M.menu.r.toFixed(1)} of ${M.edge.toFixed(1)}, ${(M.menu.l - M.logo.r).toFixed(1)}px between logo and links; ${M.links.length} links`);
     }
   }
