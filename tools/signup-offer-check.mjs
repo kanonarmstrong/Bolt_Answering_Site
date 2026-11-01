@@ -12,6 +12,8 @@
 //     the card is built (pricing.js reapply), and fall back when it doesn't answer;
 //   - the link: "Start now" goes to the sign-up flow carrying this visitor's id, ad tags and
 //     the QA flag (attribution.js decorates it as it is tapped);
+//   - leaving (AFMBP-2344): "Start now" holds the page until its event has gone out, at most
+//     about 0.3 s, then follows its link (the page load is stopped at the network and timed);
 //   - analytics: signup_offer_opened once (never demo_opened), the tap logged once as
 //     trial_link_clicked {placement: signup_offer}, a close as demo_closed {step: signup_offer};
 //   - closing and keyboard: the cross, Escape and the shade close it; focus starts on the
@@ -45,7 +47,11 @@ const MUTATE = {
   // "Start now" goes somewhere else.
   cta_href: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup'", "class: 'demo-btn demo-btn--yellow demo-so__cta', href: '/'")],
   // The tap is not logged.
-  no_track: ['demo.js', (s) => cut(s, ", onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Start now']", " }, ['Start now']")],
+  no_track: ['demo.js', (s) => cut(s, "var sent = track('trial_link_clicked', { placement: 'signup_offer' });", 'var sent = null;')],
+  // AFMBP-2344: "Start now" leaves at once (the browser's own navigation), not after its event.
+  no_hold: ['demo.js', (s) => cut(s, 'if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;', 'return;')],
+  // AFMBP-2344: "Start now" waits for its event however long the server takes.
+  no_cap: ['demo.js', (s) => cut(s, '      setTimeout(go, 300);\n', '')],
   // The button keeps its old label.
   old_label: ['demo.js', (s) => cut(s, "}, ['Start now']);", "}, ['Get started']);")],
   // The trial length and price are baked text, deaf to the feed.
@@ -104,15 +110,15 @@ const srv = createServer((req, res) => {
 }).listen(PORT, '127.0.0.1');
 
 // ---- the fake Bolt API: analytics recorded; the pricing feed configurable ----
-const api = { events: [], pricing: null, pricingDelay: 0 };
-const reset = (pricing = null, delay = 0) => { api.events = []; api.pricing = pricing; api.pricingDelay = delay; };
+const api = { events: [], pricing: null, pricingDelay: 0, analyticsDelay: 0, navs: [] };
+const reset = (pricing = null, delay = 0) => { api.events = []; api.navs = []; api.pricing = pricing; api.pricingDelay = delay; api.analyticsDelay = 0; };
 function apiRespond(method, url, postData) {
   const p = new URL(url).pathname;
   if (p === '/api/public/pricing') return [200, api.pricing ? { plans: { solo: api.pricing } } : {}, api.pricingDelay];
   if (p === '/api/demo/inbound/session' && method === 'POST') return [200, { sessionId: '00000000-0000-4000-8000-000000000001', code: '4321', number: '+18554973151', numberDisplay: '(855) 497-3151', telUri: 'tel:+18554973151,,4321', expiresAt: new Date(Date.now() + 600000).toISOString() }];
   if (p === '/api/public/analytics/events') {
-    try { for (const e of JSON.parse(postData || '{}').events || []) api.events.push({ type: e.event_type, data: e.event_data || {} }); } catch {}
-    return [200, { ok: true }];
+    try { for (const e of JSON.parse(postData || '{}').events || []) api.events.push({ type: e.event_type, data: e.event_data || {}, at: Date.now() }); } catch {}
+    return [200, { ok: true }, api.analyticsDelay];
   }
   return [200, {}];
 }
@@ -169,6 +175,11 @@ try {
     const { requestId, request } = msg.params;
     const quiet = (p) => p.catch(() => {});
     if (new URL(request.url).hostname === '127.0.0.1') return quiet(send('Fetch.continueRequest', { requestId }));
+    // AFMBP-2344: the app's page load is stopped here (the tab stays on the offer) and timed.
+    if (new URL(request.url).hostname === 'app.boltanswering.com' && msg.params.resourceType === 'Document') {
+      api.navs.push({ url: request.url, at: Date.now() });
+      return quiet(send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }));
+    }
     if (request.method === 'OPTIONS') return quiet(send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders: CORS }));
     const [code, body, delay] = /bolt-staging\.fly\.dev$/.test(new URL(request.url).hostname) ? apiRespond(request.method, request.url, request.postData) : [200, {}];
     const answer = () => quiet(send('Fetch.fulfillRequest', { requestId, responseCode: code, responseHeaders: [...CORS, { name: 'Content-Type', value: 'application/json' }], body: Buffer.from(JSON.stringify(body)).toString('base64') }));
@@ -178,10 +189,11 @@ try {
   await send('Network.enable'); await send('Network.setCacheDisabled', { cacheDisabled: true });
   await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
   // A QA visit (no Meta / Google); a tap on a sign-up link is recorded with the href it carried
-  // when it left (after attribution.js decorated it), then held so the page stays.
+  // when it left (after attribution.js decorated it). The page stays because the app's page load
+  // is stopped at the network (above), not here, so the button's own leaving can be timed.
   await send('Page.addScriptToEvaluateOnNewDocument', {
     source: "try{localStorage.setItem('bolt_qa','1')}catch(e){}" +
-      "window.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a');if(!a)return;var h=a.getAttribute('href')||'';window.__clicks=(window.__clicks||[]).concat([{href:h}]);if(/^https:\\/\\/app\\.boltanswering\\.com/.test(h)||/^tel:/.test(h))e.preventDefault();});",
+      "window.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a');if(!a)return;var h=a.getAttribute('href')||'';window.__clicks=(window.__clicks||[]).concat([{href:h}]);if(/^tel:/.test(h))e.preventDefault();});",
   });
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
   const ev = async (expression) => { const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); return r.result ? r.result.value : null; };
@@ -313,6 +325,24 @@ try {
   ok(!!u1 && u1.origin + u1.pathname === SIGNUP && u1.searchParams.get('bvid') === vid && u1.searchParams.get('utm_source') === 'qa_src' && u1.searchParams.get('utm_campaign') === 'qa_camp' && u1.searchParams.get('fbclid') === 'qa_click' && u1.searchParams.get('bolt_qa') === '1', `the tap leaves for the sign-up flow with this visitor's id, the ad tags and the QA flag (${c1 && c1.href})`);
   await sleep(300);
   ok(evs('trial_link_clicked', (d) => d.placement === 'signup_offer').length === 1 && evs('trial_link_clicked').length === 1, `events: the tap logged once, trial_link_clicked {placement: signup_offer} (${JSON.stringify(evs('trial_link_clicked').map((e) => e.data.placement))})`);
+
+  console.log('[phone] leaving: the tap waits for its event, never long (AFMBP-2344)');
+  const tapTimed = async (delay) => {
+    reset(); await load(AD); await waitScreen('signup'); await sleep(300);
+    api.analyticsDelay = delay;
+    const t0 = Date.now();
+    await tap('.demo-so__cta');
+    for (let i = 0; i < 50 && !api.navs.length; i++) await sleep(100);
+    const e = evs('trial_link_clicked', (d) => d.placement === 'signup_offer')[0], n = api.navs[0];
+    api.analyticsDelay = 0;
+    return { event: e ? e.at - t0 : null, leave: n ? n.at - t0 : null, url: n ? n.url : null };
+  };
+  const held = await tapTimed(150);
+  ok(held.event !== null && held.leave !== null && held.leave >= held.event + 140 && /[?&]bvid=/.test(held.url) && held.url.indexOf(SIGNUP) === 0,
+    `the tap holds the page until its event has gone out (server answers in 150 ms), then leaves for the sign-up flow (${JSON.stringify(held)})`);
+  const capped = await tapTimed(3000);
+  ok(capped.event !== null && capped.leave !== null && capped.leave <= 450,
+    `the tap never waits past about 0.3 s when the server hangs (${JSON.stringify(capped)})`);
 
   console.log('[phone] pricing: the feed reaches the card whether it answers before or after it is built');
   // The order that needs reapply: an in-app browser preloads the ad page HIDDEN, the feed

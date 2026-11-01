@@ -75,7 +75,7 @@
       if (!window.boltAttr) return;
       var p = { trade: TRADE };
       if (props) Object.keys(props).forEach(function (k) { p[k] = props[k]; });
-      window.boltAttr.track(event, p);
+      return window.boltAttr.track(event, p);
     } catch (e) {}
   }
   // Read a first-party cookie set on this site (Meta's _fbp / _fbc), or null.
@@ -468,7 +468,20 @@
     stopInbound();
     inboundFlow = null;
     step = 'signup_offer';
-    var cta = h('a', { class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('trial_link_clicked', { placement: 'signup_offer' }); } }, ['Start now']);
+    // AFMBP-2344: the tap's event must leave before the page does. When the next page starts
+    // loading at once, some browsers drop it (live: 3 of 6 sign-up arrivals since 10-17 had no
+    // logged tap). So the button holds the page until the event has gone out, at most 0.3 s,
+    // then follows its link, which attribution.js decorated in the capture phase. A new tab or
+    // window keeps the browser's own behaviour: this page stays.
+    var cta = h('a', { class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function (e) {
+      var sent = track('trial_link_clicked', { placement: 'signup_offer' });
+      if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      var href = e.currentTarget.href, gone = false;
+      var go = function () { if (!gone) { gone = true; window.location.href = href; } };
+      setTimeout(go, 300);
+      if (sent && sent.then) sent.then(go, go);
+    } }, ['Start now']);
     setBody([
       h('div', { class: 'demo-cm' }, [
         h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),

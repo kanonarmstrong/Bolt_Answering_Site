@@ -128,8 +128,9 @@
       if (isQa()) data.qa = true;
       if (isAutomated()) data.automated = true;
       // JSON + keepalive (not sendBeacon: the ingest parses JSON only), so an
-      // event fired just before a navigation still leaves.
-      window.fetch(API + '/api/public/analytics/events', {
+      // event fired just before a navigation still leaves. Returned (AFMBP-2344) so a
+      // caller about to leave the page can wait for it to go out.
+      var sent = window.fetch(API + '/api/public/analytics/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         keepalive: true,
@@ -140,6 +141,7 @@
       // Other first-party scripts follow the funnel through this event rather
       // than hooking track(): meta-pixel.js (AFMBP-2021) maps a few steps to Meta.
       try { window.dispatchEvent(new CustomEvent('bolt:track', { detail: { event: event, data: data } })); } catch (e) {}
+      return sent;
     } catch (e) {}
   }
 
