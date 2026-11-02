@@ -499,6 +499,7 @@
       // The bubble and stars are drawn and hidden from screen readers; "4.9/5" says it.
       h('div', { class: 'demo-cr' }, [
         h('span', { class: 'demo-so__bubble', 'aria-hidden': 'true' }),
+        h('p', { class: 'demo-so__who' }, [h('b', { text: 'Brent B. ' }), 'Indiana']),
         h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
         h('p', { class: 'demo-cm__quote', text: '“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”' })

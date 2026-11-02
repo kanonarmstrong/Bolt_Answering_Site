@@ -811,62 +811,72 @@ body.demo-lock{overflow:hidden}
    "auto" lines (22px for its 19.032px text, 23px where a line holds the 20.03px
    run). The node leaves 17 spaces at the start of the first line for the bolt
    wordmark (2821:906–909, four vectors tilted .111°, exported as one SVG); the
-   spacer is those 17 spaces' width, and the wordmark sits where the node puts it,
-   measured from the first line's baseline so it stays with the text. */
+   spacer is those 17 spaces' width, and the wordmark is placed on the paragraph's
+   box exactly where the node puts it (Chrome and Safari set the text's baseline a
+   device pixel or two apart, so a baseline-anchored mark moved with them). */
 .demo-backdrop[data-screen="signup"] :is(.demo-cm__sub,.demo-so__free){
   position:absolute;margin:0;font-family:'Times New Roman',Tinos,serif;font-size:19.032px;font-weight:400;
   line-height:22px;color:#000;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__sub{left:28.4px;top:221.11px;width:273px;text-align:left}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub{left:28.4px;top:220.11px;width:273px;text-align:left}
 .demo-backdrop[data-screen="signup"] .demo-so__big{font-size:20.03px;line-height:23px}
-.demo-backdrop[data-screen="signup"] .demo-so__bolt{display:inline-block;position:relative;width:80.886px;height:0;vertical-align:baseline}
-.demo-backdrop[data-screen="signup"] .demo-so__bolt::before{
-  content:"";position:absolute;left:2.4px;top:-27.235px;width:73.5px;height:30.7px;pointer-events:none;
+.demo-backdrop[data-screen="signup"] .demo-so__bolt{display:inline-block;width:80.886px;height:0;vertical-align:baseline}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub::before{
+  content:"";position:absolute;left:2.4px;top:-9.81px;width:73.5px;height:30.7px;pointer-events:none;
   background:url('assets/demo-so-bolt.svg') 0 0/100% 100% no-repeat;
 }
 /* The FREE line (2796:3104): the same type, centred in its 266px column, "FREE"
    and "today." bold, inside the node's 2px black box (2824:917, 274x59, stroke inside). */
-.demo-backdrop[data-screen="signup"] .demo-so__free{left:31.4px;top:337.465px;width:266px;text-align:center}
+.demo-backdrop[data-screen="signup"] .demo-so__free{left:31.4px;top:340.465px;width:266px;text-align:center}
 .demo-backdrop[data-screen="signup"] .demo-so__free b{font-weight:700}
 .demo-backdrop[data-screen="signup"] .demo-cm::after{
-  content:"";position:absolute;left:27.4px;top:331.4px;width:274px;height:59px;box-sizing:border-box;
+  content:"";position:absolute;left:27.4px;top:334.4px;width:274px;height:59px;box-sizing:border-box;
   border:2px solid #000;pointer-events:none;
 }
 /* "Start now" (2718:3350): the demo's blue button, 252x49, with the node's
    M3 Elevation 2 shadow. Figma draws it on this frame without the 2px spread
    (its clip content is off), so the spread is left out to match the node. */
 .demo-backdrop[data-screen="signup"] .demo-so__cta{
-  position:absolute;left:43.4px;top:414.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
+  position:absolute;left:43.4px;top:412.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
   box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);
   display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;text-decoration:none;
   /* The flex-centred label drew .67px above the node's; the padding sets it down. */
   padding-top:1.33px;
 }
-/* Rating (2718:3332), under the button, in a white speech bubble, the whole of it
-   tilted 3.168° as the node tilts it. The wrapper is the bubble's own box (its
-   union, 2806:3127, 296x121.872), turned about its top-left corner where the node
-   puts it, and everything inside sits where the node puts it in that box: the union
-   with both shadows (exported with its shadow box), five stars 18.013 apart at the
-   node's 18.997 height with "4.9/5" after them, on the right, then the navy
-   testimonial centred in a 266px column on 4 lines. Figma lays those lines 16px
-   apart (its 15.857 line height, rounded), so 16px lines land on them in both
-   engines. The column sits 1px left of the node's: browsers slant the synthesized
-   italic more than Figma's Inter Italic does, which pushed the ink ~1px right. */
+/* Rating (2718:3332), under the button, in a white speech bubble tilted 3.168° as the
+   node tilts it. The wrapper is the bubble's own box (its union, 2806:3127,
+   278.886x114.825), turned about its top-left corner where the node puts it, and
+   everything inside sits where the node puts it in that box:
+   - the union with both shadows (exported with its shadow box);
+   - the reviewer, "Brent B." bold and "Indiana" regular (2828:920);
+   - five stars 16.972 apart at the node's 17.898 height, then "4.9/5". The node turns
+     these 3.02°, not 3.168°, so they turn back .148° inside the wrapper;
+   - the navy testimonial centred in a 250.62px column on 4 lines. Figma lays those
+     lines 15px apart (its 14.94 line height, rounded), so 15px lines land on them.
+     The column sits .23px left of the node's (browsers slant the synthesized italic a
+     little more than Figma's Inter Italic does). The reviewer and "4.9/5" sit .67px and
+     1px below their node boxes, where Chrome then draws their ink on the node's. */
 .demo-backdrop[data-screen="signup"] .demo-cr{
-  position:absolute;left:25.697px;top:481.306px;width:296px;height:121.872px;
+  position:absolute;left:31.4px;top:478.343px;width:278.886px;height:114.825px;
   transform:rotate(3.168deg);transform-origin:0 0;
 }
 .demo-backdrop[data-screen="signup"] .demo-so__bubble{
-  position:absolute;left:-7.992px;top:-5.996px;width:312px;height:137.871px;pointer-events:none;
+  position:absolute;left:-7.538px;top:-5.649px;width:293.961px;height:129.9px;pointer-events:none;
   background:url('assets/demo-so-bubble-v5.svg') 0 0/100% 100% no-repeat;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:147.585px;top:10.956px;display:flex}
+.demo-backdrop[data-screen="signup"] .demo-so__who{
+  position:absolute;left:22.331px;top:13.72px;width:108.495px;height:13.288px;margin:0;
+  font-size:11.306px;font-weight:400;line-height:13.288px;color:var(--navy);text-align:left;white-space:nowrap;
+}
+.demo-backdrop[data-screen="signup"] .demo-so__who b{font-size:13.399px;font-weight:700}
+.demo-backdrop[data-screen="signup"] :is(.demo-cm__stars,.demo-cm__score){transform:rotate(-.148deg);transform-origin:0 0}
+.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:139.03px;top:10.476px;display:flex}
 .demo-backdrop[data-screen="signup"] .demo-cm__stars span{
-  width:18.013px;height:18.997px;background:url('assets/demo-m-star-lg.svg') .441px 0/17.132px 17.183px no-repeat;
+  width:16.972px;height:17.898px;background:url('assets/demo-m-star-lg.svg') .416px 0/16.141px 16.189px no-repeat;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:239.034px;top:13.955px;width:37.612px;height:14.103px;margin:0;font-size:14.221px;font-weight:700;line-height:14.103px;color:var(--navy);text-align:center;white-space:nowrap;
+  position:absolute;left:225.201px;top:14.084px;width:35.437px;height:13.288px;margin:0;font-size:13.399px;font-weight:700;line-height:13.288px;color:var(--navy);text-align:center;white-space:nowrap;
 }
 .demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:14.276px;top:37.15px;width:266px;margin:0;font-size:13px;font-style:italic;font-weight:400;line-height:16px;color:var(--navy);text-align:center;
+  position:absolute;left:14.113px;top:34.3px;width:250.62px;margin:0;font-size:12.248px;font-style:italic;font-weight:400;line-height:15px;color:var(--navy);text-align:center;
 }

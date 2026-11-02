@@ -1,15 +1,18 @@
 // AFMBP-2273 — the sign-up offer (Figma 2718:3312): an ad link with ?signup=1 opens the demo
-// card's frame with the offer and one yellow "Start now" into the sign-up flow, instead of
-// the demo. Drives the real page in headless Chrome against a fake Bolt API and checks:
-//   - content and art (the node as updated 2026-10-28, AFMBP-2446): the node's copy, stars,
-//     logo, close cross, the headline's purple pill, the rating's speech bubble and the
-//     paintbrush watermark (drawn, where the node puts it); no marker or underline, no help
-//     line (the updates dropped them); none of the demo's ways in, and no "Available now";
-//   - weights and colour: the headline semibold and white on the pill, the body regular with
-//     "Bolt" semibold, the trial line semibold and centred, on its own;
-//   - geometry: each piece where it sits once matched to the node's glyphs (card-relative);
-//   - pricing: "30 days" and "$79" follow the pricing feed whether it answers before or after
-//     the card is built (pricing.js reapply), and fall back when it doesn't answer;
+// card's frame with the offer and one blue "Start now" into the sign-up flow, instead of the
+// demo. Drives the real page in headless Chrome against a fake Bolt API and checks:
+//   - content and art (the "New jobs are calling" design of 2026-11-02, AFMBP-2495): the card's
+//     art (the paper with the headline drawn in it) is drawn and covers the card; the headline's
+//     words are there for screen readers only; the pitch, with the bolt wordmark drawn in the
+//     room the node leaves for it at the start of its first line; the boxed FREE line; in the
+//     tilted speech bubble, the reviewer, five stars, "4.9/5" and the testimonial; the close
+//     cross. No help line, trial line, logo, pill or watermark (v5 dropped them), none of the
+//     demo's ways in, and no "Available now";
+//   - type: the pitch and the FREE line in Times New Roman (Tinos where a phone has none: the same
+//     widths, so the same lines), black; "FREE" and "today." bold; the reviewer's name bold; the
+//     testimonial navy italic; the pitch as the node words it (no comma after "customers");
+//   - geometry: each piece where it sits once matched to the node's glyphs (card-relative); the
+//     rating turned 3.168° about its bubble's corner, the stars and score turned .148° back;
 //   - the link: "Start now" goes to the sign-up flow carrying this visitor's id, ad tags and
 //     the QA flag (attribution.js decorates it as it is tapped);
 //   - leaving (AFMBP-2344): "Start now" holds the page until its event has gone out, at most
@@ -45,53 +48,57 @@ const MUTATE = {
   // The offer is logged as a demo opened.
   demo_event: ['demo.js', (s) => cut(s, "entry === 'signup' && !s ? 'signup_offer_opened' : 'demo_opened'", "'demo_opened'")],
   // "Start now" goes somewhere else.
-  cta_href: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-btn--yellow demo-so__cta', href: 'https://app.boltanswering.com/signup'", "class: 'demo-btn demo-btn--yellow demo-so__cta', href: '/'")],
+  cta_href: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-so__cta', href: 'https://app.boltanswering.com/signup'", "class: 'demo-btn demo-so__cta', href: '/'")],
   // The tap is not logged.
   no_track: ['demo.js', (s) => cut(s, "var sent = track('trial_link_clicked', { placement: 'signup_offer' });", 'var sent = null;')],
   // AFMBP-2344: "Start now" leaves at once (the browser's own navigation), not after its event.
   no_hold: ['demo.js', (s) => cut(s, 'if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;', 'return;')],
   // AFMBP-2344: "Start now" waits for its event however long the server takes.
   no_cap: ['demo.js', (s) => cut(s, '      setTimeout(go, 300);\n', '')],
-  // The button keeps its old label.
+  // The button keeps an old label.
   old_label: ['demo.js', (s) => cut(s, "}, ['Start now']);", "}, ['Get started']);")],
-  // The trial length and price are baked text, deaf to the feed.
-  static_price: ['demo.js', (s) => cut(s, "'Get your first ', h('span', { class: 'js-td', text: '30' }), ' days free (',\n          h('span', { class: 'js-retail', text: '$79' }), ' value). Cancel anytime.'", "'Get your first 30 days free ($79 value). Cancel anytime.'")],
-  // The card never asks pricing.js for the latest numbers.
-  no_reapply: ['demo.js', (s) => cut(s, "    try { if (window.boltPricing) window.boltPricing.reapply(); } catch (e) {}\n", '')],
+  // "Start now" goes back to v4's yellow.
+  yellow_cta: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-so__cta'", "class: 'demo-btn demo-btn--yellow demo-so__cta'")],
+  // The pitch keeps the comma the owner took out.
+  comma_back: ['demo.js', (s) => cut(s, 'answers calls and books customers so you never miss a job again.', 'answers calls and books customers, so you never miss a job again.')],
+  // The reviewer line is missing.
+  no_who: ['demo.js', (s) => cut(s, "        h('p', { class: 'demo-so__who' }, [h('b', { text: 'Brent B. ' }), 'Indiana']),\n", '')],
+  // The testimonial goes back to v4's words.
+  old_quote: ['demo.js', (s) => cut(s, '“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”', '“I was paying $250 a week for someone to answer my phone and book work. Bolt booked a job and paid for itself in a day.”')],
+  // The help line comes back under the rating.
+  help_line: ['demo.js', (s) => cut(s, "      ])\n    ], 'signup');", "      ]),\n      helpLine()\n    ], 'signup');")],
+  // The card's art (the paper and the headline) is not drawn.
+  no_art: ['demo.css', (s) => cut(s, "background:#f0e0d5 url('assets/demo-so-card.webp') center/cover no-repeat;", 'background:#fff;')],
+  // The headline's screen-reader words show on top of the art.
+  visible_headline: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-so__vh){', '.demo-backdrop[data-screen="signup"] :is(.demo-so__vh){')],
+  // The bolt wordmark is not drawn.
+  no_wordmark: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-cm__sub::before{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-cm__sub::before{\n  content:none;')],
+  // The pitch starts at the column's edge, under the wordmark.
+  no_spacer: ['demo.css', (s) => cut(s, '.demo-so__bolt{display:inline-block;width:80.886px;', '.demo-so__bolt{display:inline-block;width:0;')],
+  // The pitch and the FREE line fall back to the page's sans-serif.
+  wrong_font: ['demo.css', (s) => cut(s, "font-family:'Times New Roman',Tinos,serif;", 'font-family:inherit;')],
+  // Phones without Times New Roman get whatever serif they have (different widths, different lines).
+  no_tinos: ['demo.css', (s) => cut(s, "font-family:'Times New Roman',Tinos,serif;", "font-family:'Times New Roman',serif;")],
+  // The FREE line's box is not drawn.
+  no_box: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:none;')],
+  // "FREE" and "today." drop back to regular.
+  regular_free: ['demo.css', (s) => cut(s, '.demo-so__free b{font-weight:700}', '.demo-so__free b{font-weight:400}')],
+  // The rating sits level instead of tilted.
+  flat_rating: ['demo.css', (s) => cut(s, '  transform:rotate(3.168deg);transform-origin:0 0;\n', '')],
   // The close button is hidden.
   close_hidden: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:flex;', '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:none;')],
   // "Start now" moves off the node.
-  off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:389.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:394.4px;width:252px;height:49px;')],
+  off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:412.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:417.4px;width:252px;height:49px;')],
   // A narrow phone clips the card instead of scaling it down.
   no_zoom: ['demo.css', (s) => cut(s, '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }', '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{left:0} }')],
-  // The headline drops back to regular.
-  regular_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:400;color:#fff}')],
-  // The headline stays navy on the purple pill.
-  navy_headline: ['demo.css', (s) => cut(s, '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600;color:#fff}', '.demo-cm__h{top:107.4px;line-height:26px;font-weight:600}')],
-  // The headline's pill is not drawn.
-  no_pill: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__pill{\n  display:none;position:absolute;')],
   // "Start now" loses its shadow.
   flat_button: ['demo.css', (s) => cut(s, '  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);\n  display:flex;', '  display:flex;')],
   // The testimonial is kept on one line.
-  nowrap_quote: ['demo.css', (s) => cut(s, 'line-height:16px;color:var(--navy);text-align:center;\n}', 'line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;\n}')],
-  // The testimonial goes back to the old grey.
-  gray_quote: ['demo.css', (s) => cut(s, 'line-height:16px;color:var(--navy);text-align:center;\n}', 'line-height:16px;color:#707070;text-align:center;\n}')],
+  nowrap_quote: ['demo.css', (s) => cut(s, 'line-height:15px;color:var(--navy);text-align:center;\n}', 'line-height:15px;color:var(--navy);text-align:center;white-space:nowrap;\n}')],
+  // The testimonial goes grey.
+  gray_quote: ['demo.css', (s) => cut(s, 'line-height:15px;color:var(--navy);text-align:center;\n}', 'line-height:15px;color:#707070;text-align:center;\n}')],
   // The speech bubble is not drawn.
   no_bubble: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__bubble{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__bubble{\n  display:none;position:absolute;')],
-  // The paintbrush watermark is not drawn.
-  no_brush: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-body::before{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-body::before{\n  content:none;')],
-  // The "tm" beside the logo is not drawn.
-  no_tm: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__tm{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__tm{\n  display:none;position:absolute;')],
-  // The help line comes back under the rating.
-  help_line: ['demo.js', (s) => cut(s, "      ])\n    ], 'signup');", "      ]),\n      helpLine()\n    ], 'signup');")],
-  // "Bolt" at the start of the body drops back to regular.
-  regular_bolt: ['demo.css', (s) => cut(s, '.demo-cm__sub b{font-weight:600}', '.demo-cm__sub b{font-weight:400}')],
-  // The trial line drops back to regular.
-  regular_trial: ['demo.css', (s) => cut(s, '.demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:center}', '.demo-so__trial{top:307px;line-height:23px;font-weight:400;text-align:center}')],
-  // The trial line sits flush left, as the body does.
-  left_trial: ['demo.css', (s) => cut(s, '.demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:center}', '.demo-so__trial{top:307px;line-height:23px;font-weight:600;text-align:left}')],
-  // The body sits where 26+26+23 would put it, 3.6px above the node's glyphs.
-  body_high: ['demo.css', (s) => cut(s, '.demo-cm__sub{top:186px;line-height:23px}', '.demo-cm__sub{top:182.4px;line-height:23px}')],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 const MUTS = !NC ? [] : [MUTATE[NC]];
@@ -123,7 +130,6 @@ function apiRespond(method, url, postData) {
   return [200, {}];
 }
 const evs = (type, pred = () => true) => api.events.filter((e) => e.type === type && pred(e.data));
-const FEED = { promoPriceUsd: 49, retailPriceUsd: 89, promoMonths: 1, trialDays: 14, perMinuteUsd: 0.12, perMessageUsd: 0.01, minutesIncluded: 400, messagesIncluded: 750 };
 const AD = '/handyman.html?signup=1&utm_source=qa_src&utm_campaign=qa_camp&fbclid=qa_click';
 // A page that loads unseen (a preload), until the test makes it visible.
 const HIDDEN = `window.__vs = 'hidden';
@@ -136,29 +142,27 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0, good = 0;
 const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); } };
 
-// The node (2718:3312, as updated 2026-10-28), card-relative CSS px, as matched to its glyphs
-// (Chrome at a true 3x and iPhone Safari): the card's children sit inside its .6px stroke
-// ("Start now" at 44, 390). The 10-28 updates made the card 629 tall (top 65 on the node's
-// 758 screen), moved the button 25px down, put the headline on a purple pill (2798:3107) and
-// the rating in a speech bubble (2806:3127) with a 3-line testimonial, and dropped the help line.
+// The node (2718:3312, the "New jobs are calling" design of 2026-11-02, AFMBP-2495), card-relative
+// CSS px, as matched to its glyphs (Chrome at a true 3x and iPhone Safari). The card's children sit
+// inside its .6px stroke. Card 629 tall, top 65 on the node's 758 screen.
 const NODE = {
   card: { w: 337, h: 629, y: 65 },
-  cta: { x: 44, y: 390, w: 252, h: 49 },
-  stars: { x: 94, y: 484.73, w: 107.76, h: 20.723 },
-  close: { x: 278.496, y: 21.497, w: 44, h: 44 },
-  pill: { x: 27, y: 100, w: 289, h: 69 },
-  bubble: { x: 15, y: 470, w: 312, h: 127.119 },
-  tm: { x: 111, y: 32.7 },
-  // Centred lines: [the glyph run's centre x, the line box's centre y].
-  centres: { '.demo-cm__score': [225.886, 496.002] },
-  // Left edge, top and line count: the headline on 2 lines, the body on 4 (the column sits
-  // .2px right of the node's 46 so both engines draw it on the node's glyphs; demo.css).
-  pitch: { '.demo-cm__h': [46.2, 108, 2], '.demo-cm__sub': [46.2, 186.6, 4] },
-  // The trial line and the testimonial, centred in their columns [run centre x, top, lines].
-  trial: [179.2, 307.6, 2],
-  // (The testimonial's column sits 1px left of the node's: browsers slant italics more; demo.css.)
-  quote: [170, 510.424, 3],
+  cta: { x: 44, y: 413, w: 252, h: 49 },
+  close: { x: 283.496, y: 9.497, w: 44, h: 44 },
+  // The rating's box (its bubble's union, 278.886x114.825) turned 3.168° about its top-left
+  // corner (32, 478.943): the box it fills on the page.
+  rating: { x: 25.654, y: 478.943, w: 284.804, h: 130.06 },
+  // The wordmark (the node's four vectors), on the pitch's box.
+  wordmark: { x: 31.4, y: 210.9, w: 73.5, h: 30.7 },
+  // The FREE line's 2px box, stroke inside.
+  box: { x: 28, y: 335, w: 274, h: 59 },
+  // The pitch: its box's left and top, its lines, and where its first words start (after the
+  // 17 spaces' room the node leaves for the wordmark).
+  pitch: { x: 29, y: 220.71, lines: 4, first: 109.886 },
+  // Centred blocks: [the glyph run's centre x, the box's top, lines].
+  free: [165, 341.065, 2],
 };
+const DEG = (m) => { const v = /matrix\(([^,]+), ([^,]+)/.exec(m || ''); return v ? Math.atan2(parseFloat(v[2]), parseFloat(v[1])) * 180 / Math.PI : 0; };
 
 try {
   let t = null;
@@ -208,7 +212,7 @@ try {
   const screen = () => ev("(document.querySelector('.demo-backdrop.open')||{getAttribute:function(){return null}}).getAttribute('data-screen')");
   const waitScreen = async (want, ms = 6000) => { for (let i = 0; i < ms / 100; i++) { if ((await screen()) === want) return true; await sleep(100); } return false; };
   const rect = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null; var r=e.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height,cx:r.left+r.width/2,cy:r.top+r.height/2};})()`);
-  const run = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null; var w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT), n, rs=[]; while((n=w.nextNode())){ if(!n.textContent.trim()) continue; var g=document.createRange(); g.selectNodeContents(n); [].slice.call(g.getClientRects()).forEach(function(r){ if(r.width>0) rs.push(r); }); } if(!rs.length) return null; var x0=Math.min.apply(0,rs.map(function(r){return r.left})),x1=Math.max.apply(0,rs.map(function(r){return r.right})),y0=Math.min.apply(0,rs.map(function(r){return r.top})),y1=Math.max.apply(0,rs.map(function(r){return r.bottom})); var tops=rs.map(function(r){return r.top}).sort(function(a,b){return a-b}), lines=1; for(var i=1;i<tops.length;i++) if(tops[i]-tops[i-1]>6) lines++; return {x:x0,y:y0,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2,lines:lines};})()`);
+  const run = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null; var w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT), n, rs=[]; while((n=w.nextNode())){ if(!n.textContent.trim() || (n.parentElement && n.parentElement.closest('.demo-so__vh'))) continue; var g=document.createRange(); g.selectNodeContents(n); [].slice.call(g.getClientRects()).forEach(function(r){ if(r.width>0) rs.push(r); }); } if(!rs.length) return null; var x0=Math.min.apply(0,rs.map(function(r){return r.left})),x1=Math.max.apply(0,rs.map(function(r){return r.right})),y0=Math.min.apply(0,rs.map(function(r){return r.top})),y1=Math.max.apply(0,rs.map(function(r){return r.bottom})); var tops=rs.map(function(r){return r.top}).sort(function(a,b){return a-b}), lines=1; for(var i=1;i<tops.length;i++) if(tops[i]-tops[i-1]>6) lines++; return {x:x0,y:y0,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2,lines:lines};})()`);
   const visible = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return false; var s=getComputedStyle(e); var r=e.getBoundingClientRect(); return s.display!=='none' && s.visibility!=='hidden' && r.width>0 && r.height>0;})()`);
   const text = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); return e ? e.innerText.replace(/\\s+/g,' ').trim() : null;})()`);
   let touch = false;
@@ -239,79 +243,86 @@ try {
     await send('Emulation.setTouchEmulationEnabled', mobile ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dpr, mobile });
   };
-  const HEAD = 'One phone call can make or break your business.';
-  const QUOTE = '“I was paying $250 a week for someone to answer my phone and book work. Bolt booked a job and paid for itself in a day.”';
-  const BODY = 'Bolt is a 24/7 receptionist in your pocket that answers calls and books customers, so you never miss a job.';
-  const offer = () => text('.demo-so__trial');
-  const OFFER = (days, price) => `Get your first ${days} days free (${price} value). Cancel anytime.`;
+  const HEAD = 'New jobs are calling';
+  const QUOTE = '“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”';
+  const BODY = 'Bolt is your 24/7 receptionist that answers calls and books customers so you never miss a job again.';
+  const FREE = 'It’s FREE to setup an assistant. Get started today.';
   const isClose = (f) => /^button\.demo-close /.test(f.desc);
   const isCta = (f) => /^a\.demo-btn "Start now"/.test(f.desc);
 
   // ================= phone, the node's own size =================
   await view(402, 758, 3, true);
-  console.log('[phone 402x758] content, art, geometry, pricing fallback');
+  console.log('[phone 402x758] content, art, type, geometry');
   reset();
   await load(AD);
   ok(await waitScreen('signup'), 'phone: ?signup=1 opens the sign-up offer');
   await sleep(300);
-  ok((await text('.demo-cm__h')) === HEAD, `phone: the headline (${await text('.demo-cm__h')})`);
-  ok((await text('.demo-cm__sub')) === BODY, `phone: the body (${await text('.demo-cm__sub')})`);
-  const wt = (sel) => ev(`(function(){var e=document.querySelector('.demo-backdrop.open ${sel}');return e?getComputedStyle(e).fontWeight:null})()`);
-  ok((await wt('.demo-cm__h')) === '600', `phone: the headline semibold (${await wt('.demo-cm__h')})`);
-  const hc = await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__h')).color");
-  ok(hc === 'rgb(255, 255, 255)', `phone: the headline white, on its pill (${hc})`);
-  ok((await wt('.demo-cm__sub')) === '400' && (await text('.demo-cm__sub b')) === 'Bolt' && (await wt('.demo-cm__sub b')) === '600', `phone: the body regular, its first word "Bolt" semibold (${await wt('.demo-cm__sub')}, ${await text('.demo-cm__sub b')} ${await wt('.demo-cm__sub b')})`);
-  const pill = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__pill'); if(!e) return null; var s=getComputedStyle(e); return {bg:s.backgroundColor, radius:s.borderRadius, shadow:s.boxShadow, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
-  ok(!!pill && pill.shown && pill.bg === 'rgb(86, 68, 161)' && pill.radius === '23px' && pill.shadow === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 2px' && pill.hidden === 'true', `phone: the headline's pill, the node's purple, 23px corners and its two shadows, hidden from screen readers (${JSON.stringify(pill)})`);
-  ok((await ev("(function(){var p=document.querySelector('.demo-backdrop.open .demo-so__pill'), h=document.querySelector('.demo-backdrop.open .demo-cm__h'); if(!p||!h) return false; var r=p.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === h;})()")) === true, 'phone: the headline sits on top of its pill');
-  ok((await wt('.demo-so__trial')) === '600' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__trial')).textAlign")) === 'center', `phone: the trial line semibold and centred (${await wt('.demo-so__trial')})`);
-  ok((await offer()) === OFFER(30, '$79'), `phone: the trial line, its length and price from the fallback (${await offer()})`);
-  ok((await text('.demo-so__cta')) === 'Start now', `phone: "Start now" (${await text('.demo-so__cta')})`);
-  ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === QUOTE, `phone: the rating and the testimonial (${await text('.demo-backdrop.open .demo-cm__quote')})`);
-  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-help')")) && (await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Need help') < 0")), 'phone: no help line (the node dropped it)');
-  const qc = await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__quote')).color");
-  ok(qc === 'rgb(24, 10, 83)', `phone: the testimonial in navy (${qc})`);
-  const bub = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__bubble'); if(!e) return null; var s=getComputedStyle(e); return {img:s.backgroundImage, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
-  ok(!!bub && bub.shown && /demo-so-bubble\.svg/.test(bub.img) && bub.hidden === 'true', `phone: the rating's speech bubble (the node's union, with its shadow), hidden from screen readers (${JSON.stringify(bub)})`);
-  ok((await ev("(function(){var q=document.querySelector('.demo-backdrop.open .demo-cm__quote'); if(!q) return false; var r=q.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === q;})()")) === true, 'phone: the testimonial sits on top of its bubble');
-  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__live')")) && !(await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Available now') >= 0")), 'phone: no "Available now" or green dot (the node dropped them)');
-  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-choice__call, .demo-backdrop.open .demo-choice__get, .demo-backdrop.open .demo-choice__when')")), 'phone: none of the demo\'s ways in');
-  ok((await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).every(function(s){return /demo-m-star-lg\\.svg/.test(getComputedStyle(s).backgroundImage) && Math.abs(s.getBoundingClientRect().width - 21.552) < .01})")), 'phone: five node stars');
-  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__mk, .demo-backdrop.open .demo-mk')")) && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm'),'::before').backgroundImage")) === 'none', 'phone: no marker words and no underline (the 10-28 node dropped "real money")');
-  ok(/assets\/logo\.png/.test(await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__logo')).backgroundImage")), 'phone: the in-card logo');
-  const tm = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__tm'); if(!e) return null; var s=getComputedStyle(e), r=e.getBoundingClientRect(), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(); return {text:e.textContent, font:s.fontFamily, size:s.fontSize, color:s.color, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'&&r.width>0, x:r.left-k.left, y:r.top-k.top};})()");
-  ok(!!tm && tm.shown && tm.text === 'tm' && /Permanent Marker/.test(tm.font) && tm.size === '10.658px' && tm.color === 'rgb(24, 10, 83)' && tm.hidden === 'true' && Math.abs(tm.x - NODE.tm.x) < 0.05 && Math.abs(tm.y - NODE.tm.y) < 0.05, `phone: the marker "tm" beside the logo, where the node puts it, hidden from screen readers (${JSON.stringify(tm)})`);
-  const brush = await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before');return {content:s.content, display:s.display, mask:s.webkitMaskImage||s.maskImage, transform:s.transform, box:[s.left,s.top,s.width,s.height].join(' '), bg:s.backgroundColor};})()");
-  ok(brush.content !== 'none' && brush.content !== 'normal' && brush.display !== 'none' && /demo-m-brush\.svg/.test(brush.mask) && brush.transform === 'matrix(-1, 0, 0, 1, 0, 0)' && brush.box.split(' ').map(parseFloat).every((v, i) => Math.abs(v - [-477.448, -0.15, 828.071, 688.679][i]) < 0.02) && brush.bg === 'rgba(24, 10, 83, 0.11)', `phone: the paintbrush watermark is drawn, mirrored and placed as the node draws it (${JSON.stringify(brush)})`);
-  ok((await visible('.demo-close')) && /demo-m-close\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-close'),'::before').backgroundImage")), 'phone: the close button shows, drawn with the node\'s own cross');
-  ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(252, 189, 17)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(24, 10, 83)', 'phone: "Start now" is the node\'s yellow with navy words');
-  const cs = await ev("getComputedStyle(document.querySelector('.demo-so__cta')).boxShadow");
-  ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start now" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
-  ok((await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__quote')).fontStyle")) === 'italic', 'phone: the quote in italic');
   const card = (await rect('.demo-backdrop.open .demo-card')) || { x: 0, y: 0, w: 0, h: 0 };
   const rel = (b) => b && { x: b.x - card.x, y: b.y - card.y, w: b.w, h: b.h, cx: b.cx - card.x, cy: b.cy - card.y, lines: b.lines };
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
   ok(near(card.w, NODE.card.w, 0.01) && near(card.h, NODE.card.h, 0.01), `phone: card ${NODE.card.w}x${NODE.card.h} (${card.w}x${card.h})`);
   ok(near(card.y, NODE.card.y, 0.01), `phone: card where the node puts it, ${NODE.card.y}px from the top of a 758px screen (${card.y})`);
-  for (const [k, sel] of [['cta', '.demo-so__cta'], ['stars', '.demo-backdrop.open .demo-cm__stars'], ['close', '.demo-close'], ['pill', '.demo-backdrop.open .demo-so__pill'], ['bubble', '.demo-backdrop.open .demo-so__bubble']]) {
-    const b = rel(await rect(sel)), n = NODE[k];
+  // The art: the node's image, drawn (it loads) and covering the card.
+  const art = await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-card'));return {img:s.backgroundImage,size:s.backgroundSize,pos:s.backgroundPosition,rep:s.backgroundRepeat};})()");
+  ok(/assets\/demo-so-card\.webp/.test(art.img) && art.size === 'cover' && art.pos === '50% 50%' && art.rep === 'no-repeat', `phone: the card's art is the node's image, covering the card from its centre (${JSON.stringify(art)})`);
+  const artW = await ev("new Promise(function(r){var i=new Image();i.onload=function(){r(i.naturalWidth+'x'+i.naturalHeight)};i.onerror=function(){r(null)};i.src='assets/demo-so-card.webp';})");
+  ok(artW === '941x1670', `phone: the art loads, at the node's 941x1670 (${artW})`);
+  // The headline is in the art: its words are the one heading, for screen readers only.
+  const h2 = await ev("(function(){var e=document.querySelectorAll('.demo-backdrop.open h2'); if(e.length!==1) return {n:e.length}; var s=getComputedStyle(e[0]), r=e[0].getBoundingClientRect(); return {n:1, t:e[0].textContent, clip:s.clipPath, w:r.width, h:r.height, display:s.display, vis:s.visibility};})()");
+  ok(h2.n === 1 && h2.t === HEAD && h2.clip === 'inset(50%)' && h2.w <= 1 && h2.h <= 1 && h2.display !== 'none' && h2.vis === 'visible', `a11y: one heading, "${HEAD}", read out but not drawn over the art (${JSON.stringify(h2)})`);
+  // The pitch: the node's words, "Bolt" read out from hidden text; the wordmark drawn in its room.
+  ok((await text('.demo-cm__sub')) === BODY, `phone: the pitch (${await text('.demo-cm__sub')})`);
+  const wm = await ev("(function(){var p=document.querySelector('.demo-backdrop.open .demo-cm__sub'), s=getComputedStyle(p,'::before'), r=p.getBoundingClientRect(), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(); return {content:s.content, img:s.backgroundImage, x:r.left-k.left+parseFloat(s.left), y:r.top-k.top+parseFloat(s.top), w:parseFloat(s.width), h:parseFloat(s.height)};})()");
+  ok(wm.content !== 'none' && wm.content !== 'normal' && /assets\/demo-so-bolt\.svg/.test(wm.img) && near(wm.x, NODE.wordmark.x, 0.05) && near(wm.y, NODE.wordmark.y, 0.05) && near(wm.w, NODE.wordmark.w, 0.05) && near(wm.h, NODE.wordmark.h, 0.05), `phone: the bolt wordmark is drawn where the node puts it (${JSON.stringify(wm)})`);
+  const pr = rel(await rect('.demo-backdrop.open .demo-cm__sub')), pg = rel(await run('.demo-backdrop.open .demo-cm__sub'));
+  const first = await ev("(function(){var p=document.querySelector('.demo-backdrop.open .demo-cm__sub'), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(), w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT), n; while((n=w.nextNode())){ if(n.parentElement.closest('.demo-so__vh')||!n.textContent.trim()) continue; var g=document.createRange(); g.setStart(n,0); g.setEnd(n,1); return g.getBoundingClientRect().left-k.left; } return null;})()");
+  ok(pr && pg && near(pr.x, NODE.pitch.x, 0.05) && near(pr.y, NODE.pitch.y, 0.05) && pg.lines === NODE.pitch.lines && near(first, NODE.pitch.first, 0.1), `phone: the pitch at ${NODE.pitch.x},${NODE.pitch.y}, on ${NODE.pitch.lines} lines as the node wraps it, its words starting at ${NODE.pitch.first} after the wordmark (${pr && pg && [pr.x.toFixed(2), pr.y.toFixed(2), pg.lines, first && first.toFixed(2)]})`);
+  // Type: Times New Roman (Tinos where a phone has none), black; the FREE line's bold words.
+  const type = await ev("(function(){function f(sel){var e=document.querySelector('.demo-backdrop.open '+sel), s=getComputedStyle(e); return s.fontFamily+'|'+s.fontSize+'|'+s.fontWeight+'|'+s.color;} return {sub:f('.demo-cm__sub'), big:f('.demo-so__big'), free:f('.demo-so__free'), b:[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-so__free b')).map(function(b){return b.textContent+':'+getComputedStyle(b).fontWeight})};})()");
+  ok(type.sub === '"Times New Roman", Tinos, serif|19.032px|400|rgb(0, 0, 0)' && type.big === '"Times New Roman", Tinos, serif|20.03px|400|rgb(0, 0, 0)' && type.free === '"Times New Roman", Tinos, serif|19.032px|400|rgb(0, 0, 0)', `type: the pitch and the FREE line in Times New Roman, then Tinos, black, at the node's 19.032 and 20.03px (${JSON.stringify(type)})`);
+  ok(JSON.stringify(type.b) === JSON.stringify(['FREE :700', 'today.:700']), `type: "FREE" and "today." bold (${JSON.stringify(type.b)})`);
+  const tinos = await ev("(function(){var w=[]; document.fonts.forEach(function(f){ if(/Tinos/.test(f.family)) w.push(f.weight); }); return w.sort().join(',');})()");
+  ok(tinos === '400,700', `type: Tinos regular and bold are declared, for phones without Times New Roman (${tinos})`);
+  // The FREE line, centred in its column, inside its 2px box.
+  ok((await text('.demo-so__free')) === FREE, `phone: the FREE line (${await text('.demo-so__free')})`);
+  const fr = rel(await rect('.demo-backdrop.open .demo-so__free')), fg = rel(await run('.demo-backdrop.open .demo-so__free'));
+  ok(fr && fg && near(fg.cx, NODE.free[0], 0.5) && near(fr.y, NODE.free[1], 0.05) && fg.lines === NODE.free[2], `phone: the FREE line centred at ${NODE.free[0]}, top ${NODE.free[1]}, on ${NODE.free[2]} lines (${fr && fg && [fg.cx.toFixed(2), fr.y.toFixed(2), fg.lines]})`);
+  const bx = await ev("(function(){var m=document.querySelector('.demo-backdrop.open .demo-cm'), s=getComputedStyle(m,'::after'), b=document.querySelector('.demo-backdrop.open .demo-body').getBoundingClientRect(), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(); return {content:s.content, x:b.left-k.left+parseFloat(s.left), y:b.top-k.top+parseFloat(s.top), w:parseFloat(s.width), h:parseFloat(s.height), border:s.borderTopWidth+' '+s.borderTopStyle+' '+s.borderTopColor, sizing:s.boxSizing};})()");
+  ok(bx.content !== 'none' && bx.content !== 'normal' && near(bx.x, NODE.box.x, 0.05) && near(bx.y, NODE.box.y, 0.05) && near(bx.w, NODE.box.w, 0.05) && near(bx.h, NODE.box.h, 0.05) && bx.border === '2px solid rgb(0, 0, 0)' && bx.sizing === 'border-box', `phone: the FREE line's 2px black box where the node puts it (${JSON.stringify(bx)})`);
+  // "Start now": the node's blue button and its shadow.
+  ok((await text('.demo-so__cta')) === 'Start now', `phone: "Start now" (${await text('.demo-so__cta')})`);
+  ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(43, 127, 253)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(255, 255, 255)', 'phone: "Start now" is the node\'s blue with white words');
+  const cs = await ev("getComputedStyle(document.querySelector('.demo-so__cta')).boxShadow");
+  ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start now" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
+  // The rating: the reviewer, stars, score and testimonial in the tilted bubble.
+  ok((await text('.demo-backdrop.open .demo-so__who')) === 'Brent B. Indiana' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__who b')).fontWeight")) === '700', `phone: the reviewer, "Brent B." bold, then "Indiana" (${await text('.demo-backdrop.open .demo-so__who')})`);
+  ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === QUOTE, `phone: the rating and the testimonial (${await text('.demo-backdrop.open .demo-cm__quote')})`);
+  const qs = await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-cm__quote'));return s.color+'|'+s.fontStyle+'|'+s.fontSize;})()");
+  ok(qs === 'rgb(24, 10, 83)|italic|12.248px', `phone: the testimonial navy italic at the node's 12.248px (${qs})`);
+  ok((await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).length")) === 5 && (await ev("[].slice.call(document.querySelectorAll('.demo-cm__stars span')).every(function(s){var c=getComputedStyle(s); return /demo-m-star-lg\\.svg/.test(c.backgroundImage) && Math.abs(parseFloat(c.width)-16.972)<.01 && Math.abs(parseFloat(c.height)-17.898)<.01})")), 'phone: five node stars at the node\'s 16.972x17.898');
+  const bub = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__bubble'); if(!e) return null; var s=getComputedStyle(e); return {img:s.backgroundImage, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
+  ok(!!bub && bub.shown && /demo-so-bubble-v5\.svg/.test(bub.img) && bub.hidden === 'true', `phone: the rating's speech bubble (the node's union, with its shadow), hidden from screen readers (${JSON.stringify(bub)})`);
+  const cr = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-cr'), s=document.querySelector('.demo-backdrop.open .demo-cm__stars'), c=document.querySelector('.demo-backdrop.open .demo-cm__score'); return {cr:getComputedStyle(e).transform, origin:getComputedStyle(e).transformOrigin, stars:getComputedStyle(s).transform, score:getComputedStyle(c).transform};})()");
+  ok(near(DEG(cr.cr), 3.168, 0.002) && cr.origin === '0px 0px' && near(DEG(cr.stars), -0.148, 0.002) && near(DEG(cr.score), -0.148, 0.002), `phone: the rating turned 3.168° about its corner, the stars and score turned .148° back, as the node turns them (${[DEG(cr.cr), DEG(cr.stars), DEG(cr.score)].map((v) => v.toFixed(3))})`);
+  const rb = rel(await rect('.demo-backdrop.open .demo-cr'));
+  ok(!!rb && near(rb.x, NODE.rating.x, 0.05) && near(rb.y, NODE.rating.y, 0.05) && near(rb.w, NODE.rating.w, 0.05) && near(rb.h, NODE.rating.h, 0.05), `phone: the rating fills the box the node's tilted bubble fills (${JSON.stringify(rb)} vs ${JSON.stringify(NODE.rating)})`);
+  for (const [sel, lines] of [['.demo-so__who', 1], ['.demo-cm__score', 1], ['.demo-cm__quote', 4]]) {
+    const g = await run(`.demo-backdrop.open ${sel}`);
+    ok(!!g && g.lines === lines, `phone: ${sel} on ${lines} line(s), as the node wraps it (${g && g.lines})`);
+  }
+  ok((await ev("(function(){var q=document.querySelector('.demo-backdrop.open .demo-cm__quote'); if(!q) return false; var r=q.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === q;})()")) === true, 'phone: the testimonial sits on top of its bubble');
+  // What v5 dropped, and what the offer never shows.
+  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-help')")) && (await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Need help') < 0")), 'phone: no help line (the node has none)');
+  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-so__trial, .demo-backdrop.open .demo-so__pill, .demo-backdrop.open .demo-so__tm, .demo-backdrop.open .demo-cm__logo')")), 'phone: no trial line, pill, "tm" or logo (v5 dropped them)');
+  ok((await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before').content")) === 'none', 'phone: no paintbrush watermark (v5 dropped it)');
+  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__live')")) && !(await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Available now') >= 0")), 'phone: no "Available now" or green dot');
+  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-choice__call, .demo-backdrop.open .demo-choice__get, .demo-backdrop.open .demo-choice__when')")), 'phone: none of the demo\'s ways in');
+  ok((await visible('.demo-close')) && /demo-m-close\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-close'),'::before').backgroundImage")), 'phone: the close button shows, drawn with the node\'s own cross');
+  for (const k of ['cta', 'close']) {
+    const b = rel(await rect(k === 'cta' ? '.demo-so__cta' : '.demo-close')), n = NODE[k];
     ok(!!b && near(b.x, n.x, 0.05) && near(b.y, n.y, 0.05) && near(b.w, n.w, 0.05) && near(b.h, n.h, 0.05), `phone: ${k} box where it matches the node (${JSON.stringify(b)} vs ${JSON.stringify(n)})`);
   }
-  for (const [sel, [cx, cy]] of Object.entries(NODE.centres)) {
-    const g = rel(await run(`.demo-backdrop.open ${sel}`)), b = rel(await rect(`.demo-backdrop.open ${sel}`));
-    ok(g && b && near(g.cx, cx, 0.5) && near(b.cy, cy, 0.05) && g.lines === 1, `phone: ${sel} centred where it matches the node, one line (${g && b && [g.cx.toFixed(2), b.cy.toFixed(3), g.lines]} vs ${cx},${cy})`);
-  }
-  for (const [sel, [x, y, lines]] of Object.entries(NODE.pitch)) {
-    const g = rel(await run(`.demo-backdrop.open ${sel}`)), b = rel(await rect(`.demo-backdrop.open ${sel}`));
-    ok(g && b && near(g.x, x, 0.05) && near(b.y, y, 0.05) && g.lines === lines, `phone: ${sel} from x ${x}, top ${y}, on ${lines} lines, as the node wraps it (${g && b && [g.x.toFixed(2), b.y.toFixed(2), g.lines]})`);
-  }
-  for (const [name, sel] of [['trial', '.demo-so__trial'], ['quote', '.demo-cm__quote']]) {
-    const [cx, y, lines] = NODE[name];
-    const g = rel(await run(`.demo-backdrop.open ${sel}`)), b = rel(await rect(`.demo-backdrop.open ${sel}`));
-    ok(g && b && near(g.cx, cx, 0.5) && near(b.y, y, 0.05) && g.lines === lines, `phone: the ${name === 'trial' ? 'trial line' : 'testimonial'} centred at ${cx}, top ${y}, on ${lines} lines, as the node wraps it (${g && b && [g.cx.toFixed(2), b.y.toFixed(2), g.lines]})`);
-  }
   ok((await ev("(function(){var b=document.querySelector('.demo-close'), r=b.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === b;})()")) === true, 'phone: the close button takes a tap at its centre (nothing on top of it)');
-  ok((await ev("document.querySelector('.demo-backdrop.open h2').textContent")) === HEAD && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the headline is the one heading');
 
   console.log('[phone] analytics and the link');
   ok(evs('signup_offer_opened', (d) => d.trigger === 'ad_link').length === 1 && evs('signup_offer_opened').length === 1, `events: signup_offer_opened once, from the ad link (${evs('signup_offer_opened').length})`);
@@ -344,23 +355,17 @@ try {
   ok(capped.event !== null && capped.leave !== null && capped.leave <= 450,
     `the tap never waits past about 0.3 s when the server hangs (${JSON.stringify(capped)})`);
 
-  console.log('[phone] pricing: the feed reaches the card whether it answers before or after it is built');
-  // The order that needs reapply: an in-app browser preloads the ad page HIDDEN, the feed
-  // answers, and the card is only built when someone looks (AFMBP-2010's whenVisible).
+  console.log('[phone] a preloaded page builds the card only once it is seen (AFMBP-2010)');
+  // An in-app browser preloads the ad page HIDDEN; the card is only built when someone looks.
   const hidden = await send('Page.addScriptToEvaluateOnNewDocument', { source: HIDDEN });
-  reset(FEED, 0);
+  reset();
   await load(AD, 1500);
-  ok((await screen()) === null && (await ev('document.visibilityState')) === 'hidden', 'pricing: a preloaded (hidden) page builds no card yet');
+  ok((await screen()) === null && (await ev('document.visibilityState')) === 'hidden', 'preload: a hidden page builds no card yet');
   await ev("window.__vs = 'visible'; document.dispatchEvent(new Event('visibilitychange')); 1");
-  ok(await waitScreen('signup'), 'pricing: the card opens once the page is seen');
-  ok((await offer()) === OFFER(14, '$89'), `pricing: the card built AFTER the feed answered shows the feed's trial and price (${await offer()})`);
+  ok(await waitScreen('signup'), 'preload: the card opens once the page is seen');
+  for (let i = 0; i < 30 && !evs('signup_offer_opened').length; i++) await sleep(100);
+  ok(evs('signup_offer_opened').length === 1, `preload: signup_offer_opened once, when it is seen (${evs('signup_offer_opened').length})`);
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: hidden.identifier });
-  reset(FEED, 2000);
-  await load(AD, 300);
-  ok(await waitScreen('signup'), 'pricing: offer open (feed slow)');
-  const early = await offer();
-  await sleep(2600);
-  ok(early === OFFER(30, '$79') && (await offer()) === OFFER(14, '$89'), `pricing: the fallback first, then the feed's numbers when it answers late (${early} -> ${await offer()})`);
 
   console.log('[phone] closing');
   reset();
@@ -433,13 +438,13 @@ try {
     ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     const b = await rect('.demo-so__cta');
     ok(b && b.x >= c.x && b.x + b.w <= c.x + c.w && b.y >= 0 && b.y + b.h <= h, `${w}x${h}: "Start now" inside the card and on screen (${JSON.stringify(b)})`);
-    for (const [name, sel] of [["the headline's pill", '.demo-so__pill'], ["the rating's bubble", '.demo-so__bubble']]) {
+    for (const [name, sel] of [["the FREE line", '.demo-so__free'], ["the rating's bubble", '.demo-so__bubble']]) {
       const pb = await rect(`.demo-backdrop.open ${sel}`);
       ok(!!pb && pb.x >= c.x && pb.x + pb.w <= c.x + c.w && pb.y + pb.h <= c.y + c.h + 0.5 && pb.w > 0, `${w}x${h}: ${name} inside the card (${pb && [pb.x.toFixed(1), (pb.x + pb.w).toFixed(1), (pb.y + pb.h).toFixed(1), (c.y + c.h).toFixed(1)]})`);
     }
     const x = await rect('.demo-close');
     ok(!!x && (await visible('.demo-close')) && x.x >= c.x && x.x + x.w <= c.x + c.w && x.y >= 0 && x.w >= 36, `${w}x${h}: the close button inside the card and on screen, at least 36px`);
-    for (const [sel, want] of [['.demo-cm__h', 2], ['.demo-cm__sub', 4], ['.demo-so__trial', 2], ['.demo-cm__score', 1], ['.demo-cm__quote', 3], ['.demo-so__cta', 1]]) {
+    for (const [sel, want] of [['.demo-cm__sub', 4], ['.demo-so__free', 2], ['.demo-so__who', 1], ['.demo-cm__score', 1], ['.demo-cm__quote', 4], ['.demo-so__cta', 1]]) {
       const g = await run(`.demo-backdrop.open ${sel}`);
       ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]})`);
     }
