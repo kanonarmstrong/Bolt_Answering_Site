@@ -3,10 +3,8 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '5';
-const SIGNUP = 'https://app.boltanswering.com/signup';
+const ASSET_V = '6';
 // The site's own one-line description (index.html <meta name="description">).
-const ABOUT = 'Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.';
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
    (Your Privacy Choices / Global Privacy Control) or for our own ?bolt_qa test visits. */
@@ -107,8 +105,7 @@ function postCard(p, i) {
                   ${infoline(p)}
                   <div class="article_txt">
                     <h2 class="article_title h2"><a href="${postPath(p.slug)}">${esc(p.title)}</a></h2>
-                    <p class="article_desc">${esc(p.excerpt)}</p>
-                    <div class="article_btn"><a href="${postPath(p.slug)}" class="btn" aria-label="Read: ${esc(p.title)}">Read more</a></div>
+                    <p class="article_desc">${esc(p.excerpt)} <a href="${postPath(p.slug)}" class="article_more" aria-label="Read more: ${esc(p.title)}">Read more</a></p>
                   </div>
                 </article>`;
 }
@@ -125,21 +122,6 @@ function pagination(current, total, base) {
 
 function sidebar({ recent, categories }) {
   return `            <aside class="columns_sidebar sidebar">
-              <div class="sidebar_search">
-                <form action="/blog/search/" method="get" role="search" class="js-search">
-                  <div class="search">
-                    <label class="visually-hidden" for="blog-q">Search the blog</label>
-                    <input type="search" id="blog-q" name="q" class="form-control" placeholder="Search the blog…" autocomplete="off" />
-                    <button class="btn" aria-label="Search"><span class="icon-search" aria-hidden="true"></span></button>
-                  </div>
-                </form>
-                <div class="search_results" role="status" aria-live="polite" hidden></div>
-              </div>
-              <div class="sidebar_widget sidebar_cta">
-                <h3>Never miss a job again</h3>
-                <p>${esc(ABOUT)}</p>
-                <a href="${SIGNUP}" class="btn">Get started now</a>
-              </div>
               <div class="sidebar_widget">
                 <h3>Recent posts</h3>
                 <div class="stories">
@@ -188,11 +170,23 @@ function masthead(isH1) {
     ? `<h1 class="masthead_title">${mark}</h1>`
     : `<div class="masthead_title"><a href="${BLOG_PATH}">${mark}</a></div>`;
   return `      <div class="masthead">
-        <picture>
-          <source type="image/webp" sizes="100vw" srcset="/blog/assets/img/blog-hero-800.webp 800w, /blog/assets/img/blog-hero-1600.webp 1600w, /blog/assets/img/blog-hero-2400.webp 2400w" />
-          <img class="masthead_bg" src="/blog/assets/img/blog-hero-1600.jpg" alt="" width="1600" height="272" />
-        </picture>
-        <div class="masthead_inner">${title}</div>
+        <div class="masthead_band">
+          <picture>
+            <source type="image/webp" sizes="100vw" srcset="/blog/assets/img/blog-hero-800.webp 800w, /blog/assets/img/blog-hero-1600.webp 1600w, /blog/assets/img/blog-hero-2400.webp 2400w" />
+            <img class="masthead_bg" src="/blog/assets/img/blog-hero-1600.jpg" alt="" width="1600" height="272" />
+          </picture>
+          <div class="masthead_inner">${title}</div>
+        </div>
+        <div class="masthead_search">
+          <div class="masthead_search_inner">
+            <form action="${BLOG_PATH}search/" method="get" role="search" class="msearch js-search">
+              <label class="visually-hidden" for="blog-q">Search posts</label>
+              <input type="search" id="blog-q" name="q" class="msearch_input" placeholder="Search posts" autocomplete="off" />
+              <button class="msearch_btn" aria-label="Search"><img src="/blog/assets/img/search.svg" alt="" width="23" height="23" /></button>
+              <div class="search_results" role="status" aria-live="polite" hidden></div>
+            </form>
+          </div>
+        </div>
       </div>`;
 }
 

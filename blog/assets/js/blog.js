@@ -1,5 +1,6 @@
-/* Bolt blog search (sidebar live results and /blog/search/). The header menu is the site's
-   own script.js. Pages work fully without this file; it only adds search. */
+/* Bolt blog search (live results under the masthead search field, and /blog/search/), plus
+   keeping the site's floating "Get started now" button (phones) off the search field. The
+   header menu is the site's own script.js. Pages work fully without this file. */
 (function () {
   'use strict';
   /* Search over /blog/search-index.json */
@@ -62,4 +63,27 @@
       });
     }
   }
+})();
+
+/* Phones: the floating "Get started now" button (site script.js) is fixed to the viewport, the
+   search field scrolls with the page. Hide the button whenever the two would overlap, and while
+   the field is being typed in, so it never sits on the search. Uses the site's .cta-hide. */
+(function () {
+  'use strict';
+  var cta = document.querySelector('.floating-cta');
+  var field = document.querySelector('.msearch');
+  if (!cta || !field) return;
+  var focused = false;
+  function overlaps(a, b) { return a.width && b.width && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom; }
+  function update() {
+    var hide = focused || overlaps(cta.getBoundingClientRect(), field.getBoundingClientRect());
+    cta.classList.toggle('cta-hide', hide);
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', update);
+  cta.addEventListener('transitionend', update);
+  field.addEventListener('focusin', function () { focused = true; update(); });
+  field.addEventListener('focusout', function () { focused = false; update(); });
+  update();
 })();
