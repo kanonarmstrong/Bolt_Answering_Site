@@ -94,6 +94,17 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.ok(!existsSync(join(root, 'blog/category/uncategorized/index.html')), 'Uncategorized gets no page');
 
   const art = read(root, 'blog/answer-every-call/index.html');
+  // "the line" masthead on every page: the <h1> on the blog home (no breadcrumb line), a link home elsewhere.
+  const home = read(root, 'blog/index.html');
+  assert.equal((home.match(/<h1[\s>]/g) || []).length, 1, 'blog home: exactly one h1');
+  assert.match(home, /<h1 class="masthead_title"><img src="\/blog\/assets\/img\/the-line\.svg" alt="the line"/);
+  assert.doesNotMatch(home, /class="breadcrumbs"|class="pagetitle"/, 'blog home: masthead replaces the title and breadcrumb lines');
+  assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-line\.svg"/);
+  assert.match(art, /class="breadcrumbs"/);
+  assert.doesNotMatch(art, /class="pagetitle"/);
+  const cat = read(root, 'blog/category/missed-calls-booking/index.html');
+  assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
+  assert.match(cat, /<div class="masthead_title">/);
   assert.equal((art.match(/<h1[\s>]/g) || []).length, 1, 'exactly one h1');
   assert.match(art, /<link rel="canonical" href="https:\/\/www\.boltanswering\.com\/blog\/answer-every-call\/" \/>/);
   assert.match(art, /<title>Answer Every Call, Even After Hours \| Bolt<\/title>/, 'search title field wins');
@@ -108,9 +119,9 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.equal(posting.datePublished, '2026-11-01T16:00:00.000Z');
   assert.ok(posting.wordCount > 10);
 
-  // Every image on the page is a local, resized file with alt + dimensions.
+  // Every post image on the page is a local, resized file with alt + dimensions.
   for (const tag of art.match(/<img\b[^>]*>/g)) {
-    if (tag.includes('logo-wordmark')) continue;
+    if (tag.includes('logo-wordmark') || tag.includes('/blog/assets/img/')) continue; // site chrome + masthead
     assert.match(tag, /src="\/blog\/img\/[a-z0-9-]+\/[0-9a-f]{10}-\d+\.webp"/, 'local, resized image');
     assert.match(tag, /width="\d+" height="\d+"/);
     assert.match(tag, /alt="/);
@@ -297,7 +308,7 @@ test('blog.css sizes follow the blog base size, not the site root', () => {
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\d\s*rem\b/, 'no rem units (they would follow the site\'s 16px root)');
   for (const rule of css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g)) {
     const sel = rule.slice(0, -1).trim();
-    if (sel.startsWith('@media') || sel.startsWith('.skip-link')) continue;
+    if (sel.startsWith('@media') || sel.startsWith('.skip-link') || sel.startsWith('body.blog-page ')) continue; // blog-only by page class
     for (const part of sel.split(',')) assert.match(part.trim(), /^\.bchy\b/, `unscoped selector in blog.css: ${part.trim()}`);
   }
 });

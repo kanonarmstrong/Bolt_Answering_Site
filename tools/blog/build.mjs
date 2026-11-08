@@ -96,7 +96,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       prev: n > 1 ? abs(pagePath(n - 1)) : undefined,
       next: n < pages ? abs(pagePath(n + 1)) : undefined,
       jsonLd: [blogJsonLd(posts), breadcrumbJsonLd(crumbs)],
-      body: chrome(listPage({ heading: 'Blog', crumbs, posts: slice, current: n, total: pages, recent, categories })),
+      body: chrome(listPage({ crumbs: n === 1 ? undefined : crumbs, posts: slice, current: n, total: pages, recent, categories })),
     }));
   }
 

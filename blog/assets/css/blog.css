@@ -15,7 +15,19 @@
 
 /* The template's flex page wrapper is only needed for its own header/footer ordering. */
 .bchy .main-wrapper { display: block; min-height: 0; }
-.bchy .content { padding-top: calc(3 * var(--bchy-rem, 10px)); }
+.bchy .content { padding-top: 0; }
+.bchy .section-post { padding-top: calc(3 * var(--bchy-rem, 10px)); }
+
+/* "the line" masthead (Figma 2860:1538): full-width hero band directly under the site header,
+   wordmark on the header's content edge. Sized in px/vw like the site chrome, not --bchy-rem.
+   1926px-wide design: 154px tall, 381px wordmark, so both scale with the viewport between caps. */
+.bchy .masthead { position: relative; height: clamp(88px, 8vw, 154px); overflow: hidden; background: #0b0820; }
+.bchy .masthead picture, .bchy .masthead_bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bchy .masthead_bg { object-fit: cover; object-position: center; display: block; }
+.bchy .masthead_inner { position: relative; height: 100%; max-width: 1620px; margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; }
+.bchy .masthead_title { margin: 0; padding: 0; line-height: 0; }
+.bchy .masthead_title a { display: inline-block; }
+.bchy .masthead_title img { display: block; width: clamp(160px, 19.8vw, 381px); height: auto; }
 
 .bchy h1, .bchy .h1, .bchy h2, .bchy .h2, .bchy h3, .bchy .h3, .bchy h4, .bchy .h4,
 .bchy .article_title a, .bchy .stories_item_title a, .bchy .author_name { color: var(--navy); text-transform: none; }
@@ -65,6 +77,12 @@
 
 .bchy .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .bchy a:focus-visible, .bchy button:focus-visible, .bchy input:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+/* Phones: the site's floating "Get started now" button starts just under the header, which on
+   the blog is the masthead wordmark. Start it at its bottom-right resting spot instead. */
+@media (max-width: 768px) {
+  body.blog-page .floating-cta { top: calc(100vh - 100px); top: calc(100dvh - 100px); }
+}
 
 /* Skip link sits before the site header, outside .bchy. */
 .skip-link { position: absolute; left: -9999px; top: 0; z-index: 200; background: #180a53; color: #fff; padding: 10px 16px; font-size: 14px; }
