@@ -102,6 +102,15 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-bottom-line\.svg"/);
   assert.match(art, /class="breadcrumbs"/);
   assert.doesNotMatch(art, /class="pagetitle"/);
+  // Search lives in the masthead (one field per page); no sidebar search or sidebar CTA box.
+  for (const page of [home, art]) {
+    assert.equal((page.match(/class="msearch js-search"/g) || []).length, 1, 'one masthead search form');
+    assert.match(page, /<form action="\/blog\/search\/" method="get" role="search"/);
+    assert.doesNotMatch(page, /sidebar_search|sidebar_cta|Never miss a job again/);
+  }
+  // Post cards end their excerpt with a plain "Read more" link, not a button.
+  assert.match(home, /<p class="article_desc">[^<]* <a href="\/blog\/answer-every-call\/" class="article_more" aria-label="Read more: [^"]+">Read more<\/a><\/p>/);
+  assert.doesNotMatch(home, /article_btn/);
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
   assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
   assert.match(cat, /<div class="masthead_title">/);

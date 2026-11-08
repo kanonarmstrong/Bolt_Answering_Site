@@ -21,13 +21,33 @@
 /* "the bottom line" masthead (Figma 2860:1538): full-width hero band directly under the site header,
    wordmark on the header's content edge. Sized in px/vw like the site chrome, not --bchy-rem.
    1926px-wide design: 154px tall, 476px wordmark, so both scale with the viewport between caps. */
-.bchy .masthead { position: relative; height: clamp(88px, 8vw, 154px); overflow: hidden; background: #0b0820; }
+.bchy .masthead { position: relative; }
+.bchy .masthead_band { position: relative; height: clamp(88px, 8vw, 154px); overflow: hidden; background: #0b0820; }
 .bchy .masthead picture, .bchy .masthead_bg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .bchy .masthead_bg { object-fit: cover; object-position: center; display: block; }
 .bchy .masthead_inner { position: relative; height: 100%; max-width: 1620px; margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; }
 .bchy .masthead_title { margin: 0; padding: 0; line-height: 0; }
 .bchy .masthead_title a { display: inline-block; }
 .bchy .masthead_title img { display: block; width: clamp(220px, 24.7vw, 476px); height: auto; }
+
+/* Search posts field (Figma 2860:1538 desktop, 2861:1625 phones): 328x56. Desktop: white, in the
+   masthead, right edge on the header's "Get started now" edge. Phones: grey, under the masthead,
+   right edge on the floating "Get started now" button's edge (16px). */
+.bchy .masthead_search { position: absolute; top: 0; left: 0; right: 0; height: clamp(88px, 8vw, 154px); pointer-events: none; }
+.bchy .masthead_search_inner { height: 100%; max-width: 1620px; margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; justify-content: flex-end; }
+.bchy .msearch { position: relative; pointer-events: auto; width: 328px; max-width: 100%; height: 56px; margin: 0; background: #fff; border-radius: 6px; box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1), 0 1px 4px rgba(12, 12, 13, 0.05); }
+.bchy .msearch_input { display: block; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 6px; background: transparent; padding: 0 56px 0 28px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 22px; font-weight: 400; line-height: 19.5px; color: #180a53; -webkit-appearance: none; appearance: none; }
+.bchy .msearch_input::placeholder { color: #180a53; opacity: 1; }
+.bchy .msearch_input::-webkit-search-decoration, .bchy .msearch_input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.bchy .msearch_btn { position: absolute; top: 0; right: 0; width: 56px; height: 56px; padding: 0; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.bchy .msearch_btn img { display: block; width: 23px; height: 23px; }
+.bchy .msearch .search_results { position: absolute; top: calc(100% + 8px); right: 0; width: max(100%, 360px); margin: 0; z-index: 50; box-shadow: 0 8px 24px rgba(12, 12, 13, 0.12); text-align: left; }
+@media (max-width: 768px) {
+  .bchy .masthead_search { position: static; height: auto; }
+  .bchy .masthead_search_inner { padding: 16px 16px 0; }
+  .bchy .msearch { background: #e0e0e0; }
+  .bchy .msearch .search_results { width: 100%; }
+}
 
 .bchy h1, .bchy .h1, .bchy h2, .bchy .h2, .bchy h3, .bchy .h3, .bchy h4, .bchy .h4,
 .bchy .article_title a, .bchy .stories_item_title a, .bchy .author_name { color: var(--navy); text-transform: none; }
@@ -47,11 +67,7 @@
 .bchy .article_item_cover img, .bchy .article_cover img, .bchy .stories_item_img img { width: 100%; height: auto; display: block; }
 .bchy .breadcrumbs { white-space: normal; overflow: visible; display: flex; flex-wrap: wrap; align-items: center; gap: calc(0.4 * var(--bchy-rem, 10px)) 0; }
 
-/* Sidebar call to action (replaces the template's banner ad slots). */
-.bchy .sidebar_cta { background: var(--offwhite); border: 1px solid rgba(43, 127, 253, 0.2); border-radius: calc(1.6 * var(--bchy-rem, 10px)); padding: calc(2.4 * var(--bchy-rem, 10px)); }
-.bchy .sidebar_cta p { font-size: calc(1.5 * var(--bchy-rem, 10px)); line-height: 1.6; margin: calc(0.8 * var(--bchy-rem, 10px)) 0 calc(1.8 * var(--bchy-rem, 10px)); }
-
-/* Search results (sidebar live results and the /blog/search/ page). */
+/* Search results (live results under the search field and the /blog/search/ page). */
 .bchy .search_results { margin-top: calc(1.2 * var(--bchy-rem, 10px)); background: #fff; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: calc(1.2 * var(--bchy-rem, 10px)); padding: calc(1.2 * var(--bchy-rem, 10px)) calc(1.6 * var(--bchy-rem, 10px)); }
 .bchy .search_results ul, .bchy .search_page_results ul { list-style: none; margin: 0; padding: 0; }
 .bchy .search_results li, .bchy .search_page_results li { padding: calc(1 * var(--bchy-rem, 10px)) 0; border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
@@ -66,6 +82,8 @@
 .bchy .related li { font-size: calc(1.6 * var(--bchy-rem, 10px)); margin: calc(0.6 * var(--bchy-rem, 10px)) 0; }
 .bchy .related a { color: var(--blue); }
 
+.bchy .article_more { color: #2b7ffd; font-weight: 600; white-space: nowrap; }
+.bchy .article_more:hover { text-decoration: underline; text-underline-offset: 0.2em; }
 .bchy .list_intro { font-size: calc(1.7 * var(--bchy-rem, 10px)); margin-bottom: calc(3 * var(--bchy-rem, 10px)); }
 .bchy .icon-arrow-prev { transform: rotate(180deg); }
 
