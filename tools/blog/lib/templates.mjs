@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '3';
+const ASSET_V = '4';
 const SIGNUP = 'https://app.boltanswering.com/signup';
 // The site's own one-line description (index.html <meta name="description">).
 const ABOUT = 'Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.';
@@ -67,7 +67,7 @@ export function layout({ chrome, title, description, canonical, ogType = 'websit
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   ${jsonLd.map(jsonLdTag).join('\n  ')}
 </head>
-<body>
+<body class="blog-page">
   <a class="skip-link" href="#main">Skip to content</a>
   ${chrome.header}
 
@@ -180,12 +180,32 @@ function breadcrumbs(crumbs) {
     .join(' <span class="dash"></span> ')}</nav>`;
 }
 
-function wrapMain({ heading, headingTag = 'h1', crumbs, inner }) {
+/** "the line" masthead: full-width hero band with the blog's wordmark (a Figma-outlined SVG).
+ *  It is the page's <h1> when the page has no heading of its own (blog home), otherwise a link home. */
+function masthead(isH1) {
+  const mark = '<img src="/blog/assets/img/the-line.svg" alt="the line" width="381" height="80" />';
+  const title = isH1
+    ? `<h1 class="masthead_title">${mark}</h1>`
+    : `<div class="masthead_title"><a href="${BLOG_PATH}">${mark}</a></div>`;
+  return `      <div class="masthead">
+        <picture>
+          <source type="image/webp" sizes="100vw" srcset="/blog/assets/img/the-line-hero-800.webp 800w, /blog/assets/img/the-line-hero-1600.webp 1600w, /blog/assets/img/the-line-hero-2400.webp 2400w" />
+          <img class="masthead_bg" src="/blog/assets/img/the-line-hero-1600.jpg" alt="" width="1600" height="272" />
+        </picture>
+        <div class="masthead_inner">${title}</div>
+      </div>`;
+}
+
+/** heading: the page's <h1> under the masthead (category name, "Search"). With no heading the
+ *  masthead is the <h1>, unless the content has its own (articles: titleInContent).
+ *  crumbs: omit for no breadcrumb line (blog home). */
+function wrapMain({ heading, titleInContent = false, crumbs, inner }) {
   return `    <main class="content" id="main">
+${masthead(!heading && !titleInContent)}
       <section class="section-post">
         <div class="wrapper">
-          <div class="pagetitle"><${headingTag}${headingTag === 'h1' ? '' : ' class="h1"'}>${esc(heading)}</${headingTag}></div>
-          ${breadcrumbs(crumbs)}
+          ${heading ? `<div class="pagetitle"><h1>${esc(heading)}</h1></div>` : ''}
+          ${crumbs ? breadcrumbs(crumbs) : ''}
           <div class="columns">
 ${inner}
           </div>
@@ -216,8 +236,8 @@ ${html}
               ${related.length ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h3">Keep reading</h2><ul>${related.map((r) => `<li><a href="${postPath(r.slug)}">${esc(r.title)}</a></li>`).join('')}</ul></section>` : ''}
             </div>
 ${sidebar({ recent, categories })}`;
-  // The page title bar shows "Blog"; the article's own <h1> is the post title.
-  return wrapMain({ heading: 'Blog', headingTag: 'div', crumbs, inner });
+  // The masthead links back to the blog; the article's own <h1> is the post title.
+  return wrapMain({ titleInContent: true, crumbs, inner });
 }
 
 export function searchPage({ recent, categories }) {
