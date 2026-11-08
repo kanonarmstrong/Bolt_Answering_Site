@@ -21,7 +21,26 @@ const quiet = () => {};
 function tempRepo() {
   const root = mkdtempSync(join(tmpdir(), 'bolt-blog-'));
   writeFileSync(join(root, 'index.html'), '<html><head><title>Home</title></head></html>');
-  writeFileSync(join(root, 'hvac.html'), '<html><head><title>HVAC</title></head></html>');
+  // Stand-ins for the site pages the blog copies its header and footer from (lib/chrome.mjs).
+  mkdirSync(join(root, 'support'));
+  writeFileSync(join(root, 'support', 'index.html'), `<html><head>
+  <link rel="stylesheet" href="/assets/fonts.css?v=1" />
+  <link rel="stylesheet" href="/styles.css?v=53" />
+  <link rel="stylesheet" href="/support/support.css?v=5" />
+</head><body>
+  <header class="nav" id="top"><a href="/" class="logo"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+    <ul class="nav__links"><li class="nav__dropdown nav__dropdown--community"><a href="#" class="nav__dropdown-trigger">Community</a>
+      <ul class="nav__dropdown-menu"><li><a href="/blog/">Blog</a></li><li><a href="/support">Support</a></li></ul></li></ul>
+  </header>
+  <main>support</main></body></html>`);
+  writeFileSync(join(root, 'hvac.html'), `<html><head><title>HVAC</title></head><body>
+  <footer class="footer"><nav class="footer__menu"><a href="index.html">Home</a><a href="#pricing">Pricing</a><a href="index.html#how">How</a><a href="#">FB</a><a href="/terms/">Terms</a></nav></footer>
+
+  <a href="https://app.boltanswering.com/signup" class="btn btn--yellow floating-cta">Get started now</a>
+  <script src="pricing.js?v=7"></script>
+  <script src="script.js?v=29"></script>
+  <script src="demo.js?v=46"></script>
+</body></html>`);
   mkdirSync(join(root, 'deletemydata'));
   writeFileSync(join(root, 'deletemydata', 'index.html'), '<html><head><meta name="robots" content="noindex"></head></html>');
   return root;
@@ -220,4 +239,65 @@ test("WordPress.com's built-in SEO fields feed the search title and description"
   const [q] = normalize({ categories: [], posts: [{ ...base, meta: { jetpack_seo_html_title: '', advanced_seo_description: '' } }] }).posts;
   assert.equal(q.seoTitle, 'On-page title');
   assert.equal(q.description, 'Excerpt.');
+});
+
+test('blog pages wear the site header and footer, not the template\'s', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: FIX, log: quiet });
+  for (const rel of ['blog/index.html', 'blog/answer-every-call/index.html', 'blog/category/missed-calls-booking/index.html', 'blog/search/index.html']) {
+    const h = read(root, rel);
+    assert.equal((h.match(/<header class="nav"/g) || []).length, 1, `${rel}: site header once`);
+    assert.equal((h.match(/<footer class="footer"/g) || []).length, 1, `${rel}: site footer once`);
+    assert.doesNotMatch(h, /header_top|header_mid|header_nav|footer_cols/, `${rel}: no template header/footer`);
+    assert.match(h, /<a href="\/blog\/" aria-current="page">Blog<\/a>/);
+    assert.match(h, /<link rel="stylesheet" href="\/styles\.css\?v=53" \/>/, 'site stylesheet, same version as the site');
+    assert.doesNotMatch(h, /support\.css/, 'page-specific CSS is not copied');
+    assert.match(h, /<script src="\/script\.js\?v=29"><\/script>/);
+    assert.match(h, /<script src="\/pricing\.js\?v=7"><\/script>/);
+    assert.doesNotMatch(h, /demo\.js/, 'page-specific scripts are not copied');
+    assert.match(h, /class="btn btn--yellow floating-cta"/);
+    // Footer links made absolute so they work from /blog/<post>/.
+    assert.match(h, /<a href="\/">Home<\/a><a href="\/#pricing">Pricing<\/a><a href="\/#how">How<\/a><a href="#">FB<\/a>/);
+    // Content sits inside the scoped wrapper, between header and footer.
+    const iHeader = h.indexOf('</header>'), iBchy = h.indexOf('<div class="bchy">'), iFooter = h.indexOf('<footer class="footer"');
+    assert.ok(iHeader < iBchy && iBchy < iFooter, `${rel}: header, then blog content, then footer`);
+  }
+});
+
+test('relative site links are made absolute', async () => {
+  const { absolutizeUrl } = await import('./lib/chrome.mjs');
+  assert.equal(absolutizeUrl('index.html'), '/');
+  assert.equal(absolutizeUrl('index.html#how'), '/#how');
+  assert.equal(absolutizeUrl('#pricing'), '/#pricing');
+  assert.equal(absolutizeUrl('#'), '#');
+  assert.equal(absolutizeUrl('electrical.html'), '/electrical.html');
+  assert.equal(absolutizeUrl('assets/logo.png'), '/assets/logo.png');
+  for (const u of ['/support', 'https://app.boltanswering.com/login', 'mailto:a@b.c', 'tel:+1']) assert.equal(absolutizeUrl(u), u);
+});
+
+test('template CSS is scoped to the blog content and never styles the site header or footer', () => {
+  const css = transformCss('body{margin:0} html { font-size: 10px !important; } @media (max-width:767px){ html { font-size: 9px !important; } } p{font-size:1.8rem;margin:0 -2rem} .footer{order:3} .btn,h1{color:red} @media (max-width:600px){.header a{x:y}} @font-face{font-family:x}');
+  assert.match(css, /\.bchy\s*\{margin:0\}/);
+  assert.doesNotMatch(css, /(^|[};\s])html[\s,{]/, 'no rule touches the page root');
+  assert.match(css, /\.bchy \{ --bchy-rem: 10px; \}/);
+  assert.match(css, /@media \(max-width:767px\)\{ \.bchy \{ --bchy-rem: 9px; \}/);
+  assert.match(css, /\.bchy p\{font-size:calc\(1\.8 \* var\(--bchy-rem, 10px\)\);/);
+  assert.doesNotMatch(css, /\drem\b/, 'no rem left');
+  assert.match(css, /margin:0 calc\(-2 \* var\(--bchy-rem, 10px\)\)/, 'negative sizes stay valid');
+  assert.doesNotMatch(css, /-calc\(/, 'no invalid -calc(');
+  assert.match(css, /\.bchy \.footer\s*\{/);
+  assert.match(css, /\.bchy \.btn,\s*\.bchy h1\s*\{/);
+  assert.match(css, /\.bchy \.header a\s*\{/);
+  assert.match(css, /@font-face\s*\{font-family:x\}/);
+  assert.doesNotMatch(css, /(^|[};])\s*\.footer\s*\{/, 'no unscoped .footer rule');
+});
+
+test('blog.css sizes follow the blog base size, not the site root', () => {
+  const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\d\s*rem\b/, 'no rem units (they would follow the site\'s 16px root)');
+  for (const rule of css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g)) {
+    const sel = rule.slice(0, -1).trim();
+    if (sel.startsWith('@media') || sel.startsWith('.skip-link')) continue;
+    for (const part of sel.split(',')) assert.match(part.trim(), /^\.bchy\b/, `unscoped selector in blog.css: ${part.trim()}`);
+  }
 });

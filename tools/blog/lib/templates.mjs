@@ -3,9 +3,8 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '1';
+const ASSET_V = '2';
 const SIGNUP = 'https://app.boltanswering.com/signup';
-const SIGNIN = 'https://app.boltanswering.com/login';
 // The site's own one-line description (index.html <meta name="description">).
 const ABOUT = 'Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.';
 
@@ -41,7 +40,7 @@ const ANALYTICS = `<script>
 
 const jsonLdTag = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
 
-export function layout({ title, description, canonical, ogType = 'website', ogImage, jsonLd = [], body, robots = 'index, follow, max-image-preview:large', prev, next, published, modified }) {
+export function layout({ chrome, title, description, canonical, ogType = 'website', ogImage, jsonLd = [], body, robots = 'index, follow, max-image-preview:large', prev, next, published, modified }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,7 +59,7 @@ export function layout({ title, description, canonical, ogType = 'website', ogIm
   <meta property="og:url" content="${esc(canonical)}" />${ogImage ? `\n  <meta property="og:image" content="${esc(ogImage)}" />` : ''}${published ? `\n  <meta property="article:published_time" content="${published}" />\n  <meta property="article:modified_time" content="${modified}" />` : ''}
   <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}" />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
-  <link rel="stylesheet" href="/assets/fonts.css?v=1" />
+  ${chrome.styles.map((href) => `<link rel="stylesheet" href="${href}" />`).join('\n  ')}
   <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=${ASSET_V}" />
   <link rel="stylesheet" href="/blog/assets/css/blog.css?v=${ASSET_V}" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
@@ -69,87 +68,22 @@ export function layout({ title, description, canonical, ogType = 'website', ogIm
   ${jsonLd.map(jsonLdTag).join('\n  ')}
 </head>
 <body>
-  <div class="main-wrapper">
+  <a class="skip-link" href="#main">Skip to content</a>
+  ${chrome.header}
+
+  <div class="bchy">
+    <div class="main-wrapper">
 ${body}
+    </div>
   </div>
+
+  ${chrome.footer}
+
+  ${chrome.scripts.map((src) => `<script src="${src}"></script>`).join('\n  ')}
   <script defer src="/blog/assets/js/blog.js?v=${ASSET_V}"></script>
 </body>
 </html>
 `;
-}
-
-export function header(categories) {
-  return `    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="header">
-      <div class="wrapper">
-        <div class="header_top">
-          <div class="header_cols">
-            <div class="header_categ">
-              <button type="button" class="header_categ_opener" aria-expanded="false" aria-controls="catdrop"><span class="icon-grid" aria-hidden="true"></span>Categories</button>
-              <div class="header_categ_drop" id="catdrop">
-                <ul class="catlist">
-${categories.map((c) => `                  <li><a href="${categoryPath(c.slug)}">${esc(c.name)} <span>(${c.count})</span></a></li>`).join('\n')}
-                </ul>
-              </div>
-            </div>
-            <a href="mailto:support@boltanswering.com" class="header_mail"><span class="icon-mail" aria-hidden="true"></span>support@boltanswering.com</a>
-          </div>
-        </div>
-        <div class="header_mid">
-          <a href="/" class="header_logo logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" width="120" height="40" /></a>
-          <nav aria-label="Main">
-            <ul class="header_nav" id="mainnav">
-              <li><a href="/">Home</a></li>
-              <li class="header_nav_trade"><a href="/hvac.html">HVAC</a></li>
-              <li class="header_nav_trade"><a href="/plumbing.html">Plumbing</a></li>
-              <li class="header_nav_trade"><a href="/electrical.html">Electrical</a></li>
-              <li><a href="/#pricing">Pricing</a></li>
-              <li><a href="${BLOG_PATH}" aria-current="page">Blog</a></li>
-              <li><a href="${SIGNIN}">Sign in</a></li>
-              <li class="header_nav_cta"><a href="${SIGNUP}" class="btn">Get started now</a></li>
-            </ul>
-          </nav>
-          <button type="button" class="button-nav" aria-label="Open menu" aria-expanded="false" aria-controls="mainnav"><span></span></button>
-        </div>
-        <div class="navoverlay"></div>
-      </div>
-    </header>`;
-}
-
-export function footer(categories) {
-  const year = new Date().getUTCFullYear();
-  return `    <footer class="footer">
-      <div class="wrapper">
-        <div class="footer_cols">
-          <div class="footer_cols_item footer_cols_item-1">
-            <div class="footer_title">About Bolt</div>
-            <div class="footer_txt">${esc(ABOUT)}</div>
-            <p class="footer_cta"><a href="${SIGNUP}" class="btn">Get started now</a></p>
-          </div>
-          <div class="footer_cols_item footer_cols_item-2">
-            <div class="footer_title">Categories</div>
-            <ul class="footer_list">
-${categories.map((c) => `              <li><a href="${categoryPath(c.slug)}">${esc(c.name)}</a></li>`).join('\n')}
-            </ul>
-          </div>
-          <div class="footer_cols_item footer_cols_item-3">
-            <div class="footer_title">Bolt</div>
-            <ul class="footer_list">
-              <li><a href="/">Home</a></li>
-              <li><a href="/support">Support</a></li>
-              <li><a href="${SIGNIN}">Sign in</a></li>
-              <li><a href="/blog/feed.xml">RSS feed</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer_bot">
-          <div class="footer_copy">&copy; ${year} ${esc(PUBLISHER_LEGAL_NAME)}</div>
-          <div class="footer_links">
-            <a href="/terms/">Terms &amp; Conditions</a> <span class="dash"></span> <a href="/privacy/">Privacy Policy</a> <span class="dash"></span> <a href="/deletemydata">Delete My Data</a> <span class="dash"></span> <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
-          </div>
-        </div>
-      </div>
-    </footer>`;
 }
 
 function picture(img, { sizes, eager = false } = {}) {

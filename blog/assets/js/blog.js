@@ -1,38 +1,7 @@
-/* Bolt blog: mobile menu, categories dropdown, and search. Replaces the template's
-   jQuery script. Pages work fully without this file; it only adds convenience. */
+/* Bolt blog search (sidebar live results and /blog/search/). The header menu is the site's
+   own script.js. Pages work fully without this file; it only adds search. */
 (function () {
   'use strict';
-  var html = document.documentElement;
-
-  /* Mobile menu */
-  var navBtn = document.querySelector('.button-nav');
-  var nav = document.querySelector('.header_nav');
-  var overlay = document.querySelector('.navoverlay');
-  function setNav(open) {
-    if (!nav || !navBtn) return;
-    nav.classList.toggle('opened', open);
-    navBtn.classList.toggle('active', open);
-    if (overlay) overlay.classList.toggle('active', open);
-    html.classList.toggle('noscroll-tablet', open);
-    navBtn.setAttribute('aria-expanded', String(open));
-    navBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-  }
-  if (navBtn) navBtn.addEventListener('click', function () { setNav(!nav.classList.contains('opened')); });
-  if (overlay) overlay.addEventListener('click', function () { setNav(false); });
-
-  /* Categories dropdown */
-  var catBtn = document.querySelector('.header_categ_opener');
-  var catDrop = document.querySelector('.header_categ_drop');
-  function setCat(open) {
-    if (!catBtn || !catDrop) return;
-    catDrop.classList.toggle('opened', open);
-    catBtn.classList.toggle('active', open);
-    catBtn.setAttribute('aria-expanded', String(open));
-  }
-  if (catBtn) catBtn.addEventListener('click', function (e) { e.stopPropagation(); setCat(!catDrop.classList.contains('opened')); });
-  document.addEventListener('click', function (e) { if (catDrop && !e.target.closest('.header_categ')) setCat(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { setNav(false); setCat(false); } });
-
   /* Search over /blog/search-index.json */
   var indexPromise = null;
   function loadIndex() {
