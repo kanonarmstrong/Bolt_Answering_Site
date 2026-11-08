@@ -17,7 +17,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchFromWordPress, loadFixtures, normalize } from './lib/wp.mjs';
 import { processContent, processImage } from './lib/content.mjs';
-import { layout, header, footer, listPage, articlePage, searchPage } from './lib/templates.mjs';
+import { layout as renderLayout, listPage, articlePage, searchPage } from './lib/templates.mjs';
+import { readSiteChrome } from './lib/chrome.mjs';
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt } from './lib/seo.mjs';
 import { abs, postPath, categoryPath, pagePath, stripTags, readingMinutes, BLOG_PATH, POSTS_PER_PAGE } from './lib/util.mjs';
 
@@ -70,7 +71,10 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
 
   for (const c of categories) c.count = posts.filter((p) => p.categories.some((pc) => pc.slug === c.slug)).length;
   const recent = posts.slice(0, 5);
-  const chrome = (body) => `${header(categories)}\n${body}\n${footer(categories)}`;
+  // Every blog page wears the marketing site's own header and footer; Benchy only styles the content.
+  const site = readSiteChrome(repoRoot);
+  const layout = (opts) => renderLayout({ ...opts, chrome: site });
+  const chrome = (body) => body;
   const home = { name: 'Home', href: '/' };
   const blogCrumb = { name: 'Blog', href: BLOG_PATH };
 
