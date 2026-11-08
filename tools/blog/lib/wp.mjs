@@ -11,25 +11,51 @@ async function getJson(url) {
   return { data: await res.json(), totalPages: Number(res.headers.get('x-wp-totalpages') || 1) };
 }
 
-async function getAll(base, route, params) {
+async function getAll(apiBase, route, params) {
   const out = [];
   for (let page = 1; ; page++) {
     const qs = new URLSearchParams({ per_page: '100', page: String(page), ...params });
-    const { data, totalPages } = await getJson(`${base}/wp-json/wp/v2/${route}?${qs}`);
+    const { data, totalPages } = await getJson(`${apiBase}/${route}?${qs}`);
     out.push(...data);
     if (page >= totalPages) break;
   }
   return out;
 }
 
+/**
+ * Turn the REST API address a WordPress site advertises (its Link: rel="https://api.w.org/"
+ * header) into the base for /wp/v2 routes. Self-hosted and WordPress.com Business sites
+ * advertise https://site/wp-json/; WordPress.com Personal/Premium ("simple") sites
+ * advertise https://public-api.wordpress.com/wp-json/?rest_route=/sites/<site>, whose
+ * /wp/v2 routes live at https://public-api.wordpress.com/wp/v2/sites/<site>.
+ */
+export function apiBaseFromLink(link) {
+  const u = new URL(link);
+  const route = u.searchParams.get('rest_route');
+  if (u.host === 'public-api.wordpress.com' && route && /^\/sites\/[^/]+\/?$/.test(route)) {
+    return `https://public-api.wordpress.com/wp/v2${route.replace(/\/+$/, '')}`;
+  }
+  return `${u.origin}${u.pathname.replace(/\/+$/, '')}/wp/v2`;
+}
+
+/** Ask the site where its REST API lives. WP_API_BASE, if set, skips the lookup. */
+export async function discoverApiBase(baseUrl) {
+  if (process.env.WP_API_BASE) return process.env.WP_API_BASE.replace(/\/+$/, '');
+  const res = await fetch(baseUrl, { method: 'HEAD', redirect: 'follow', headers: { 'User-Agent': 'bolt-blog-build' } });
+  const header = res.headers.get('link') || '';
+  const m = header.match(/<([^>]+)>;\s*rel="https:\/\/api\.w\.org\/"/);
+  return m ? apiBaseFromLink(m[1]) : `${baseUrl}/wp-json/wp/v2`;
+}
+
 /** Fetch raw posts and categories from a live WordPress site. */
 export async function fetchFromWordPress(baseUrl) {
   const base = baseUrl.replace(/\/+$/, '');
+  const apiBase = await discoverApiBase(base);
   const [posts, categories] = await Promise.all([
-    getAll(base, 'posts', { status: 'publish', _embed: '1', orderby: 'date', order: 'desc' }),
-    getAll(base, 'categories', { hide_empty: 'true' }),
+    getAll(apiBase, 'posts', { status: 'publish', _embed: '1', orderby: 'date', order: 'desc' }),
+    getAll(apiBase, 'categories', { hide_empty: 'true' }),
   ]);
-  return { posts, categories, wpHost: new URL(base).host };
+  return { posts, categories, wpHost: new URL(base).host, apiBase };
 }
 
 /** Load the same shapes from fixture files (posts.json, categories.json). */
@@ -59,8 +85,9 @@ export function normalize({ posts, categories }) {
         id: p.id,
         slug: p.slug,
         title,
-        seoTitle: (meta.bolt_seo_title || '').trim() || title,
-        description: truncate((meta.bolt_seo_description || '').trim() || excerptText || stripTags(p.content?.rendered || ''), 158),
+        // Search fields: the Bolt plugin's, else WordPress.com's built-in SEO fields, else title/excerpt.
+        seoTitle: (meta.bolt_seo_title || meta.jetpack_seo_html_title || '').trim() || title,
+        description: truncate((meta.bolt_seo_description || meta.advanced_seo_description || '').trim() || excerptText || stripTags(p.content?.rendered || ''), 158),
         excerpt: truncate(excerptText || stripTags(p.content?.rendered || ''), 220),
         contentHtml: p.content?.rendered || '',
         datePublished: new Date(p.date_gmt ? `${p.date_gmt}Z` : p.date).toISOString(),
