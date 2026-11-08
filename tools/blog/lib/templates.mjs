@@ -1,0 +1,301 @@
+/* HTML templates for the blog, built on the Benchy layout (blog.html / article.html)
+   with Bolt's header, footer, analytics and privacy wiring. Every page is complete,
+   readable HTML without JavaScript: the only script is search, menu and dropdown. */
+import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
+
+const ASSET_V = '1';
+const SIGNUP = 'https://app.boltanswering.com/signup';
+const SIGNIN = 'https://app.boltanswering.com/login';
+// The site's own one-line description (index.html <meta name="description">).
+const ABOUT = 'Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.';
+
+/* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
+   (Your Privacy Choices / Global Privacy Control) or for our own ?bolt_qa test visits. */
+const ANALYTICS = `<script>
+    (function () {
+      var q = location.search, off = false;
+      try {
+        if (/[?&]bolt_optout=1(&|$)/.test(q)) localStorage.setItem('bolt_optout', '1');
+        else if (/[?&]bolt_optout=0(&|$)/.test(q)) localStorage.removeItem('bolt_optout');
+        off = navigator.globalPrivacyControl === true || localStorage.getItem('bolt_optout') === '1';
+        var qa = /[?&](bolt_qa|demoqa)=1(&|$)/.test(q) || (localStorage.getItem('bolt_qa') === '1' && !/[?&]bolt_qa=0(&|$)/.test(q));
+        var debug = /[?&]bolt_pixel_debug=1(&|$)/.test(q) || sessionStorage.getItem('bolt_pixel_debug') === '1';
+        if (qa && !debug) off = true;
+      } catch (e) { off = navigator.globalPrivacyControl === true || (/[?&](bolt_qa|demoqa)=1(&|$)/.test(q) && !/[?&]bolt_pixel_debug=1(&|$)/.test(q)); }
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      if (off) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8C8SFMCRYH';
+      document.head.appendChild(s);
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-8C8SFMCRYH');
+      window.gtag('config', 'AW-18483202475');
+    })();
+  </script>
+  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/meta-pixel.js?v=3"></script>
+  <script defer src="/privacy-choices.js?v=2"></script>
+  <script defer src="/sentry-init.js?v=1"></script>`;
+
+const jsonLdTag = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+
+export function layout({ title, description, canonical, ogType = 'website', ogImage, jsonLd = [], body, robots = 'index, follow, max-image-preview:large', prev, next, published, modified }) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  ${ANALYTICS}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(description)}" />
+  <meta name="robots" content="${robots}" />
+  <link rel="canonical" href="${esc(canonical)}" />${prev ? `\n  <link rel="prev" href="${esc(prev)}" />` : ''}${next ? `\n  <link rel="next" href="${esc(next)}" />` : ''}
+  <link rel="alternate" type="application/rss+xml" title="Bolt blog" href="/blog/feed.xml" />
+  <meta property="og:site_name" content="${SITE_NAME}" />
+  <meta property="og:type" content="${ogType}" />
+  <meta property="og:title" content="${esc(title)}" />
+  <meta property="og:description" content="${esc(description)}" />
+  <meta property="og:url" content="${esc(canonical)}" />${ogImage ? `\n  <meta property="og:image" content="${esc(ogImage)}" />` : ''}${published ? `\n  <meta property="article:published_time" content="${published}" />\n  <meta property="article:modified_time" content="${modified}" />` : ''}
+  <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}" />
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
+  <link rel="stylesheet" href="/assets/fonts.css?v=1" />
+  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=${ASSET_V}" />
+  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=${ASSET_V}" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  ${jsonLd.map(jsonLdTag).join('\n  ')}
+</head>
+<body>
+  <div class="main-wrapper">
+${body}
+  </div>
+  <script defer src="/blog/assets/js/blog.js?v=${ASSET_V}"></script>
+</body>
+</html>
+`;
+}
+
+export function header(categories) {
+  return `    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="header">
+      <div class="wrapper">
+        <div class="header_top">
+          <div class="header_cols">
+            <div class="header_categ">
+              <button type="button" class="header_categ_opener" aria-expanded="false" aria-controls="catdrop"><span class="icon-grid" aria-hidden="true"></span>Categories</button>
+              <div class="header_categ_drop" id="catdrop">
+                <ul class="catlist">
+${categories.map((c) => `                  <li><a href="${categoryPath(c.slug)}">${esc(c.name)} <span>(${c.count})</span></a></li>`).join('\n')}
+                </ul>
+              </div>
+            </div>
+            <a href="mailto:support@boltanswering.com" class="header_mail"><span class="icon-mail" aria-hidden="true"></span>support@boltanswering.com</a>
+          </div>
+        </div>
+        <div class="header_mid">
+          <a href="/" class="header_logo logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" width="120" height="40" /></a>
+          <nav aria-label="Main">
+            <ul class="header_nav" id="mainnav">
+              <li><a href="/">Home</a></li>
+              <li class="header_nav_trade"><a href="/hvac.html">HVAC</a></li>
+              <li class="header_nav_trade"><a href="/plumbing.html">Plumbing</a></li>
+              <li class="header_nav_trade"><a href="/electrical.html">Electrical</a></li>
+              <li><a href="/#pricing">Pricing</a></li>
+              <li><a href="${BLOG_PATH}" aria-current="page">Blog</a></li>
+              <li><a href="${SIGNIN}">Sign in</a></li>
+              <li class="header_nav_cta"><a href="${SIGNUP}" class="btn">Get started now</a></li>
+            </ul>
+          </nav>
+          <button type="button" class="button-nav" aria-label="Open menu" aria-expanded="false" aria-controls="mainnav"><span></span></button>
+        </div>
+        <div class="navoverlay"></div>
+      </div>
+    </header>`;
+}
+
+export function footer(categories) {
+  const year = new Date().getUTCFullYear();
+  return `    <footer class="footer">
+      <div class="wrapper">
+        <div class="footer_cols">
+          <div class="footer_cols_item footer_cols_item-1">
+            <div class="footer_title">About Bolt</div>
+            <div class="footer_txt">${esc(ABOUT)}</div>
+            <p class="footer_cta"><a href="${SIGNUP}" class="btn">Get started now</a></p>
+          </div>
+          <div class="footer_cols_item footer_cols_item-2">
+            <div class="footer_title">Categories</div>
+            <ul class="footer_list">
+${categories.map((c) => `              <li><a href="${categoryPath(c.slug)}">${esc(c.name)}</a></li>`).join('\n')}
+            </ul>
+          </div>
+          <div class="footer_cols_item footer_cols_item-3">
+            <div class="footer_title">Bolt</div>
+            <ul class="footer_list">
+              <li><a href="/">Home</a></li>
+              <li><a href="/support">Support</a></li>
+              <li><a href="${SIGNIN}">Sign in</a></li>
+              <li><a href="/blog/feed.xml">RSS feed</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer_bot">
+          <div class="footer_copy">&copy; ${year} ${esc(PUBLISHER_LEGAL_NAME)}</div>
+          <div class="footer_links">
+            <a href="/terms/">Terms &amp; Conditions</a> <span class="dash"></span> <a href="/privacy/">Privacy Policy</a> <span class="dash"></span> <a href="/deletemydata">Delete My Data</a> <span class="dash"></span> <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
+          </div>
+        </div>
+      </div>
+    </footer>`;
+}
+
+function picture(img, { sizes, eager = false } = {}) {
+  if (!img) return '';
+  return `<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`;
+}
+
+const infoline = (p) => `<div class="article_infoline infoline">
+                    <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div> <span class="dash"></span>
+                    <div class="infoline_author">${esc(p.author.name)}</div> <span class="dash"></span>
+                    <div class="infoline_tag">${p.minutes} min read</div>
+                  </div>`;
+
+function postCard(p, i) {
+  const cat = p.categories[0];
+  return `                <article class="article_item">
+                  <div class="article_item_cover${p.image ? '' : ' article_item_cover-empty'}">
+                    ${p.image ? `<a href="${postPath(p.slug)}" tabindex="-1" aria-hidden="true">${picture(p.image, { sizes: '(max-width: 1023px) 100vw, 850px', eager: i === 0 })}</a>` : ''}
+                    ${cat ? `<a href="${categoryPath(cat.slug)}" class="cats_item">${esc(cat.name)}</a>` : ''}
+                  </div>
+                  ${infoline(p)}
+                  <div class="article_txt">
+                    <h2 class="article_title h2"><a href="${postPath(p.slug)}">${esc(p.title)}</a></h2>
+                    <p class="article_desc">${esc(p.excerpt)}</p>
+                    <div class="article_btn"><a href="${postPath(p.slug)}" class="btn" aria-label="Read: ${esc(p.title)}">Read more</a></div>
+                  </div>
+                </article>`;
+}
+
+function pagination(current, total, base) {
+  if (total <= 1) return '';
+  const href = (n) => (base ? (n <= 1 ? base : `${base}page/${n}/`) : pagePath(n));
+  const parts = [];
+  if (current > 1) parts.push(`<a href="${href(current - 1)}" rel="prev" aria-label="Previous page"><span class="icon-arrow icon-arrow-prev" aria-hidden="true"></span></a>`);
+  for (let n = 1; n <= total; n++) parts.push(n === current ? `<span class="current" aria-current="page">${n}</span>` : `<a href="${href(n)}">${n}</a>`);
+  if (current < total) parts.push(`<a href="${href(current + 1)}" rel="next" aria-label="Next page"><span class="icon-arrow" aria-hidden="true"></span></a>`);
+  return `<nav class="pagenavi" aria-label="Pages">${parts.join(' ')}</nav>`;
+}
+
+function sidebar({ recent, categories }) {
+  return `            <aside class="columns_sidebar sidebar">
+              <div class="sidebar_search">
+                <form action="/blog/search/" method="get" role="search" class="js-search">
+                  <div class="search">
+                    <label class="visually-hidden" for="blog-q">Search the blog</label>
+                    <input type="search" id="blog-q" name="q" class="form-control" placeholder="Search the blog…" autocomplete="off" />
+                    <button class="btn" aria-label="Search"><span class="icon-search" aria-hidden="true"></span></button>
+                  </div>
+                </form>
+                <div class="search_results" role="status" aria-live="polite" hidden></div>
+              </div>
+              <div class="sidebar_widget sidebar_cta">
+                <h3>Never miss a job again</h3>
+                <p>${esc(ABOUT)}</p>
+                <a href="${SIGNUP}" class="btn">Get started now</a>
+              </div>
+              <div class="sidebar_widget">
+                <h3>Recent posts</h3>
+                <div class="stories">
+${recent.map((p) => `                  <div class="stories_item">
+                    ${p.image ? `<div class="stories_item_img"><a href="${postPath(p.slug)}" tabindex="-1" aria-hidden="true">${picture(p.image, { sizes: '420px' })}</a></div>` : ''}
+                    <div class="stories_item_infoline infoline">
+                      <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div>${p.categories[0] ? ` <span class="dash"></span>\n                      <div class="infoline_tag">${esc(p.categories[0].name)}</div>` : ''}
+                    </div>
+                    <div class="stories_item_title"><a href="${postPath(p.slug)}">${esc(p.title)}</a></div>
+                  </div>`).join('\n')}
+                </div>
+              </div>
+${categories.length ? `              <div class="sidebar_widget">
+                <h3>Categories</h3>
+                <div class="cats">
+                  ${categories.map((c) => `<a href="${categoryPath(c.slug)}" class="cats_item">${esc(c.name)}</a>`).join('')}
+                </div>
+              </div>` : ''}
+            </aside>`;
+}
+
+/** Blog home (page n) and category pages share this list layout. */
+export function listPage({ heading, crumbs, posts, current, total, base, recent, categories, intro }) {
+  const inner = `            <div class="columns_center">
+              ${intro ? `<p class="list_intro">${esc(intro)}</p>` : ''}
+              <div class="article article_list">
+${posts.length ? posts.map(postCard).join('\n') : '                <p>No posts yet. Check back soon.</p>'}
+              </div>
+              ${pagination(current, total, base)}
+            </div>
+${sidebar({ recent, categories })}`;
+  return wrapMain({ heading, crumbs, inner });
+}
+
+function breadcrumbs(crumbs) {
+  return `<nav class="breadcrumbs" aria-label="Breadcrumb">${crumbs
+    .map((c, i) => (i < crumbs.length - 1 ? `<a href="${c.href}">${esc(c.name)}</a>` : `<span aria-current="page">${esc(c.name)}</span>`))
+    .join(' <span class="dash"></span> ')}</nav>`;
+}
+
+function wrapMain({ heading, headingTag = 'h1', crumbs, inner }) {
+  return `    <main class="content" id="main">
+      <section class="section-post">
+        <div class="wrapper">
+          <div class="pagetitle"><${headingTag}${headingTag === 'h1' ? '' : ' class="h1"'}>${esc(heading)}</${headingTag}></div>
+          ${breadcrumbs(crumbs)}
+          <div class="columns">
+${inner}
+          </div>
+        </div>
+      </section>
+    </main>`;
+}
+
+export function articlePage({ post, html, crumbs, recent, categories, related }) {
+  const cat = post.categories[0];
+  const inner = `            <div class="columns_center">
+              <article class="article">
+                ${post.image ? `<div class="article_cover">${picture(post.image, { sizes: '(max-width: 1023px) 100vw, 850px', eager: true })}${cat ? `<a href="${categoryPath(cat.slug)}" class="cats_item">${esc(cat.name)}</a>` : ''}</div>` : ''}
+                ${infoline(post)}
+                <div class="article_txt">
+                  <h1>${esc(post.title)}</h1>
+${html}
+                </div>
+                ${post.tags.length ? `<div class="article_tags"><div class="article_tags_title">Tags:</div> ${post.tags.map((t) => `<span>#${esc(t.name)}</span>`).join(' <span class="dash"></span> ')}</div>` : ''}
+                <div class="author">
+                  <div class="author_cont">
+                    <div class="author_name">${esc(post.author.name)}</div>
+                    ${post.author.description ? `<div class="author_txt">${esc(post.author.description)}</div>` : ''}
+                    ${post.dateModified.slice(0, 10) !== post.datePublished.slice(0, 10) ? `<div class="author_txt">Updated <time datetime="${post.dateModified}">${formatDate(post.dateModified)}</time></div>` : ''}
+                  </div>
+                </div>
+              </article>
+              ${related.length ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h3">Keep reading</h2><ul>${related.map((r) => `<li><a href="${postPath(r.slug)}">${esc(r.title)}</a></li>`).join('')}</ul></section>` : ''}
+            </div>
+${sidebar({ recent, categories })}`;
+  // The page title bar shows "Blog"; the article's own <h1> is the post title.
+  return wrapMain({ heading: 'Blog', headingTag: 'div', crumbs, inner });
+}
+
+export function searchPage({ recent, categories }) {
+  const inner = `            <div class="columns_center">
+              <div class="search_page">
+                <p class="js-search-empty">Type a search in the box to find posts.</p>
+                <noscript><p>Search needs JavaScript. You can browse <a href="${BLOG_PATH}">all posts</a> instead.</p></noscript>
+                <div class="search_page_results" role="status" aria-live="polite"></div>
+              </div>
+            </div>
+${sidebar({ recent, categories })}`;
+  return wrapMain({ heading: 'Search', crumbs: [{ name: 'Home', href: '/' }, { name: 'Blog', href: BLOG_PATH }, { name: 'Search' }], inner });
+}
+
+export { wrapMain };

@@ -1,0 +1,15 @@
+# Bolt
+
+> Bolt (Bolt Answering) is a smart assistant for independent HVAC, plumbing, electrical, handyman, and general contracting pros. It answers the calls you miss, books jobs into your calendar, and texts you the details, in English or Spanish.
+
+## Product
+- [Home](https://www.boltanswering.com/): what Bolt does and how to get started
+- [Electrical](https://www.boltanswering.com/electrical.html)
+- [General contracting](https://www.boltanswering.com/general-contractor.html)
+- [Handyman](https://www.boltanswering.com/handyman.html)
+- [HVAC](https://www.boltanswering.com/hvac.html)
+- [Plumbing](https://www.boltanswering.com/plumbing.html)
+- [Support](https://www.boltanswering.com/support/)
+
+## Optional
+- [Sitemap](https://www.boltanswering.com/sitemap.xml)
