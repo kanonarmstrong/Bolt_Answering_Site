@@ -1,0 +1,6 @@
+[
+  { "id": 1, "name": "Uncategorized", "slug": "uncategorized", "description": "" },
+  { "id": 3, "name": "Running the Business", "slug": "running-the-business", "description": "Pricing, competition, and growing an independent shop." },
+  { "id": 4, "name": "Missed Calls &amp; Booking", "slug": "missed-calls-booking", "description": "" },
+  { "id": 5, "name": "Empty Category", "slug": "empty-category", "description": "" }
+]

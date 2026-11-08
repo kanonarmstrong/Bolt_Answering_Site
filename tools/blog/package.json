@@ -1,0 +1,17 @@
+{
+  "name": "bolt-blog-build",
+  "private": true,
+  "type": "module",
+  "description": "Builds boltanswering.com/blog from WordPress (headless) into static pages.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node build.mjs",
+    "build:fixtures": "node build.mjs --fixtures fixtures/wp",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "marked": "^14.1.4",
+    "sanitize-html": "^2.13.1",
+    "sharp": "^0.33.5"
+  }
+}

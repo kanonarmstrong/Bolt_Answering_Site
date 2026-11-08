@@ -1,0 +1,90 @@
+/* Bolt overrides on top of benchy.css (the licensed template, recolored).
+   Keep template edits here so benchy.css can be regenerated from the original. */
+:root {
+  --navy: #180a53;
+  --blue: #2b7ffd;
+  --yellow: #fcbd11;
+  --offwhite: #f9fbff;
+  --ink: #0c0c0d;
+  --body: #4a4a55;
+}
+
+body { color: var(--body); }
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, .footer_title, .article_title a, .stories_item_title a, .author_name { color: var(--navy); text-transform: none; }
+.article_txt h1 { font-size: 4rem; line-height: 1.15; padding-top: 0; }
+.article_txt h2 { font-size: 3rem; line-height: 1.2; margin-top: 2rem; }
+.article_txt h3 { font-size: 2.2rem; margin-top: 1.4rem; }
+.article_txt p, .article_txt li { font-size: 1.7rem; line-height: 1.7; }
+article.article .article_txt a:not(.btn) { color: var(--blue); text-decoration: underline; text-underline-offset: 0.2em; }
+.article_txt img { max-width: 100%; height: auto; border-radius: 1.2rem; }
+.article_txt figure { margin: 2.4rem 0; }
+.article_txt figcaption { font-size: 1.4rem; color: #6b6b78; margin-top: 0.8rem; }
+.article_txt table { width: 100%; border-collapse: collapse; margin: 2.4rem 0; font-size: 1.5rem; display: block; overflow-x: auto; }
+.article_txt th, .article_txt td { border: 1px solid rgba(0, 0, 0, 0.12); padding: 0.8rem 1.2rem; text-align: left; vertical-align: top; }
+.article_txt th { background: var(--offwhite); color: var(--navy); }
+.article_title.h2 { font-size: 3.2rem; }
+.article_item_cover-empty { min-height: 0; }
+.article_item_cover img, .article_cover img, .stories_item_img img { width: 100%; height: auto; display: block; }
+
+/* Header: logo left, links right (the template centers the logo between two link groups). */
+.header_mid { display: flex; align-items: center; gap: 2rem; }
+.header_logo { position: static; width: auto; margin: 0; left: auto; }
+.header_logo img { width: 120px; height: auto; display: block; }
+.header_mid nav { margin-left: auto; }
+.header_nav { justify-content: flex-end; gap: 0.4rem 2.4rem; margin: 0; }
+.header_nav a[aria-current="page"] { color: var(--blue); }
+.header_nav_cta .btn { height: 4.4rem; padding: 0 2.2rem; color: #fff; }
+.header_categ_opener { background: none; border: 0; padding: 0; font: inherit; font-size: 1.4rem; cursor: pointer; color: inherit; }
+
+button.button-nav { background: none; border: 0; padding: 0; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.breadcrumbs { white-space: normal; overflow: visible; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0; }
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+  .header_nav_trade { display: none; }
+  .header_nav { gap: 0.4rem 1.6rem; }
+}
+@media screen and (max-width: 767px) {
+  .header_logo img { width: 96px; }
+}
+
+/* Accessibility helpers. */
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 200; background: var(--navy); color: #fff; padding: 1rem 1.6rem; font-size: 1.4rem; }
+.skip-link:focus { left: 1rem; top: 1rem; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+/* Sidebar call to action (replaces the template's banner ad slots). */
+.sidebar_cta { background: var(--offwhite); border: 1px solid rgba(43, 127, 253, 0.2); border-radius: 1.6rem; padding: 2.4rem; }
+.sidebar_cta p { font-size: 1.5rem; line-height: 1.6; margin: 0.8rem 0 1.8rem; }
+.footer_cta { margin-top: 2rem; }
+
+/* Search results (sidebar live results and the /blog/search/ page). */
+.search_results { margin-top: 1.2rem; background: #fff; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 1.2rem; padding: 1.2rem 1.6rem; }
+.search_results ul, .search_page_results ul { list-style: none; margin: 0; padding: 0; }
+.search_results li, .search_page_results li { padding: 1rem 0; border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+.search_results li:last-child, .search_page_results li:last-child { border-bottom: 0; }
+.search_results a, .search_page_results a { color: var(--navy); font-weight: 600; font-size: 1.5rem; }
+.search_page_results p, .search_results p { font-size: 1.4rem; margin: 0.4rem 0 0; }
+.search_page { font-size: 1.6rem; }
+
+/* Related posts under an article. */
+.related { margin-top: 4rem; }
+.related ul { margin: 1rem 0 0; padding-left: 2rem; }
+.related li { font-size: 1.6rem; margin: 0.6rem 0; }
+.related a { color: var(--blue); }
+
+.list_intro { font-size: 1.7rem; margin-bottom: 3rem; }
+.icon-arrow-prev { transform: rotate(180deg); }
+.author { margin-top: 3rem; background: var(--offwhite); border: 1px solid rgba(24, 10, 83, 0.08); border-radius: 1.6rem; padding: 2.4rem; }
+.author .author_name { color: var(--navy); }
+.author .author_txt { color: var(--body); font-size: 1.5rem; }
+
+@media screen and (max-width: 1023px) {
+  .header_nav { padding-top: 7rem; }
+  .header_mid nav { margin-left: 0; }
+  .header_nav { justify-content: flex-start; gap: 0; }
+  .header_nav_cta { margin-top: 1.6rem; }
+  .article_txt h1 { font-size: 3.2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
