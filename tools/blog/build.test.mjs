@@ -190,3 +190,34 @@ test('with no published posts, only robots.txt, sitemap.xml and llms.txt are wri
   assert.doesNotMatch(sitemap, /\/blog\//);
   assert.doesNotMatch(read(root, 'llms.txt'), /## Blog/);
 });
+
+test('WordPress.com "simple" sites are read through public-api.wordpress.com', async () => {
+  const { apiBaseFromLink, discoverApiBase } = await import('./lib/wp.mjs');
+  assert.equal(apiBaseFromLink('https://public-api.wordpress.com/wp-json/?rest_route=/sites/boltcms.wordpress.com'), 'https://public-api.wordpress.com/wp/v2/sites/boltcms.wordpress.com');
+  assert.equal(apiBaseFromLink('https://cms.example.com/wp-json/'), 'https://cms.example.com/wp-json/wp/v2');
+
+  const realFetch = globalThis.fetch;
+  const saved = process.env.WP_API_BASE;
+  delete process.env.WP_API_BASE;
+  try {
+    globalThis.fetch = async () => new Response(null, { headers: { link: '<https://public-api.wordpress.com/wp-json/?rest_route=/sites/x.wordpress.com>; rel="https://api.w.org/", <https://wp.me/a>; rel=shortlink' } });
+    assert.equal(await discoverApiBase('https://cms.example.com'), 'https://public-api.wordpress.com/wp/v2/sites/x.wordpress.com');
+    globalThis.fetch = async () => new Response(null, {});
+    assert.equal(await discoverApiBase('https://cms.example.com'), 'https://cms.example.com/wp-json/wp/v2', 'falls back to /wp-json');
+    process.env.WP_API_BASE = 'https://override.test/wp/v2/';
+    assert.equal(await discoverApiBase('https://cms.example.com'), 'https://override.test/wp/v2');
+  } finally {
+    globalThis.fetch = realFetch;
+    if (saved === undefined) delete process.env.WP_API_BASE; else process.env.WP_API_BASE = saved;
+  }
+});
+
+test("WordPress.com's built-in SEO fields feed the search title and description", () => {
+  const base = { id: 1, status: 'publish', slug: 's', title: { rendered: 'On-page title' }, excerpt: { rendered: '<p>Excerpt.</p>' }, content: { rendered: '<p>Body</p>' }, date: '2026-01-01T00:00:00' };
+  const [p] = normalize({ categories: [], posts: [{ ...base, meta: { jetpack_seo_html_title: 'Search title', advanced_seo_description: 'Search description.' } }] }).posts;
+  assert.equal(p.seoTitle, 'Search title');
+  assert.equal(p.description, 'Search description.');
+  const [q] = normalize({ categories: [], posts: [{ ...base, meta: { jetpack_seo_html_title: '', advanced_seo_description: '' } }] }).posts;
+  assert.equal(q.seoTitle, 'On-page title');
+  assert.equal(q.description, 'Excerpt.');
+});

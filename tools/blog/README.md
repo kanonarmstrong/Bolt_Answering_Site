@@ -14,35 +14,37 @@ Built in for Google and AI search: article and breadcrumb structured data, FAQ s
 `robots.txt` (all crawlers allowed, including AI), `llms.txt`, an RSS feed, responsive WebP images,
 and an IndexNow ping to Bing on every change.
 
-## One-time setup (about 30 minutes)
+## One-time setup
 
-1. **Create the WordPress site** on a managed host whose plan allows plugins (WordPress.com
-   Business, WP Engine, Kinsta, …).
-2. **Point `cms.boltanswering.com` at it.** At your domain registrar, add the DNS record your host
-   gives you (usually a CNAME), then set the site address to `https://cms.boltanswering.com` in the
-   host's dashboard.
-3. **Install the connector plugin.** In WordPress: Plugins → Add New → Upload Plugin → upload
-   `tools/blog/wordpress/bolt-blog-connector.php` (zip it first if the host asks for a .zip).
-   Activate it.
-4. **Create the GitHub token.** github.com → Settings → Developer settings → Fine-grained tokens →
-   Generate new token. Repository access: only `kanonarmstrong/Bolt_Answering_Site`. Permissions:
-   **Contents: Read and write**. Expiration: up to a year (set a reminder to renew).
-5. **Connect them.** In WordPress: Settings → Bolt Blog → paste the token → Save → **Send a test
-   rebuild**. You should see "Rebuild requested."
-6. **Tell GitHub where WordPress lives.** On GitHub: the site repo → Settings → Secrets and
-   variables → Actions → **Variables** → New variable `WP_BASE_URL` = `https://cms.boltanswering.com`.
-7. **Hide WordPress from search** (belt and braces; the plugin already does this): WordPress
-   Settings → Reading → check "Discourage search engines from indexing this site".
-8. **After the first post is live:** add `https://www.boltanswering.com` to
-   [Google Search Console](https://search.google.com/search-console) and
-   [Bing Webmaster Tools](https://www.bing.com/webmasters), and submit
-   `https://www.boltanswering.com/sitemap.xml` in both.
+This runs on **WordPress.com Personal**, which can't install custom plugins. No plugin and no
+GitHub token are needed: GitHub checks WordPress for published posts every 15 minutes.
+
+1. **WordPress.com site** at `cms.boltanswering.com` (CNAME at Namecheap → the value WordPress.com
+   gives you; then make it the primary domain).
+2. **Privacy:** WordPress.com → Settings → General → Privacy → **Public** with **Discourage search
+   engines** checked. Never **Private** or **Coming soon**: both block the build from reading posts.
+3. **Delete the sample "Hello world!" post** (and anything else you don't want public). Every
+   published post goes to boltanswering.com/blog.
+4. **GitHub variable:** repo → Settings → Secrets and variables → Actions → Variables →
+   `WP_BASE_URL` = `https://cms.boltanswering.com`. The build finds the WordPress.com API itself.
+5. **Google Search Console and Bing Webmaster Tools:** add the site and submit
+   `https://www.boltanswering.com/sitemap.xml`.
+
+**Publishing:** a post appears about 15 minutes after you click Publish (GitHub sometimes runs
+schedules a few minutes late). For an immediate rebuild: GitHub → Actions → "Blog" → Run workflow.
+
+**If you ever move to a plan or host that allows plugins** (WordPress.com Business, WP Engine, …),
+install `tools/blog/wordpress/bolt-blog-connector.php` for near-instant rebuilds, its own search
+fields, and redirecting the WordPress copy to boltanswering.com. Setup: Settings → Bolt Blog →
+paste a GitHub fine-grained token for this repo only with "Contents: Read and write".
 
 ## Writing a post that does well in search and AI answers
 
-- **Title:** plain words a contractor would search for. The **Search title** field (sidebar,
-  "Search & AI (Bolt)") can be longer or more keyword-heavy than the on-page title.
-- **Search description:** one or two sentences, ~150 characters, answering the question directly.
+- **Title:** plain words a contractor would search for. If your editor shows WordPress.com's
+  **SEO** panel (Jetpack), its **title** and **description** fields are used for search results;
+  otherwise the post title and the **Excerpt** are.
+- **Search description / Excerpt:** one or two sentences, ~150 characters, answering the question
+  directly.
 - **Featured image:** always set one, and fill in its **Alt text** in the Media Library. The build
   warns about any image missing alt text. Images are resized and converted automatically; upload the
   original.
@@ -56,9 +58,9 @@ and an IndexNow ping to Bing on every change.
 
 ## Day to day
 
-- **Publish / update / unpublish / trash** a post: the blog rebuilds in about 1–2 minutes.
+- **Publish / update / unpublish / trash** a post: the blog updates within about 15 minutes.
 - **Nothing changed?** GitHub → Actions → "Blog" shows each run and its warnings. "Run workflow"
-  rebuilds by hand. A daily run also catches anything missed.
+  rebuilds right away.
 - **Drafts never appear** on the site. Only published posts are read.
 
 ## Importing drafts

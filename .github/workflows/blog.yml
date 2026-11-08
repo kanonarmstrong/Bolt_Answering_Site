@@ -1,18 +1,22 @@
 name: Blog
 
 # Rebuilds boltanswering.com/blog from WordPress.
-#   - WordPress sends a repository_dispatch (type wp_publish) when a post is published,
-#     updated, unpublished or deleted (tools/blog/wordpress/bolt-blog-connector.php).
-#   - A daily run catches anything a missed signal left behind.
-#   - "Run workflow" on the Actions tab rebuilds on demand.
+#   - Every 15 minutes it reads the published posts and commits only if something changed,
+#     so a post goes live within about 15 minutes of Publish (GitHub can run schedules a
+#     few minutes late). This is how the WordPress.com Personal plan works, which can't
+#     install the connector plugin.
+#   - "Run workflow" on the Actions tab rebuilds right away.
+#   - On a host that allows plugins, tools/blog/wordpress/bolt-blog-connector.php sends a
+#     repository_dispatch (type wp_publish) on publish for a near-instant rebuild.
 # The WordPress address is the repository variable WP_BASE_URL (Settings → Secrets and
 # variables → Actions → Variables). Until it is set, the build step is skipped.
+# GitHub pauses schedules in a repo with no commits for 60 days; re-enable on the Actions tab.
 
 on:
   repository_dispatch:
     types: [wp_publish]
   schedule:
-    - cron: '17 11 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
   pull_request:
     paths: ['tools/blog/**', 'blog/assets/**', '.github/workflows/blog.yml']
