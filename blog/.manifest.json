@@ -1,8 +1,16 @@
 {
   "files": [
+    "blog/category/test/index.html",
+    "blog/feed.xml",
+    "blog/index.html",
+    "blog/search-index.json",
+    "blog/search/index.html",
+    "blog/test-post-please-ignore/index.html",
     "llms.txt",
     "robots.txt",
     "sitemap.xml"
   ],
-  "imageDirs": []
+  "imageDirs": [
+    "test-post-please-ignore"
+  ]
 }

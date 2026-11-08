@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    (function () {
+      var q = location.search, off = false;
+      try {
+        if (/[?&]bolt_optout=1(&|$)/.test(q)) localStorage.setItem('bolt_optout', '1');
+        else if (/[?&]bolt_optout=0(&|$)/.test(q)) localStorage.removeItem('bolt_optout');
+        off = navigator.globalPrivacyControl === true || localStorage.getItem('bolt_optout') === '1';
+        var qa = /[?&](bolt_qa|demoqa)=1(&|$)/.test(q) || (localStorage.getItem('bolt_qa') === '1' && !/[?&]bolt_qa=0(&|$)/.test(q));
+        var debug = /[?&]bolt_pixel_debug=1(&|$)/.test(q) || sessionStorage.getItem('bolt_pixel_debug') === '1';
+        if (qa && !debug) off = true;
+      } catch (e) { off = navigator.globalPrivacyControl === true || (/[?&](bolt_qa|demoqa)=1(&|$)/.test(q) && !/[?&]bolt_pixel_debug=1(&|$)/.test(q)); }
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      if (off) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8C8SFMCRYH';
+      document.head.appendChild(s);
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-8C8SFMCRYH');
+      window.gtag('config', 'AW-18483202475');
+    })();
+  </script>
+  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/meta-pixel.js?v=3"></script>
+  <script defer src="/privacy-choices.js?v=2"></script>
+  <script defer src="/sentry-init.js?v=1"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search the Bolt blog</title>
+  <meta name="description" content="Search Bolt blog posts." />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://www.boltanswering.com/blog/search/" />
+  <link rel="alternate" type="application/rss+xml" title="Bolt blog" href="/blog/feed.xml" />
+  <meta property="og:site_name" content="Bolt" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Search the Bolt blog" />
+  <meta property="og:description" content="Search Bolt blog posts." />
+  <meta property="og:url" content="https://www.boltanswering.com/blog/search/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
+  <link rel="stylesheet" href="/assets/fonts.css?v=1" />
+  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=1" />
+  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=1" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  
+</head>
+<body>
+  <div class="main-wrapper">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="header">
+      <div class="wrapper">
+        <div class="header_top">
+          <div class="header_cols">
+            <div class="header_categ">
+              <button type="button" class="header_categ_opener" aria-expanded="false" aria-controls="catdrop"><span class="icon-grid" aria-hidden="true"></span>Categories</button>
+              <div class="header_categ_drop" id="catdrop">
+                <ul class="catlist">
+                  <li><a href="/blog/category/test/">Test <span>(1)</span></a></li>
+                </ul>
+              </div>
+            </div>
+            <a href="mailto:support@boltanswering.com" class="header_mail"><span class="icon-mail" aria-hidden="true"></span>support@boltanswering.com</a>
+          </div>
+        </div>
+        <div class="header_mid">
+          <a href="/" class="header_logo logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" width="120" height="40" /></a>
+          <nav aria-label="Main">
+            <ul class="header_nav" id="mainnav">
+              <li><a href="/">Home</a></li>
+              <li class="header_nav_trade"><a href="/hvac.html">HVAC</a></li>
+              <li class="header_nav_trade"><a href="/plumbing.html">Plumbing</a></li>
+              <li class="header_nav_trade"><a href="/electrical.html">Electrical</a></li>
+              <li><a href="/#pricing">Pricing</a></li>
+              <li><a href="/blog/" aria-current="page">Blog</a></li>
+              <li><a href="https://app.boltanswering.com/login">Sign in</a></li>
+              <li class="header_nav_cta"><a href="https://app.boltanswering.com/signup" class="btn">Get started now</a></li>
+            </ul>
+          </nav>
+          <button type="button" class="button-nav" aria-label="Open menu" aria-expanded="false" aria-controls="mainnav"><span></span></button>
+        </div>
+        <div class="navoverlay"></div>
+      </div>
+    </header>
+    <main class="content" id="main">
+      <section class="section-post">
+        <div class="wrapper">
+          <div class="pagetitle"><h1>Search</h1></div>
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span class="dash"></span> <a href="/blog/">Blog</a> <span class="dash"></span> <span aria-current="page">Search</span></nav>
+          <div class="columns">
+            <div class="columns_center">
+              <div class="search_page">
+                <p class="js-search-empty">Type a search in the box to find posts.</p>
+                <noscript><p>Search needs JavaScript. You can browse <a href="/blog/">all posts</a> instead.</p></noscript>
+                <div class="search_page_results" role="status" aria-live="polite"></div>
+              </div>
+            </div>
+            <aside class="columns_sidebar sidebar">
+              <div class="sidebar_search">
+                <form action="/blog/search/" method="get" role="search" class="js-search">
+                  <div class="search">
+                    <label class="visually-hidden" for="blog-q">Search the blog</label>
+                    <input type="search" id="blog-q" name="q" class="form-control" placeholder="Search the blog…" autocomplete="off" />
+                    <button class="btn" aria-label="Search"><span class="icon-search" aria-hidden="true"></span></button>
+                  </div>
+                </form>
+                <div class="search_results" role="status" aria-live="polite" hidden></div>
+              </div>
+              <div class="sidebar_widget sidebar_cta">
+                <h3>Never miss a job again</h3>
+                <p>Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.</p>
+                <a href="https://app.boltanswering.com/signup" class="btn">Get started now</a>
+              </div>
+              <div class="sidebar_widget">
+                <h3>Recent posts</h3>
+                <div class="stories">
+                  <div class="stories_item">
+                    <div class="stories_item_img"><a href="/blog/test-post-please-ignore/" tabindex="-1" aria-hidden="true"><img src="/blog/img/test-post-please-ignore/df32e81860-1200.webp" srcset="/blog/img/test-post-please-ignore/df32e81860-480.webp 480w, /blog/img/test-post-please-ignore/df32e81860-960.webp 960w, /blog/img/test-post-please-ignore/df32e81860-1200.webp 1200w" sizes="420px" width="1200" height="630" alt="Yellow lightning bolt on a dark blue background" loading="lazy" decoding="async" /></a></div>
+                    <div class="stories_item_infoline infoline">
+                      <div class="infoline_date"><time datetime="2026-11-08T20:14:24.000Z">Nov 8, 2026</time></div> <span class="dash"></span>
+                      <div class="infoline_tag">Test</div>
+                    </div>
+                    <div class="stories_item_title"><a href="/blog/test-post-please-ignore/">Test post, please ignore</a></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sidebar_widget">
+                <h3>Categories</h3>
+                <div class="cats">
+                  <a href="/blog/category/test/" class="cats_item">Test</a>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="wrapper">
+        <div class="footer_cols">
+          <div class="footer_cols_item footer_cols_item-1">
+            <div class="footer_title">About Bolt</div>
+            <div class="footer_txt">Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.</div>
+            <p class="footer_cta"><a href="https://app.boltanswering.com/signup" class="btn">Get started now</a></p>
+          </div>
+          <div class="footer_cols_item footer_cols_item-2">
+            <div class="footer_title">Categories</div>
+            <ul class="footer_list">
+              <li><a href="/blog/category/test/">Test</a></li>
+            </ul>
+          </div>
+          <div class="footer_cols_item footer_cols_item-3">
+            <div class="footer_title">Bolt</div>
+            <ul class="footer_list">
+              <li><a href="/">Home</a></li>
+              <li><a href="/support">Support</a></li>
+              <li><a href="https://app.boltanswering.com/login">Sign in</a></li>
+              <li><a href="/blog/feed.xml">RSS feed</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer_bot">
+          <div class="footer_copy">&copy; 2026 hlpr inc.</div>
+          <div class="footer_links">
+            <a href="/terms/">Terms &amp; Conditions</a> <span class="dash"></span> <a href="/privacy/">Privacy Policy</a> <span class="dash"></span> <a href="/deletemydata">Delete My Data</a> <span class="dash"></span> <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+  <script defer src="/blog/assets/js/blog.js?v=1"></script>
+</body>
+</html>

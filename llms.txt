@@ -11,5 +11,9 @@
 - [Plumbing](https://www.boltanswering.com/plumbing.html)
 - [Support](https://www.boltanswering.com/support/)
 
+## Blog
+- [Test post, please ignore](https://www.boltanswering.com/blog/test-post-please-ignore/): Checking that the Bolt blog publishes correctly.
+
 ## Optional
+- [RSS feed](https://www.boltanswering.com/blog/feed.xml)
 - [Sitemap](https://www.boltanswering.com/sitemap.xml)
