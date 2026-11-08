@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '2';
+const ASSET_V = '3';
 const SIGNUP = 'https://app.boltanswering.com/signup';
 // The site's own one-line description (index.html <meta name="description">).
 const ABOUT = 'Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.';

@@ -58,7 +58,7 @@
 .bchy .icon-arrow-prev { transform: rotate(180deg); }
 
 /* Author box: no photo, so the text starts at the left edge of the box. */
-.bchy .author { margin-top: calc(3 * var(--bchy-rem, 10px)); background: var(--offwhite); border: 1px solid rgba(24, 10, 83, 0.08); border-radius: calc(1.6 * var(--bchy-rem, 10px)); padding: calc(2.4 * var(--bchy-rem, 10px)); display: block; }
+.bchy .author { margin-top: calc(3 * var(--bchy-rem, 10px)); background: var(--offwhite); border: 1px solid rgba(24, 10, 83, 0.08); border-radius: calc(1.6 * var(--bchy-rem, 10px)); padding: calc(2.4 * var(--bchy-rem, 10px)); display: block; text-align: left; } /* the template centers it below 600px */
 .bchy .author_cont { max-width: none; }
 .bchy .author .author_name { color: var(--navy); margin-bottom: calc(0.4 * var(--bchy-rem, 10px)); }
 .bchy .author .author_txt { color: var(--body); font-size: calc(1.5 * var(--bchy-rem, 10px)); }
