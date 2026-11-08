@@ -11,5 +11,9 @@
 - [Plumbing](https://www.boltanswering.com/plumbing.html)
 - [Support](https://www.boltanswering.com/support/)
 
+## Blog
+- [The 5 Most Profitable Handyman Jobs You Can Start Offering Today](https://www.boltanswering.com/blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/): If you are still taking every random job that comes your way, you are probably leaving money on the table. The handymen who earn the most tend to pick a…
+
 ## Optional
+- [RSS feed](https://www.boltanswering.com/blog/feed.xml)
 - [Sitemap](https://www.boltanswering.com/sitemap.xml)

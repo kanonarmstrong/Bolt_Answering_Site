@@ -1,8 +1,15 @@
 {
   "files": [
+    "blog/feed.xml",
+    "blog/index.html",
+    "blog/search-index.json",
+    "blog/search/index.html",
+    "blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/index.html",
     "llms.txt",
     "robots.txt",
     "sitemap.xml"
   ],
-  "imageDirs": []
+  "imageDirs": [
+    "the-5-most-profitable-handyman-jobs-you-can-start-offering-today"
+  ]
 }
