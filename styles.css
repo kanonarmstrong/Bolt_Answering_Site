@@ -496,7 +496,10 @@ ul,ol{list-style:none}
   }
   .nav__dropdown.open .nav__dropdown-menu{max-height:360px;padding:0 0 8px}
   .nav__dropdown.open .nav__dropdown-trigger svg{transform:rotate(180deg)}
-  .nav__dropdown-menu li a{padding:10px 16px 10px 40px;font-size:15px}  /* links start 40px in from the dropdown's left edge */
+  .nav__dropdown-menu li a{padding:10px 16px 10px 34px;font-size:15px}  /* text 30px right of the main menu links (they sit 4px in) */
+  /* A tap counts as :hover on phones, which applied the desktop centering shift (translateX(-50%))
+     and pushed the submenu off the left edge of the screen. */
+  .nav__dropdown:hover .nav__dropdown-menu,.nav__dropdown:focus-within .nav__dropdown-menu{transform:none}
   .nav__dropdown:hover .nav__dropdown-trigger svg{transform:none}
   .nav__cta{margin-top:16px;width:100%;height:52px}
 
