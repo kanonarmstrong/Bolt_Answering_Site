@@ -41,7 +41,7 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
-  <link rel="stylesheet" href="/styles.css?v=50" />
+  <link rel="stylesheet" href="/styles.css?v=52" />
   <link rel="stylesheet" href="/support/support.css?v=5" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
@@ -70,8 +70,14 @@
               <li><a href="/plumbing.html">Plumbing</a></li>
             </ul>
           </li>
+          <li class="nav__dropdown nav__dropdown--community">
+            <a href="#" class="nav__dropdown-trigger">Community <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/blog/">Blog</a></li>
+              <li><a href="/support">Support</a></li>
+            </ul>
+          </li>
           <li><a href="/#pricing">Pricing</a></li>
-          <li><a href="/support">Support</a></li>
           <li><a href="https://app.boltanswering.com/login" class="nav__signin">Sign in</a></li>
         </ul>
         <a href="https://app.boltanswering.com/signup" class="btn btn--yellow nav__cta">Get started now</a>
@@ -229,15 +235,16 @@
           t.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
       }
-      var dt = document.querySelector('.nav__dropdown-trigger');
-      if (dt) {
+      document.querySelectorAll('.nav__dropdown-trigger').forEach(function (dt) {
         dt.addEventListener('click', function (e) {
           e.preventDefault();
           if (window.matchMedia('(max-width:768px)').matches) {
-            dt.closest('.nav__dropdown').classList.toggle('open');
+            var dd = dt.closest('.nav__dropdown');
+            document.querySelectorAll('.nav__dropdown.open').forEach(function (o) { if (o !== dd) o.classList.remove('open'); });
+            dd.classList.toggle('open');
           }
         });
-      }
+      });
 
       // Static site, no backend: hand the request to the visitor's mail client
       // (delivers to support@boltanswering.com) and show the confirmation.

@@ -11,37 +11,40 @@
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
-  // Close menu when a real link is tapped (ignore the Trades dropdown trigger).
-  // Also collapse the Trades submenu so tapping any other link (Home, Support…)
+  // Close menu when a real link is tapped (ignore the dropdown triggers).
+  // Also collapse any open submenu so tapping any other link (Home, Support…)
   // doesn't leave it expanded.
   menu.querySelectorAll('a').forEach(function (a) {
     a.addEventListener('click', function () {
       if (a.classList.contains('nav__dropdown-trigger')) return;
       menu.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
-      var dd = menu.querySelector('.nav__dropdown.open');
-      if (dd) dd.classList.remove('open');
+      menu.querySelectorAll('.nav__dropdown.open').forEach(function (dd) { dd.classList.remove('open'); });
     });
   });
 })();
 
-// Mobile Trades accordion — tap to expand/collapse (desktop keeps hover)
+// Mobile dropdown accordions (Trades, Community) — tap to expand/collapse; desktop keeps hover.
+// Opening one closes the other, and closing the hamburger menu collapses both.
 (function () {
-  var trigger = document.querySelector('.nav__dropdown-trigger');
-  if (!trigger) return;
-  var dropdown = trigger.closest('.nav__dropdown');
-  trigger.addEventListener('click', function (e) {
-    if (window.matchMedia('(max-width: 768px)').matches) {
-      e.preventDefault();
-      dropdown.classList.toggle('open');
-    }
+  var triggers = document.querySelectorAll('.nav__dropdown-trigger');
+  if (!triggers.length) return;
+  function closeAll(except) {
+    document.querySelectorAll('.nav__dropdown.open').forEach(function (d) { if (d !== except) d.classList.remove('open'); });
+  }
+  triggers.forEach(function (trigger) {
+    var dropdown = trigger.closest('.nav__dropdown');
+    trigger.addEventListener('click', function (e) {
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        e.preventDefault();
+        closeAll(dropdown);
+        dropdown.classList.toggle('open');
+      }
+    });
   });
-  // collapse it whenever the hamburger menu closes
   var toggle = document.getElementById('navToggle');
   if (toggle) toggle.addEventListener('click', function () {
-    if (!document.getElementById('navMenu').classList.contains('open')) {
-      dropdown.classList.remove('open');
-    }
+    if (!document.getElementById('navMenu').classList.contains('open')) closeAll(null);
   });
 })();
 
@@ -108,8 +111,7 @@
     var toggle = document.getElementById('navToggle');
     if (menu) menu.classList.remove('open');
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
-    var dd = document.querySelector('.nav__dropdown.open');
-    if (dd) dd.classList.remove('open');
+    document.querySelectorAll('.nav__dropdown.open').forEach(function (dd) { dd.classList.remove('open'); });
   }
   function toTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function toEl(el) {
