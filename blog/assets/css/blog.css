@@ -18,16 +18,16 @@
 .bchy .content { padding-top: 0; }
 .bchy .section-post { padding-top: calc(3 * var(--bchy-rem, 10px)); }
 
-/* "the line" masthead (Figma 2860:1538): full-width hero band directly under the site header,
+/* "the bottom line" masthead (Figma 2860:1538): full-width hero band directly under the site header,
    wordmark on the header's content edge. Sized in px/vw like the site chrome, not --bchy-rem.
-   1926px-wide design: 154px tall, 381px wordmark, so both scale with the viewport between caps. */
+   1926px-wide design: 154px tall, 476px wordmark, so both scale with the viewport between caps. */
 .bchy .masthead { position: relative; height: clamp(88px, 8vw, 154px); overflow: hidden; background: #0b0820; }
 .bchy .masthead picture, .bchy .masthead_bg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .bchy .masthead_bg { object-fit: cover; object-position: center; display: block; }
 .bchy .masthead_inner { position: relative; height: 100%; max-width: 1620px; margin: 0 auto; padding: 0 var(--pad); display: flex; align-items: center; }
 .bchy .masthead_title { margin: 0; padding: 0; line-height: 0; }
 .bchy .masthead_title a { display: inline-block; }
-.bchy .masthead_title img { display: block; width: clamp(160px, 19.8vw, 381px); height: auto; }
+.bchy .masthead_title img { display: block; width: clamp(220px, 24.7vw, 476px); height: auto; }
 
 .bchy h1, .bchy .h1, .bchy h2, .bchy .h2, .bchy h3, .bchy .h3, .bchy h4, .bchy .h4,
 .bchy .article_title a, .bchy .stories_item_title a, .bchy .author_name { color: var(--navy); text-transform: none; }

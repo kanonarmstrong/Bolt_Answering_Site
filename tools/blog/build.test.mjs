@@ -94,12 +94,12 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.ok(!existsSync(join(root, 'blog/category/uncategorized/index.html')), 'Uncategorized gets no page');
 
   const art = read(root, 'blog/answer-every-call/index.html');
-  // "the line" masthead on every page: the <h1> on the blog home (no breadcrumb line), a link home elsewhere.
+  // "the bottom line" masthead on every page: the <h1> on the blog home (no breadcrumb line), a link home elsewhere.
   const home = read(root, 'blog/index.html');
   assert.equal((home.match(/<h1[\s>]/g) || []).length, 1, 'blog home: exactly one h1');
-  assert.match(home, /<h1 class="masthead_title"><img src="\/blog\/assets\/img\/the-line\.svg" alt="the line"/);
+  assert.match(home, /<h1 class="masthead_title"><img src="\/blog\/assets\/img\/the-bottom-line\.svg" alt="the bottom line"/);
   assert.doesNotMatch(home, /class="breadcrumbs"|class="pagetitle"/, 'blog home: masthead replaces the title and breadcrumb lines');
-  assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-line\.svg"/);
+  assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-bottom-line\.svg"/);
   assert.match(art, /class="breadcrumbs"/);
   assert.doesNotMatch(art, /class="pagetitle"/);
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
