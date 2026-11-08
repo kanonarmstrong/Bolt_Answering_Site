@@ -43,50 +43,55 @@
   <meta name="twitter:card" content="summary" />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
-  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=1" />
-  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=1" />
+  <link rel="stylesheet" href="/styles.css?v=53" />
+  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=2" />
+  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=2" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
   
 </head>
 <body>
-  <div class="main-wrapper">
-    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="header">
-      <div class="wrapper">
-        <div class="header_top">
-          <div class="header_cols">
-            <div class="header_categ">
-              <button type="button" class="header_categ_opener" aria-expanded="false" aria-controls="catdrop"><span class="icon-grid" aria-hidden="true"></span>Categories</button>
-              <div class="header_categ_drop" id="catdrop">
-                <ul class="catlist">
-                  <li><a href="/blog/category/test/">Test <span>(1)</span></a></li>
-                </ul>
-              </div>
-            </div>
-            <a href="mailto:support@boltanswering.com" class="header_mail"><span class="icon-mail" aria-hidden="true"></span>support@boltanswering.com</a>
-          </div>
-        </div>
-        <div class="header_mid">
-          <a href="/" class="header_logo logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" width="120" height="40" /></a>
-          <nav aria-label="Main">
-            <ul class="header_nav" id="mainnav">
-              <li><a href="/">Home</a></li>
-              <li class="header_nav_trade"><a href="/hvac.html">HVAC</a></li>
-              <li class="header_nav_trade"><a href="/plumbing.html">Plumbing</a></li>
-              <li class="header_nav_trade"><a href="/electrical.html">Electrical</a></li>
-              <li><a href="/#pricing">Pricing</a></li>
-              <li><a href="/blog/" aria-current="page">Blog</a></li>
-              <li><a href="https://app.boltanswering.com/login">Sign in</a></li>
-              <li class="header_nav_cta"><a href="https://app.boltanswering.com/signup" class="btn">Get started now</a></li>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="nav" id="top">
+    <div class="nav__inner">
+      <a href="/" class="logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+
+      <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav__menu" id="navMenu">
+        <ul class="nav__links">
+          <li><a href="/">Home</a></li>
+          <li style="display:none"><a href="/#how">How it works</a></li><!-- under construction -->
+          <li class="nav__dropdown">
+            <a href="#" class="nav__dropdown-trigger">Trades <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/electrical.html">Electrical</a></li>
+              <li><a href="/general-contractor.html">General contracting</a></li>
+              <li><a href="/handyman.html">Handyman</a></li>
+              <li><a href="/hvac.html">HVAC</a></li>
+              <li><a href="/plumbing.html">Plumbing</a></li>
             </ul>
-          </nav>
-          <button type="button" class="button-nav" aria-label="Open menu" aria-expanded="false" aria-controls="mainnav"><span></span></button>
-        </div>
-        <div class="navoverlay"></div>
-      </div>
-    </header>
+          </li>
+          <li class="nav__dropdown nav__dropdown--community">
+            <a href="#" class="nav__dropdown-trigger">Community <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/blog/" aria-current="page">Blog</a></li>
+              <li><a href="/support">Support</a></li>
+            </ul>
+          </li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="https://app.boltanswering.com/login" class="nav__signin">Sign in</a></li>
+        </ul>
+        <a href="https://app.boltanswering.com/signup" class="btn btn--yellow nav__cta">Get started now</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="bchy">
+    <div class="main-wrapper">
     <main class="content" id="main">
       <section class="section-post">
         <div class="wrapper">
@@ -140,39 +145,35 @@
         </div>
       </section>
     </main>
-    <footer class="footer">
-      <div class="wrapper">
-        <div class="footer_cols">
-          <div class="footer_cols_item footer_cols_item-1">
-            <div class="footer_title">About Bolt</div>
-            <div class="footer_txt">Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.</div>
-            <p class="footer_cta"><a href="https://app.boltanswering.com/signup" class="btn">Get started now</a></p>
-          </div>
-          <div class="footer_cols_item footer_cols_item-2">
-            <div class="footer_title">Categories</div>
-            <ul class="footer_list">
-              <li><a href="/blog/category/test/">Test</a></li>
-            </ul>
-          </div>
-          <div class="footer_cols_item footer_cols_item-3">
-            <div class="footer_title">Bolt</div>
-            <ul class="footer_list">
-              <li><a href="/">Home</a></li>
-              <li><a href="/support">Support</a></li>
-              <li><a href="https://app.boltanswering.com/login">Sign in</a></li>
-              <li><a href="/blog/feed.xml">RSS feed</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer_bot">
-          <div class="footer_copy">&copy; 2026 hlpr inc.</div>
-          <div class="footer_links">
-            <a href="/terms/">Terms &amp; Conditions</a> <span class="dash"></span> <a href="/privacy/">Privacy Policy</a> <span class="dash"></span> <a href="/deletemydata">Delete My Data</a> <span class="dash"></span> <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
-          </div>
-        </div>
-      </div>
-    </footer>
+    </div>
   </div>
-  <script defer src="/blog/assets/js/blog.js?v=1"></script>
+
+  <footer class="footer">
+    <div class="footer__social">
+      <a href="#" class="footer__icon" aria-label="Facebook">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#0c0c0d"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+      </a>
+      <a href="#" class="footer__icon" aria-label="Instagram">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#0c0c0d"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 01-1.38-.9 3.7 3.7 0 01-.9-1.38c-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.12 1.38C1.35 2.68.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.12.66.66 1.33 1.08 2.12 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.12-1.38.66-.66 1.08-1.33 1.38-2.12.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.12A5.85 5.85 0 0019.86.63c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zm0 10.16a4 4 0 110-8 4 4 0 010 8zm7.85-10.4a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z"/></svg>
+      </a>
+    </div>
+    <nav class="footer__menu">
+      <a href="/">Home</a>
+      <a href="/#how" style="display:none">How it works</a><!-- under construction -->
+      <a href="/#pricing">Pricing</a>
+      <a href="/support">Support</a>
+      <a href="https://app.boltanswering.com/login" class="footer__signin">Sign in</a>
+      <a href="/terms/">Terms &amp; Conditions</a>
+      <a href="/privacy/">Privacy Policy</a>
+      <a href="/deletemydata">Delete My Data</a>
+      <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
+    </nav>
+    <p class="footer__copy">&copy; 2026 hlpr inc.</p>
+  </footer>
+  <a href="https://app.boltanswering.com/signup" class="btn btn--yellow floating-cta">Get started now</a>
+
+  <script src="/pricing.js?v=7"></script>
+  <script src="/script.js?v=29"></script>
+  <script defer src="/blog/assets/js/blog.js?v=2"></script>
 </body>
 </html>
