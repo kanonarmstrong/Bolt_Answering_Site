@@ -132,6 +132,8 @@ ul,ol{list-style:none}
   display:block;padding:8px 16px;color:var(--dropdown);font-weight:400;font-size:16px;
 }
 .nav__dropdown-menu li a:hover{color:var(--navy);background:rgba(43,128,252,.06)}
+/* Community menu (Figma 2860:1526): narrower than Trades, sized to its two short links. */
+@media (min-width:769px){.nav__dropdown--community .nav__dropdown-menu{width:113px}}
 .nav__dropdown:hover .nav__dropdown-menu,
 .nav__dropdown:focus-within .nav__dropdown-menu{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 .nav__dropdown:hover .nav__dropdown-trigger svg{transform:rotate(180deg)}
