@@ -165,6 +165,7 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(robots, /Sitemap: https:\/\/www\.boltanswering\.com\/sitemap\.xml/);
   assert.match(read(root, 'blog/search/index.html'), /content="noindex, follow"/);
   assert.doesNotMatch(read(root, 'blog/search/index.html'), /class="breadcrumbs"/, 'search page has no breadcrumbs');
+  assert.doesNotMatch(read(root, 'blog/category/missed-calls-booking/index.html'), /class="breadcrumbs"/, 'category pages have no breadcrumbs');
   assert.match(read(root, 'llms.txt'), /\[Why private equity buys trades shops\]\(https:\/\/www\.boltanswering\.com\/blog\/why-pe-buys-shops\/\)/);
   assert.match(read(root, 'blog/feed.xml'), /<content:encoded><!\[CDATA\[/);
   const index = JSON.parse(read(root, 'blog/search-index.json'));
