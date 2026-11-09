@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '8';
+const ASSET_V = '9';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -89,10 +89,11 @@ function picture(img, { sizes, eager = false } = {}) {
   return `<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`;
 }
 
-/** "Nov 6, 2026 | 2 min read" stamp on post cards and posts. The author is in the post's
+/** "Nov 6, 2026 | 2 min read" stamp on post cards, posts and Recent posts. The author is in the post's
  *  author box and JSON-LD. */
+const stamp = (p) => `<div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div><span class="infoline_sep" aria-hidden="true">|</span><div class="infoline_tag">${p.minutes} min read</div>`;
 const infoline = (p) => `<div class="article_infoline infoline">
-                    <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div><span class="infoline_sep" aria-hidden="true">|</span><div class="infoline_tag">${p.minutes} min read</div>
+                    ${stamp(p)}
                   </div>`;
 
 function postCard(p, i) {
@@ -128,7 +129,7 @@ function sidebar({ recent, categories }) {
 ${recent.map((p) => `                  <div class="stories_item">
                     ${p.image ? `<div class="stories_item_img"><a href="${postPath(p.slug)}" tabindex="-1" aria-hidden="true">${picture(p.image, { sizes: '420px' })}</a></div>` : ''}
                     <div class="stories_item_infoline infoline">
-                      <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div>${p.categories[0] ? ` <span class="dash"></span>\n                      <div class="infoline_tag">${esc(p.categories[0].name)}</div>` : ''}
+                      ${stamp(p)}
                     </div>
                     <div class="stories_item_title"><a href="${postPath(p.slug)}">${esc(p.title)}</a></div>
                   </div>`).join('\n')}

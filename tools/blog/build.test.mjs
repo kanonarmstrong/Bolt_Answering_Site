@@ -118,6 +118,7 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   // Date | read-time stamp, no author.
   assert.match(home, /<div class="infoline_date"><time datetime="2026-11-01T16:00:00\.000Z">Nov 1, 2026<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/);
   assert.doesNotMatch(art, /infoline_author/);
+  assert.match(art, /<div class="stories_item_infoline infoline">\s*<div class="infoline_date"><time[^>]*>[A-Z][a-z]{2} \d{1,2}, \d{4}<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/, 'Recent posts use the same stamp');
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
   assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
   assert.match(cat, /<div class="masthead_title">/);
