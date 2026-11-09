@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js). Not loaded for a browser that opted out (Your Privacy Choices)
+       or sends Global Privacy Control (AFMBP-2019), nor for our own test visits unless
+       ?bolt_pixel_debug=1 asks for the tags in this browser session (AFMBP-2039). -->
+  <script>
+    (function () {
+      var q = location.search, off = false;
+      try {
+        if (/[?&]bolt_optout=1(&|$)/.test(q)) localStorage.setItem('bolt_optout', '1');
+        else if (/[?&]bolt_optout=0(&|$)/.test(q)) localStorage.removeItem('bolt_optout');
+        off = navigator.globalPrivacyControl === true || localStorage.getItem('bolt_optout') === '1';
+        // Our own test visits: ?bolt_qa=1 (remembered until ?bolt_qa=0) or ?demoqa=1. The URL is
+        // read first because this runs before attribution.js saves the flag.
+        var qa = /[?&](bolt_qa|demoqa)=1(&|$)/.test(q) || (localStorage.getItem('bolt_qa') === '1' && !/[?&]bolt_qa=0(&|$)/.test(q));
+        var debug = /[?&]bolt_pixel_debug=1(&|$)/.test(q) || sessionStorage.getItem('bolt_pixel_debug') === '1';
+        if (qa && !debug) off = true;
+      } catch (e) { off = navigator.globalPrivacyControl === true || (/[?&](bolt_qa|demoqa)=1(&|$)/.test(q) && !/[?&]bolt_pixel_debug=1(&|$)/.test(q)); }
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      if (off) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8C8SFMCRYH';
+      document.head.appendChild(s);
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-8C8SFMCRYH');
+      window.gtag('config', 'AW-18483202475');
+    })();
+  </script>
+  <!-- Funnel attribution + events, Bolt's own analytics (AFMBP-1968) -->
+  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/meta-pixel.js?v=3"></script>
+  <script defer src="/privacy-choices.js?v=2"></script>
+  <!-- JavaScript error reports (Sentry), behind one switch in sentry-init.js (AFMBP-2130) -->
+  <script defer src="/sentry-init.js?v=1"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Bolt Answering — Never miss a job again</title>
+  <meta name="description" content="Bolt Answering is an AI phone answering service for solo tradespeople. It answers every call, books jobs and follows up. Start a 30-day free trial." />
+  <link rel="canonical" href="https://www.boltanswering.com/about/" />
+  <meta name="application-name" content="Bolt Answering" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bolt Answering" />
+  <meta property="og:title" content="About Bolt Answering — Never miss a job again" />
+  <meta property="og:description" content="Bolt Answering is an AI phone answering service for solo tradespeople. It answers every call, books jobs and follows up. Start a 30-day free trial." />
+  <meta property="og:url" content="https://www.boltanswering.com/about/" />
+  <meta property="og:image" content="https://www.boltanswering.com/assets/logo.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="1024" />
+  <meta property="og:image:alt" content="Bolt Answering logo" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="About Bolt Answering — Never miss a job again" />
+  <meta name="twitter:description" content="Bolt Answering is an AI phone answering service for solo tradespeople. It answers every call, books jobs and follows up. Start a 30-day free trial." />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": "https://www.boltanswering.com/about/#page",
+    "url": "https://www.boltanswering.com/about/",
+    "name": "About Bolt Answering",
+    "description": "Bolt Answering is an AI phone answering service for solo tradespeople. It answers every call, books jobs and follows up. Start a 30-day free trial.",
+    "about": {
+      "@id": "https://www.boltanswering.com/#organization"
+    },
+    "isPartOf": {
+      "@id": "https://www.boltanswering.com/#website"
+    }
+  }
+  </script>
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
+  <link rel="stylesheet" href="/assets/fonts.css?v=1" />
+  <link rel="stylesheet" href="/styles.css?v=55" />
+  <link rel="stylesheet" href="/demo.css?v=31" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <header class="nav" id="top">
+    <div class="nav__inner">
+      <a href="/" class="logo" aria-label="Bolt home"><img src="/assets/logo-wordmark.png" alt="Bolt" /></a>
+
+      <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav__menu" id="navMenu">
+        <ul class="nav__links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/about/" aria-current="page">About</a></li>
+          <li style="display:none"><a href="/#how">How it works</a></li><!-- under construction -->
+          <li class="nav__dropdown">
+            <a href="#" class="nav__dropdown-trigger">Trades <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/electrical.html">Electrical</a></li>
+              <li><a href="/general-contractor.html">General contracting</a></li>
+              <li><a href="/handyman.html">Handyman</a></li>
+              <li><a href="/hvac.html">HVAC</a></li>
+              <li><a href="/plumbing.html">Plumbing</a></li>
+            </ul>
+          </li>
+          <li class="nav__dropdown nav__dropdown--community">
+            <a href="#" class="nav__dropdown-trigger">Community <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></a>
+            <ul class="nav__dropdown-menu">
+              <li><a href="/blog/">Blog</a></li>
+              <li><a href="/support">Support</a></li>
+            </ul>
+          </li>
+          <li><a href="/#pricing">Pricing</a></li>
+          <li><a href="https://app.boltanswering.com/login" class="nav__signin">Sign in</a></li>
+        </ul>
+        <a href="https://app.boltanswering.com/signup" class="btn btn--yellow nav__cta">Get started now</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===================== ABOUT (Figma 2874:1629, owner 11-09) ===================== -->
+  <main class="about">
+    <div class="about__inner">
+      <img class="about__art about__art--man" src="/assets/about/bearded-man.webp" alt="" width="1536" height="1024" />
+      <img class="about__art about__art--attic" src="/assets/about/attic-ductwork.webp" alt="" width="1536" height="1024" loading="lazy" />
+      <img class="about__art about__art--woman" src="/assets/about/woman-clipboard.webp" alt="" width="1312" height="1199" loading="lazy" />
+      <img class="about__art about__art--wave" src="/assets/about/sound-wave.webp" alt="" width="1711" height="919" loading="lazy" />
+
+      <p class="about__kicker marker">About us</p>
+      <h1 class="hero__title about__title"><span class="sr-only">About Bolt Answering: </span><span class="marker hero__never">NEVER</span> <span class="hero__sub">miss a job again</span></h1>
+
+      <div class="about__body">
+        <p>When the heat goes out in January or a pipe lets go on a Sunday, a family calls you. That trust took years to earn, and no assistant replaces it. Bolt has a smaller job: make sure that call reaches you.</p>
+        <p><strong>Bolt answers calls on the phone and number you already have.</strong> It books the job, screens out spam, and texts you the details so you can stay focused on the work in front of you. <strong>You&rsquo;re the one they call for the work. Bolt just makes sure you get the chance to.</strong></p>
+
+        <h2 class="about__h">The phone always rings at the <span class="marker">wrong time</span></h2>
+        <p>It&rsquo;s 2:15 on a Tuesday. A guy working a 9-to-5 has a handyman business he runs nights and weekends, and his cell is buzzing in his pocket during a meeting. An HVAC tech on his back in a crawl space with both hands on a condensate line. A general contractor is walking a kitchen remodel with a homeowner and has to let it ring. A plumber&rsquo;s phone is sitting on the dash of the van... 40 feet away.</p>
+        <p><strong>Every one of those calls is a job.</strong> Someone needs a leak fixed or a deck quoted, and most of them won&rsquo;t leave a voicemail. <strong>They call the next name on the list.</strong></p>
+        <p>The usual answer is a receptionist. A full-time receptionist can cost more than $2,000/month. That&rsquo;s a lot to carry while the business is still finding its feet, and the bigger companies are already using AI to answer calls so customers don&rsquo;t call smaller, independent pros.</p>
+        <p><strong>So answering calls often falls to someone else.</strong> A wife or girlfriend picks up or calls back when they can. A friend or family member covers on Saturdays. It works for a while, until their own jobs and kids need them back.</p>
+        <p><strong>We built Bolt for that stretch, when the calls are coming in but a front desk doesn&rsquo;t pencil out yet.</strong></p>
+
+        <h2 class="about__h about__h--8">What Bolt does on <span class="marker">every call</span></h2>
+        <p>The best tradespeople have always had the best tools. This one works the phone. Here&rsquo;s just a few of the things that Bolt can do for your business on Day 1:</p>
+        <ol class="about__list">
+          <li>Picks up day or night, and tells callers it&rsquo;s your assistant.</li>
+          <li>Sorts real customers from spam and robocalls.</li>
+          <li>Asks what the job is, where it is, and how soon they need you. Urgent calls get flagged right away.</li>
+          <li>Books the job into your schedule while the caller is still on the line.</li>
+          <li>Sends you the details by text or app notification. No voicemails to play back.</li>
+          <li>Speaks Spanish and more than 70 other languages, with no extra setup.</li>
+        </ol>
+
+        <h2 class="about__h">Who we <span class="marker">serve</span></h2>
+        <p><strong>Solo independent pros and small crews</strong> in HVAC, plumbing, electrical, general contracting, and handyman work. That includes people building a business on the side of a full-time job, and owners whose spouse or a friend used to cover the phone.</p>
+
+        <h2 class="about__h">How Bolt is <span class="marker">different</span></h2>
+        <ol class="about__list about__list--last">
+          <li><strong>Your phone. Your number.</strong> You forward calls from the cell you already carry. Customers dial the same number they always have. There&rsquo;s no new line, no switching carriers, and no office phone system to buy. Setup takes under 10 minutes.</li>
+          <li><strong>It runs from your pocket.</strong> Call summaries, bookings, and settings all live on your phone. Nothing about Bolt assumes you have a desk or an office manager.</li>
+          <li><strong>It knows the trades.</strong> Bolt can tell a no-heat call from a tune-up, and a burst pipe from a dripping faucet. It asks the questions a good dispatcher would ask.</li>
+          <li><strong>It&rsquo;s priced for a growing business.</strong> Try Bolt free for <span class="js-td">30</span> days. And after that, less than $4/day. Our low price is a commitment to the heroes that are always the second call when something in our homes goes wrong.</li>
+          <li><strong>It&rsquo;s straight with your callers.</strong> Bolt says up front that it&rsquo;s your assistant. Your customers know you&rsquo;re out on a job, and most would rather book an appointment than leave a message.</li>
+        </ol>
+
+        <p class="about__hear"><strong>Hear the difference now:</strong> <a href="#" class="btn btn--blue about__talk">Talk to your new assistant</a></p>
+
+        <h2 class="about__h about__h--free">First <span class="js-td">30</span> days are&nbsp; <span class="marker">Free</span></h2>
+        <p>We believe so much in our product that we&rsquo;re giving away the first <span class="js-td">30</span> days for free. If you decide to keep using Bolt after the free trial, there are no long-term contracts and you can cancel at anytime.</p>
+      </div>
+    </div>
+  </main>
+
+  <section class="subscribe">
+    <form class="subscribe__form" onsubmit="return false;">
+      <span class="subscribe__icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#212529" stroke-width="1.6"/><path d="M4 7l8 6 8-6" stroke="#212529" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      </span>
+      <input type="email" placeholder="Stay in touch with Bolt" aria-label="Email address" />
+      <button type="submit" class="subscribe__btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13" stroke="#180a53" stroke-width="1.8" stroke-linecap="round"/><path d="M22 2l-7 20-4-9-9-4 20-7z" stroke="#180a53" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+        Subscribe
+      </button>
+    </form>
+    <div class="subscribe__brand">
+      <span class="logo logo--lg"><img src="/assets/logo-wordmark.png" alt="Bolt" /></span>
+      <span class="subscribe__tag">Never miss a job again.</span>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="footer__social">
+      <a href="https://www.facebook.com/profile.php?id=61590229919739" class="footer__icon" aria-label="Bolt Answering on Facebook">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#0c0c0d"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+      </a>
+      <a href="https://www.instagram.com/boltanswering/" class="footer__icon" aria-label="Bolt Answering on Instagram">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#0c0c0d"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 01-1.38-.9 3.7 3.7 0 01-.9-1.38c-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.12 1.38C1.35 2.68.94 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.12.66.66 1.33 1.08 2.12 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.12-1.38.66-.66 1.08-1.33 1.38-2.12.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.12A5.85 5.85 0 0019.86.63c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zm0 10.16a4 4 0 110-8 4 4 0 010 8zm7.85-10.4a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z"/></svg>
+      </a>
+    </div>
+    <nav class="footer__menu">
+      <a href="/">Home</a>
+      <a href="/about/" aria-current="page">About</a>
+      <a href="/#how" style="display:none">How it works</a><!-- under construction -->
+      <a href="/#pricing">Pricing</a>
+      <a href="/support">Support</a>
+      <a href="https://app.boltanswering.com/login" class="footer__signin">Sign in</a>
+      <a href="/terms/">Terms &amp; Conditions</a>
+      <a href="/privacy/">Privacy Policy</a>
+      <a href="/deletemydata">Delete My Data</a>
+      <a href="/privacy/#your-privacy-choices" data-privacy-choices>Your Privacy Choices</a>
+    </nav>
+    <p class="footer__copy">&copy; 2026 hlpr inc.</p>
+  </footer>
+
+  <a href="https://app.boltanswering.com/signup" class="btn btn--yellow floating-cta">Get started now</a>
+
+
+  <script src="/pricing.js?v=8"></script>
+  <script src="/script.js?v=29"></script>
+  <script src="/demo-format.js?v=3"></script>  <script src="/demo.js?v=46"></script>
+  <script src="/subscribe.js?v=1"></script>
+</body>
+</html>

@@ -112,7 +112,9 @@ ul,ol{list-style:none}
 .nav__links a:hover{color:var(--gray)}
 /* The Community dropdown made the row ~10px longer than the bar at 769-780px, squeezing the logo
    (tools/nav-logo-check.mjs). Tighten the link gaps in the narrowest desktop band only. */
-@media (min-width:769px) and (max-width:860px){.nav__links{gap:15px}}
+/* AFMBP-2526: "About" (after Home) made it ~40px longer again at 769-820px; tighter gaps and a
+   slightly smaller link size in this band keep every link and the whole logo. */
+@media (min-width:769px) and (max-width:860px){.nav__links{gap:8px}.nav__links a{font-size:13px}}
 .nav__links a.nav__signin{color:var(--blue)}
 .nav__links a.nav__signin:hover{color:var(--blue)}
 
@@ -943,3 +945,69 @@ ul,ol{list-style:none}
 /* AFMBP-2525 — text for screen readers and search engines only (e.g. "Bolt Answering for
    Handymen:" at the start of each trade headline). It takes no space and paints nothing. */
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+
+/* ===================== ABOUT (AFMBP-2526, owner's Figma 2874:1629) =====================
+   The node is a 1920px-wide frame. --u is one of its pixels: 1px at 1920 wide, scaling with the window
+   down to .68px, so the body text never drops under 17px. Every size and offset below is the node's
+   number times --u, so the page keeps the node's proportions and line breaks at every desktop width.
+   The node has no phone frame; phones get one plain column (below). */
+.about{--u:clamp(.68px,.05208vw,1px);position:relative;overflow-x:clip;background:#fff;color:#707070}
+.about__inner{
+  position:relative;max-width:calc(1296 * var(--u) + 2 * var(--pad));margin:0 auto;
+  padding:calc(45 * var(--u)) var(--pad) calc(260 * var(--u));
+}
+.about__kicker{margin:0;color:var(--navy);font-size:calc(30 * var(--u));line-height:calc(49 * var(--u))}
+.about__title{position:relative;z-index:1;margin:calc(115 * var(--u)) 0 0 calc(-12 * var(--u))}
+.about__title .hero__never{font-size:calc(100 * var(--u));margin-right:calc(7 * var(--u));letter-spacing:0}
+/* The node's swoosh is longer and a bit thicker than the homepage's, tilted 4.94deg (NEVER is 5.68deg). */
+.about__title .hero__never::after{left:calc(-6 * var(--u));right:calc(-66 * var(--u));bottom:calc(-40 * var(--u));height:calc(31 * var(--u));transform:rotate(.74deg)}
+.about__title .hero__sub{position:relative;top:calc(-29 * var(--u));font-size:calc(50 * var(--u))}
+.about__body{
+  position:relative;z-index:1;max-width:calc(891 * var(--u));margin-top:calc(104 * var(--u));
+  font-size:calc(25 * var(--u));line-height:calc(30 * var(--u));
+}
+.about__body p{margin:0 0 calc(30 * var(--u))}
+.about__body strong{font-weight:700}
+/* The node spaces sections with blank 30px lines: two before a heading, one after (vertical margins
+   collapse, so a heading's top margin is the whole gap, not added to the paragraph's). */
+.about__h{
+  margin:calc(57 * var(--u)) 0 calc(28 * var(--u));color:var(--navy);font-weight:400;
+  font-size:calc(35 * var(--u));line-height:calc(30 * var(--u));
+}
+.about__h .marker{font-size:calc(45 * var(--u));letter-spacing:0;white-space:nowrap}
+.about__h--8{margin-bottom:calc(36 * var(--u))}
+.about__h--free{margin:calc(59 * var(--u)) 0 calc(50 * var(--u))}
+.about__list{margin:0 0 calc(65 * var(--u));padding-left:calc(37.5 * var(--u));list-style:decimal}
+.about__list--last{margin-bottom:calc(35 * var(--u))}
+.about__list--last li::marker{font-weight:700}  /* the node's numbers take each item's bold lead */
+.about__list li{margin-bottom:calc(8 * var(--u))}
+.about__list li:last-child{margin-bottom:0}
+.about__hear{display:flex;align-items:center;gap:calc(15 * var(--u));padding-left:calc(16 * var(--u))}
+.about__hear strong{flex-shrink:0}
+/* The node's button (309 x 49, 22px) at 1920; below that it never gets smaller than the site's own
+   "Talk to your new assistant" button (49px tall, 16px label). */
+.btn.about__talk{width:calc(309 * var(--u));min-width:calc(12em + 44px);height:49px;padding:0;font-size:max(16px,calc(22 * var(--u)));font-weight:400}
+/* The node's line art: 14% opacity, behind the text; two are mirrored. Offsets are from the column's left
+   edge and the section's top, in node pixels. */
+.about__art{position:absolute;z-index:0;opacity:.14;object-fit:cover;pointer-events:none;user-select:none}
+.about__art--man{left:calc(var(--pad) + 572 * var(--u));top:calc(373 * var(--u));width:calc(792 * var(--u));height:calc(528 * var(--u));transform:scaleX(-1)}
+.about__art--attic{left:calc(var(--pad) + 706 * var(--u));top:calc(1117 * var(--u));width:calc(704 * var(--u));height:calc(469 * var(--u));transform:scaleX(-1)}
+.about__art--woman{left:calc(var(--pad) + 718 * var(--u));top:calc(1728 * var(--u));width:calc(584 * var(--u));height:calc(534 * var(--u))}
+.about__art--wave{left:calc(var(--pad) + 741 * var(--u));top:calc(2433 * var(--u));width:calc(633 * var(--u));height:calc(461 * var(--u))}
+@media (max-width:768px){
+  .about__art{display:none}
+  .about__inner{padding:calc(clamp(30px,4vw,56px) + 40px) var(--pad) 40px}   /* room for the floating CTA, as on the home page */
+  .about__kicker{font-size:24px;line-height:32px}
+  .about__title{justify-content:flex-start;margin:26px 0 0}
+  .about__title .hero__never{font-size:clamp(38px,11vw,60px);margin-right:.1em}
+  .about__title .hero__never::after{left:-2%;right:-9%;bottom:-.22em;height:.22em;transform:none}
+  .about__title .hero__sub{top:0;font-size:clamp(19px,5.6vw,30px)}
+  .about__body{max-width:none;margin-top:34px;font-size:17px;line-height:1.45}
+  .about__body p{margin-bottom:18px}
+  .about__h{margin:34px 0 14px;font-size:23px;line-height:1.25}
+  .about__h .marker{font-size:29px}
+  .about__h--8{margin-bottom:14px}
+  .about__list{margin-bottom:18px;padding-left:24px}
+  .about__hear{flex-direction:column;align-items:flex-start;gap:12px;padding-left:0}
+  .btn.about__talk{width:auto;height:49px;padding:0 22px;font-size:16px}
+}

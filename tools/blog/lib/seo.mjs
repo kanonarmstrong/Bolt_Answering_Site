@@ -145,6 +145,7 @@ export function llmsTxt({ posts, pages }) {
     '',
     '## Product',
     `- [Home](${abs('/')}): what Bolt Answering does and how to get started`,
+    `- [About](${abs('/about/')})`,
     ...trade.map((p) => `- [${TRADE_NAMES[p.path] || p.path}](${abs(p.path)})`),
     `- [Support](${abs('/support/')})`,
   ];
