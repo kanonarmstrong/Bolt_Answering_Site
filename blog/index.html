@@ -44,8 +44,8 @@
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="/styles.css?v=53" />
-  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=5" />
-  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=5" />
+  <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=6" />
+  <link rel="stylesheet" href="/blog/assets/css/blog.css?v=6" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
@@ -95,11 +95,23 @@
     <div class="main-wrapper">
     <main class="content" id="main">
       <div class="masthead">
-        <picture>
-          <source type="image/webp" sizes="100vw" srcset="/blog/assets/img/blog-hero-800.webp 800w, /blog/assets/img/blog-hero-1600.webp 1600w, /blog/assets/img/blog-hero-2400.webp 2400w" />
-          <img class="masthead_bg" src="/blog/assets/img/blog-hero-1600.jpg" alt="" width="1600" height="272" />
-        </picture>
-        <div class="masthead_inner"><h1 class="masthead_title"><img src="/blog/assets/img/the-bottom-line.svg" alt="the bottom line" width="476" height="48" /></h1></div>
+        <div class="masthead_band">
+          <picture>
+            <source type="image/webp" sizes="100vw" srcset="/blog/assets/img/blog-hero-800.webp 800w, /blog/assets/img/blog-hero-1600.webp 1600w, /blog/assets/img/blog-hero-2400.webp 2400w" />
+            <img class="masthead_bg" src="/blog/assets/img/blog-hero-1600.jpg" alt="" width="1600" height="272" />
+          </picture>
+          <div class="masthead_inner"><h1 class="masthead_title"><img src="/blog/assets/img/the-bottom-line.svg" alt="the bottom line" width="476" height="48" /></h1></div>
+        </div>
+        <div class="masthead_search">
+          <div class="masthead_search_inner">
+            <form action="/blog/search/" method="get" role="search" class="msearch js-search">
+              <label class="visually-hidden" for="blog-q">Search posts</label>
+              <input type="search" id="blog-q" name="q" class="msearch_input" placeholder="Search posts" autocomplete="off" />
+              <button class="msearch_btn" aria-label="Search"><img src="/blog/assets/img/search.svg" alt="" width="23" height="23" /></button>
+              <div class="search_results" role="status" aria-live="polite" hidden></div>
+            </form>
+          </div>
+        </div>
       </div>
       <section class="section-post">
         <div class="wrapper">
@@ -121,29 +133,13 @@
                   </div>
                   <div class="article_txt">
                     <h2 class="article_title h2"><a href="/blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/">The 5 Most Profitable Handyman Jobs You Can Start Offering Today</a></h2>
-                    <p class="article_desc">If you are still taking every random job that comes your way, you are probably leaving money on the table. The handymen who earn the most tend to pick a small set of repeatable jobs, get fast at them, and let their…</p>
-                    <div class="article_btn"><a href="/blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/" class="btn" aria-label="Read: The 5 Most Profitable Handyman Jobs You Can Start Offering Today">Read more</a></div>
+                    <p class="article_desc">If you are still taking every random job that comes your way, you are probably leaving money on the table. The handymen who earn the most tend to pick a small set of repeatable jobs, get fast at them, and let their… <a href="/blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/" class="article_more" aria-label="Read more: The 5 Most Profitable Handyman Jobs You Can Start Offering Today">Read more</a></p>
                   </div>
                 </article>
               </div>
               
             </div>
             <aside class="columns_sidebar sidebar">
-              <div class="sidebar_search">
-                <form action="/blog/search/" method="get" role="search" class="js-search">
-                  <div class="search">
-                    <label class="visually-hidden" for="blog-q">Search the blog</label>
-                    <input type="search" id="blog-q" name="q" class="form-control" placeholder="Search the blog…" autocomplete="off" />
-                    <button class="btn" aria-label="Search"><span class="icon-search" aria-hidden="true"></span></button>
-                  </div>
-                </form>
-                <div class="search_results" role="status" aria-live="polite" hidden></div>
-              </div>
-              <div class="sidebar_widget sidebar_cta">
-                <h3>Never miss a job again</h3>
-                <p>Bolt does more than answer calls for independent pros. It handles scheduling, captures leads, and preps follow-ups so you can stay focused on doing a great job.</p>
-                <a href="https://app.boltanswering.com/signup" class="btn">Get started now</a>
-              </div>
               <div class="sidebar_widget">
                 <h3>Recent posts</h3>
                 <div class="stories">
@@ -191,6 +187,6 @@
 
   <script src="/pricing.js?v=7"></script>
   <script src="/script.js?v=29"></script>
-  <script defer src="/blog/assets/js/blog.js?v=5"></script>
+  <script defer src="/blog/assets/js/blog.js?v=6"></script>
 </body>
 </html>
