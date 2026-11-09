@@ -102,9 +102,13 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-bottom-line\.svg"/);
   assert.match(art, /class="breadcrumbs"/);
   assert.doesNotMatch(art, /class="pagetitle"/);
-  // Search lives in the masthead (one field per page); no sidebar search or sidebar CTA box.
+  // Search: one field in the masthead (desktop) and one right after Recent posts (phones), with
+  // distinct ids; no old sidebar search or sidebar CTA box.
   for (const page of [home, art]) {
-    assert.equal((page.match(/class="msearch js-search"/g) || []).length, 1, 'one masthead search form');
+    assert.equal((page.match(/class="msearch js-search"/g) || []).length, 2, 'masthead + sidebar search forms');
+    assert.match(page, /class="masthead_search"[\s\S]*id="blog-q"/);
+    assert.match(page, /<h3>Recent posts<\/h3>[\s\S]*?<div class="sidebar_widget sidebar_msearch">\s*<form[^>]*>[\s\S]*?id="blog-q-side"/);
+    assert.ok(page.indexOf('sidebar_msearch') < page.indexOf('<h3>Categories</h3>') || !page.includes('<h3>Categories</h3>'), 'phone search sits before Categories');
     assert.match(page, /<form action="\/blog\/search\/" method="get" role="search"/);
     assert.doesNotMatch(page, /sidebar_search|sidebar_cta|Never miss a job again/);
   }

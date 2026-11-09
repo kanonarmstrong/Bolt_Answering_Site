@@ -36,12 +36,14 @@
     }).join('') + '</ul>';
   }
 
-  var form = document.querySelector('.js-search');
-  var input = form && form.querySelector('input[name="q"]');
-  var live = document.querySelector('.search_results');
+  // Every search field on the page (masthead on desktop, under Recent posts on phones).
+  var forms = Array.prototype.slice.call(document.querySelectorAll('.js-search'));
   var pageResults = document.querySelector('.search_page_results');
-  var timer;
-  if (input && live && !pageResults) {
+  if (!pageResults) forms.forEach(function (form) {
+    var input = form.querySelector('input[name="q"]');
+    var live = form.querySelector('.search_results');
+    var timer;
+    if (!input || !live) return;
     input.addEventListener('input', function () {
       clearTimeout(timer);
       var q = input.value.trim();
@@ -50,10 +52,10 @@
         loadIndex().then(function (index) { live.innerHTML = render(search(index, q), q, 5); live.hidden = false; });
       }, 150);
     });
-  }
+  });
   if (pageResults) {
     var q = new URLSearchParams(location.search).get('q') || '';
-    if (input) input.value = q;
+    forms.forEach(function (f) { var i = f.querySelector('input[name="q"]'); if (i) i.value = q; });
     var empty = document.querySelector('.js-search-empty');
     if (q.trim()) {
       if (empty) empty.hidden = true;
@@ -71,19 +73,22 @@
 (function () {
   'use strict';
   var cta = document.querySelector('.floating-cta');
-  var field = document.querySelector('.msearch');
-  if (!cta || !field) return;
+  var fields = Array.prototype.slice.call(document.querySelectorAll('.msearch'));
+  if (!cta || !fields.length) return;
   var focused = false;
   function overlaps(a, b) { return a.width && b.width && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom; }
   function update() {
-    var hide = focused || overlaps(cta.getBoundingClientRect(), field.getBoundingClientRect());
+    var c = cta.getBoundingClientRect();
+    var hide = focused || fields.some(function (f) { return overlaps(c, f.getBoundingClientRect()); });
     cta.classList.toggle('cta-hide', hide);
   }
   window.addEventListener('scroll', update, { passive: true });
   window.addEventListener('resize', update);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', update);
   cta.addEventListener('transitionend', update);
-  field.addEventListener('focusin', function () { focused = true; update(); });
-  field.addEventListener('focusout', function () { focused = false; update(); });
+  fields.forEach(function (f) {
+    f.addEventListener('focusin', function () { focused = true; update(); });
+    f.addEventListener('focusout', function () { focused = false; update(); });
+  });
   update();
 })();
