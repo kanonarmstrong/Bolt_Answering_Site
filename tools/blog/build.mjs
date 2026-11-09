@@ -120,7 +120,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       description: c.description || `Bolt blog posts about ${c.name.toLowerCase()} for independent trades pros.`,
       canonical: abs(categoryPath(c.slug)),
       jsonLd: [breadcrumbJsonLd(crumbs)],
-      body: chrome(listPage({ heading: c.name, crumbs, posts: inCat, current: 1, total: 1, recent, categories, intro: c.description })),
+      body: chrome(listPage({ heading: c.name, posts: inCat, current: 1, total: 1, recent, categories, intro: c.description })),
     }));
   }
 
