@@ -2,7 +2,7 @@
 
 export const SITE_URL = 'https://www.boltanswering.com';
 export const BLOG_PATH = '/blog/';
-export const SITE_NAME = 'Bolt';
+export const SITE_NAME = 'Bolt Answering';
 export const PUBLISHER_LEGAL_NAME = 'hlpr inc.';
 export const LOGO_URL = `${SITE_URL}/assets/logo.png`;
 export const POSTS_PER_PAGE = 10;

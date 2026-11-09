@@ -189,3 +189,46 @@ test('AFMBP-2273: reapply writes the LAST numbers applied into hooks added since
   assert.equal(String(nodes['.js-td'][0].textContent), '14');
   assert.equal(nodes['.js-retail'][0].textContent, '$59.99');
 });
+
+/* AFMBP-2525 — the homepage's structured data (JSON-LD) states the offer the chevron shows. */
+const LD_RE = /<script type="application\/ld\+json" class="js-ld-offer">([\s\S]*?)<\/script>/;
+const appNode = (ld) => ld['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+const ldDoc = (script) => ({ readyState: 'complete', querySelectorAll: (sel) => (sel === 'script.js-ld-offer' ? [script] : []) });
+
+test('AFMBP-2525: the JSON-LD baked into index.html carries offerLd(FALLBACK)', () => {
+  const m = readFileSync('index.html', 'utf8').match(LD_RE);
+  assert.ok(m, 'index.html has the js-ld-offer JSON-LD');
+  assert.deepEqual(appNode(JSON.parse(m[1])).offers, P.offerLd(P.FALLBACK));
+  const o = P.offerLd(P.FALLBACK);
+  assert.equal(o.price, 59);
+  assert.equal(o.priceCurrency, 'USD');
+  assert.equal(o.description, '30-day free trial. Then $59/month for the first month, and $79/month after that. ' +
+    'Includes 750 messages and 400 minutes per cycle, then $0.12/minute and $0.01/message.');
+});
+
+test('AFMBP-2525: the feed rewrites the JSON-LD offer, and only the offer', () => {
+  const raw = readFileSync('index.html', 'utf8').match(LD_RE)[1];
+  const before = JSON.parse(raw);
+  const script = { textContent: raw };
+  P.apply(ldDoc(script), FEED);
+  const after = JSON.parse(script.textContent);
+  assert.deepEqual(appNode(after).offers, P.offerLd(FEED));
+  assert.equal(appNode(after).offers.price, 39.99);
+  assert.match(appNode(after).offers.description, /^14-day free trial\. Then \$39\.99\/month for the first 6 months, and \$59\.99\/month after that\./);
+  for (const n of before['@graph']) {
+    if (n['@type'] !== 'SoftwareApplication') assert.deepEqual(after['@graph'].find((x) => x['@id'] === n['@id']), n);
+  }
+  const { offers: _a, ...appAfter } = appNode(after);
+  const { offers: _b, ...appBefore } = appNode(before);
+  assert.deepEqual(appAfter, appBefore);
+});
+
+test('AFMBP-2525: no trial and no promo are stated as such (0 is real); bad JSON-LD is left alone', () => {
+  const o = P.offerLd({ ...P.FALLBACK, trialDays: 0, promoMonths: 0 });
+  assert.equal(o.price, 79);
+  assert.equal(o.description, '$79/month. Includes 750 messages and 400 minutes per cycle, then $0.12/minute and $0.01/message.');
+  assert.deepEqual(o.priceSpecification.map((s) => s.name), ['Regular price']);
+  const script = { textContent: '{not json' };
+  assert.doesNotThrow(() => P.apply(ldDoc(script), FEED));
+  assert.equal(script.textContent, '{not json');
+});

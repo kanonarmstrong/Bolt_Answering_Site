@@ -46,7 +46,7 @@ export function blogJsonLd(posts) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Blog',
-    name: 'Bolt blog',
+    name: 'Bolt Answering blog',
     url: abs(BLOG_PATH),
     publisher: PUBLISHER,
     blogPost: posts.slice(0, 20).map((p) => ({ '@type': 'BlogPosting', headline: p.title.slice(0, 110), url: abs(postPath(p.slug)), datePublished: p.datePublished })),
@@ -105,10 +105,10 @@ ${p.categories.map((c) => `      <category>${escXml(c.name)}</category>`).join('
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Bolt blog</title>
+    <title>Bolt Answering blog</title>
     <link>${abs(BLOG_PATH)}</link>
     <atom:link href="${abs('/blog/feed.xml')}" rel="self" type="application/rss+xml" />
-    <description>Practical advice for independent HVAC, plumbing, and electrical pros, from Bolt.</description>
+    <description>Practical advice for independent HVAC, plumbing, and electrical pros, from Bolt Answering.</description>
     <language>en-us</language>
 ${posts[0] ? `    <lastBuildDate>${new Date(posts[0].dateModified).toUTCString()}</lastBuildDate>\n` : ''}${items.join('\n')}
   </channel>
@@ -137,12 +137,14 @@ const TRADE_NAMES = { '/hvac.html': 'HVAC', '/plumbing.html': 'Plumbing', '/elec
 export function llmsTxt({ posts, pages }) {
   const trade = pages.filter((p) => /^\/(hvac|plumbing|electrical|handyman|general-contractor)\.html$/.test(p.path));
   const lines = [
-    '# Bolt',
+    '# Bolt Answering',
     '',
-    '> Bolt (Bolt Answering) is a smart assistant for independent HVAC, plumbing, electrical, handyman, and general contracting pros. It answers the calls you miss, books jobs into your calendar, and texts you the details, in English or Spanish.',
+    '> Bolt Answering is a smart assistant for independent HVAC, plumbing, electrical, handyman, and general contracting pros. It answers the calls you miss, books jobs into your calendar, and texts you the details, in English or Spanish.',
+    '',
+    "Bolt Answering is an independent product at boltanswering.com and isn't affiliated with other companies that use the name Bolt.",
     '',
     '## Product',
-    `- [Home](${abs('/')}): what Bolt does and how to get started`,
+    `- [Home](${abs('/')}): what Bolt Answering does and how to get started`,
     ...trade.map((p) => `- [${TRADE_NAMES[p.path] || p.path}](${abs(p.path)})`),
     `- [Support](${abs('/support/')})`,
   ];
