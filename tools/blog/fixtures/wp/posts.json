@@ -9,7 +9,7 @@
     "content": { "rendered": "<!-- wp:paragraph --><p>Intro paragraph with a <a href=\"https://cms.example.test/why-pe-buys-shops/\">link to another post</a> and an <a href=\"https://example.org\" target=\"_blank\">outside link</a>.</p><!-- /wp:paragraph --><h1>Stray H1 in content</h1><figure class=\"wp-block-image\"><img src=\"media/inline-1.jpg\" alt=\"A yellow test image\" class=\"wp-image-9\" srcset=\"x 1x\"/></figure><p><img src=\"media/inline-1.jpg\" alt=\"\"/></p><p><img src=\"https://evil.example.com/x.jpg\" alt=\"bad host\"/></p><script>alert(1)</script><p onclick=\"x()\">Clickable?</p><p></p><h2>FAQ</h2><h3>Can I keep my number?</h3><p>Yes. You forward it.</p><p><strong>Does it work after hours?</strong><br>It answers nights and weekends.</p>" },
     "categories": [4], "meta": { "bolt_seo_title": "Answer Every Call, Even After Hours", "bolt_seo_description": "" },
     "_embedded": {
-      "author": [{ "name": "Kanon Armstrong", "slug": "kanon", "description": "Founder of Bolt." }],
+      "author": [{ "name": "Kanon Armstrong", "slug": "kanon", "description": "Founder of Bolt.", "avatar_urls": { "24": "media/avatar.png", "48": "media/avatar.png", "96": "media/avatar.png" } }],
       "wp:featuredmedia": [{ "source_url": "media/cover-1.jpg", "alt_text": "Blue cover", "media_details": { "width": 1800, "height": 1000 } }],
       "wp:term": [[{ "taxonomy": "category", "id": 4 }], [{ "taxonomy": "post_tag", "name": "After hours", "slug": "after-hours" }]]
     }

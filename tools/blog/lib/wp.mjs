@@ -94,7 +94,7 @@ export function normalize({ posts, categories }) {
         dateModified: new Date(p.modified_gmt ? `${p.modified_gmt}Z` : p.modified || p.date).toISOString(),
         categories: (p.categories || []).map((id) => catById.get(id)).filter(Boolean),
         tags,
-        author: { name: author?.name || 'Bolt Team', description: stripTags(author?.description || ''), slug: author?.slug || 'bolt' },
+        author: { name: author?.name || 'Bolt Team', description: stripTags(author?.description || ''), slug: author?.slug || 'bolt', avatar: author?.avatar_urls?.['96'] || null },
         image: media && media.source_url
           ? { src: media.source_url, alt: (media.alt_text || '').trim(), width: media.media_details?.width, height: media.media_details?.height }
           : null,
