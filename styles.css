@@ -112,7 +112,9 @@ ul,ol{list-style:none}
 .nav__links a:hover{color:var(--gray)}
 /* The Community dropdown made the row ~10px longer than the bar at 769-780px, squeezing the logo
    (tools/nav-logo-check.mjs). Tighten the link gaps in the narrowest desktop band only. */
-@media (min-width:769px) and (max-width:860px){.nav__links{gap:15px}}
+/* AFMBP-2526: "About" (after Home) made it ~40px longer again at 769-820px; tighter gaps and a
+   slightly smaller link size in this band keep every link and the whole logo. */
+@media (min-width:769px) and (max-width:860px){.nav__links{gap:8px}.nav__links a{font-size:13px}}
 .nav__links a.nav__signin{color:var(--blue)}
 .nav__links a.nav__signin:hover{color:var(--blue)}
 
