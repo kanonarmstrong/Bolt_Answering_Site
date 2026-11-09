@@ -8,21 +8,20 @@
 //   - the <title> names "Bolt Answering", and no JSON-LD on the page carries a rating or a review;
 // the homepage:
 //   - the owner's title and description (the trial length is pricing.js's FALLBACK);
-//   - the first paragraph under the H1 names Bolt Answering and the trades, not "schedules consultations";
+//   - the first paragraph under the H1 is still the owner's own (owner, 11-09: "leave this copy alone");
 //   - one JSON-LD block (Organization, WebSite, SoftwareApplication) with the owner's names, legal name and
 //     profiles, operatingSystem "Web" (iOS joins in December: AFMBP-2528), and an offer equal to pricing.js's
 //     offerLd(FALLBACK); the logo it points to exists;
 // the trade pages:
 //   - "Bolt Answering for <Trade>" in the title and, screen-reader-only, at the start of the H1; phones hide the
 //     H1 and show a baked image, so its alt text opens with the same words;
-//   - the meta description names Bolt Answering;
-// the footers (home + trades): "© 2026 Bolt Answering · hlpr inc.", never the old "© 2026 hlpr inc.", and the
+// the footers (home + trades): the owner's "© 2026 hlpr inc." (unchanged), and the
 //   Facebook and Instagram icons link to the same two profiles as sameAs;
-// styles.css hides .sr-only text (1px, clipped, out of flow); llms.txt opens "# Bolt Answering" and says we are
+// privacy and terms name the company "hlpr inc."; styles.css hides .sr-only text (1px, clipped, out of flow); llms.txt opens "# Bolt Answering" and says we are
 // independent; the blog generator names the site "Bolt Answering" (and, live, every blog page in the sitemap does).
 // Run: node tools/brand-entity-check.mjs [siteRoot]
 //      BASE=https://www.boltanswering.com node tools/brand-entity-check.mjs     the same checks on the live site
-//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|llms   negative controls on
+//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|legal|llms   negative controls on
 //      the copy read (file or live); each must FAIL.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -38,8 +37,9 @@ const LOGO = `${SITE}/assets/logo.png`;
 const ALT_NAMES = ['BoltAnswering', 'Bolt Answering AI'];
 const SAME_AS = ['https://www.facebook.com/profile.php?id=61590229919739', 'https://www.instagram.com/boltanswering/'];
 const TRADES = { 'handyman.html': 'Handymen', 'plumbing.html': 'Plumbers', 'electrical.html': 'Electricians', 'hvac.html': 'HVAC Pros', 'general-contractor.html': 'General Contractors' };
-const LEAD = 'Bolt Answering is a smart assistant for handymen, plumbers, electricians, HVAC pros and general contractors.';
-const FOOTER = '<p class="footer__copy">&copy; 2026 Bolt Answering &middot; hlpr inc.</p>';
+const LEAD = 'Bolt does more than answer calls for independent pros. It books jobs, schedules consultations, captures leads, sets up follow-ups, and handles your schedule so you can focus on your work.';
+const ORG_DESC = 'Bolt Answering is an AI phone answering service for solo tradespeople. It answers every call, books jobs and follows up.';
+const FOOTER = '<p class="footer__copy">&copy; 2026 hlpr inc.</p>';
 const INDEPENDENT = "Bolt Answering is an independent product at boltanswering.com and isn't affiliated with other companies that use the name Bolt.";
 
 // ---------- reading: files, or the live site ----------
@@ -84,10 +84,11 @@ function mutate(file, s) {
   if (NC === 'sameas' && file === 'index.html') return swap('"https://www.instagram.com/boltanswering/"', '"https://www.instagram.com/boltanswering/", "https://www.linkedin.com/company/bolt"');
   if (NC === 'mobilealt' && file === 'general-contractor.html') return swap('alt="Bolt Answering for General Contractors: ', 'alt="');
   if (NC === 'social' && file === 'electrical.html') return swap('<a href="https://www.instagram.com/boltanswering/" class="footer__icon"', '<a href="#" class="footer__icon"');
+  if (NC === 'legal' && file === 'terms/index.html') return swap('refers to hlpr inc., 9180', 'refers to hlpr, 9180');
   if (NC === 'srspan' && file === 'plumbing.html') return swap('<span class="sr-only">Bolt Answering for Plumbers: </span>', '');
   if (NC === 'srcss' && file === 'styles.css') return re(/\n\.sr-only\{[^}]*\}/, '');
-  if (NC === 'footer' && file === 'hvac.html') return swap(FOOTER, '<p class="footer__copy">&copy; 2026 hlpr inc.</p>');
-  if (NC === 'lead' && file === 'index.html') return re(/(<p class="hero__lead[^>]*>)[^<]*/, '$1Bolt does more than answer calls for independent pros. It books jobs, schedules consultations, captures leads.');
+  if (NC === 'footer' && file === 'hvac.html') return swap(FOOTER, '<p class="footer__copy">&copy; 2026 Bolt Answering &middot; hlpr inc.</p>');
+  if (NC === 'lead' && file === 'index.html') return re(/(<p class="hero__lead[^>]*>)[^<]*/, '$1Bolt Answering is a smart assistant for handymen, plumbers, electricians, HVAC pros and general contractors.');
   if (NC === 'llms' && file === 'llms.txt') return swap('# Bolt Answering\n', '# Bolt\n');
   return s;
 }
@@ -152,10 +153,9 @@ for (const page of pages) {
   if (page === 'index.html') {
     check('home: the owner\'s title', () => assert.equal(title, HOME_TITLE));
     check('home: the owner\'s description (trial length = pricing.js FALLBACK)', () => assert.equal(desc, HOME_DESC));
-    check('home: the first paragraph under the H1 names Bolt Answering and the trades', () => {
+    check('home: the first paragraph under the H1 is the owner\'s, unchanged', () => {
       const lead = (html.match(/<p class="hero__lead[^>]*>([^<]*)<\/p>/) || [])[1] || '';
-      assert.ok(lead.startsWith(LEAD), `lead "${lead.slice(0, 80)}"`);
-      assert.ok(!/consultation/i.test(lead));
+      assert.equal(lead, LEAD);
       assert.ok(html.indexOf('hero__lead') > html.indexOf('</h1>'), 'the paragraph comes after the H1');
     });
     const docs = jsonLd(html);
@@ -187,7 +187,7 @@ for (const page of pages) {
       assert.equal(a.name, NAME);
       assert.equal(a.applicationCategory, 'BusinessApplication');
       assert.equal(a.operatingSystem, 'Web');
-      assert.ok(a.description?.startsWith(LEAD));
+      assert.equal(a.description, ORG_DESC);
     });
     check('home JSON-LD: the offer is pricing.js offerLd(FALLBACK) (the price the page shows)', () =>
       assert.deepEqual(JSON.parse(JSON.stringify(node('SoftwareApplication').offers)), JSON.parse(JSON.stringify(P.offerLd(P.FALLBACK)))));
@@ -204,7 +204,6 @@ for (const page of pages) {
     check(`${page}: title "Bolt Answering for ${noun} …"`, () => assert.ok(title?.startsWith(`${NAME} for ${noun} `), `title "${title}"`));
     check(`${page}: the H1 opens with screen-reader-only "Bolt Answering for ${noun}: "`, () =>
       assert.ok(html.includes(`<h1 class="tphero__title rv" data-rd="120"><span class="sr-only">${NAME} for ${noun}: </span>`)));
-    check(`${page}: the meta description names ${NAME}`, () => assert.ok(desc?.includes(NAME), `desc "${desc}"`));
     check(`${page}: phones show a baked hero image instead of the H1; its alt opens with "Bolt Answering for ${noun}: "`, () =>
       assert.match(html, new RegExp(`<img class="tphero__mobileimg" src="[^"]*" alt="${NAME} for ${noun}: `)));
   }
@@ -212,11 +211,13 @@ for (const page of pages) {
     check(`${page}: the footer's Facebook and Instagram icons link to the sameAs profiles`, () => {
       assert.deepEqual(attr(html, /<a href="([^"]*)" class="footer__icon"/g), SAME_AS);
     });
-    check(`${page}: footer "© 2026 Bolt Answering · hlpr inc."`, () => {
-      assert.ok(html.includes(FOOTER));
-      assert.ok(!html.includes('&copy; 2026 hlpr inc.'));
-    });
+    check(`${page}: footer is the owner's "© 2026 hlpr inc."`, () => assert.ok(html.includes(FOOTER)));
   }
+}
+
+for (const [file, words] of [['privacy/index.html', 'means hlpr inc., 9180 Alcosta'], ['terms/index.html', 'refers to hlpr inc., 9180 Alcosta']]) {
+  const h = await read(file);
+  check(`${file}: the company is "hlpr inc." (owner, 11-09)`, () => assert.ok(h.includes(words)));
 }
 
 const css = await read('styles.css');
