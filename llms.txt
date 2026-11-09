@@ -6,6 +6,7 @@ Bolt Answering is an independent product at boltanswering.com and isn't affiliat
 
 ## Product
 - [Home](https://www.boltanswering.com/): what Bolt Answering does and how to get started
+- [About](https://www.boltanswering.com/about/)
 - [Electrical](https://www.boltanswering.com/electrical.html)
 - [General contracting](https://www.boltanswering.com/general-contractor.html)
 - [Handyman](https://www.boltanswering.com/handyman.html)

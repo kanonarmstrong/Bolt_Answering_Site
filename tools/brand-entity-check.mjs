@@ -21,7 +21,7 @@
 // independent; the blog generator names the site "Bolt Answering" (and, live, every blog page in the sitemap does).
 // Run: node tools/brand-entity-check.mjs [siteRoot]
 //      BASE=https://www.boltanswering.com node tools/brand-entity-check.mjs     the same checks on the live site
-//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|legal|llms   negative controls on
+//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|legal|llms|aboutnav|aboutdup|aboutfooter|abouth1|aboutcopy|aboutld|sitemap   negative controls on
 //      the copy read (file or live); each must FAIL.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -85,6 +85,13 @@ function mutate(file, s) {
   if (NC === 'mobilealt' && file === 'general-contractor.html') return swap('alt="Bolt Answering for General Contractors: ', 'alt="');
   if (NC === 'social' && file === 'electrical.html') return swap('<a href="https://www.instagram.com/boltanswering/" class="footer__icon"', '<a href="#" class="footer__icon"');
   if (NC === 'legal' && file === 'terms/index.html') return swap('refers to hlpr inc., 9180', 'refers to hlpr, 9180');
+  if (NC === 'aboutdup' && file === 'about/index.html') return swap('<a href="/about/" aria-current="page">About</a>\n', '<a href="/about/" aria-current="page">About</a>\n      <a href="/about/">About</a>\n');
+  if (NC === 'aboutnav' && file === 'support/index.html') return swap('<li><a href="/about/">About</a></li>', '');
+  if (NC === 'aboutfooter' && file === 'hvac.html') return swap('<a href="/about/">About</a>', '');
+  if (NC === 'abouth1' && file === 'about/index.html') return swap('<span class="sr-only">About Bolt Answering: </span>', '');
+  if (NC === 'aboutcopy' && file === 'about/index.html') return swap('Bolt has a smaller job', 'Bolt Answering has a smaller job');
+  if (NC === 'aboutld' && file === 'about/index.html') return swap('"@id": "https://www.boltanswering.com/#organization"', '"@id": "https://www.boltanswering.com/#org"');
+  if (NC === 'sitemap' && file === 'sitemap.xml') return swap('  <url><loc>https://www.boltanswering.com/about/</loc></url>\n', '');
   if (NC === 'srspan' && file === 'plumbing.html') return swap('<span class="sr-only">Bolt Answering for Plumbers: </span>', '');
   if (NC === 'srcss' && file === 'styles.css') return re(/\n\.sr-only\{[^}]*\}/, '');
   if (NC === 'footer' && file === 'hvac.html') return swap(FOOTER, '<p class="footer__copy">&copy; 2026 Bolt Answering &middot; hlpr inc.</p>');
@@ -199,6 +206,36 @@ for (const page of pages) {
     }
   }
 
+  check(`${page}: at most one About link in the nav and one in the footer`, () =>
+    assert.equal((html.match(/href="\/about\/"/g) || []).length, (html.includes('class="nav__links"') ? 1 : 0) + (html.includes('class="footer__menu"') ? 1 : 0)));
+  if (html.includes('class="nav__links"')) {
+    check(`${page}: the nav links to /about/ right after Home`, () =>
+      assert.match(html, /<li><a href="(?:#top|index\.html|\/)">Home<\/a><\/li>\s*<li><a href="\/about\/"( aria-current="page")?>About<\/a><\/li>/));
+  }
+  if (html.includes('class="footer__menu"')) {
+    check(`${page}: the footer links to /about/ right after Home`, () =>
+      assert.match(html, /<a href="(?:#top|index\.html|\/)">Home<\/a>\s*<a href="\/about\/"( aria-current="page")?>About<\/a>/));
+  }
+  if (page === 'about/index.html') {
+    check('about: title "About Bolt Answering — Never miss a job again"', () => assert.equal(title, 'About Bolt Answering — Never miss a job again'));
+    check('about: the description is the owner\'s homepage description, verbatim', () => assert.equal(desc, HOME_DESC));
+    check('about: the H1 opens with screen-reader-only "About Bolt Answering: "', () =>
+      assert.ok(html.includes('<h1 class="hero__title about__title"><span class="sr-only">About Bolt Answering: </span>')));
+    check('about: AboutPage JSON-LD points at the homepage\'s Organization and WebSite', () => {
+      const d = jsonLd(html);
+      assert.equal(d.length, 1);
+      assert.equal(d[0]['@type'], 'AboutPage');
+      assert.equal(d[0].url, canon);
+      assert.deepEqual(d[0].about, { '@id': `${SITE}/#organization` });
+      assert.deepEqual(d[0].isPartOf, { '@id': `${SITE}/#website` });
+    });
+    check('about: the nav and footer mark About as the current page', () => assert.equal((html.match(/<a href="\/about\/" aria-current="page">About<\/a>/g) || []).length, 2));
+    check('about: the owner\'s node copy, verbatim (first paragraph; 6 + 5 list items; the trial length follows pricing.js)', () => {
+      assert.ok(html.includes('<p>When the heat goes out in January or a pipe lets go on a Sunday, a family calls you. That trust took years to earn, and no assistant replaces it. Bolt has a smaller job: make sure that call reaches you.</p>'));
+      assert.deepEqual([...html.matchAll(/<ol class="about__list[^"]*">([\s\S]*?)<\/ol>/g)].map((m) => (m[1].match(/<li>/g) || []).length), [6, 5]);
+      assert.equal((html.match(/<span class="js-td">30<\/span>/g) || []).length, 3);
+    });
+  }
   if (TRADES[page]) {
     const noun = TRADES[page];
     check(`${page}: title "Bolt Answering for ${noun} …"`, () => assert.ok(title?.startsWith(`${NAME} for ${noun} `), `title "${title}"`));
@@ -207,7 +244,7 @@ for (const page of pages) {
     check(`${page}: phones show a baked hero image instead of the H1; its alt opens with "Bolt Answering for ${noun}: "`, () =>
       assert.match(html, new RegExp(`<img class="tphero__mobileimg" src="[^"]*" alt="${NAME} for ${noun}: `)));
   }
-  if (page === 'index.html' || TRADES[page]) {
+  if (page === 'index.html' || TRADES[page] || page === 'about/index.html') {
     check(`${page}: the footer's Facebook and Instagram icons link to the sameAs profiles`, () => {
       assert.deepEqual(attr(html, /<a href="([^"]*)" class="footer__icon"/g), SAME_AS);
     });
@@ -227,7 +264,11 @@ check('styles.css: .sr-only takes no space and paints nothing', () => {
     assert.ok(rule.includes(d), `missing ${d}`);
 });
 
+const sitemap = await read('sitemap.xml');
+check('sitemap.xml lists /about/ (the blog build adds every indexable page; this line is the same)', () =>
+  assert.ok(sitemap.includes('<url><loc>https://www.boltanswering.com/about/</loc></url>')));
 const llms = await read('llms.txt');
+check('llms.txt lists the About page', () => assert.ok(llms.includes('- [About](https://www.boltanswering.com/about/)\n')));
 check('llms.txt opens "# Bolt Answering" and says we are independent', () => {
   assert.ok(llms.startsWith('# Bolt Answering\n'));
   assert.ok(llms.includes(INDEPENDENT));
