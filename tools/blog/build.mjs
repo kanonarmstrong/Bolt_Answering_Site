@@ -101,7 +101,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
     listPaths.push(path);
     const crumbs = n === 1 ? [home, { name: 'Blog' }] : [home, blogCrumb, { name: `Page ${n}` }];
     write(`${path.slice(1)}index.html`, layout({
-      title: n === 1 ? 'Bolt blog: practical advice for independent trades pros' : `Bolt blog, page ${n}`,
+      title: n === 1 ? 'Bolt Answering blog: practical advice for independent trades pros' : `Bolt Answering blog, page ${n}`,
       description: 'Practical, sourced advice for independent HVAC, plumbing, and electrical pros on missed calls, booking, pricing, and growing a trades business.',
       canonical: abs(path),
       prev: n > 1 ? abs(pagePath(n - 1)) : undefined,
@@ -116,8 +116,8 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
     const inCat = posts.filter((p) => p.categories.some((pc) => pc.slug === c.slug));
     const crumbs = [home, blogCrumb, { name: c.name }];
     write(`${categoryPath(c.slug).slice(1)}index.html`, layout({
-      title: `${c.name} | Bolt blog`,
-      description: c.description || `Bolt blog posts about ${c.name.toLowerCase()} for independent trades pros.`,
+      title: `${c.name} | Bolt Answering blog`,
+      description: c.description || `Bolt Answering blog posts about ${c.name.toLowerCase()} for independent trades pros.`,
       canonical: abs(categoryPath(c.slug)),
       jsonLd: [breadcrumbJsonLd(crumbs)],
       body: chrome(listPage({ heading: c.name, posts: inCat, current: 1, total: 1, recent, categories, intro: c.description })),
@@ -131,7 +131,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
     const related = posts.filter((o) => o.slug !== p.slug && (!cat || o.categories.some((oc) => oc.slug === cat.slug))).slice(0, 3);
     const fill = related.length < 3 ? posts.filter((o) => o.slug !== p.slug && !related.includes(o)).slice(0, 3 - related.length) : [];
     write(`${postPath(p.slug).slice(1)}index.html`, layout({
-      title: `${p.seoTitle} | Bolt`,
+      title: `${p.seoTitle} | Bolt Answering`,
       description: p.description,
       canonical: abs(postPath(p.slug)),
       ogType: 'article',
@@ -145,8 +145,8 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
 
   // Search (client-side, over a small JSON index). Not indexed: it has no content of its own.
   if (hasPosts) write('blog/search/index.html', layout({
-    title: 'Search the Bolt blog',
-    description: 'Search Bolt blog posts.',
+    title: 'Search the Bolt Answering blog',
+    description: 'Search Bolt Answering blog posts.',
     canonical: abs('/blog/search/'),
     robots: 'noindex, follow',
     body: chrome(searchPage({ recent, categories })),

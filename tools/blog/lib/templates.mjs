@@ -49,7 +49,7 @@ export function layout({ chrome, title, description, canonical, ogType = 'websit
   <meta name="description" content="${esc(description)}" />
   <meta name="robots" content="${robots}" />
   <link rel="canonical" href="${esc(canonical)}" />${prev ? `\n  <link rel="prev" href="${esc(prev)}" />` : ''}${next ? `\n  <link rel="next" href="${esc(next)}" />` : ''}
-  <link rel="alternate" type="application/rss+xml" title="Bolt blog" href="/blog/feed.xml" />
+  <link rel="alternate" type="application/rss+xml" title="Bolt Answering blog" href="/blog/feed.xml" />
   <meta property="og:site_name" content="${SITE_NAME}" />
   <meta property="og:type" content="${ogType}" />
   <meta property="og:title" content="${esc(title)}" />

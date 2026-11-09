@@ -939,3 +939,7 @@ ul,ol{list-style:none}
   .tpcapes__bg,.tpcapes__overlay,.tpcapes__inner,.tpcapes__phone{display:none}
   .tpcapes__mobileimg{display:block;width:100%;height:auto}
 }
+
+/* AFMBP-2525 — text for screen readers and search engines only (e.g. "Bolt Answering for
+   Handymen:" at the start of each trade headline). It takes no space and paints nothing. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}

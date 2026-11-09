@@ -64,6 +64,44 @@
     for (var i = 0; i < list.length; i++) fn(list[i]);
   }
 
+  // AFMBP-2525 — the homepage's structured data (JSON-LD) states the same offer
+  // as the chevron, so search engines read the price the page shows. The JSON-LD
+  // baked into index.html carries offerLd(FALLBACK) (pinned by pricing.test.mjs),
+  // and apply() rewrites it from the feed like every other price on the page.
+  function offerLd(p) {
+    var promo = num(p.promoPriceUsd, FALLBACK.promoPriceUsd);
+    var retail = num(p.retailPriceUsd, FALLBACK.retailPriceUsd);
+    var months = num(p.promoMonths, FALLBACK.promoMonths);
+    var days = num(p.trialDays, FALLBACK.trialDays);
+    var minutes = num(p.minutesIncluded, FALLBACK.minutesIncluded);
+    var messages = num(p.messagesIncluded, FALLBACK.messagesIncluded);
+    var hasPromo = months > 0 && promo !== retail;
+    var spec = [];
+    var said = [];
+    if (days > 0) {
+      spec.push({ '@type': 'UnitPriceSpecification', name: 'Free trial', price: 0, priceCurrency: 'USD', unitCode: 'DAY', billingDuration: days });
+      said.push(days + '-day free trial.');
+    }
+    if (hasPromo) {
+      spec.push({ '@type': 'UnitPriceSpecification', name: 'Promo price', price: promo, priceCurrency: 'USD', unitCode: 'MON', billingDuration: months });
+      said.push((days > 0 ? 'Then ' : '') + money(promo) + '/month for the first ' + (months === 1 ? 'month' : months + ' months') +
+        ', and ' + money(retail) + '/month after that.');
+    } else {
+      said.push((days > 0 ? 'Then ' : '') + money(retail) + '/month.');
+    }
+    spec.push({ '@type': 'UnitPriceSpecification', name: 'Regular price', price: retail, priceCurrency: 'USD', unitCode: 'MON' });
+    said.push('Includes ' + messages + ' messages and ' + minutes + ' minutes per cycle, then ' +
+      money(num(p.perMinuteUsd, FALLBACK.perMinuteUsd)) + '/minute and ' + money(num(p.perMessageUsd, FALLBACK.perMessageUsd)) + '/message.');
+    return {
+      '@type': 'Offer',
+      price: hasPromo ? promo : retail,
+      priceCurrency: 'USD',
+      url: 'https://app.boltanswering.com/signup',
+      description: said.join(' '),
+      priceSpecification: spec
+    };
+  }
+
   // The numbers last applied (the fallback, then the feed once it answers).
   var last = FALLBACK;
 
@@ -132,6 +170,19 @@
     each(doc, '.chev-mobile', function (el) {
       el.setAttribute('aria-label', aria);
     });
+
+    // The homepage's structured data (AFMBP-2525): every node with an offer gets
+    // the same offer the chevron shows. Bad JSON leaves the baked copy alone.
+    each(doc, 'script.js-ld-offer', function (el) {
+      try {
+        var data = JSON.parse(el.textContent);
+        var nodes = data['@graph'] || [data];
+        for (var i = 0; i < nodes.length; i++) {
+          if (nodes[i] && nodes[i].offers) nodes[i].offers = offerLd(p);
+        }
+        el.textContent = JSON.stringify(data);
+      } catch (e) { /* keep the baked JSON-LD (the fallback offer) */ }
+    });
   }
 
   function run(doc, fetchImpl) {
@@ -156,5 +207,5 @@
     apply(doc, last);
   }
 
-  return { FEED: FEED, FALLBACK: FALLBACK, money: money, monthsWord: monthsWord, apply: apply, reapply: reapply, run: run };
+  return { FEED: FEED, FALLBACK: FALLBACK, money: money, monthsWord: monthsWord, offerLd: offerLd, apply: apply, reapply: reapply, run: run };
 });

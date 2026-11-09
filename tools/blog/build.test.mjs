@@ -128,7 +128,7 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(cat, /<div class="masthead_title">/);
   assert.equal((art.match(/<h1[\s>]/g) || []).length, 1, 'exactly one h1');
   assert.match(art, /<link rel="canonical" href="https:\/\/www\.boltanswering\.com\/blog\/answer-every-call\/" \/>/);
-  assert.match(art, /<title>Answer Every Call, Even After Hours \| Bolt<\/title>/, 'search title field wins');
+  assert.match(art, /<title>Answer Every Call, Even After Hours \| Bolt Answering<\/title>/, 'search title field wins');
   assert.match(art, /<html lang="en">/);
   assert.doesNotMatch(art, /alert\(1\)|onclick|evil\.example\.com|data-src=/);
   assert.doesNotMatch(art, /maximum-scale/, 'pinch zoom is allowed');
