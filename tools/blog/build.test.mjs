@@ -115,6 +115,9 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   // Post cards end their excerpt with a plain "Read more" link, not a button.
   assert.match(home, /<p class="article_desc">[^<]* <a href="\/blog\/answer-every-call\/" class="article_more" aria-label="Read more: [^"]+">Read more<\/a><\/p>/);
   assert.doesNotMatch(home, /article_btn/);
+  // Date | read-time stamp, no author.
+  assert.match(home, /<div class="infoline_date"><time datetime="2026-11-01T16:00:00\.000Z">Nov 1, 2026<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/);
+  assert.doesNotMatch(art, /infoline_author/);
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
   assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
   assert.match(cat, /<div class="masthead_title">/);

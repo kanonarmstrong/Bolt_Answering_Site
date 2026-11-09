@@ -88,6 +88,8 @@
 
 .bchy .article_more { color: #2b7ffd; font-weight: 600; white-space: nowrap; }
 .bchy .article_more:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+.bchy .article_infoline { text-transform: none; }
+.bchy .infoline_sep { margin: 0 8px; }
 .bchy .list_intro { font-size: calc(1.7 * var(--bchy-rem, 10px)); margin-bottom: calc(3 * var(--bchy-rem, 10px)); }
 .bchy .icon-arrow-prev { transform: rotate(180deg); }
 

@@ -89,10 +89,10 @@ function picture(img, { sizes, eager = false } = {}) {
   return `<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`;
 }
 
+/** "Nov 6, 2026 | 2 min read" stamp on post cards and posts. The author is in the post's
+ *  author box and JSON-LD. */
 const infoline = (p) => `<div class="article_infoline infoline">
-                    <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div> <span class="dash"></span>
-                    <div class="infoline_author">${esc(p.author.name)}</div> <span class="dash"></span>
-                    <div class="infoline_tag">${p.minutes} min read</div>
+                    <div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div><span class="infoline_sep" aria-hidden="true">|</span><div class="infoline_tag">${p.minutes} min read</div>
                   </div>`;
 
 function postCard(p, i) {
