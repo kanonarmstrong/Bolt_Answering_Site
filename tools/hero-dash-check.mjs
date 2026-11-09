@@ -129,9 +129,14 @@ try {
     const hero = document.querySelector('.tphero'), R = hero.getBoundingClientRect(), dash = hero.querySelector('.tphero__dash'), cs = getComputedStyle(dash);
     const copy = hero.querySelector('.tphero__copy'), lines = [];
     const part = (e) => e.closest('.btn') ? 'button' : e.closest('.tphero__title') ? 'headline' : e.closest('.tphero__sub') ? 'subtitle' : e.closest('.tphero__label') ? 'label' : e.tagName.toLowerCase();
+    // Screen-reader-only text (AFMBP-2525: "Bolt Answering for Plumbers:" at the start of each H1) sits in a
+    // box 1px or smaller with overflow hidden, so it paints nothing; its Range rects still span the whole
+    // laid-out line, so skip it. Judged by the rendered box, not a class name: if the hiding CSS broke, the
+    // text would get a real box again and be measured like any other line.
+    const clipped = (e) => { for (; e && e !== copy; e = e.parentElement) { const s = getComputedStyle(e), b = e.getBoundingClientRect(); if (s.overflowX === 'hidden' && s.overflowY === 'hidden' && b.width <= 1 && b.height <= 1) return true; } return false; };
     const tw = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
     for (let n = tw.nextNode(); n; n = tw.nextNode()) {
-      const text = n.textContent.trim(); if (!text) continue;
+      const text = n.textContent.trim(); if (!text || clipped(n.parentElement)) continue;
       const r = document.createRange(); r.selectNodeContents(n);
       [...r.getClientRects()].forEach((b, i) => { if (b.width > 1 && b.height > 1) lines.push({ what: part(n.parentElement) + ' "' + text.slice(0, 24) + (i ? '" line ' + (i + 1) : '"'), l: b.left, r: b.right, t: b.top + scrollY, b: b.bottom + scrollY }); });
     }
