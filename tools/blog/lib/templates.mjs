@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '7';
+const ASSET_V = '8';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -217,7 +217,7 @@ ${inner}
     </main>`;
 }
 
-export function articlePage({ post, html, crumbs, recent, categories, related }) {
+export function articlePage({ post, html, recent, categories, related }) {
   const cat = post.categories[0];
   const inner = `            <div class="columns_center">
               <article class="article">
@@ -239,8 +239,9 @@ ${html}
               ${related.length ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h3">Keep reading</h2><ul>${related.map((r) => `<li><a href="${postPath(r.slug)}">${esc(r.title)}</a></li>`).join('')}</ul></section>` : ''}
             </div>
 ${sidebar({ recent, categories })}`;
-  // The masthead links back to the blog; the article's own <h1> is the post title.
-  return wrapMain({ titleInContent: true, crumbs, inner });
+  // The masthead links back to the blog; the article's own <h1> is the post title. No visible
+  // breadcrumb line on posts (the BreadcrumbList JSON-LD in the head stays for search engines).
+  return wrapMain({ titleInContent: true, inner });
 }
 
 export function searchPage({ recent, categories }) {

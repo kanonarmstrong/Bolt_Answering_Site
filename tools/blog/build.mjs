@@ -128,7 +128,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       published: p.datePublished,
       modified: p.dateModified,
       jsonLd: [articleJsonLd(p), breadcrumbJsonLd(crumbs), ...(p.faq.length ? [faqJsonLd(p.faq)] : [])],
-      body: chrome(articlePage({ post: p, html: p.html, crumbs, recent: recent.filter((r) => r.slug !== p.slug).slice(0, 4), categories, related: [...related, ...fill] })),
+      body: chrome(articlePage({ post: p, html: p.html, recent: recent.filter((r) => r.slug !== p.slug).slice(0, 4), categories, related: [...related, ...fill] })),
     }));
   }
 

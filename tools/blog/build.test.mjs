@@ -100,7 +100,7 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(home, /<h1 class="masthead_title"><img src="\/blog\/assets\/img\/the-bottom-line\.svg" alt="the bottom line"/);
   assert.doesNotMatch(home, /class="breadcrumbs"|class="pagetitle"/, 'blog home: masthead replaces the title and breadcrumb lines');
   assert.match(art, /<div class="masthead_title"><a href="\/blog\/"><img src="\/blog\/assets\/img\/the-bottom-line\.svg"/);
-  assert.match(art, /class="breadcrumbs"/);
+  assert.doesNotMatch(art, /class="breadcrumbs"/, 'posts: no visible breadcrumb line');
   assert.doesNotMatch(art, /class="pagetitle"/);
   // Search: one field in the masthead (desktop) and one right after Recent posts (phones), with
   // distinct ids; no old sidebar search or sidebar CTA box.
