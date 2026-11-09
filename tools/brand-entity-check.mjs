@@ -13,14 +13,15 @@
 //     profiles, operatingSystem "Web" (iOS joins in December: AFMBP-2528), and an offer equal to pricing.js's
 //     offerLd(FALLBACK); the logo it points to exists;
 // the trade pages:
-//   - "Bolt Answering for <Trade>" in the title and, screen-reader-only, at the start of the H1;
+//   - "Bolt Answering for <Trade>" in the title and, screen-reader-only, at the start of the H1; phones hide the
+//     H1 and show a baked image, so its alt text opens with the same words;
 //   - the meta description names Bolt Answering;
 // the footers (home + trades): "© 2026 Bolt Answering · hlpr inc.", never the old "© 2026 hlpr inc.";
 // styles.css hides .sr-only text (1px, clipped, out of flow); llms.txt opens "# Bolt Answering" and says we are
 // independent; the blog generator names the site "Bolt Answering" (and, live, every blog page in the sitemap does).
 // Run: node tools/brand-entity-check.mjs [siteRoot]
 //      BASE=https://www.boltanswering.com node tools/brand-entity-check.mjs     the same checks on the live site
-//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|srspan|srcss|footer|lead|llms   negative controls on
+//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|srspan|mobilealt|srcss|footer|lead|llms   negative controls on
 //      the copy read (file or live); each must FAIL.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -80,6 +81,7 @@ function mutate(file, s) {
   if (NC === 'rating' && file === 'index.html') return swap('"applicationCategory": "BusinessApplication",', '"applicationCategory": "BusinessApplication", "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.9", "ratingCount": "12"},');
   if (NC === 'offer' && file === 'index.html') return swap('"price": 59,', '"price": 49,');
   if (NC === 'sameas' && file === 'index.html') return swap('"https://www.instagram.com/boltanswering/"', '"https://www.instagram.com/boltanswering/", "https://www.linkedin.com/company/bolt"');
+  if (NC === 'mobilealt' && file === 'general-contractor.html') return swap('alt="Bolt Answering for General Contractors: ', 'alt="');
   if (NC === 'srspan' && file === 'plumbing.html') return swap('<span class="sr-only">Bolt Answering for Plumbers: </span>', '');
   if (NC === 'srcss' && file === 'styles.css') return re(/\n\.sr-only\{[^}]*\}/, '');
   if (NC === 'footer' && file === 'hvac.html') return swap(FOOTER, '<p class="footer__copy">&copy; 2026 hlpr inc.</p>');
@@ -201,6 +203,8 @@ for (const page of pages) {
     check(`${page}: the H1 opens with screen-reader-only "Bolt Answering for ${noun}: "`, () =>
       assert.ok(html.includes(`<h1 class="tphero__title rv" data-rd="120"><span class="sr-only">${NAME} for ${noun}: </span>`)));
     check(`${page}: the meta description names ${NAME}`, () => assert.ok(desc?.includes(NAME), `desc "${desc}"`));
+    check(`${page}: phones show a baked hero image instead of the H1; its alt opens with "Bolt Answering for ${noun}: "`, () =>
+      assert.match(html, new RegExp(`<img class="tphero__mobileimg" src="[^"]*" alt="${NAME} for ${noun}: `)));
   }
   if (page === 'index.html' || TRADES[page]) {
     check(`${page}: footer "© 2026 Bolt Answering · hlpr inc."`, () => {
