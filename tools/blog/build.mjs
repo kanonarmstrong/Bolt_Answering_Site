@@ -16,7 +16,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchFromWordPress, loadFixtures, normalize } from './lib/wp.mjs';
-import { processContent, processImage } from './lib/content.mjs';
+import { processContent, processImage, processAvatar } from './lib/content.mjs';
 import { layout as renderLayout, listPage, articlePage, searchPage } from './lib/templates.mjs';
 import { readSiteChrome } from './lib/chrome.mjs';
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt } from './lib/seo.mjs';
@@ -36,6 +36,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
   const warnings = [];
   const written = new Set();
   const keepImages = new Map();
+  const avatarCache = new Map();
   const write = (rel, content) => {
     const full = join(repoRoot, rel);
     mkdirSync(dirname(full), { recursive: true });
@@ -63,6 +64,16 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       }
     } else {
       warnings.push(`"${p.title}": no featured image. Posts look and share better with one.`);
+    }
+    if (p.author.avatar) {
+      try {
+        const av = await processAvatar(p.author.avatar, { slug: p.slug, ...ctx }, avatarCache);
+        p.author.avatar = av ? av.src : null;
+        if (av) keepImages.get(p.slug).add(av.file);
+      } catch (e) {
+        warnings.push(`"${p.title}": author photo skipped (${e.message})`);
+        p.author.avatar = null;
+      }
     }
     const text = stripTags(p.html);
     p.wordCount = text.split(/\s+/).filter(Boolean).length;

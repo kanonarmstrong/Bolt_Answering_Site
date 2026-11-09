@@ -119,6 +119,10 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(home, /<div class="infoline_date"><time datetime="2026-11-01T16:00:00\.000Z">Nov 1, 2026<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/);
   assert.doesNotMatch(art, /infoline_author/);
   assert.match(art, /<div class="stories_item_infoline infoline">\s*<div class="infoline_date"><time[^>]*>[A-Z][a-z]{2} \d{1,2}, \d{4}<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/, 'Recent posts use the same stamp');
+  // Author Gravatar: self-hosted, before the name; posts by authors without one get none.
+  assert.match(art, /<div class="author_name"><img class="author_avatar" src="\/blog\/img\/answer-every-call\/[0-9a-f]{10}-avatar\.webp" alt="" width="20" height="20" \/><span>Kanon Armstrong<\/span><\/div>/);
+  assert.ok(readdirSync(join(root, 'blog/img/answer-every-call')).some((f) => f.endsWith('-avatar.webp')), 'avatar file written');
+  assert.match(read(root, 'blog/why-pe-buys-shops/index.html'), /<div class="author_name"><span>Kanon Armstrong<\/span><\/div>/);
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
   assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
   assert.match(cat, /<div class="masthead_title">/);
@@ -139,7 +143,7 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   // Every post image on the page is a local, resized file with alt + dimensions.
   for (const tag of art.match(/<img\b[^>]*>/g)) {
     if (tag.includes('logo-wordmark') || tag.includes('/blog/assets/img/')) continue; // site chrome + masthead
-    assert.match(tag, /src="\/blog\/img\/[a-z0-9-]+\/[0-9a-f]{10}-\d+\.webp"/, 'local, resized image');
+    assert.match(tag, /src="\/blog\/img\/[a-z0-9-]+\/[0-9a-f]{10}-(?:\d+|avatar)\.webp"/, 'local, resized image');
     assert.match(tag, /width="\d+" height="\d+"/);
     assert.match(tag, /alt="/);
   }

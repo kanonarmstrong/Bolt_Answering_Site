@@ -85,6 +85,41 @@ export async function processImage(src, { slug, repoRoot, wpHost, fixtureDir }) 
   };
 }
 
+export const AVATAR_PX = 80; // drawn at the author name's font size (~20px): 4x covers retina
+
+/**
+ * The author's Gravatar (from WordPress's avatar_urls), downloaded at build time and saved as
+ * blog/img/<slug>/<hash>-avatar.webp so readers' browsers never call gravatar.com. Asks
+ * Gravatar for d=404, so an author without a Gravatar gets no image instead of a generated
+ * pattern: returns null then. `cache` (a Map) avoids re-downloading the same author per post.
+ */
+export async function processAvatar(src, { slug, repoRoot, fixtureDir }, cache = new Map()) {
+  let buf = cache.get(src);
+  if (buf === undefined) {
+    if (fixtureDir && !/^https?:/i.test(src)) {
+      buf = readFileSync(join(fixtureDir, src));
+    } else {
+      const url = new URL(src);
+      if (!/(^|\.)gravatar\.com$/.test(url.host)) throw new Error(`Refusing avatar from unexpected host ${url.host}`);
+      url.searchParams.set('s', String(AVATAR_PX));
+      url.searchParams.set('d', '404');
+      const res = await fetch(url, { headers: { 'User-Agent': 'bolt-blog-build' } });
+      if (res.status === 404) buf = null;
+      else if (!res.ok) throw new Error(`Avatar download failed: ${res.status}`);
+      else buf = Buffer.from(await res.arrayBuffer());
+    }
+    cache.set(src, buf);
+  }
+  if (!buf) return null;
+  const hash = createHash('sha1').update(buf).digest('hex').slice(0, 10);
+  const dir = join(repoRoot, 'blog', 'img', slug);
+  mkdirSync(dir, { recursive: true });
+  const name = `${hash}-avatar.webp`;
+  const path = join(dir, name);
+  if (!existsSync(path)) await sharp(buf).resize(AVATAR_PX, AVATAR_PX, { fit: 'cover' }).webp({ quality: 80 }).toFile(path);
+  return { src: `/blog/img/${slug}/${name}`, file: name };
+}
+
 /** Rewrite links that point at the WordPress copy of a post to the post's /blog/ URL. */
 export function rewriteLinks(html, { wpHost, linkMap }) {
   return html.replace(/<a\b([^>]*?)href="([^"]+)"([^>]*)>/g, (m, pre, href, post) => {

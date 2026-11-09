@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '9';
+const ASSET_V = '10';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -231,7 +231,7 @@ ${html}
                 ${post.tags.length ? `<div class="article_tags"><div class="article_tags_title">Tags:</div> ${post.tags.map((t) => `<span>#${esc(t.name)}</span>`).join(' <span class="dash"></span> ')}</div>` : ''}
                 <div class="author">
                   <div class="author_cont">
-                    <div class="author_name">${esc(post.author.name)}</div>
+                    <div class="author_name">${post.author.avatar ? `<img class="author_avatar" src="${post.author.avatar}" alt="" width="20" height="20" />` : ''}<span>${esc(post.author.name)}</span></div>
                     ${post.author.description ? `<div class="author_txt">${esc(post.author.description)}</div>` : ''}
                     ${post.dateModified.slice(0, 10) !== post.datePublished.slice(0, 10) ? `<div class="author_txt">Updated <time datetime="${post.dateModified}">${formatDate(post.dateModified)}</time></div>` : ''}
                   </div>
