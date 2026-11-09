@@ -254,7 +254,7 @@ export function searchPage({ recent, categories }) {
               </div>
             </div>
 ${sidebar({ recent, categories })}`;
-  return wrapMain({ heading: 'Search', crumbs: [{ name: 'Home', href: '/' }, { name: 'Blog', href: BLOG_PATH }, { name: 'Search' }], inner });
+  return wrapMain({ heading: 'Search', inner });
 }
 
 export { wrapMain };
