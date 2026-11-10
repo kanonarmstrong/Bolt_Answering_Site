@@ -65,7 +65,7 @@ ul,ol{list-style:none}
   transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
   white-space:nowrap;
 }
-/* The "Start now" trial buttons (the only .btn--yellow; owner 11-09, AFMBP-2537) are the size of the "Talk to your new
+/* The trial buttons ("Start your free trial", the only .btn--yellow; owner 11-10, AFMBP-2548; before: "Start now", AFMBP-2537) are the size of the "Talk to your new
    assistant" button (.btn--blue, owner AFMBP-2327): its padding and height, and at least its width
    (that label is 12.4em of Inter 500 at the Talk button's size, plus the padding). Their label is 15%
    larger than the Talk button's (owner, AFMBP-2482: "increase the size of the 'get started now' font

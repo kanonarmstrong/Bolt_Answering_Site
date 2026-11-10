@@ -21,7 +21,7 @@
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=bolt_services |
 //      NC=swap_help | NC=no_help_event | NC=old_rows | NC=old_sub_size | NC=old_sub_color |
-//      NC=old_dy — negative controls on the SERVED copy only; each must FAIL.
+//      NC=old_dy | NC=old_recap_label | NC=recap_tall — negative controls on the SERVED copy only; each must FAIL.
 // AFMBP-2274 (the nodes as updated 2026-10-16): the calling cards' rows read "Talk to the “…”
 // receptionist" / "Tell her about your issue or project", the form's sub is #707070 at 18px,
 // and the "You call us" card sits centred (.5px low) as 2672:2064 now puts it.
@@ -65,8 +65,10 @@ const MUTATE = {
   swap_help: ['demo.js', (s) => cut(cut(cut(s, "osLink('/support/hca/disable-ios-spam-blockers'", 'TMP_IOS'), "osLink('/support/hca/disable-android-spam-blockers'", "osLink('/support/hca/disable-ios-spam-blockers'"), 'TMP_IOS', "osLink('/support/hca/disable-android-spam-blockers'")],
   // A help-article tap is not counted.
   no_help_event: ['demo.js', (s) => cut(s, "a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });", '')],
-  // AFMBP-2482: the end-of-call button keeps its old labels.
-  old_recap_label: ['demo.js', (s) => cut(s, "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start now'])", "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Get started now'])")],
+  // AFMBP-2548: the end-of-call button keeps its old label.
+  old_recap_label: ['demo.js', (s) => cut(s, "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start your free trial'])", "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start now'])")],
+  // AFMBP-2548: the desktop end-of-call button back at 56px, taller than the Talk button.
+  recap_tall: ['demo.css', (s) => cut(s, '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:49px;', '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:56px;')],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 // A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
@@ -363,7 +365,7 @@ try {
   ok((await text('.demo-success-sub')) === "Don't waste money on receptionists or lose leads to voicemail. Bolt qualifies leads and books jobs for under $3/day.", `success: the node's pitch (${await text('.demo-success-sub')})`);
   ok((await text('.demo-success-tlabel')) === 'Here’s the transcript:', 'success: "Here’s the transcript:"');
   ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-chat .demo-bubble')).map(function(e){return e.innerText})")) === JSON.stringify(TRANSCRIPT.map((t) => t.content)), 'success: the call\'s own transcript, not the node\'s sample');
-  ok((await text('.demo-success-cta')) === 'Start now' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(0, 154, 21)' && (await attr('.demo-success-cta', 'href')) === 'https://app.boltanswering.com/signup', 'success: the green "Start now" to sign-up');
+  ok((await text('.demo-success-cta')) === 'Start your free trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(0, 154, 21)' && (await attr('.demo-success-cta', 'href')) === 'https://app.boltanswering.com/signup', 'success: the green "Start your free trial" to sign-up');
   ok(!(await visible('.demo-success-trial')), 'success: no desktop "First 30 days" line');
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'out-1').length === 1 && evs('demo_call_finished').length === 1, `events: demo_transcript_shown and demo_call_finished once each (${evs('demo_transcript_shown').length}, ${evs('demo_call_finished').length})`);
   await tap('.demo-success-cta');
@@ -424,7 +426,7 @@ try {
   ok((await text('.demo-incall__digits')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-incall__digits')}, ${api.sessions})`);
   api.inState = 'connected'; api.inCallId = 'in-1'; api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'inbound: the linked call ends on the same success card');
-  ok((await text('.demo-success-title')) === 'NEVER miss a job again' && (await text('.demo-success-cta')) === 'Start now', 'inbound: one shared success (same card, same copy)');
+  ok((await text('.demo-success-title')) === 'NEVER miss a job again' && (await text('.demo-success-cta')) === 'Start your free trial', 'inbound: one shared success (same card, same copy)');
   await sleep(3500);
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'in-1' && d.mode === 'inbound').length === 1, 'events: inbound success counted once, mode inbound');
 
@@ -451,6 +453,32 @@ try {
   api.recap = { status: 'failed' };
   ok(await waitScreen('fail', 8000), 'desktop: failure card');
   ok((await text('.demo-failcard__btn')) === 'Try again' && /Follow these instructions/.test(await text('.demo-failcard__body')) && !(await visible('.demo-failcard__body2')), 'desktop: its own failure copy and "Try again"');
+
+  // AFMBP-2548 (owner, 11-10: "make the height of those buttons the same size as the height of the 'talk to
+  // your assistant' buttons"): on a computer the success card's trial button reads "Start your free trial" and is
+  // the height of the page's "Talk to your new assistant" button (it was 56px, the Talk button 49px).
+  console.log('[desktop] success: the trial button at the Talk button\'s height');
+  for (const [w, h] of [[1280, 900], [1920, 1080]]) {
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
+    reset();
+    await load('/hvac.html?talk=form');
+    ok(await waitScreen('phone'), `desktop ${w}: the form, for a call that completes`);
+    await type('#demo-phone', '4155551234');
+    await type('#demo-business', 'QA Test Co');
+    await ev("document.getElementById('demo-phone').focus(); 1");
+    await enter();
+    await sleep(500);
+    await ev("document.querySelectorAll('.demo-code input')[0].focus(); 1");
+    await send('Input.insertText', { text: '123456' });
+    ok(await waitScreen('calling', 6000), `desktop ${w}: Calling`);
+    api.recap = { status: 'completed', transcript: TRANSCRIPT };
+    ok(await waitScreen('recap', 8000), `desktop ${w}: the completed call -> the success card`);
+    await sleep(400);
+    const talk = await box('.tphero .btn--blue'), cta = await box('.demo-backdrop.open .demo-success-cta');
+    ok((await text('.demo-success-cta')) === 'Start your free trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(252, 189, 17)', `desktop ${w}: the yellow "Start your free trial" (${await text('.demo-success-cta')})`);
+    ok(!!talk && !!cta && talk.h > 0 && near(cta.h, talk.h, 0.5), `desktop ${w}: the success card's trial button is ${cta && cta.h}px tall; "Talk to your new assistant" is ${talk && talk.h}px`);
+    ok(!!cta && (await ev("(function(){var a=document.querySelector('.demo-success-cta');return a.scrollWidth<=a.clientWidth&&a.scrollHeight<=a.clientHeight})()")) === true, `desktop ${w}: the label fits inside the button`);
+  }
 
   console.log(bad ? `\n${bad} FAILED, ${good} passed${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS (${good} checks)${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
   ws.close();

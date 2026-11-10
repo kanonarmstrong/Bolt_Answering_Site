@@ -1,5 +1,5 @@
 // AFMBP-2273 — the sign-up offer (Figma 2718:3312): an ad link with ?signup=1 opens the demo
-// card's frame with the offer and one blue "Start now" into the sign-up flow, instead of the
+// card's frame with the offer and one blue "Start your free trial" into the sign-up flow, instead of the
 // demo. Drives the real page in headless Chrome against a fake Bolt API and checks:
 //   - content and art (the "New jobs are calling" design of 2026-11-02, AFMBP-2495): the card's
 //     art (the paper with the headline drawn in it) is drawn and covers the card; the headline's
@@ -13,14 +13,14 @@
 //     testimonial navy italic; the pitch as the node words it (no comma after "customers");
 //   - geometry: each piece where it sits once matched to the node's glyphs (card-relative); the
 //     rating turned 3.168° about its bubble's corner, the stars and score turned .148° back;
-//   - the link: "Start now" goes to the sign-up flow carrying this visitor's id, ad tags and
+//   - the link: "Start your free trial" goes to the sign-up flow carrying this visitor's id, ad tags and
 //     the QA flag (attribution.js decorates it as it is tapped);
-//   - leaving (AFMBP-2344): "Start now" holds the page until its event has gone out, at most
+//   - leaving (AFMBP-2344): "Start your free trial" holds the page until its event has gone out, at most
 //     about 0.3 s, then follows its link (the page load is stopped at the network and timed);
 //   - analytics: signup_offer_opened once (never demo_opened), the tap logged once as
 //     trial_link_clicked {placement: signup_offer}, a close as demo_closed {step: signup_offer};
 //   - closing and keyboard: the cross, Escape and the shade close it; focus starts on the
-//     dialog, Tab goes round the cross and "Start now";
+//     dialog, Tab goes round the cross and "Start your free trial";
 //   - regressions: ?talk=1 still opens the demo; a plain page opens nothing;
 //   - sizes: phones 280-430, tablet 768, desktop 1024-1920 (the same card everywhere, no
 //     desktop node yet): no horizontal overflow, every piece on screen and inside the card.
@@ -48,17 +48,17 @@ const MUTATE = {
   no_route: ['demo.js', (s) => cut(s, "var entry = /[?&]signup=1(&|$)/.test(q) ? 'signup' :", "var entry =")],
   // The offer is logged as a demo opened.
   demo_event: ['demo.js', (s) => cut(s, "entry === 'signup' && !s ? 'signup_offer_opened' : 'demo_opened'", "'demo_opened'")],
-  // "Start now" goes somewhere else.
+  // "Start your free trial" goes somewhere else.
   cta_href: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-so__cta', href: 'https://app.boltanswering.com/signup'", "class: 'demo-btn demo-so__cta', href: '/'")],
   // The tap is not logged.
   no_track: ['demo.js', (s) => cut(s, "var sent = track('trial_link_clicked', { placement: 'signup_offer' });", 'var sent = null;')],
-  // AFMBP-2344: "Start now" leaves at once (the browser's own navigation), not after its event.
+  // AFMBP-2344: "Start your free trial" leaves at once (the browser's own navigation), not after its event.
   no_hold: ['demo.js', (s) => cut(s, 'if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;', 'return;')],
-  // AFMBP-2344: "Start now" waits for its event however long the server takes.
+  // AFMBP-2344: "Start your free trial" waits for its event however long the server takes.
   no_cap: ['demo.js', (s) => cut(s, '      setTimeout(go, 300);\n', '')],
   // The button keeps an old label.
-  old_label: ['demo.js', (s) => cut(s, "}, ['Start now']);", "}, ['Get started']);")],
-  // "Start now" goes back to v4's yellow.
+  old_label: ['demo.js', (s) => cut(s, "}, ['Start your free trial']);", "}, ['Start now']);")],
+  // "Start your free trial" goes back to v4's yellow.
   yellow_cta: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-so__cta'", "class: 'demo-btn demo-btn--yellow demo-so__cta'")],
   // The pitch keeps the comma the owner took out.
   comma_back: ['demo.js', (s) => cut(s, 'answers calls and books customers so you never miss a job again.', 'answers calls and books customers, so you never miss a job again.')],
@@ -86,17 +86,17 @@ const MUTATE = {
   no_box: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:none;')],
   // "FREE" and "today." drop back to regular.
   regular_free: ['demo.css', (s) => cut(s, '.demo-so__free b{font-weight:700}', '.demo-so__free b{font-weight:400}')],
-  // "Start now" drops back to regular (the owner set it Bold, 11-09).
+  // "Start your free trial" drops back to regular (the owner set it Bold, 11-09).
   regular_cta: ['demo.css', (s) => cut(s, 'font-size:22px;font-weight:700;line-height:21px;text-decoration:none;', 'font-size:22px;font-weight:400;line-height:21px;text-decoration:none;')],
   // The rating sits level instead of tilted.
   flat_rating: ['demo.css', (s) => cut(s, '  transform:rotate(3.168deg);transform-origin:0 0;\n', '')],
   // The close button is hidden.
   close_hidden: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:flex;', '.demo-backdrop[data-screen="signup"] .demo-close{\n  display:none;')],
-  // "Start now" moves off the node.
+  // "Start your free trial" moves off the node.
   off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:412.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:417.4px;width:252px;height:49px;')],
   // A narrow phone clips the card instead of scaling it down.
   no_zoom: ['demo.css', (s) => cut(s, '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }', '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{left:0} }')],
-  // "Start now" loses its shadow.
+  // "Start your free trial" loses its shadow.
   flat_button: ['demo.css', (s) => cut(s, '  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);\n  display:flex;', '  display:flex;')],
   // The testimonial is kept on one line.
   nowrap_quote: ['demo.css', (s) => cut(s, 'line-height:15px;color:var(--navy);text-align:center;\n}', 'line-height:15px;color:var(--navy);text-align:center;white-space:nowrap;\n}')],
@@ -253,7 +253,7 @@ try {
   const BODY = 'Bolt is your 24/7 receptionist that answers calls and books customers so you never miss a job again.';
   const FREE = 'It’s FREE to set up an assistant. Get started today.';
   const isClose = (f) => /^button\.demo-close /.test(f.desc);
-  const isCta = (f) => /^a\.demo-btn "Start now"/.test(f.desc);
+  const isCta = (f) => /^a\.demo-btn "Start your free trial"/.test(f.desc);
 
   // ================= phone, the node's own size =================
   await view(402, 758, 3, true);
@@ -294,14 +294,15 @@ try {
   ok(fr && fg && near(fg.cx, NODE.free[0], 0.5) && near(fr.y, NODE.free[1], 0.05) && fg.lines === NODE.free[2], `phone: the FREE line centred at ${NODE.free[0]}, top ${NODE.free[1]}, on ${NODE.free[2]} lines (${fr && fg && [fg.cx.toFixed(2), fr.y.toFixed(2), fg.lines]})`);
   const bx = (await ev("(function(){var m=document.querySelector('.demo-backdrop.open .demo-cm'), s=getComputedStyle(m,'::after'), b=document.querySelector('.demo-backdrop.open .demo-body').getBoundingClientRect(), k=document.querySelector('.demo-backdrop.open .demo-card').getBoundingClientRect(); return {content:s.content, x:b.left-k.left+parseFloat(s.left), y:b.top-k.top+parseFloat(s.top), w:parseFloat(s.width), h:parseFloat(s.height), border:s.borderTopWidth+' '+s.borderTopStyle+' '+s.borderTopColor, sizing:s.boxSizing};})()")) || {};
   ok(bx.content !== 'none' && bx.content !== 'normal' && near(bx.x, NODE.box.x, 0.05) && near(bx.y, NODE.box.y, 0.05) && near(bx.w, NODE.box.w, 0.05) && near(bx.h, NODE.box.h, 0.05) && bx.border === '2px solid rgb(0, 0, 0)' && bx.sizing === 'border-box', `phone: the FREE line's 2px black box where the node puts it (${JSON.stringify(bx)})`);
-  // "Start now": the node's blue button and its shadow.
-  ok((await text('.demo-so__cta')) === 'Start now', `phone: "Start now" (${await text('.demo-so__cta')})`);
-  ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(43, 127, 253)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(255, 255, 255)', 'phone: "Start now" is the node\'s blue with white words');
+  // "Start your free trial": the node's blue button and its shadow.
+  // AFMBP-2548: the owner's label (11-10), not the node's "Start now".
+  ok((await text('.demo-so__cta')) === 'Start your free trial', `phone: "Start your free trial" (${await text('.demo-so__cta')})`);
+  ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(43, 127, 253)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(255, 255, 255)', 'phone: "Start your free trial" is the node\'s blue with white words');
   const cs = await ev("getComputedStyle(document.querySelector('.demo-so__cta')).boxShadow");
-  ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start now" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
+  ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start your free trial" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
   // The label is the node's Inter Bold 22 on a 21px line (owner, 11-09), drawn with the bold face itself.
   const lf = (await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-so__cta')); return {font:s.fontFamily.split(',')[0].replace(/[\"']/g,'')+'|'+s.fontSize+'|'+s.fontWeight+'|'+s.lineHeight, bold:document.fonts.check('700 22px Inter')};})()")) || {};
-  ok(lf.font === 'Inter|22px|700|21px' && lf.bold === true, `phone: "Start now" is Inter Bold 22 on a 21px line (${lf.font}, bold face ${lf.bold})`);
+  ok(lf.font === 'Inter|22px|700|21px' && lf.bold === true, `phone: "Start your free trial" is Inter Bold 22 on a 21px line (${lf.font}, bold face ${lf.bold})`);
   // The rating: the reviewer, stars, score and testimonial in the tilted bubble.
   ok((await text('.demo-backdrop.open .demo-so__who')) === 'Brent B. Indiana' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__who b')).fontWeight")) === '700', `phone: the reviewer, "Brent B." bold, then "Indiana" (${await text('.demo-backdrop.open .demo-so__who')})`);
   ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === QUOTE, `phone: the rating and the testimonial (${await text('.demo-backdrop.open .demo-cm__quote')})`);
@@ -336,7 +337,7 @@ try {
   ok(evs('signup_offer_opened', (d) => d.trigger === 'ad_link').length === 1 && evs('signup_offer_opened').length === 1, `events: signup_offer_opened once, from the ad link (${evs('signup_offer_opened').length})`);
   ok(evs('demo_opened').length === 0, `events: no demo_opened for the offer (${evs('demo_opened').length})`);
   ok(evs('signup_offer_opened', (d) => d.attr && d.attr.utm_source === 'qa_src' && d.attr.click_id === 'qa_click').length === 1, 'attribution: the ad tags ride on signup_offer_opened');
-  ok((await ev("document.querySelector('.demo-so__cta').tagName")) === 'A' && (await ev("document.querySelector('.demo-so__cta').getAttribute('href')")).indexOf(SIGNUP) === 0, '"Start now" is a link into the sign-up flow');
+  ok((await ev("document.querySelector('.demo-so__cta').tagName")) === 'A' && (await ev("document.querySelector('.demo-so__cta').getAttribute('href')")).indexOf(SIGNUP) === 0, '"Start your free trial" is a link into the sign-up flow');
   await tap('.demo-so__cta');
   const c1 = await lastClick();
   let u1 = null; try { u1 = new URL(c1.href); } catch {}
@@ -392,7 +393,7 @@ try {
   if (sp) await tapAt(sp.x, sp.y);
   ok(!!sp && (await screen()) === null, 'close: a tap on the shade closes it');
 
-  console.log('[phone] keyboard: focus starts on the dialog; Tab goes round the cross and "Start now"');
+  console.log('[phone] keyboard: focus starts on the dialog; Tab goes round the cross and "Start your free trial"');
   reset();
   await load(AD);
   ok(await waitScreen('signup'), 'keyboard: offer open');
@@ -400,14 +401,14 @@ try {
   // The card's hairline is a painted inset shadow, not a ring: the dialog's outline is what must stay off.
   ok(f0.on === 'dialog' && f0.outline === 'none', `keyboard: focus is on the dialog as it opens, and it draws no ring (${f0.on} ${f0.outline})`);
   const fwd = [await tab(), await tab(), await tab()];
-  ok(isClose(fwd[0]) && isCta(fwd[1]) && isClose(fwd[2]), `keyboard: Tab goes the cross, "Start now", then round (${fwd.map((f) => f.desc).join(' > ')})`);
+  ok(isClose(fwd[0]) && isCta(fwd[1]) && isClose(fwd[2]), `keyboard: Tab goes the cross, "Start your free trial", then round (${fwd.map((f) => f.desc).join(' > ')})`);
   ok(fwd.every((f) => f.on === 'inside'), 'keyboard: Tab never leaves the dialog');
   const bwd = [await tab(true), await tab(true)];
   ok(isCta(bwd[0]) && isClose(bwd[1]) && bwd.every((f) => f.on === 'inside'), `keyboard: Shift+Tab goes back round (${bwd.map((f) => f.desc).join(' > ')})`);
   await tab();
   await key('Enter', 'Enter', 13);
   const k1 = await lastClick();
-  ok(!!k1 && k1.href.indexOf(SIGNUP) === 0 && evs('trial_link_clicked', (d) => d.placement === 'signup_offer').length === 1, 'keyboard: Enter on "Start now" goes to the sign-up flow, logged once');
+  ok(!!k1 && k1.href.indexOf(SIGNUP) === 0 && evs('trial_link_clicked', (d) => d.placement === 'signup_offer').length === 1, 'keyboard: Enter on "Start your free trial" goes to the sign-up flow, logged once');
   reset();
   await load(AD);
   ok(await waitScreen('signup'), 'keyboard: offer open, to close it');
@@ -445,7 +446,7 @@ try {
     ok(c.x >= 0 && c.x + c.w <= w, `${w}x${h}: the card inside the viewport (${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
     ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     const b = await rect('.demo-so__cta');
-    ok(b && b.x >= c.x && b.x + b.w <= c.x + c.w && b.y >= 0 && b.y + b.h <= h, `${w}x${h}: "Start now" inside the card and on screen (${JSON.stringify(b)})`);
+    ok(b && b.x >= c.x && b.x + b.w <= c.x + c.w && b.y >= 0 && b.y + b.h <= h, `${w}x${h}: "Start your free trial" inside the card and on screen (${JSON.stringify(b)})`);
     for (const [name, sel] of [["the FREE line", '.demo-so__free'], ["the rating's bubble", '.demo-so__bubble']]) {
       const pb = await rect(`.demo-backdrop.open ${sel}`);
       ok(!!pb && pb.x >= c.x && pb.x + pb.w <= c.x + c.w && pb.y + pb.h <= c.y + c.h + 0.5 && pb.w > 0, `${w}x${h}: ${name} inside the card (${pb && [pb.x.toFixed(1), (pb.x + pb.w).toFixed(1), (pb.y + pb.h).toFixed(1), (c.y + c.h).toFixed(1)]})`);
