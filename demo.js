@@ -493,7 +493,7 @@
           'is your 24/7 receptionist that ',
           h('span', { class: 'demo-so__big', text: 'answers calls and books customers so you never miss a job again.' })
         ]),
-        h('p', { class: 'demo-so__free' }, ['It’s ', h('b', { text: 'FREE ' }), 'to setup an assistant. Get started ', h('b', { text: 'today.' })])
+        h('p', { class: 'demo-so__free' }, ['It’s ', h('b', { text: 'FREE ' }), 'to set up an assistant. Get started ', h('b', { text: 'today.' })])
       ]),
       cta,
       // The bubble and stars are drawn and hidden from screen readers; "4.9/5" says it.
