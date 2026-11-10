@@ -157,7 +157,7 @@ test('every visible "for first N months" is the .js-pm hook, never a baked numbe
   }
 });
 
-test('AFMBP-2537: every trial button reads "Start now" (owner, 2026-11-09; before: AFMBP-2482), and pricing.js writes no trial length into one', () => {
+test('AFMBP-2548: every trial button reads "Start your free trial" (owner, 2026-11-10; before: AFMBP-2537, AFMBP-2482), and pricing.js writes no trial length into one', () => {
   const buttons = [];
   // blog/ is the bot's: its pages copy the nav and floating button from the site at its next build.
   for (const f of htmlFiles().filter((f) => !f.startsWith('blog/'))) {
@@ -166,7 +166,7 @@ test('AFMBP-2537: every trial button reads "Start now" (owner, 2026-11-09; befor
     assert.ok(!/Start my free|free 30-day trial/i.test(html), `${f} still has an old trial label`);
   }
   assert.ok(buttons.length >= 22, `found ${buttons.length} trial buttons`);
-  for (const [f, label] of buttons) assert.equal(label, 'Start now', f);
+  for (const [f, label] of buttons) assert.equal(label, 'Start your free trial', f);
   const src = readFileSync(new URL('./pricing.js', import.meta.url), 'utf8');
   assert.ok(!/js-cta-trial|Start my free/.test(src), 'pricing.js still rewrites a trial button');
 });

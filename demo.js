@@ -457,7 +457,7 @@
   // AFMBP-2273 — the sign-up offer (Figma 2718:3312; the "New jobs are calling"
   // design of 2026-11-02, AFMBP-2495): the card's art (paper, with the headline
   // drawn in it), the close, the pitch with the bolt wordmark set into its first
-  // line, the boxed "It's FREE" line, one blue "Start now" into the sign-up flow,
+  // line, the boxed "It's FREE" line, one blue "Start your free trial" into the sign-up flow,
   // and the rating with a testimonial in a speech bubble, tilted (no help line).
   // The same card at every width (no desktop node yet). attribution.js decorates
   // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
@@ -481,7 +481,7 @@
       var go = function () { if (!gone) { gone = true; window.location.href = href; } };
       setTimeout(go, 300);
       if (sent && sent.then) sent.then(go, go);
-    } }, ['Start now']);
+    } }, ['Start your free trial']);
     setBody([
       h('div', { class: 'demo-cm' }, [
         // The headline is drawn in the card's art; this is its text, for screen readers.
@@ -1325,7 +1325,7 @@
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__sm', text: 'are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start now'])
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start your free trial'])
       ])
     ], 'recap');
     chatBar(box, bar);

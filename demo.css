@@ -177,9 +177,10 @@ body.demo-lock{overflow:hidden}
 .demo-success-trial__gap{font-size:clamp(24px,4.4vw,30px)}
 
 .demo-success-cta{
-  max-width:340px;margin:2px auto 0;height:56px;
+  max-width:340px;margin:2px auto 0;height:49px;
   display:flex;align-items:center;justify-content:center;text-decoration:none;
-  /* "Start now" (owner 11-09, AFMBP-2537), 15% larger (owner, AFMBP-2482); the button itself is unchanged. */
+  /* "Start your free trial" (owner 11-10, AFMBP-2548; before: "Start now", AFMBP-2537), 15% larger (owner, AFMBP-2482). 49px tall,
+     the "Talk to your new assistant" button's height (owner 11-10, AFMBP-2548; it was 56px). Phones draw it below. */
   font-size:clamp(20.7px,2.76vw,25.3px);
 }
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
@@ -751,7 +752,7 @@ body.demo-lock{overflow:hidden}
    AFMBP-2273 — the sign-up offer (Figma 2718:3312, the "New jobs are calling"
    design of 2026-11-02, AFMBP-2495): the card's art (paper, with the headline
    drawn in it), the close, the pitch with the bolt wordmark set into its first
-   line, the boxed "It's FREE" line, one blue "Start now", and the rating with a
+   line, the boxed "It's FREE" line, one blue "Start your free trial", and the rating with a
    testimonial in a speech bubble, tilted (the node has no help line).
    Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
    these rules sit outside the breakpoints. Numbers are body-relative (the body
@@ -833,7 +834,8 @@ body.demo-lock{overflow:hidden}
   content:"";position:absolute;left:27.4px;top:334.4px;width:274px;height:59px;box-sizing:border-box;
   border:2px solid #000;pointer-events:none;
 }
-/* "Start now" (2718:3350): the demo's blue button, 252x49, with the node's
+/* The trial button (2718:3350; the node says "Start now", the owner made it "Start your free trial" on 11-10,
+   AFMBP-2548): the demo's blue button, 252x49, with the node's
    M3 Elevation 2 shadow. Figma draws it on this frame without the 2px spread
    (its clip content is off), so the spread is left out to match the node.
    The label is Inter Bold, as the owner set it on 11-09 (App file, 2091:6774). */
