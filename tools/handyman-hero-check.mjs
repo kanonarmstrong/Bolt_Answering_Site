@@ -6,10 +6,14 @@
 // and none of the copy it replaced is left in the subtitle. The page's meta description (Google's snippet) is the
 // new subtitle, and og:description / twitter:description repeat it, so search results and link cards match.
 // This is the live HTML hero, shown wider than 768px. On phones the hero is a baked Figma image
-// (assets/handy-hero-mobile.png), which changes only with a new export from the owner's node (D2).
+// (assets/handy-hero-mobile.png), which changes only with a new export from the owner's node.
+// AFMBP-2540 (D2, owner OK 2026-11-10): that image is now his frame 2309:4959 with the same headline + subtitle,
+// exported at the old image's size (1291x2175, nav cropped; its bytes are pinned below), served as ?v=3 so phones
+// fetch it, with the hidden prefix + the image's words as its alt text.
 // Run: node tools/handyman-hero-check.mjs [siteRoot]
-//      NC=oldtitle | NC=pr111title | NC=oldsub | NC=onetone | NC=oldmeta | NC=oldog — negative controls on the copy
+//      NC=oldtitle | NC=pr111title | NC=oldsub | NC=onetone | NC=oldmeta | NC=oldog | NC=oldalt | NC=oldv — negative controls on the copy
 //      read; each must FAIL.
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -19,6 +23,10 @@ const NC = process.env.NC || '';
 const TITLE = '<span class="sr-only">Bolt Answering for Handymen: </span><span class="l-gray">You&rsquo;re busy working.</span><span class="l-navy">We\'ll get new work scheduled.</span>';
 const SUB = 'Keep working your day job. Bolt handles your calls and fills your side-hustle schedule.';
 const OLD_SUB = ['Stopping mid-job', 'breaks your momentum', 'next job just gets booked'];
+// D2: the phone image (the export of frame 2309:4959, 1291x2175), its URL and its alt text.
+const PHONE_IMG = '<img class="tphero__mobileimg" src="assets/handy-hero-mobile.png?v=3" alt="Bolt Answering for Handymen: You&rsquo;re busy working. We\'ll get new work scheduled. Keep working your day job. Bolt handles your calls and fills your side-hustle schedule." />';
+const PHONE_SHA = '340e09460e56263b5fcc8c9c353c6ae22caeb813bff6deff763cf9b41cb284cd';
+const OLD_ALT = ['busy helping customers', 'Let us get the new ones scheduled', 'Bolt takes the call'];
 
 // Negative controls: [text, replacement] on the copy this check reads.
 const CONTROLS = {
@@ -29,6 +37,9 @@ const CONTROLS = {
   oldsub: [`data-rd="260">${SUB}</p>`, 'data-rd="260">Stopping mid-job to answer a call breaks your momentum. Bolt takes it instead, so the next job just gets booked.</p>'],
   onetone: ['<span class="l-gray">You&rsquo;re busy working.</span>', '<span class="l-navy">You&rsquo;re busy working.</span>'],
   oldmeta: [`<meta name="description" content="${SUB}" />`, '<meta name="description" content="Stopping mid-job to answer a call breaks your momentum. Bolt takes it, so the next job just gets booked." />'],
+  // D2: the phone image's alt text back to the old words, or its URL back to the old version (phones keep the cached image).
+  oldalt: ["busy working. We'll get new work scheduled. Keep working your day job. Bolt handles your calls and fills your side-hustle schedule.\" />", 'busy helping customers. Let us get the new ones scheduled. Bolt takes the call so the next job just gets booked." />'],
+  oldv: ['handy-hero-mobile.png?v=3', 'handy-hero-mobile.png?v=2'],
   oldog: [`<meta property="og:description" content="${SUB}" />`, '<meta property="og:description" content="Stopping mid-job to answer a call breaks your momentum. Bolt takes it, so the next job just gets booked." />'],
 };
 
@@ -58,6 +69,15 @@ for (const [attr, name] of [['name', 'description'], ['property', 'og:descriptio
   const got = meta(attr, name);
   check(got.length === 1 && got[0] === SUB, `${name} is the new subtitle (got ${JSON.stringify(got)})`);
 }
+
+// D2: the phone hero image, its URL and alt text, and the image file itself.
+const imgs = [...html.matchAll(/<img class="tphero__mobileimg"[^>]*\/>/g)].map((m) => m[0]);
+check(imgs.length === 1 && imgs[0] === PHONE_IMG, `phone hero image: ?v=3 with the new words as alt text (got ${JSON.stringify(imgs)})`);
+for (const o of OLD_ALT) check(!imgs.some((i) => i.includes(o)), `the phone image's alt text no longer says "${o}"`);
+const png = readFileSync(join(ROOT, 'assets', 'handy-hero-mobile.png'));
+const pw = png.readUInt32BE(16), ph = png.readUInt32BE(20), psha = createHash('sha256').update(png).digest('hex');
+check(pw === 1291 && ph === 2175, `phone hero image is 1291x2175, the size the tap target over its painted button is set for (got ${pw}x${ph})`);
+check(psha === PHONE_SHA, `phone hero image is the export of the owner's frame 2309:4959 (sha256 ${psha.slice(0, 12)}, want ${PHONE_SHA.slice(0, 12)})`);
 
 const fails = results.filter((r) => !r).length;
 console.log(fails ? `FAIL ${fails} of ${results.length}` : `ALL PASS (${results.length} checks)`);
