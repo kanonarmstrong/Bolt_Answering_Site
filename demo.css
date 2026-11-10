@@ -179,7 +179,7 @@ body.demo-lock{overflow:hidden}
 .demo-success-cta{
   max-width:340px;margin:2px auto 0;height:56px;
   display:flex;align-items:center;justify-content:center;text-decoration:none;
-  /* "Get started now", 15% larger (owner, AFMBP-2482); the button itself is unchanged. */
+  /* "Start now" (owner 11-09, AFMBP-2537), 15% larger (owner, AFMBP-2482); the button itself is unchanged. */
   font-size:clamp(20.7px,2.76vw,25.3px);
 }
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
