@@ -62,6 +62,8 @@ const MUTATE = {
   yellow_cta: ['demo.js', (s) => cut(s, "class: 'demo-btn demo-so__cta'", "class: 'demo-btn demo-btn--yellow demo-so__cta'")],
   // The pitch keeps the comma the owner took out.
   comma_back: ['demo.js', (s) => cut(s, 'answers calls and books customers so you never miss a job again.', 'answers calls and books customers, so you never miss a job again.')],
+  // The FREE line keeps "setup" as one word for the verb (D3, owner 11-09: "set up").
+  setup_typo: ['demo.js', (s) => cut(s, "'to set up an assistant. Get started '", "'to setup an assistant. Get started '")],
   // The reviewer line is missing.
   no_who: ['demo.js', (s) => cut(s, "        h('p', { class: 'demo-so__who' }, [h('b', { text: 'Brent B. ' }), 'Indiana']),\n", '')],
   // The testimonial goes back to v4's words.
@@ -249,7 +251,7 @@ try {
   const HEAD = 'New jobs are calling';
   const QUOTE = '“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”';
   const BODY = 'Bolt is your 24/7 receptionist that answers calls and books customers so you never miss a job again.';
-  const FREE = 'It’s FREE to setup an assistant. Get started today.';
+  const FREE = 'It’s FREE to set up an assistant. Get started today.';
   const isClose = (f) => /^button\.demo-close /.test(f.desc);
   const isCta = (f) => /^a\.demo-btn "Start now"/.test(f.desc);
 
