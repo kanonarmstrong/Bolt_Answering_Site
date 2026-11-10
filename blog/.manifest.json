@@ -1,7 +1,6 @@
 {
   "files": [
     "blog/feed.xml",
-    "blog/how-specializing-lets-a-handyman-charge-150-to-300-an-hour/index.html",
     "blog/index.html",
     "blog/search-index.json",
     "blog/search/index.html",
@@ -11,7 +10,6 @@
     "sitemap.xml"
   ],
   "imageDirs": [
-    "how-specializing-lets-a-handyman-charge-150-to-300-an-hour",
     "the-5-most-profitable-handyman-jobs-you-can-start-offering-today"
   ]
 }
