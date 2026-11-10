@@ -994,8 +994,18 @@ ul,ol{list-style:none}
 .about__art--attic{left:calc(var(--pad) + 706 * var(--u));top:calc(1117 * var(--u));width:calc(704 * var(--u));height:calc(469 * var(--u));transform:scaleX(-1)}
 .about__art--woman{left:calc(var(--pad) + 718 * var(--u));top:calc(1728 * var(--u));width:calc(584 * var(--u));height:calc(534 * var(--u))}
 .about__art--wave{left:calc(var(--pad) + 741 * var(--u));top:calc(2433 * var(--u));width:calc(633 * var(--u));height:calc(461 * var(--u))}
+/* AFMBP-2536 (owner: "add the watermark images from the node to the mobile version"): phones show the
+   node's four drawings too, beside the same passages as on desktop. Each sits where its passage starts
+   (absolute, no top: its static position), sized to the screen and bleeding off the right edge; two are
+   mirrored, as in the node. Desktop never shows these copies. */
+.about__art-m{display:none}
 @media (max-width:768px){
   .about__art{display:none}
+  .about__art-m{display:block;position:absolute;z-index:-1;right:-22vw;width:86vw;height:auto;opacity:.14;pointer-events:none;user-select:none}
+  .about__art-m--man,.about__art-m--attic{transform:scaleX(-1)}
+  .about__art-m--man{margin-top:-6vw}
+  .about__art-m--woman{right:-14vw;width:70vw}
+  .about__art-m--wave{right:-20vw;width:80vw;margin-top:8vw}
   .about__inner{padding:calc(clamp(30px,4vw,56px) + 40px) var(--pad) 40px}   /* room for the floating CTA, as on the home page */
   .about__kicker{font-size:24px;line-height:32px}
   .about__title{justify-content:flex-start;margin:26px 0 0}
