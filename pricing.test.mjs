@@ -232,3 +232,33 @@ test('AFMBP-2525: no trial and no promo are stated as such (0 is real); bad JSON
   assert.doesNotThrow(() => P.apply(ldDoc(script), FEED));
   assert.equal(script.textContent, '{not json');
 });
+
+/* AFMBP-2535 — the support page's FAQPage JSON-LD is rebuilt from the FAQ as shown. */
+function faqDoc(items, json) {
+  const script = { textContent: json };
+  const fakeItems = items.map(([q, a]) => ({ querySelector: (sel) => (sel === 'summary' ? { textContent: q } : sel === '.sup-faq__a' ? { textContent: a } : null) }));
+  return { script, doc: { readyState: 'complete', querySelectorAll: (sel) => (sel === 'script.js-ld-faq' ? [script] : sel === '.sup-faq__item' ? fakeItems : []) } };
+}
+
+test('AFMBP-2535: the FAQ JSON-LD is the FAQ as shown, one line per question and answer', () => {
+  const { script, doc } = faqDoc(
+    [['What is Bolt Answering?\n              ', '\n  Bolt Answering is an AI phone answering service.  '], ['How much?', '\n<p>Your first 14 days are free.</p>\n   <p>Month to month.</p>']],
+    JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', '@id': 'x#faq', mainEntity: [] }),
+  );
+  P.apply(doc, FEED);
+  const d = JSON.parse(script.textContent);
+  assert.equal(d['@id'], 'x#faq');
+  assert.deepEqual(d.mainEntity, [
+    { '@type': 'Question', name: 'What is Bolt Answering?', acceptedAnswer: { '@type': 'Answer', text: 'Bolt Answering is an AI phone answering service.' } },
+    { '@type': 'Question', name: 'How much?', acceptedAnswer: { '@type': 'Answer', text: '<p>Your first 14 days are free.</p> <p>Month to month.</p>' } },
+  ]);
+});
+
+test('AFMBP-2535: bad FAQ JSON-LD, or a page with no FAQ items, is left alone', () => {
+  const bad = faqDoc([['Q', 'A']], '{not json');
+  assert.doesNotThrow(() => P.apply(bad.doc, FEED));
+  assert.equal(bad.script.textContent, '{not json');
+  const empty = faqDoc([], '{"@type":"FAQPage","mainEntity":[1]}');
+  P.apply(empty.doc, FEED);
+  assert.equal(empty.script.textContent, '{"@type":"FAQPage","mainEntity":[1]}');
+});

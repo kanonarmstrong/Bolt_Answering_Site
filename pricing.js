@@ -183,6 +183,32 @@
         el.textContent = JSON.stringify(data);
       } catch (e) { /* keep the baked JSON-LD (the fallback offer) */ }
     });
+
+    // AFMBP-2535 — the support page's FAQPage JSON-LD is the FAQ as shown. It is rebuilt from the
+    // page after the numbers above are written (the pricing answer's trial length follows the
+    // feed), so the structured data never says something the page doesn't. Bad JSON is left alone.
+    each(doc, 'script.js-ld-faq', function (el) {
+      try {
+        var data = JSON.parse(el.textContent);
+        var items = doc.querySelectorAll('.sup-faq__item');
+        var main = [];
+        for (var i = 0; i < items.length; i++) {
+          var q = items[i].querySelector('summary');
+          var a = items[i].querySelector('.sup-faq__a');
+          if (!q || !a) continue;
+          main.push({ '@type': 'Question', name: squash(q.textContent), acceptedAnswer: { '@type': 'Answer', text: squash(a.textContent) } });
+        }
+        if (main.length) {
+          data.mainEntity = main;
+          el.textContent = JSON.stringify(data);
+        }
+      } catch (e) { /* keep the baked FAQ JSON-LD */ }
+    });
+  }
+
+  // Visible text as one line: what a reader sees, without the markup's line breaks and indents.
+  function squash(t) {
+    return String(t).replace(/\s+/g, ' ').trim();
   }
 
   function run(doc, fetchImpl) {

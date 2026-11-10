@@ -39,6 +39,7 @@ These hooks in the page follow the feed:
 | `.mchev__fine li` | standard price; included messages/minutes; overage rates |
 | `.chev-mobile[aria-label]` | the whole offer, for screen readers |
 | `script.js-ld-offer` (homepage) | the offer in the structured data (JSON-LD) search engines read: `offerLd()` (AFMBP-2525) |
+| `script.js-ld-faq` (support page) | the FAQPage JSON-LD, rebuilt from the FAQ as shown after the numbers above are written, so the pricing answer's trial length matches (AFMBP-2535) |
 
 `pricing.test.mjs` pins these hooks and reads every page. A new page that shows
 the offer without a hook, or with a baked number, fails it.
