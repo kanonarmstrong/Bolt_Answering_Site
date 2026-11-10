@@ -145,7 +145,7 @@
       el.textContent = days;
     });
 
-    // The trial buttons read "Get started now" (owner, 2026-10-31, AFMBP-2482): no
+    // The trial buttons read "Start now" (owner, 2026-11-09, AFMBP-2537; before: AFMBP-2482): no
     // trial length in the label, so nothing to write there any more.
 
     // Mobile fine print (two lines).
