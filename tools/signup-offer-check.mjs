@@ -32,9 +32,10 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, resolve } from 'node:path';
 
-const ROOT = process.argv[2] ?? new URL('..', import.meta.url).pathname;
+// Absolute, so a relative root ('.') still matches the NC's '/<file>' suffix below and the mutation is served.
+const ROOT = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
 const NC = process.env.NC || '';
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -83,6 +84,8 @@ const MUTATE = {
   no_box: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:"";', '.demo-backdrop[data-screen="signup"] .demo-cm::after{\n  content:none;')],
   // "FREE" and "today." drop back to regular.
   regular_free: ['demo.css', (s) => cut(s, '.demo-so__free b{font-weight:700}', '.demo-so__free b{font-weight:400}')],
+  // "Start now" drops back to regular (the owner set it Bold, 11-09).
+  regular_cta: ['demo.css', (s) => cut(s, 'font-size:22px;font-weight:700;line-height:21px;text-decoration:none;', 'font-size:22px;font-weight:400;line-height:21px;text-decoration:none;')],
   // The rating sits level instead of tilted.
   flat_rating: ['demo.css', (s) => cut(s, '  transform:rotate(3.168deg);transform-origin:0 0;\n', '')],
   // The close button is hidden.
@@ -294,6 +297,9 @@ try {
   ok((await ev("getComputedStyle(document.querySelector('.demo-so__cta')).backgroundColor")) === 'rgb(43, 127, 253)' && (await ev("getComputedStyle(document.querySelector('.demo-so__cta')).color")) === 'rgb(255, 255, 255)', 'phone: "Start now" is the node\'s blue with white words');
   const cs = await ev("getComputedStyle(document.querySelector('.demo-so__cta')).boxShadow");
   ok(cs === 'rgba(0, 0, 0, 0.3) 0px 1px 2px 0px, rgba(0, 0, 0, 0.15) 0px 2px 6px 0px', `phone: "Start now" carries the node's two shadows as Figma draws them on it, no spread (${cs})`);
+  // The label is the node's Inter Bold 22 on a 21px line (owner, 11-09), drawn with the bold face itself.
+  const lf = (await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-so__cta')); return {font:s.fontFamily.split(',')[0].replace(/[\"']/g,'')+'|'+s.fontSize+'|'+s.fontWeight+'|'+s.lineHeight, bold:document.fonts.check('700 22px Inter')};})()")) || {};
+  ok(lf.font === 'Inter|22px|700|21px' && lf.bold === true, `phone: "Start now" is Inter Bold 22 on a 21px line (${lf.font}, bold face ${lf.bold})`);
   // The rating: the reviewer, stars, score and testimonial in the tilted bubble.
   ok((await text('.demo-backdrop.open .demo-so__who')) === 'Brent B. Indiana' && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-so__who b')).fontWeight")) === '700', `phone: the reviewer, "Brent B." bold, then "Indiana" (${await text('.demo-backdrop.open .demo-so__who')})`);
   ok((await text('.demo-backdrop.open .demo-cm__score')) === '4.9/5' && (await text('.demo-backdrop.open .demo-cm__quote')) === QUOTE, `phone: the rating and the testimonial (${await text('.demo-backdrop.open .demo-cm__quote')})`);
