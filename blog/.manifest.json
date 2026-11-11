@@ -6,12 +6,14 @@
     "blog/search-index.json",
     "blog/search/index.html",
     "blog/the-5-most-profitable-handyman-jobs-you-can-start-offering-today/index.html",
+    "blog/why-pay-per-lead-sites-cost-more-than-they-look/index.html",
     "llms.txt",
     "robots.txt",
     "sitemap.xml"
   ],
   "imageDirs": [
     "how-specializing-lets-a-handyman-charge-150-to-300-an-hour",
-    "the-5-most-profitable-handyman-jobs-you-can-start-offering-today"
+    "the-5-most-profitable-handyman-jobs-you-can-start-offering-today",
+    "why-pay-per-lead-sites-cost-more-than-they-look"
   ]
 }
