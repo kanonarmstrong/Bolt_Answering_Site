@@ -52,6 +52,19 @@
   .bchy .msearch_input { font-size: 16px; } /* under 16px, iOS Safari zooms the page on focus */
   .bchy .msearch .search_results { width: 100%; }
 }
+/* AFMBP-2577 (owner 11-12, desktop): the masthead field is as wide as the Recent posts images, which fill the sidebar
+   column (benchy.css: 307px, 258px at <=1199px). Its right edge already sits on the column's, so both edges line up.
+   At <=1023px the sidebar stacks under the posts, so the field keeps its 220px. Recent posts titles are 20% smaller
+   on desktop (benchy's 2rem -> 1.6rem), still two lines at most (2 x the 130% line height). */
+.bchy .masthead_search .msearch { width: 307px; }
+.bchy .stories_item_title { font-size: calc(1.6 * var(--bchy-rem, 10px)); max-height: calc(4.16 * var(--bchy-rem, 10px)); }
+@media screen and (max-width: 1199px) {
+  .bchy .masthead_search .msearch { width: 258px; }
+}
+@media screen and (max-width: 1023px) {
+  .bchy .masthead_search .msearch { width: 220px; }
+  .bchy .stories_item_title { font-size: calc(2 * var(--bchy-rem, 10px)); max-height: calc(5.2 * var(--bchy-rem, 10px)); }
+}
 
 .bchy h1, .bchy .h1, .bchy h2, .bchy .h2, .bchy h3, .bchy .h3, .bchy h4, .bchy .h4,
 .bchy .article_title a, .bchy .stories_item_title a { color: var(--navy); text-transform: none; }

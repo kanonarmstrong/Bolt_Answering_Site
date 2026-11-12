@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '16';
+const ASSET_V = '17';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -176,11 +176,12 @@ function breadcrumbs(crumbs) {
 /** "the bottom line" masthead: full-width hero band with the blog's wordmark (a Figma-outlined SVG).
  *  It is the page's <h1> when the page has no heading of its own (blog home), otherwise a link home. */
 /** "Search posts" field. Each page has two: in the masthead (desktop) and under Recent posts
- *  (phones); CSS shows one per screen size, so ids differ. */
-function searchForm(id) {
+ *  (phones); CSS shows one per screen size, so ids differ. The masthead one reads just "Search"
+ *  (AFMBP-2577, owner 11-12); screen readers hear "Search posts" from the label on both. */
+function searchForm(id, placeholder = 'Search posts') {
   return `<form action="${BLOG_PATH}search/" method="get" role="search" class="msearch js-search">
               <label class="visually-hidden" for="${id}">Search posts</label>
-              <input type="search" id="${id}" name="q" class="msearch_input" placeholder="Search posts" autocomplete="off" />
+              <input type="search" id="${id}" name="q" class="msearch_input" placeholder="${placeholder}" autocomplete="off" />
               <button class="msearch_btn" aria-label="Search"><img src="/blog/assets/img/search.svg" alt="" width="23" height="23" /></button>
               <div class="search_results" role="status" aria-live="polite" hidden></div>
             </form>`;
@@ -201,7 +202,7 @@ function masthead(isH1) {
         </div>
         <div class="masthead_search">
           <div class="masthead_search_inner">
-            ${searchForm('blog-q')}
+            ${searchForm('blog-q', 'Search')}
           </div>
         </div>
       </div>`;
