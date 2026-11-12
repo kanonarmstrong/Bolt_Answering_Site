@@ -396,7 +396,8 @@ try {
   await tap('.demo-failcard__link:nth-child(1)');
   await tap('.demo-failcard__link:nth-child(2)');
   ok(evs('demo_help_clicked', (d) => d.os === 'ios').length === 1 && evs('demo_help_clicked', (d) => d.os === 'android').length === 1, `events: each help tap counted once, by platform (${JSON.stringify(evs('demo_help_clicked').map((e) => e.data.os))})`);
-  ok(evs('demo_help_clicked').every((e) => Object.keys(e.data).filter((k) => !['os', 'trade', 'qa', 'attr', 'page', 'automated'].includes(k)).length === 0), 'events: the help event carries the platform only (no phone, email or business)');
+  // `browser` (AFMBP-2565) rides on every event: a closed class like "ios_browser", never the user agent.
+  ok(evs('demo_help_clicked').every((e) => Object.keys(e.data).filter((k) => !['os', 'trade', 'qa', 'attr', 'page', 'automated', 'browser'].includes(k)).length === 0 && /^(ios|android|desktop)_[a-z]+$/.test(e.data.browser)), 'events: the help event carries the platform only (no phone, email or business)');
   ok((await text('.demo-failcard__btn')) === 'Continue', 'failure: "Continue"');
   const before = sent('/api/demo/call').length;
   api.recap = { status: 'in_call', transcript: null };

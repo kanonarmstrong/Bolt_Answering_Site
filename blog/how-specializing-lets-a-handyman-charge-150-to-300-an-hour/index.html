@@ -24,7 +24,7 @@
       window.gtag('config', 'AW-18483202475');
     })();
   </script>
-  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/attribution.js?v=6"></script>
   <script defer src="/meta-pixel.js?v=3"></script>
   <script defer src="/privacy-choices.js?v=2"></script>
   <script defer src="/sentry-init.js?v=1"></script>
@@ -44,6 +44,9 @@
   <meta property="article:published_time" content="2026-11-10T16:04:29.000Z" />
   <meta property="article:modified_time" content="2026-11-10T19:08:30.000Z" />
   <meta name="twitter:card" content="summary_large_image" />
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
+  <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="/styles.css?v=56" />

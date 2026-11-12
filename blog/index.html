@@ -24,7 +24,7 @@
       window.gtag('config', 'AW-18483202475');
     })();
   </script>
-  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/attribution.js?v=6"></script>
   <script defer src="/meta-pixel.js?v=3"></script>
   <script defer src="/privacy-choices.js?v=2"></script>
   <script defer src="/sentry-init.js?v=1"></script>
@@ -41,6 +41,9 @@
   <meta property="og:description" content="Practical, sourced advice for independent HVAC, plumbing, and electrical pros on missed calls, booking, pricing, and growing a trades business." />
   <meta property="og:url" content="https://www.boltanswering.com/blog/" />
   <meta name="twitter:card" content="summary" />
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
+  <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
   <link rel="stylesheet" href="/styles.css?v=56" />

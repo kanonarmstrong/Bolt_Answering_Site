@@ -30,7 +30,7 @@
     })();
   </script>
   <!-- Funnel attribution + events, Bolt's own analytics (AFMBP-1968) -->
-  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/attribution.js?v=6"></script>
   <script defer src="/meta-pixel.js?v=3"></script>
   <script defer src="/privacy-choices.js?v=2"></script>
   <!-- JavaScript error reports (Sentry), behind one switch in sentry-init.js (AFMBP-2130) -->
@@ -53,6 +53,9 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Bolt Answering for Handymen — Never miss a job again" />
   <meta name="twitter:description" content="Keep working your day job. Bolt handles your calls and fills your side-hustle schedule." />
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
+  <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />
   <link rel="stylesheet" href="/assets/fonts.css?v=1" />
@@ -246,7 +249,7 @@
 
   <script src="pricing.js?v=9"></script>
   <script src="script.js?v=29"></script>
-  <script src="demo-format.js?v=3"></script>  <script src="demo.js?v=49"></script>
+  <script src="demo-format.js?v=3"></script>  <script src="demo.js?v=50"></script>
   <script src="reveal.js?v=6"></script>
   <script src="capes-zoom.js?v=1"></script>
   <script src="subscribe.js?v=1"></script>
