@@ -428,6 +428,39 @@ test('AFMBP-2572: the blog home list is 60% of the template: post titles, and ea
   for (const m of blog.matchAll(/^\s*(\.bchy \.article_list[^{]*)\{/gm)) assert.match(m[1], /^\.bchy \.article_list /);
 });
 
+test('AFMBP-2573: every blog image wears the standard format: cards, the post cover, Recent posts and images in post text', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: FIX, log: quiet });
+  const wrapped = (html) => (html.match(/<span class="bimg"(?: style="max-width:\d+px")?><span class="bimg__in"><img /g) || []).length;
+  const bare = (html) => (html.match(/<img [^>]*src="\/blog\/img\//g) || []).length;
+  const home = read(root, 'blog/index.html');
+  assert.ok(wrapped(home) >= 2 && wrapped(home) === bare(home), `blog home: ${wrapped(home)} of ${bare(home)} post images in the format`);
+  const art = read(root, 'blog/answer-every-call/index.html');
+  assert.match(art, /<div class="article_cover"><span class="bimg"><span class="bimg__in"><img /, 'the post cover');
+  assert.match(art, /<div class="stories_item_img"><a [^>]*><span class="bimg"><span class="bimg__in"><img /, 'Recent posts');
+  assert.match(art, /<span class="bimg" style="max-width:\d+px"><span class="bimg__in"><img [^>]*sizes="\(max-width: 1023px\) 100vw, 760px"/, 'an image in the post text, no wider than itself');
+  assert.equal(wrapped(art), bare(art), 'no post image left without the format');
+});
+
+test('AFMBP-2573: blog.css draws the Figma 2883:1674 format, and the logo is the node\'s white bolt', () => {
+  const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  const rule = (sel) => (css.match(new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`)) || [])[1] || '';
+  assert.match(rule('.bchy .bimg'), /container-type: inline-size/);
+  assert.match(rule('.bchy .bimg__in'), /overflow: hidden;.*border-radius: 1\.953cqw;/, 'corners 80/4096 of the width');
+  const after = rule('.bchy .bimg__in::after');
+  assert.match(after, /url\(\.\.\/img\/bolt-logo-white\.svg\) no-repeat right 3\.1cqw bottom 2\.22cqw \/ 8\.96cqw auto/, 'logo 367/4096 wide, 127/4096 from the right, 91/4096 from the bottom');
+  const grad = (after.match(/linear-gradient\(to right, (.*?)\); \}?$/m) || after.match(/linear-gradient\(to right, ([^;]*)\);\s*$/) || [])[1] || '';
+  const stops = grad.split(/,\s*(?=rgb)/);
+  assert.equal(stops.length, 11, `11 stops on Figma's unpremultiplied curve (${stops.length})`);
+  assert.equal(stops[0], 'rgba(69, 22, 185, 0) 50.00%', 'clear purple at 50%');
+  assert.equal(stops[10].replace(/\)$/, ''), 'rgb(31, 10, 83) 94.36%', '#1F0A53 at 94.36%');
+  assert.match(after, /pointer-events: none/, 'the overlay never takes a tap');
+  assert.match(rule('.bchy .article_cover .bimg, .bchy .stories_item_img .bimg'), /position: absolute; inset: 0;/, 'cropped frames carry the format on what shows');
+  const svg = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'img', 'bolt-logo-white.svg'), 'utf8');
+  assert.match(svg, /viewBox="0 0 367 152"/);
+  assert.equal((svg.match(/fill="white"/g) || []).length, 4, 'the four white paths of "Bolt Logo Vector, Small"');
+});
+
 test('blog.css sizes follow the blog base size, not the site root', () => {
   const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\d\s*rem\b/, 'no rem units (they would follow the site\'s 16px root)');
