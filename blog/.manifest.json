@@ -1,6 +1,7 @@
 {
   "files": [
     "blog/feed.xml",
+    "blog/from-jack-of-all-trades-to-go-to-guy-a-growth-plan-for-handymen/index.html",
     "blog/how-specializing-lets-a-handyman-charge-150-to-300-an-hour/index.html",
     "blog/index.html",
     "blog/search-index.json",
@@ -12,6 +13,7 @@
     "sitemap.xml"
   ],
   "imageDirs": [
+    "from-jack-of-all-trades-to-go-to-guy-a-growth-plan-for-handymen",
     "how-specializing-lets-a-handyman-charge-150-to-300-an-hour",
     "the-5-most-profitable-handyman-jobs-you-can-start-offering-today",
     "why-pay-per-lead-sites-cost-more-than-they-look"
