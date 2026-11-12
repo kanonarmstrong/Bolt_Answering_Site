@@ -183,10 +183,12 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
   assert.match(home, /<div class="infoline_date"><time datetime="2026-11-01T16:00:00\.000Z">Nov 1, 2026<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/);
   assert.doesNotMatch(art, /infoline_author/);
   assert.match(art, /<div class="stories_item_infoline infoline">\s*<div class="infoline_date"><time[^>]*>[A-Z][a-z]{2} \d{1,2}, \d{4}<\/time><\/div><span class="infoline_sep" aria-hidden="true">\|<\/span><div class="infoline_tag">\d+ min read<\/div>/, 'Recent posts use the same stamp');
-  // Author Gravatar: self-hosted, before the name; posts by authors without one get none.
-  assert.match(art, /<div class="author_name"><img class="author_avatar" src="\/blog\/img\/answer-every-call\/[0-9a-f]{10}-avatar\.webp" alt="" width="20" height="20" \/><span>Kanon Armstrong<\/span><\/div>/);
-  assert.ok(readdirSync(join(root, 'blog/img/answer-every-call')).some((f) => f.endsWith('-avatar.webp')), 'avatar file written');
-  assert.match(read(root, 'blog/why-pe-buys-shops/index.html'), /<div class="author_name"><span>Kanon Armstrong<\/span><\/div>/);
+  // AFMBP-2571 (owner 11-12): no author box at the end of a post (name, photo, bio, "Updated" line); the author
+  // stays in the JSON-LD below and in the feed.
+  for (const page of [art, read(root, 'blog/why-pe-buys-shops/index.html')]) {
+    assert.doesNotMatch(page, /class="author(_|")|author_avatar|author_txt/, 'no author box');
+    assert.doesNotMatch(page, />Updated <time/, 'no "Updated" line');
+  }
   const cat = read(root, 'blog/category/missed-calls-booking/index.html');
   assert.equal((cat.match(/<h1[\s>]/g) || []).length, 1, 'category: exactly one h1');
   assert.match(cat, /<div class="masthead_title">/);

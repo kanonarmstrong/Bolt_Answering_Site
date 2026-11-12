@@ -54,7 +54,7 @@
 }
 
 .bchy h1, .bchy .h1, .bchy h2, .bchy .h2, .bchy h3, .bchy .h3, .bchy h4, .bchy .h4,
-.bchy .article_title a, .bchy .stories_item_title a, .bchy .author_name { color: var(--navy); text-transform: none; }
+.bchy .article_title a, .bchy .stories_item_title a { color: var(--navy); text-transform: none; }
 .bchy .article_txt h1 { font-size: calc(4 * var(--bchy-rem, 10px)); line-height: 1.15; padding-top: 0; }
 .bchy .article_txt h2 { font-size: calc(3 * var(--bchy-rem, 10px)); line-height: 1.2; margin-top: calc(2 * var(--bchy-rem, 10px)); }
 .bchy .article_txt h3 { font-size: calc(2.2 * var(--bchy-rem, 10px)); margin-top: calc(1.4 * var(--bchy-rem, 10px)); }
@@ -112,14 +112,6 @@
 .bchy .list_intro { font-size: calc(1.7 * var(--bchy-rem, 10px)); margin-bottom: calc(3 * var(--bchy-rem, 10px)); }
 .bchy .icon-arrow-prev { transform: rotate(180deg); }
 
-/* Author box: no photo, so the text starts at the left edge of the box. */
-.bchy .author { margin-top: calc(3 * var(--bchy-rem, 10px)); background: var(--offwhite); border: 1px solid rgba(24, 10, 83, 0.08); border-radius: calc(1.6 * var(--bchy-rem, 10px)); padding: calc(2.4 * var(--bchy-rem, 10px)); display: block; text-align: left; } /* the template centers it below 600px */
-.bchy .author_cont { max-width: none; }
-.bchy .author .author_name { color: var(--navy); margin-bottom: calc(0.4 * var(--bchy-rem, 10px)); }
-/* Gravatar left of the name, exactly the name's font size (1em), so it never makes the line taller. */
-.bchy .author .author_name { display: flex; align-items: center; gap: 0.4em; }
-.bchy .author_avatar { flex: none; display: block; width: 1em; height: 1em; border-radius: 50%; object-fit: cover; }
-.bchy .author .author_txt { color: var(--body); font-size: calc(1.5 * var(--bchy-rem, 10px)); }
 
 .bchy .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .bchy a:focus-visible, .bchy button:focus-visible, .bchy input:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
