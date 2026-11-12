@@ -175,6 +175,10 @@ test('a fixture build produces crawlable pages with correct SEO wiring', async (
     assert.ok(page.indexOf('sidebar_msearch') < page.indexOf('<h3>Categories</h3>') || !page.includes('<h3>Categories</h3>'), 'phone search sits before Categories');
     assert.match(page, /<form action="\/blog\/search\/" method="get" role="search"/);
     assert.doesNotMatch(page, /sidebar_search|sidebar_cta|Never miss a job again/);
+    // AFMBP-2577 (owner 11-12): the masthead field reads "Search"; the phone one keeps "Search posts"; both labels say "Search posts".
+    assert.match(page, /class="masthead_search"[\s\S]*?<label class="visually-hidden" for="blog-q">Search posts<\/label>\s*<input type="search" id="blog-q" name="q" class="msearch_input" placeholder="Search" autocomplete="off" \/>/);
+    assert.match(page, /<label class="visually-hidden" for="blog-q-side">Search posts<\/label>\s*<input type="search" id="blog-q-side" name="q" class="msearch_input" placeholder="Search posts" autocomplete="off" \/>/);
+    assert.equal((page.match(/placeholder="Search"/g) || []).length, 1, 'only the masthead field says "Search"');
   }
   // Post cards end their excerpt with a plain "Read more" link, not a button.
   assert.match(home, /<p class="article_desc">[^<]* <a href="\/blog\/answer-every-call\/" class="article_more" aria-label="Read more: [^"]+">Read more<\/a><\/p>/);
@@ -470,6 +474,24 @@ test('AFMBP-2573: blog.css draws the Figma 2883:1674 format, and the logo is the
   const svg = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'img', 'bolt-logo-white.svg'), 'utf8');
   assert.match(svg, /viewBox="0 0 367 152"/);
   assert.equal((svg.match(/fill="white"/g) || []).length, 4, 'the four white paths of "Bolt Logo Vector, Small"');
+});
+
+test('AFMBP-2577: the desktop search field is as wide as the Recent posts images; Recent posts titles 20% smaller', () => {
+  const blog = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  const tpl = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'benchy.css'), 'utf8');
+  // The Recent posts images fill the sidebar column, so the field takes the column's width at each of benchy's breakpoints.
+  assert.ok(tpl.includes('.bchy .columns_sidebar { width: 307px; min-width: 307px; margin: 0 0 0 40px; }'), 'benchy: sidebar 307px');
+  assert.ok(tpl.includes('@media screen and (max-width: 1199px) { .bchy .columns_sidebar { margin: 0 0 0 30px; width: 258px; min-width: 258px; }'), 'benchy: sidebar 258px at <=1199px');
+  assert.ok(tpl.includes('  .bchy .columns_sidebar { margin: 0; width: 100%; min-width: 280px;'), 'benchy: sidebar stacks full width at <=1023px');
+  assert.ok(blog.includes('.bchy .masthead_search .msearch { width: 307px; }'));
+  assert.match(blog, /@media screen and \(max-width: 1199px\) \{\n  \.bchy \.masthead_search \.msearch \{ width: 258px; \}\n\}/);
+  assert.match(blog, /@media screen and \(max-width: 1023px\) \{\n  \.bchy \.masthead_search \.msearch \{ width: 220px; \}/, 'no column below 1024px: the field keeps 220px');
+  assert.match(blog, /\.bchy \.msearch \{ position: relative; pointer-events: auto; width: 220px;/, 'the base field (and the phone one) is still 220px');
+  // Recent posts titles: 0.8 x benchy's size and two-line cap on desktop; benchy's own where the sidebar stacks.
+  assert.ok(tpl.includes('.bchy .stories_item_title { max-height: calc(5.2 * var(--bchy-rem, 10px)); overflow: hidden;') && tpl.includes('font-size: calc(2 * var(--bchy-rem, 10px)); line-height: 130%;'), 'benchy: 2rem titles, 130% line height, 2 lines');
+  assert.ok(blog.includes('.bchy .stories_item_title { font-size: calc(1.6 * var(--bchy-rem, 10px)); max-height: calc(4.16 * var(--bchy-rem, 10px)); }'));
+  assert.ok(Math.abs(2 * 0.8 - 1.6) < 1e-9 && Math.abs(1.6 * 1.3 * 2 - 4.16) < 1e-9, '1.6 = 0.8 x 2; 4.16 = two 130% lines of 1.6');
+  assert.match(blog, /@media screen and \(max-width: 1023px\) \{\n[^}]*\}\n  \.bchy \.stories_item_title \{ font-size: calc\(2 \* var\(--bchy-rem, 10px\)\); max-height: calc\(5\.2 \* var\(--bchy-rem, 10px\)\); \}/);
 });
 
 test('blog.css sizes follow the blog base size, not the site root', () => {
