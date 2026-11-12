@@ -22,6 +22,8 @@ import { tmpdir } from 'node:os';
 const ROOT = resolve(process.argv[2] || '.');
 const NC = process.env.NC || '';
 const PAGES = ['start/handyman.html', 'start/plumbing.html', 'start/general-contractor.html'];
+// The trade each page's card events carry, as demo.js's TRADE names it on the trade pages.
+const TRADE = { 'start/handyman.html': 'handyman', 'start/plumbing.html': 'plumbing', 'start/general-contractor.html': 'general_contracting' };
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const UA = 'Mozilla/5.0 (Linux; Android 14; SM-A146U; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/490.0.0.49.79;]';
 
@@ -30,6 +32,7 @@ const MUTATE = {
   placement: (p, s) => s.replace('class="signup_offer ql-card"', 'class="ql-card"'),
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
   opened: (p, s) => s.replace("A.track('signup_offer_opened'", "A.track('signup_offer_seen'"),
+  trade: (p, s) => s.replace("{ trigger: 'quick_landing', trade: TRADE }", "{ trigger: 'quick_landing' }"),
   noindex: (p, s) => s.replace('<meta name="robots" content="noindex" />', ''),
   prefetch: (p, s) => s.replace("l.rel = 'prefetch'; l.href", "l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href"),
   position: (p, s) => s.replace('.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:70px 0 40px}', '.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:90px 0 40px}'),
@@ -124,6 +127,7 @@ try {
     check('site_landed, then signup_offer_opened once', g.events.includes('site_landed') && g.events.filter((t) => t === 'signup_offer_opened').length === 1, g.events);
     const opened = await ev(`(window.__events.find((e) => e.type === 'signup_offer_opened') || {}).data`);
     check('signup_offer_opened: trigger quick_landing, on this page', opened && opened.trigger === 'quick_landing' && opened.page === `/${page}`, opened);
+    check(`signup_offer_opened carries the card's trade (${TRADE[page]})`, opened && opened.trade === TRADE[page], opened && opened.trade);
 
     // The button: trial_link_clicked with the card's placement, and Meta's StartTrialClick from it.
     await ev(`(() => { const a = document.querySelector('.ql-cta'); a.addEventListener('click', (e) => e.preventDefault()); a.click(); })()`);
@@ -136,7 +140,7 @@ try {
     await ev(`(() => { const a = document.querySelector('.ql-close'); a.addEventListener('click', (e) => e.preventDefault()); a.click(); })()`);
     await sleep(300);
     const closed = await ev(`window.__events.filter((e) => e.type === 'demo_closed').map((e) => e.data)`);
-    check('close tap: demo_closed {step: signup_offer}', closed.length === 1 && closed[0].step === 'signup_offer', closed);
+    check(`close tap: demo_closed {step: signup_offer, trade: ${TRADE[page]}}`, closed.length === 1 && closed[0].step === 'signup_offer' && closed[0].trade === TRADE[page], closed);
   }
 } finally {
   try { ws && ws.close(); } catch {}

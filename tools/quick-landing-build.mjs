@@ -19,11 +19,11 @@ const tag = (name) => {
 };
 const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
 const TRADES = [
-  { slug: 'handyman', title: 'Bolt Answering for Handymen — Never miss a job again' },
-  { slug: 'plumbing', title: 'Bolt Answering for Plumbers — Never miss a job again' },
-  { slug: 'general-contractor', title: 'Bolt Answering for General Contractors — Never miss a job again' },
+  { slug: 'handyman', trade: 'handyman', title: 'Bolt Answering for Handymen — Never miss a job again' },
+  { slug: 'plumbing', trade: 'plumbing', title: 'Bolt Answering for Plumbers — Never miss a job again' },
+  { slug: 'general-contractor', trade: 'general_contracting', title: 'Bolt Answering for General Contractors — Never miss a job again' },
 ];
-const page = ({ slug, title }) => `<!DOCTYPE html>
+const page = ({ slug, trade, title }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 ${GTAG}
@@ -205,16 +205,19 @@ ${GTAG}
     // with placement "signup_offer" (the section's first class), and meta-pixel.js turns that
     // into StartTrialClick. attribution.js is deferred, so it is ready at DOMContentLoaded.
     (function () {
+      // The trade, as demo.js's TRADE names it for the card on the trade pages: the board's
+      // "The sign-up offer, by ad" reads it off signup_offer_opened.
+      var TRADE = '${trade}';
       function withAttr(fn) {
         var go = function () { if (window.boltAttr) fn(window.boltAttr); };
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
       }
       withAttr(function (A) {
-        A.whenVisible(function () { A.track('signup_offer_opened', { trigger: 'quick_landing' }); });
+        A.whenVisible(function () { A.track('signup_offer_opened', { trigger: 'quick_landing', trade: TRADE }); });
       });
       var x = document.querySelector('.ql-close');
       if (x) x.addEventListener('click', function () {
-        if (window.boltAttr) window.boltAttr.track('demo_closed', { step: 'signup_offer' });
+        if (window.boltAttr) window.boltAttr.track('demo_closed', { step: 'signup_offer', trade: TRADE });
       });
       // Warm the app's sign-up page while the card is read (AFMBP-2564): the app lists the files
       // its sign-up page needs at a stable address; prefetch them once this page has loaded.
