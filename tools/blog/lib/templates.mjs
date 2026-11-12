@@ -56,7 +56,8 @@ export function layout({ chrome, title, description, canonical, ogType = 'websit
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:url" content="${esc(canonical)}" />${ogImage ? `\n  <meta property="og:image" content="${esc(ogImage)}" />` : ''}${published ? `\n  <meta property="article:published_time" content="${published}" />\n  <meta property="article:modified_time" content="${modified}" />` : ''}
   <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}" />
-  <!-- The app's sign-up is one tap away: open its connection early (AFMBP-2564) -->
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
   <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   ${chrome.styles.map((href) => `<link rel="stylesheet" href="${href}" />`).join('\n  ')}

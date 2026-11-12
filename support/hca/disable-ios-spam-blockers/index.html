@@ -52,7 +52,8 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Turn off spam blockers on iPhone — Bolt Answering" />
   <meta name="twitter:description" content="Some iPhone settings silence calls from unknown numbers, including your Bolt test call. Here's how to temporarily disable spam blockers on iPhones." />
-  <!-- The app's sign-up is one tap away: open its connection early (AFMBP-2564) -->
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
   <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />

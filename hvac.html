@@ -53,7 +53,8 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Bolt Answering for HVAC Pros — Never miss a job again" />
   <meta name="twitter:description" content="A 'no A/C' call in August won't wait. Bolt answers, sorts urgent from routine, and books it while you're on the roof." />
-  <!-- The app's sign-up is one tap away: open its connection early (AFMBP-2564) -->
+  <!-- The app's sign-up is one tap away (AFMBP-2564): the plain preconnect warms the tap's navigation and the prefetches, the crossorigin one the signup-preload.json fetch -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
   <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/permanent-marker-400.woff2" crossorigin />

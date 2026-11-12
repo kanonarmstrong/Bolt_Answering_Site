@@ -15,7 +15,8 @@
 //   - the same flags as every event: qa on a QA visit, automated in an automated browser, and an
 //     opt-out keeps Bolt's own first-party events running, as it always has for site_landed;
 //   - the warm-up: every page with a sign-up link (and the blog template) opens the app's
-//     connection early (one crossorigin preconnect); the offer asks for /signup-preload.json once,
+//     connections early (a plain preconnect for the tap's navigation and the prefetches, a
+//     crossorigin one for the preload list's fetch); the offer asks for /signup-preload.json once,
 //     and prefetches its files once the page has loaded (paths on the app only, each once), as
 //     plain prefetches: the app's files carry no CORS header, as on the live app, and the browser
 //     refuses none of them; the app's answer today (its index.html, no CORS), a 404 or no network
@@ -60,8 +61,10 @@ const MUTATE = {
   no_new_view: ['attribution.js', (s) => cut(s, '    if (e && e.persisted) whenVisible(function () { startView(sinceStart()); });\n', '')],
   // The deepest point is not kept: scroll_pct is where the screen was at the end.
   last_depth: ['attribution.js', (s) => cut(s, '    if (view && !view.done) view.bottom = Math.max(view.bottom, screenBottom());', '    if (view && !view.done) view.bottom = screenBottom();')],
-  // A trade page loses the app's preconnect.
+  // A trade page loses the app's crossorigin preconnect (the preload list's).
   no_preconnect: ['handyman.html', (s) => cut(s, '  <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />\n', '')],
+  // A trade page loses the app's plain preconnect (the tap's navigation and the prefetches).
+  no_plain_preconnect: ['handyman.html', (s) => cut(s, '  <link rel="preconnect" href="https://app.boltanswering.com" />\n', '')],
   // The offer doesn't warm the app.
   no_warm: ['demo.js', (s) => cut(s, "    if (entry === 'signup' && !s) warmApp();\n", '')],
   // A listed file on another site is prefetched.
@@ -273,7 +276,7 @@ try {
     ok(offer.length === 1 && offer[0].data.trigger === 'ad_link' && offer[0].data.trade === 'handyman' && offer[0].data.browser === 'android_browser', `regression: signup_offer_opened once, ad_link, handyman, with browser (${show(offer.map((e) => e.data))})`);
     ok(tab.of('demo_opened').length === 0, 'regression: no demo_opened for the offer');
     const pc = await tab.ev(`[].slice.call(document.querySelectorAll('link[rel="preconnect"]')).map(function(l){return {href:l.href, co:l.crossOrigin, head:l.parentNode===document.head};})`);
-    ok(pc.length === 1 && pc[0].href === APP + '/' && pc[0].co === 'anonymous' && pc[0].head, `warm-up: one crossorigin preconnect to the app, in <head> (${show(pc)})`);
+    ok(pc.length === 2 && pc.every((l) => l.href === APP + '/' && l.head) && pc.filter((l) => l.co === null).length === 1 && pc.filter((l) => l.co === 'anonymous').length === 1, `warm-up: two preconnects to the app in <head>, one plain and one crossorigin (${show(pc)})`);
     const pre = tab.app.filter((r) => r.path === '/signup-preload.json');
     ok(pre.length === 1 && /^(Fetch|XHR)$/.test(pre[0].type) && pre[0].method === 'GET', `warm-up: the offer asks for /signup-preload.json once (${show(pre)})`);
     ok((await tab.ev('document.querySelectorAll(\'link[rel="prefetch"]\').length')) === 0 && tab.app.length === 1, `warm-up: today's answer (the app's index.html, no CORS) prefetches nothing (${show(tab.app.map((r) => r.path))})`);
@@ -499,7 +502,7 @@ try {
     const files = [];
     const walk = (d) => { for (const n of readdirSync(d)) { const p = join(d, n); if (statSync(p).isDirectory()) { if (!/^(\.git|node_modules|tools|vendor)$/.test(n)) walk(p); } else if (n.endsWith('.html')) files.push(p); } };
     walk(ROOT);
-    const LINE = '<link rel="preconnect" href="https://app.boltanswering.com" crossorigin />';
+    const LINES = ['<link rel="preconnect" href="https://app.boltanswering.com" />', '<link rel="preconnect" href="https://app.boltanswering.com" crossorigin />'];
     let checked = 0; const missing = [];
     for (const f of files) {
       let s = readFileSync(f, 'utf8');
@@ -507,11 +510,11 @@ try {
       if (!s.includes('https://app.boltanswering.com/signup') && !/demo\.js/.test(s)) continue;
       checked++;
       const head = s.slice(0, s.indexOf('</head>'));
-      if (head.split(LINE).length !== 2 || s.split('rel="preconnect"').length !== 2) missing.push(relative(ROOT, f));
+      if (LINES.some((l) => head.split(l).length !== 2) || s.split('rel="preconnect"').length !== 3) missing.push(relative(ROOT, f));
     }
-    ok(checked >= 16 && missing.length === 0, `pages: all ${checked} pages with a sign-up link or the offer have one preconnect to the app, in <head> (missing: ${show(missing)})`);
+    ok(checked >= 16 && missing.length === 0, `pages: all ${checked} pages with a sign-up link or the offer have both preconnects to the app (plain, crossorigin), once each, in <head> (missing: ${show(missing)})`);
     const tpl = readFileSync(join(ROOT, 'tools/blog/lib/templates.mjs'), 'utf8');
-    ok(tpl.split(LINE).length === 2, 'pages: the blog template has it too, so every rebuilt blog page keeps it');
+    ok(LINES.every((l) => tpl.split(l).length === 2), 'pages: the blog template has both too, so every rebuilt blog page keeps them');
   }
 
   console.log('\nsample payloads:');
