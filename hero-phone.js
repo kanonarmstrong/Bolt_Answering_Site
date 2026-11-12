@@ -441,7 +441,7 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
     }
 
     function render() {
-        if (disposed || !renderer || !geomCtx) return
+        if (disposed || lost || !renderer || !geomCtx) return
         syncBox()
         var w = wrap.clientWidth,
             h = wrap.clientHeight
@@ -619,19 +619,105 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
         }
     }
 
-    init()
+    // ---------- leaving, coming back, and a lost WebGL context (AFMBP-2581) ----------
+    // A page left for another one can come back with Back, from the browser's back/forward cache, with all of this
+    // state intact (Safari on iPhone keeps it). So leaving only pauses the phone and Back resumes it where it was;
+    // only a page that is really going away (not cached) is torn down. Before, every pagehide disposed the renderer
+    // and forced the context lost, and cancelled the frame without clearing its handle: after Back the phone's body
+    // was gone (an empty canvas, the picture still hidden) and its screen frozen, with no way to restart the clock.
+    var lost = false
+    var recoverTimer = 0
+    function pause() {
+        if (raf) window.cancelAnimationFrame(raf)
+        raf = 0
+        lastTs = 0
+    }
+    // Build the phone again on a context that has come back (or a new one): its environment map was drawn on the
+    // GPU and went with the old context, so everything is built from scratch. The first frame then puts the phone
+    // back over the picture (maybeShow) and the clock carries on from where it stopped.
+    function rebuild() {
+        if (disposed) return
+        phone.clear()
+        for (var i = scene.children.length - 1; i >= 0; i--) {
+            if (scene.children[i] !== poseGroup) scene.remove(scene.children[i])
+        }
+        scene.environment = null
+        var built = buildPhone(
+            scene,
+            phone,
+            renderer,
+            CFG,
+            function () {
+                return disposed || lost
+            },
+            render
+        )
+        geomCtx = built.geomCtx
+        render()
+        wake()
+    }
+    // A context the browser hasn't given back: start over on a new canvas. No WebGL any more -> the picture stays.
+    function recover() {
+        recoverTimer = 0
+        if (disposed || !lost || document.hidden) return
+        var fresh = document.createElement("canvas")
+        fresh.className = canvas.className
+        canvas.parentNode.replaceChild(fresh, canvas)
+        canvas = fresh
+        try {
+            if (renderer) renderer.dispose()
+        } catch (e) {}
+        renderer = null
+        try {
+            renderer = createRenderer(canvas)
+        } catch (e) {
+            return
+        }
+        watchContext(canvas)
+        lost = false
+        rebuild()
+    }
+    function watchContext(cv) {
+        cv.addEventListener("webglcontextlost", function () {
+            // three.js calls preventDefault(), so the browser may hand the context back. Until then the hero
+            // picture shows again: the phone never leaves an empty frame.
+            if (cv !== canvas || disposed) return
+            lost = true
+            pause()
+            frameReady = false
+            media.classList.remove("hero__media--3d")
+            if (!recoverTimer) recoverTimer = window.setTimeout(recover, 1500)
+        })
+        cv.addEventListener("webglcontextrestored", function () {
+            if (cv !== canvas || disposed || !lost) return
+            if (recoverTimer) window.clearTimeout(recoverTimer)
+            recoverTimer = 0
+            lost = false
+            rebuild()
+        })
+    }
 
-    window.addEventListener(
-        "pagehide",
-        function () {
-            disposed = true
-            if (raf) window.cancelAnimationFrame(raf)
-            if (resizeObserver) resizeObserver.disconnect()
-            if (renderer) {
-                renderer.dispose()
-                renderer.forceContextLoss && renderer.forceContextLoss()
-            }
-        },
-        { once: true }
-    )
+    init()
+    watchContext(canvas)
+
+    window.addEventListener("pagehide", function (e) {
+        pause()
+        if (e.persisted || disposed) return
+        disposed = true
+        if (recoverTimer) window.clearTimeout(recoverTimer)
+        if (resizeObserver) resizeObserver.disconnect()
+        if (renderer) {
+            renderer.dispose()
+            renderer.forceContextLoss && renderer.forceContextLoss()
+        }
+    })
+    window.addEventListener("pageshow", function (e) {
+        if (!e.persisted || disposed) return
+        if (lost) return recover()
+        render()
+        wake()
+    })
+    document.addEventListener("visibilitychange", function () {
+        if (lost && !document.hidden && !recoverTimer) recoverTimer = window.setTimeout(recover, 300)
+    })
 })()
