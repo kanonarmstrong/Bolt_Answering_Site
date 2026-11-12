@@ -31,7 +31,7 @@ const ANALYTICS = `<script>
       window.gtag('config', 'AW-18483202475');
     })();
   </script>
-  <script defer src="/attribution.js?v=5"></script>
+  <script defer src="/attribution.js?v=6"></script>
   <script defer src="/meta-pixel.js?v=3"></script>
   <script defer src="/privacy-choices.js?v=2"></script>
   <script defer src="/sentry-init.js?v=1"></script>`;
@@ -56,6 +56,8 @@ export function layout({ chrome, title, description, canonical, ogType = 'websit
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:url" content="${esc(canonical)}" />${ogImage ? `\n  <meta property="og:image" content="${esc(ogImage)}" />` : ''}${published ? `\n  <meta property="article:published_time" content="${published}" />\n  <meta property="article:modified_time" content="${modified}" />` : ''}
   <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}" />
+  <!-- The app's sign-up is one tap away: open its connection early (AFMBP-2564) -->
+  <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/inter.woff2" crossorigin />
   ${chrome.styles.map((href) => `<link rel="stylesheet" href="${href}" />`).join('\n  ')}
   <link rel="stylesheet" href="/blog/assets/css/benchy.css?v=${ASSET_V}" />

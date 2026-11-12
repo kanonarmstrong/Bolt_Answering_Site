@@ -196,6 +196,53 @@
     artWarmed = true;
     MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n; });
   }
+  // AFMBP-2564 — warm the app's sign-up page while the sign-up offer is up, so its one button
+  // opens a page whose code is already in the browser. The app publishes the files that page
+  // needs first at /signup-preload.json, readable from any site: {"files": ["/assets/….js",
+  // "/assets/….css"]}. The offer asks for it once per page and has the browser prefetch each
+  // file (lowest priority, once the page itself has finished loading, so nothing of this page
+  // waits on it). Each page's <head> also opens the connection early (preconnect). Silent by
+  // design: no file yet, offline, blocked, not JSON, or a file on another site adds nothing,
+  // and nothing waits on it. QA visits warm it too; nothing goes to analytics.
+  // The prefetch is a plain one, without crossorigin: the app's files carry no
+  // Access-Control-Allow-Origin, and a crossorigin prefetch of them is refused by CORS, so the
+  // sign-up page downloads them a second time. Plain, Chrome keeps them for the sign-up page's
+  // own `crossorigin` loads with or without that header (headless Chrome 157, two same-site
+  // origins, 2026-11-12: JS and CSS each fetched once).
+  var APP_ORIGIN = 'https://app.boltanswering.com';
+  var appWarmed = false;
+  function prefetchAppFiles(files) {
+    var have = {}, links = document.querySelectorAll('link[rel="prefetch"]');
+    for (var i = 0; i < links.length; i++) have[links[i].href] = true;
+    // A sign-up page needs a few files; a list far longer than that is a mistake, not a plan.
+    for (var j = 0; j < files.length && j < 20; j++) {
+      var p = files[j], u;
+      if (typeof p !== 'string' || p.charAt(0) !== '/') continue;
+      try { u = new URL(p, APP_ORIGIN); } catch (e) { continue; }
+      if (u.origin !== APP_ORIGIN || have[u.href]) continue;   // "//host/…" or "/\host/…" leave the app
+      have[u.href] = true;
+      var l = document.createElement('link');
+      l.rel = 'prefetch';
+      l.href = u.href;
+      document.head.appendChild(l);
+    }
+  }
+  function warmApp() {
+    if (appWarmed) return;
+    appWarmed = true;
+    try {
+      window.fetch(APP_ORIGIN + '/signup-preload.json', { mode: 'cors', credentials: 'omit', priority: 'low' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          var files = d && Array.isArray(d.files) ? d.files : [];
+          if (!files.length) return;
+          var go = function () { try { prefetchAppFiles(files); } catch (e) {} };
+          if (document.readyState === 'complete') go();
+          else window.addEventListener('load', go);
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
   // The modal opens on the choice between the two demos (AFMBP-2083); `entry`
   // 'form' skips it for the "We'll call you" form (/?talk=form). A call this tab
   // started on the demo line takes precedence: the page follows it instead.
@@ -220,6 +267,7 @@
     // A reload in the middle of a demo-line call is not a new open.
     // The sign-up offer is not a demo: its own event keeps the demo funnel clean.
     if (trigger !== 'resume') track(entry === 'signup' && !s ? 'signup_offer_opened' : 'demo_opened', { trigger: trigger || 'button' });
+    if (entry === 'signup' && !s) warmApp();
   }
   function closeModal(e) {
     if (backdrop && backdrop.classList.contains('open')) track('demo_closed', { step: step });
