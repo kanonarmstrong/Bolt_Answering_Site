@@ -7,6 +7,7 @@ import { join, basename } from 'node:path';
 import sanitizeHtml from 'sanitize-html';
 import sharp from 'sharp';
 import { stripTags, decodeEntities, postPath } from './util.mjs';
+import { brandImage } from './templates.mjs';
 
 export const IMAGE_WIDTHS = [480, 960, 1600];
 const OG_WIDTH = 1200;
@@ -210,7 +211,8 @@ export async function processContent(post, ctx) {
     try {
       const img = await processImage(decodeEntities(src), { slug: post.slug, ...ctx });
       keepFiles.push(...img.files);
-      html = html.replace(tag, `<img src="${img.src}" srcset="${img.srcset}" sizes="(max-width: 1023px) 100vw, 760px" width="${img.width}" height="${img.height}" alt="${alt.replace(/"/g, '&quot;')}" loading="lazy" decoding="async">`);
+      // AFMBP-2573: the blog's standard image format (as templates.mjs's featured images), no wider than the image itself.
+      html = html.replace(tag, brandImage(`<img src="${img.src}" srcset="${img.srcset}" sizes="(max-width: 1023px) 100vw, 760px" width="${img.width}" height="${img.height}" alt="${alt.replace(/"/g, '&quot;')}" loading="lazy" decoding="async">`, img.width));
     } catch (e) {
       warnings.push(`"${post.title}": ${e.message}`);
       html = html.replace(tag, '');

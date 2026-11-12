@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '14';
+const ASSET_V = '15';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -87,9 +87,13 @@ ${body}
 `;
 }
 
+/** A post's image in the blog's standard format (AFMBP-2573, Figma 2883:1674): blog.css draws its rounded corners, the
+ *  gradient and the white logo on .bimg > .bimg__in. */
+export const brandImage = (imgTag, maxWidth) => `<span class="bimg"${maxWidth ? ` style="max-width:${maxWidth}px"` : ''}><span class="bimg__in">${imgTag}</span></span>`;
+
 function picture(img, { sizes, eager = false } = {}) {
   if (!img) return '';
-  return `<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`;
+  return brandImage(`<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`);
 }
 
 /** "Nov 6, 2026 | 2 min read" stamp on post cards, posts and Recent posts. The author is only in the post's

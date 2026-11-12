@@ -88,6 +88,23 @@
 .bchy .article_title.h2 { font-size: calc(3.2 * var(--bchy-rem, 10px)); }
 .bchy .article_item_cover-empty { min-height: 0; }
 .bchy .article_item_cover img, .bchy .article_cover img, .bchy .stories_item_img img { width: 100%; height: auto; display: block; }
+/* AFMBP-2573 (owner 11-12): one standard format for every blog image (Figma 2883:1674, "Blog image format", 4096x2730):
+   rounded corners, a gradient overlay and the white bolt logo bottom right. templates.mjs (featured images) and content.mjs
+   (images in post text) wrap each image in .bimg > .bimg__in. .bimg is a size container, so 1cqw = 1% of the image's width
+   and the node's numbers scale with every image: corners 80/4096 = 1.953cqw; logo 367px wide = 8.96cqw, 127px from the
+   right = 3.1cqw, 91px from the bottom = 2.22cqw; gradient left to right, clear purple rgba(69,22,185,0) at 50% to #1F0A53
+   at 94.36%. Figma blends those two unpremultiplied (the lavender middle); CSS blends premultiplied, so the 11 stops follow
+   Figma's curve. The first border-radius/background lines are the fallback for browsers without container units. */
+.bchy .bimg { display: block; position: relative; container-type: inline-size; }
+.bchy .bimg__in { display: block; position: relative; overflow: hidden; border-radius: 12px; border-radius: 1.953cqw; }
+.bchy .bimg__in::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: url(../img/bolt-logo-white.svg) no-repeat right 3.4% bottom 4.8% / 8.96% auto, linear-gradient(to right, rgba(69, 22, 185, 0) 50.00%, rgba(65, 21, 175, 0.1) 54.44%, rgba(61, 20, 165, 0.2) 58.87%, rgba(58, 19, 154, 0.3) 63.31%, rgba(54, 17, 144, 0.4) 67.74%, rgba(50, 16, 134, 0.5) 72.18%, rgba(46, 15, 124, 0.6) 76.62%, rgba(42, 14, 114, 0.7) 81.05%, rgba(39, 12, 103, 0.8) 85.49%, rgba(35, 11, 93, 0.9) 89.92%, rgb(31, 10, 83) 94.36%);
+  background: url(../img/bolt-logo-white.svg) no-repeat right 3.1cqw bottom 2.22cqw / 8.96cqw auto, linear-gradient(to right, rgba(69, 22, 185, 0) 50.00%, rgba(65, 21, 175, 0.1) 54.44%, rgba(61, 20, 165, 0.2) 58.87%, rgba(58, 19, 154, 0.3) 63.31%, rgba(54, 17, 144, 0.4) 67.74%, rgba(50, 16, 134, 0.5) 72.18%, rgba(46, 15, 124, 0.6) 76.62%, rgba(42, 14, 114, 0.7) 81.05%, rgba(39, 12, 103, 0.8) 85.49%, rgba(35, 11, 93, 0.9) 89.92%, rgb(31, 10, 83) 94.36%); }
+.bchy .bimg img { position: static; display: block; width: 100%; height: auto; border-radius: 0; }
+/* The post's own cover and the sidebar thumbnails crop the image to the template's frame (42.6% / 49% of the width tall):
+   the format sits on that visible frame, so the logo is in its bottom right corner. */
+.bchy .article_cover .bimg, .bchy .stories_item_img .bimg { position: absolute; inset: 0; }
+.bchy .article_cover .bimg__in, .bchy .stories_item_img .bimg__in { height: 100%; }
 /* AFMBP-2572 (owner 11-12): the blog home's post list, tighter. Post titles 40% smaller, and 40% less white space
    between one post's excerpt and the next post's title. That space is three gaps (after the excerpt; below the cover
    image down to the date line; the date line to the title), and each is 60% of what benchy.css draws at every width.
