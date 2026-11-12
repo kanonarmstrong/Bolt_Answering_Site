@@ -88,6 +88,28 @@
 .bchy .article_title.h2 { font-size: calc(3.2 * var(--bchy-rem, 10px)); }
 .bchy .article_item_cover-empty { min-height: 0; }
 .bchy .article_item_cover img, .bchy .article_cover img, .bchy .stories_item_img img { width: 100%; height: auto; display: block; }
+/* AFMBP-2572 (owner 11-12): the blog home's post list, tighter. Post titles 40% smaller, and 40% less white space
+   between one post's excerpt and the next post's title. That space is three gaps (after the excerpt; below the cover
+   image down to the date line; the date line to the title), and each is 60% of what benchy.css draws at every width.
+   The cover frame now hugs its image: benchy's frame is 63.1% as tall as it is wide, while the blog shows the whole
+   image, so a 2:1 image left an empty 13.1%-of-the-width band under it. 60% of that band comes back as margin.
+   The gap after the excerpt is measured from its last line of text, so the post's bottom margin also gives back 40% of
+   that line's half-leading (3.9px on wide screens, 3px on phones). */
+.bchy .article_list .article_title.h2 { font-size: calc(1.92 * var(--bchy-rem, 10px)); margin-top: calc(1.2 * var(--bchy-rem, 10px)); padding-top: calc(0.6 * var(--bchy-rem, 10px)); }
+.bchy .article_list .article_item { margin-bottom: calc(6 * var(--bchy-rem, 10px) - 1.56px); }
+.bchy .article_list .article_txt p.article_desc { padding-bottom: calc(1.68 * var(--bchy-rem, 10px)); margin-bottom: calc(1.74 * var(--bchy-rem, 10px)); }
+.bchy .article_list .article_item_cover:before { display: none; }
+.bchy .article_list .article_item_cover img { position: static; }
+.bchy .article_list .article_item_cover { margin-bottom: calc(7.86% + 0.54 * var(--bchy-rem, 10px)); }
+.bchy .article_list .infoline { padding-top: calc(0.84 * var(--bchy-rem, 10px)); padding-bottom: calc(1.2 * var(--bchy-rem, 10px)); margin-bottom: calc(1.26 * var(--bchy-rem, 10px)); }
+@media screen and (max-width: 1023px) {
+  .bchy .article_list .article_item { margin-bottom: calc(4.8 * var(--bchy-rem, 10px) - 1.56px); }
+}
+@media screen and (max-width: 767px) {
+  .bchy .article_list .article_item { margin-bottom: calc(3.6 * var(--bchy-rem, 10px) - 1.2px); }
+  .bchy .article_list .article_txt p.article_desc { padding-bottom: calc(1.2 * var(--bchy-rem, 10px)); margin-bottom: calc(1.14 * var(--bchy-rem, 10px)); }
+  .bchy .article_list .infoline { padding-top: calc(0.6 * var(--bchy-rem, 10px)); padding-bottom: calc(0.6 * var(--bchy-rem, 10px)); margin-bottom: calc(0.9 * var(--bchy-rem, 10px)); }
+}
 .bchy .breadcrumbs { white-space: normal; overflow: visible; display: flex; flex-wrap: wrap; align-items: center; gap: calc(0.4 * var(--bchy-rem, 10px)) 0; }
 
 /* Search results (live results under the search field and the /blog/search/ page). */
