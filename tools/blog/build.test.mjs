@@ -494,6 +494,16 @@ test('AFMBP-2577: the desktop search field is as wide as the Recent posts images
   assert.match(blog, /@media screen and \(max-width: 1023px\) \{\n[^}]*\}\n  \.bchy \.stories_item_title \{ font-size: calc\(2 \* var\(--bchy-rem, 10px\)\); max-height: calc\(5\.2 \* var\(--bchy-rem, 10px\)\); \}/);
 });
 
+test('AFMBP-2579: every blog home post image sits in a frame the shape of the 11-12 post image (1408x768), cropped to fill', async () => {
+  const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  assert.ok(css.includes('.bchy .article_list .article_item_cover .bimg__in { aspect-ratio: 1408 / 768; }'), 'the frame has the 11-12 image\'s shape');
+  assert.ok(css.includes('.bchy .article_list .article_item_cover .bimg__in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }'), 'every image fills the frame, trimmed from the centre');
+  // Only the blog home list: the post's own cover and the Recent posts thumbnails keep benchy's frames (42.6% / 49%).
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim(), body: m[2] }));
+  // (The masthead's background picture has always filled its band with object-fit; it is not a post image.)
+  assert.deepEqual(rules.filter((r) => /aspect-ratio|object-fit/.test(r.body) && r.sel !== '.bchy .masthead_bg').map((r) => r.sel), ['.bchy .article_list .article_item_cover .bimg__in', '.bchy .article_list .article_item_cover .bimg__in img'], 'no other post image is reshaped');
+});
+
 test('blog.css sizes follow the blog base size, not the site root', () => {
   const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\d\s*rem\b/, 'no rem units (they would follow the site\'s 16px root)');
