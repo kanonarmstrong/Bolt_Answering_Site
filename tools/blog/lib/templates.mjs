@@ -3,7 +3,7 @@
    readable HTML without JavaScript: the only script is search, menu and dropdown. */
 import { esc, formatDate, postPath, categoryPath, pagePath, BLOG_PATH, SITE_NAME, PUBLISHER_LEGAL_NAME } from './util.mjs';
 
-const ASSET_V = '12';
+const ASSET_V = '13';
 // The site's own one-line description (index.html <meta name="description">).
 
 /* Same analytics bootstrap as the rest of the site: no tags for a browser that opted out
@@ -92,8 +92,8 @@ function picture(img, { sizes, eager = false } = {}) {
   return `<img src="${img.src}" srcset="${img.srcset}" sizes="${sizes}" width="${img.width}" height="${img.height}" alt="${esc(img.alt)}"${eager ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" />`;
 }
 
-/** "Nov 6, 2026 | 2 min read" stamp on post cards, posts and Recent posts. The author is in the post's
- *  author box and JSON-LD. */
+/** "Nov 6, 2026 | 2 min read" stamp on post cards, posts and Recent posts. The author is only in the post's
+ *  JSON-LD and RSS (no author box on posts, owner 11-12, AFMBP-2571). */
 const stamp = (p) => `<div class="infoline_date"><time datetime="${p.datePublished}">${formatDate(p.datePublished)}</time></div><span class="infoline_sep" aria-hidden="true">|</span><div class="infoline_tag">${p.minutes} min read</div>`;
 const infoline = (p) => `<div class="article_infoline infoline">
                     ${stamp(p)}
@@ -232,13 +232,6 @@ export function articlePage({ post, html, recent, categories, related }) {
 ${html}
                 </div>
                 ${post.tags.length ? `<div class="article_tags"><div class="article_tags_title">Tags:</div> ${post.tags.map((t) => `<span>#${esc(t.name)}</span>`).join(' <span class="dash"></span> ')}</div>` : ''}
-                <div class="author">
-                  <div class="author_cont">
-                    <div class="author_name">${post.author.avatar ? `<img class="author_avatar" src="${post.author.avatar}" alt="" width="20" height="20" />` : ''}<span>${esc(post.author.name)}</span></div>
-                    ${post.author.description ? `<div class="author_txt">${esc(post.author.description)}</div>` : ''}
-                    ${post.dateModified.slice(0, 10) !== post.datePublished.slice(0, 10) ? `<div class="author_txt">Updated <time datetime="${post.dateModified}">${formatDate(post.dateModified)}</time></div>` : ''}
-                  </div>
-                </div>
               </article>
               ${related.length ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h3">Keep reading</h2><ul>${related.map((r) => `<li><a href="${postPath(r.slug)}">${esc(r.title)}</a></li>`).join('')}</ul></section>` : ''}
             </div>
