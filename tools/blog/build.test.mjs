@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from './build.mjs';
-import { sanitize, rewriteLinks, extractFaq, isAllowedImageHost, closingTrialButton, processContent } from './lib/content.mjs';
+import { sanitize, rewriteLinks, extractFaq, isAllowedImageHost, closingTrialButton, processContent, OL_CLASSES } from './lib/content.mjs';
 import { normalize } from './lib/wp.mjs';
 import { changedUrls } from './indexnow.mjs';
 import { parseDraft, toWxr } from './make-wxr.mjs';
@@ -91,6 +91,30 @@ test('AFMBP-2569: the post button restates the Talk button\'s own size and colou
   assert.equal(val(post, 'box-shadow'), 'none');
   const hover = blog.match(/\.bchy \.article_txt a\.btn\.btn--blue:hover \{([^}]*)\}/)[1];
   assert.equal(val(hover, 'box-shadow'), (site.match(/\.btn--blue:hover\{([^}]*)\}/)[1].match(/box-shadow:([^;}]+)/) || [])[1].replace(/\s+/g, ''), 'hover shadow as the Talk button');
+});
+
+test('AFMBP-2570: a numbered list keeps the List style picked in WordPress, as a class blog.css styles', () => {
+  const cases = [
+    ['<ol class="wp-block-list"><li>a</li></ol>', '<ol><li>a</li></ol>'],
+    ['<ol class="wp-block-list" type="a" start="3" reversed><li>a</li></ol>', '<ol start="3" reversed class="list-lower-alpha"><li>a</li></ol>'],
+    ['<ol type="A"><li>a</li></ol>', '<ol class="list-upper-alpha"><li>a</li></ol>'],
+    ['<ol type="i"><li>a</li></ol>', '<ol class="list-lower-roman"><li>a</li></ol>'],
+    ['<ol type="I"><li>a</li></ol>', '<ol class="list-upper-roman"><li>a</li></ol>'],
+    ['<ol style="list-style-type:lower-latin"><li>a</li></ol>', '<ol class="list-lower-alpha"><li>a</li></ol>'],
+    ['<ol type="1"><li>a</li></ol>', '<ol><li>a</li></ol>'],
+    ['<ol type="disc" class="list-lower-alpha"><li>a</li></ol>', '<ol><li>a</li></ol>'], // only the build sets the class
+    ['<ul class="wp-block-list"><li>a<ul><li>b</li></ul></li></ul>', '<ul><li>a<ul><li>b</li></ul></li></ul>'],
+  ];
+  for (const [wp, want] of cases) assert.equal(sanitize(wp), want, wp);
+});
+
+test('AFMBP-2570: lists in a post show their markers (styles.css removes them site-wide)', () => {
+  const blog = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = (sel) => (blog.match(new RegExp(`${sel.replace(/[.*]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
+  assert.match(rule('.bchy .article_txt ul'), /list-style:\s*disc/);
+  assert.match(rule('.bchy .article_txt ul ul'), /list-style-type:\s*circle/);
+  assert.match(rule('.bchy .article_txt ol'), /list-style:\s*decimal/);
+  for (const c of OL_CLASSES) assert.match(rule(`.bchy .article_txt ol.${c}`), new RegExp(`list-style-type:\\s*${c.slice(5)}`), c);
 });
 
 test('links to the WordPress copy of a post are rewritten to /blog/<slug>/', () => {

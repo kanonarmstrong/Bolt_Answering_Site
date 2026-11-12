@@ -68,6 +68,17 @@
 .bchy .article_txt .post-cta { display: flex; flex-wrap: wrap; gap: 12px; margin: calc(2.4 * var(--bchy-rem, 10px)) 0; padding: 0; }
 .bchy .article_txt a.btn.btn--blue { height: 49px; min-width: calc(12.4em + 44px); padding: 0 22px; font-size: clamp(15px, 1.4vw, 16px); font-weight: 500; text-transform: none; color: var(--offwhite); background: var(--blue); border-radius: 6px; box-shadow: none; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
 .bchy .article_txt a.btn.btn--blue:hover { box-shadow: 0 6px 18px rgba(43, 128, 252, .4); }
+/* AFMBP-2570: lists in a post show their markers, as picked in WordPress. styles.css removes them site-wide
+   (ul,ol{list-style:none}). A bulleted list gets round bullets (hollow, then square, when nested); a numbered list
+   gets numbers, or the letters or Roman numerals its List style asks for (content.mjs keeps that as a class). */
+.bchy .article_txt ul { list-style: disc; }
+.bchy .article_txt ul ul { list-style-type: circle; }
+.bchy .article_txt ul ul ul { list-style-type: square; }
+.bchy .article_txt ol { list-style: decimal; }
+.bchy .article_txt ol.list-lower-alpha { list-style-type: lower-alpha; }
+.bchy .article_txt ol.list-upper-alpha { list-style-type: upper-alpha; }
+.bchy .article_txt ol.list-lower-roman { list-style-type: lower-roman; }
+.bchy .article_txt ol.list-upper-roman { list-style-type: upper-roman; }
 .bchy .article_txt img { max-width: 100%; height: auto; border-radius: calc(1.2 * var(--bchy-rem, 10px)); }
 .bchy .article_txt figure { margin: calc(2.4 * var(--bchy-rem, 10px)) 0; }
 .bchy .article_txt figcaption { font-size: calc(1.4 * var(--bchy-rem, 10px)); color: #6b6b78; margin-top: calc(0.8 * var(--bchy-rem, 10px)); }

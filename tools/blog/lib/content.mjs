@@ -17,6 +17,18 @@ const BUTTON = 'btn btn--blue';
 const hasClass = (attribs, name) => (attribs.class || '').split(/\s+/).includes(name);
 const withoutClass = ({ class: _dropped, ...rest }) => rest;
 
+// AFMBP-2570: the numbering a WordPress numbered list asks for (its List style: numbers, letters or Roman numerals,
+// saved as type="a" or as an inline list-style-type) is kept as a class blog.css styles. An attribute selector
+// can't tell type="a" from type="A" in HTML, and inline styles are dropped.
+const OL_TYPES = { 1: 'decimal', a: 'lower-alpha', A: 'upper-alpha', i: 'lower-roman', I: 'upper-roman' };
+export const OL_CLASSES = ['list-lower-alpha', 'list-upper-alpha', 'list-lower-roman', 'list-upper-roman'];
+function olNumbering(attribs) {
+  const fromStyle = ((attribs.style || '').match(/list-style-type\s*:\s*(decimal|lower-alpha|upper-alpha|lower-latin|upper-latin|lower-roman|upper-roman)/i) || [])[1];
+  const kind = OL_TYPES[attribs.type] || (fromStyle && fromStyle.toLowerCase().replace('latin', 'alpha'));
+  const { class: _c, style: _s, type: _t, ...rest } = attribs;
+  return OL_CLASSES.includes(`list-${kind}`) ? { ...rest, class: `list-${kind}` } : rest;
+}
+
 const ALLOWED = {
   allowedTags: ['p', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote', 'cite', 'q',
     'figure', 'figcaption', 'img', 'br', 'hr', 'code', 'pre', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'sup', 'sub', 'mark', 'span', 'div'],
@@ -28,7 +40,7 @@ const ALLOWED = {
     ol: ['start', 'reversed'],
     '*': ['id'],
   },
-  allowedClasses: { p: ['post-cta'], a: BUTTON.split(' ') },
+  allowedClasses: { p: ['post-cta'], a: BUTTON.split(' '), ol: OL_CLASSES },
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   allowedSchemesAppliedToAttributes: ['href', 'src'],
   transformTags: {
@@ -38,6 +50,7 @@ const ALLOWED = {
     div: (tagName, attribs) => (hasClass(attribs, 'wp-block-buttons') ? { tagName: 'p', attribs: { class: 'post-cta' } } : { tagName, attribs: withoutClass(attribs) }),
     a: (tagName, attribs) => ({ tagName, attribs: hasClass(attribs, 'wp-block-button__link') ? { ...withoutClass(attribs), class: BUTTON } : withoutClass(attribs) }),
     p: (tagName, attribs) => ({ tagName, attribs: withoutClass(attribs) }),
+    ol: (tagName, attribs) => ({ tagName, attribs: olNumbering(attribs) }),
   },
   exclusiveFilter: (frame) => (frame.tag === 'p' || frame.tag === 'div' || frame.tag === 'span') && !frame.text.trim() && !frame.mediaChildren?.length,
 };
