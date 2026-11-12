@@ -66,7 +66,7 @@ import { THREE, clamp, buildPhone, createRenderer, PHONE_LOOK, faceAspectForScre
 
     // ---------- helpers ----------
     var A = "assets/hero-phone/"
-    var V = "?v=2"
+    var V = "?v=3" // AFMBP-2582: new avatar photo on Home, Calls, Schedule and Customers
     function el(cls, parent, box) {
         var e = document.createElement("div")
         e.className = cls
