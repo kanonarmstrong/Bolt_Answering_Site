@@ -10,6 +10,14 @@ const g0 = src.indexOf('  <!-- Google tag (gtag.js)');
 const g1 = src.indexOf('</script>', g0) + '</script>'.length;
 const GTAG = src.slice(g0, g1);
 if (g0 < 0 || !GTAG.includes('G-8C8SFMCRYH')) throw new Error('gtag block not found');
+// The deferred site scripts, at the versions the trade pages load now (a version bump there
+// reaches these pages on the next build).
+const tag = (name) => {
+  const m = src.match(new RegExp(`<script defer src="/${name}\\.js\\?v=\\d+"></script>`));
+  if (!m) throw new Error(`${name}.js tag not found in handyman.html`);
+  return m[0];
+};
+const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
 const TRADES = [
   { slug: 'handyman', title: 'Bolt Answering for Handymen — Never miss a job again' },
   { slug: 'plumbing', title: 'Bolt Answering for Plumbers — Never miss a job again' },
@@ -20,11 +28,11 @@ const page = ({ slug, title }) => `<!DOCTYPE html>
 <head>
 ${GTAG}
   <!-- Funnel attribution + events, Bolt's own analytics (AFMBP-1968) -->
-  <script defer src="/attribution.js?v=5"></script>
-  <script defer src="/meta-pixel.js?v=3"></script>
-  <script defer src="/privacy-choices.js?v=2"></script>
+  ${SCRIPTS.attribution}
+  ${SCRIPTS.pixel}
+  ${SCRIPTS.privacy}
   <!-- JavaScript error reports (Sentry), behind one switch in sentry-init.js (AFMBP-2130) -->
-  <script defer src="/sentry-init.js?v=1"></script>
+  ${SCRIPTS.sentry}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
@@ -42,7 +50,9 @@ ${GTAG}
   <meta property="og:image:alt" content="Bolt Answering logo" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${title}" />
-  <!-- The app's sign-up page is the next stop: open the connection now (AFMBP-2564). -->
+  <!-- The app's sign-up page is the next stop: open its connections now (AFMBP-2564). The plain one
+       serves the tap's navigation and the prefetches; the crossorigin one the preload list's fetch. -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
   <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <!-- The card's art carries the headline, so it is the page's largest paint. -->
   <link rel="preload" as="image" href="/assets/demo-so-card.webp" fetchpriority="high" />
@@ -218,7 +228,9 @@ ${GTAG}
               files.forEach(function (p) {
                 if (typeof p !== 'string' || p.charAt(0) !== '/' || p.charAt(1) === '/') return;
                 var l = document.createElement('link');
-                l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href = 'https://app.boltanswering.com' + p;
+                // A plain prefetch, as site PR #140's: the app's files carry no Access-Control-Allow-Origin, so a
+                // crossorigin prefetch would be refused, while the app's own load reuses a plain one.
+                l.rel = 'prefetch'; l.href = 'https://app.boltanswering.com' + p;
                 document.head.appendChild(l);
               });
             })

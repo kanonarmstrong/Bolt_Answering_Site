@@ -12,6 +12,7 @@
 // The ingest and the pixel are stubbed in the page; nothing reaches production.
 // Run: node tools/quick-landing-check.mjs [siteRoot]
 //      NC=<name> node tools/quick-landing-check.mjs   — one negative control (see MUTATE); each must FAIL.
+// The warm-up is checked against a stubbed preload list with good and bad entries.
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
@@ -30,6 +31,7 @@ const MUTATE = {
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
   opened: (p, s) => s.replace("A.track('signup_offer_opened'", "A.track('signup_offer_seen'"),
   noindex: (p, s) => s.replace('<meta name="robots" content="noindex" />', ''),
+  prefetch: (p, s) => s.replace("l.rel = 'prefetch'; l.href", "l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href"),
   position: (p, s) => s.replace('.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:70px 0 40px}', '.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:90px 0 40px}'),
 };
 if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
@@ -64,6 +66,7 @@ const STUB = `(() => {
       try { const b = JSON.parse(opts && opts.body || '{}'); for (const e of (b.events || [b])) window.__events.push({ type: e.event_type, data: e.event_data || {} }); } catch (e) {}
       return Promise.resolve(new Response('{}', { status: 200 }));
     }
+    if (u === 'https://app.boltanswering.com/signup-preload.json') return Promise.resolve(new Response(JSON.stringify({ files: ['/assets/index-AAA.js', '//elsewhere.example/x.js', 'https://elsewhere.example/y.js', '/assets/index-BBB.css', 42] }), { status: 200, headers: { 'content-type': 'application/json' } }));
     if (u.startsWith('https://app.boltanswering.com/')) return Promise.resolve(new Response('', { status: 404 }));
     return real(url, opts);
   };
@@ -114,6 +117,10 @@ try {
     check('close goes to the home page', g.closeHref === '/', g.closeHref);
     check('noindex', g.robots === 'noindex', g.robots);
     check('not in the sitemap', !sitemap.includes(`/${page}`));
+    const pf = await ev(`[...document.querySelectorAll('link[rel=prefetch]')].map((l) => ({ href: l.href, co: l.getAttribute('crossorigin') }))`);
+    check('warm-up: plain prefetches of the listed app files only (AFMBP-2564 list)', JSON.stringify(pf) === JSON.stringify([{ href: 'https://app.boltanswering.com/assets/index-AAA.js', co: null }, { href: 'https://app.boltanswering.com/assets/index-BBB.css', co: null }]), pf);
+    const pc = await ev(`[...document.querySelectorAll('link[rel=preconnect]')].map((l) => l.href + (l.hasAttribute('crossorigin') ? ' crossorigin' : ''))`);
+    check('preconnects: app.boltanswering.com plain and crossorigin', JSON.stringify(pc) === JSON.stringify(['https://app.boltanswering.com/', 'https://app.boltanswering.com/ crossorigin']), pc);
     check('site_landed, then signup_offer_opened once', g.events.includes('site_landed') && g.events.filter((t) => t === 'signup_offer_opened').length === 1, g.events);
     const opened = await ev(`(window.__events.find((e) => e.type === 'signup_offer_opened') || {}).data`);
     check('signup_offer_opened: trigger quick_landing, on this page', opened && opened.trigger === 'quick_landing' && opened.page === `/${page}`, opened);

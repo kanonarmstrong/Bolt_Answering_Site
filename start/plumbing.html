@@ -52,7 +52,9 @@
   <meta property="og:image:alt" content="Bolt Answering logo" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Bolt Answering for Plumbers — Never miss a job again" />
-  <!-- The app's sign-up page is the next stop: open the connection now (AFMBP-2564). -->
+  <!-- The app's sign-up page is the next stop: open its connections now (AFMBP-2564). The plain one
+       serves the tap's navigation and the prefetches; the crossorigin one the preload list's fetch. -->
+  <link rel="preconnect" href="https://app.boltanswering.com" />
   <link rel="preconnect" href="https://app.boltanswering.com" crossorigin />
   <!-- The card's art carries the headline, so it is the page's largest paint. -->
   <link rel="preload" as="image" href="/assets/demo-so-card.webp" fetchpriority="high" />
@@ -228,7 +230,9 @@
               files.forEach(function (p) {
                 if (typeof p !== 'string' || p.charAt(0) !== '/' || p.charAt(1) === '/') return;
                 var l = document.createElement('link');
-                l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href = 'https://app.boltanswering.com' + p;
+                // A plain prefetch, as site PR #140's: the app's files carry no Access-Control-Allow-Origin, so a
+                // crossorigin prefetch would be refused, while the app's own load reuses a plain one.
+                l.rel = 'prefetch'; l.href = 'https://app.boltanswering.com' + p;
                 document.head.appendChild(l);
               });
             })
