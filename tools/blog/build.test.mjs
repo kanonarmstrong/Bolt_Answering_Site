@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from './build.mjs';
-import { sanitize, rewriteLinks, extractFaq, isAllowedImageHost } from './lib/content.mjs';
+import { sanitize, rewriteLinks, extractFaq, isAllowedImageHost, closingTrialButton, processContent } from './lib/content.mjs';
 import { normalize } from './lib/wp.mjs';
 import { changedUrls } from './indexnow.mjs';
 import { parseDraft, toWxr } from './make-wxr.mjs';
@@ -51,6 +51,46 @@ const jsonLd = (html) => [...html.matchAll(/<script type="application\/ld\+json"
 test('sanitize drops scripts, event handlers and iframes, and demotes h1 to h2', () => {
   const out = sanitize('<h1>T</h1><script>alert(1)</script><p onclick="x()">Hi</p><iframe src="https://x"></iframe><p></p>');
   assert.equal(out, '<h2>T</h2><p>Hi</p>');
+});
+
+test('AFMBP-2569: a WordPress Buttons block is the site\'s blue Talk button, and no other class survives', () => {
+  const wp = '<p class="wp-block-paragraph">Hi</p>\n<div class="wp-block-buttons is-layout-flex wp-block-buttons-is-layout-flex">\n<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://www.boltanswering.com">Try free for 30 days</a></div>\n</div>';
+  assert.equal(sanitize(wp), '<p>Hi</p>\n<p class="post-cta">\n<a href="https://www.boltanswering.com" class="btn btn--blue">Try free for 30 days</a>\n</p>');
+  // Only the build adds the button's classes: typed on an ordinary link or paragraph in WordPress, they are dropped.
+  assert.equal(sanitize('<p class="post-cta x"><a class="btn btn--blue" href="https://x.test/">a</a></p><div class="evil"><p>z</p></div>'), '<p><a href="https://x.test/">a</a></p><p>z</p>');
+});
+
+test('AFMBP-2569: a post that ends with a free-trial link on its own line shows it as the same button', () => {
+  assert.equal(closingTrialButton('<p>x</p>\n\n<p><a href="https://boltanswering.com">Try Bolt free for 30 days.</a></p>\n'),
+    '<p>x</p>\n\n<p class="post-cta"><a class="btn btn--blue" href="https://boltanswering.com">Try Bolt free for 30 days.</a></p>');
+  for (const html of [
+    '<p><a href="/x">Try Bolt free for 30 days.</a></p><p>Then this.</p>', // not the post's last block
+    '<p>x</p><p><a href="/x">Read the FTC order</a></p>', // no free trial in the words
+    '<p>Or <a href="/x">try it free</a>.</p>', // words around the link
+  ]) assert.equal(closingTrialButton(html), html);
+});
+
+test('AFMBP-2569: the button survives the whole content pipeline, links rewritten as usual', async () => {
+  const post = { title: 'T', slug: 't', contentHtml: '<p>a</p><div class="wp-block-buttons"><div class="wp-block-button"><a class="wp-block-button__link" href="https://cms.example.test/why-pe-buys-shops/">Go</a></div></div>' };
+  const { html } = await processContent(post, { wpHost: 'cms.example.test', linkMap: new Map([['/why-pe-buys-shops/', 'why-pe-buys-shops']]), repoRoot: tempRepo() });
+  assert.equal(html, '<p>a</p><p class="post-cta"><a href="/blog/why-pe-buys-shops/" class="btn btn--blue">Go</a></p>');
+});
+
+test('AFMBP-2569: the post button restates the Talk button\'s own size and colours (benchy.css resets every .bchy link)', () => {
+  const site = readFileSync(join(HERE, '..', '..', 'styles.css'), 'utf8');
+  const blog = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  const talk = site.match(/\.btn--blue\{([^}]*)\}/)[1];
+  const post = blog.match(/\.bchy \.article_txt a\.btn\.btn--blue \{([^}]*)\}/)[1];
+  const val = (rule, prop) => (rule.match(new RegExp(`(?:^|;)\\s*${prop}\\s*:\\s*([^;]+)`)) || [])[1]?.replace(/\s+/g, '');
+  for (const prop of ['font-size', 'padding', 'height', 'background', 'color']) assert.equal(val(post, prop), val(talk, prop), `${prop}: blog ${val(post, prop)}, Talk button ${val(talk, prop)}`);
+  // benchy.css's own .btn is uppercase, weight 600, a pill with a big blue shadow: the post button undoes all of it.
+  const base = site.match(/\.btn\{([^}]*)\}/)[1];
+  assert.equal(val(post, 'font-weight'), val(base, 'font-weight'), 'font-weight as the site .btn');
+  assert.equal(val(post, 'border-radius'), val(base, 'border-radius'), 'corners as the site .btn');
+  assert.equal(val(post, 'text-transform'), 'none');
+  assert.equal(val(post, 'box-shadow'), 'none');
+  const hover = blog.match(/\.bchy \.article_txt a\.btn\.btn--blue:hover \{([^}]*)\}/)[1];
+  assert.equal(val(hover, 'box-shadow'), (site.match(/\.btn--blue:hover\{([^}]*)\}/)[1].match(/box-shadow:([^;}]+)/) || [])[1].replace(/\s+/g, ''), 'hover shadow as the Talk button');
 });
 
 test('links to the WordPress copy of a post are rewritten to /blog/<slug>/', () => {

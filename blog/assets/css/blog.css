@@ -60,6 +60,14 @@
 .bchy .article_txt h3 { font-size: calc(2.2 * var(--bchy-rem, 10px)); margin-top: calc(1.4 * var(--bchy-rem, 10px)); }
 .bchy .article_txt p, .bchy .article_txt li { font-size: calc(1.7 * var(--bchy-rem, 10px)); line-height: 1.7; }
 .bchy article.article .article_txt a:not(.btn) { color: var(--blue); text-decoration: underline; text-underline-offset: 0.2em; }
+/* AFMBP-2569: a WordPress Buttons block (and a post's closing free-trial link) is the site's blue "Talk to your new
+   assistant" button, styles.css .btn.btn--blue. benchy.css resets every .bchy link (padding, size, colour, transition)
+   and has its own .btn (uppercase, weight 600, a pill with a big blue shadow), so the Talk button's own values are
+   restated here: 49px tall, 16px label (15px on narrow screens) in weight 500 as written, 6px corners, no shadow
+   until hover, and at least as wide as the Talk button (its 12.4em label plus padding). */
+.bchy .article_txt .post-cta { display: flex; flex-wrap: wrap; gap: 12px; margin: calc(2.4 * var(--bchy-rem, 10px)) 0; padding: 0; }
+.bchy .article_txt a.btn.btn--blue { height: 49px; min-width: calc(12.4em + 44px); padding: 0 22px; font-size: clamp(15px, 1.4vw, 16px); font-weight: 500; text-transform: none; color: var(--offwhite); background: var(--blue); border-radius: 6px; box-shadow: none; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+.bchy .article_txt a.btn.btn--blue:hover { box-shadow: 0 6px 18px rgba(43, 128, 252, .4); }
 .bchy .article_txt img { max-width: 100%; height: auto; border-radius: calc(1.2 * var(--bchy-rem, 10px)); }
 .bchy .article_txt figure { margin: calc(2.4 * var(--bchy-rem, 10px)) 0; }
 .bchy .article_txt figcaption { font-size: calc(1.4 * var(--bchy-rem, 10px)); color: #6b6b78; margin-top: calc(0.8 * var(--bchy-rem, 10px)); }

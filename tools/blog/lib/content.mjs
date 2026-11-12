@@ -11,6 +11,12 @@ import { stripTags, decodeEntities, postPath } from './util.mjs';
 export const IMAGE_WIDTHS = [480, 960, 1600];
 const OG_WIDTH = 1200;
 
+// AFMBP-2569: the site's blue "Talk to your new assistant" button (styles.css .btn.btn--blue; blog.css sizes it
+// inside posts). A WordPress Buttons block becomes a paragraph of these buttons; no other class survives.
+const BUTTON = 'btn btn--blue';
+const hasClass = (attribs, name) => (attribs.class || '').split(/\s+/).includes(name);
+const withoutClass = ({ class: _dropped, ...rest }) => rest;
+
 const ALLOWED = {
   allowedTags: ['p', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'strong', 'b', 'em', 'i', 'u', 's', 'blockquote', 'cite', 'q',
     'figure', 'figcaption', 'img', 'br', 'hr', 'code', 'pre', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'sup', 'sub', 'mark', 'span', 'div'],
@@ -22,17 +28,35 @@ const ALLOWED = {
     ol: ['start', 'reversed'],
     '*': ['id'],
   },
+  allowedClasses: { p: ['post-cta'], a: BUTTON.split(' ') },
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   allowedSchemesAppliedToAttributes: ['href', 'src'],
-  transformTags: { h1: 'h2', b: 'strong', i: 'em' },
+  transformTags: {
+    h1: 'h2', b: 'strong', i: 'em',
+    // WordPress Buttons block: <div class="wp-block-buttons"><div class="wp-block-button"><a class="wp-block-button__link">.
+    // The outer box becomes <p class="post-cta">, the inner one is unwrapped below, the link gets the site button's classes.
+    div: (tagName, attribs) => (hasClass(attribs, 'wp-block-buttons') ? { tagName: 'p', attribs: { class: 'post-cta' } } : { tagName, attribs: withoutClass(attribs) }),
+    a: (tagName, attribs) => ({ tagName, attribs: hasClass(attribs, 'wp-block-button__link') ? { ...withoutClass(attribs), class: BUTTON } : withoutClass(attribs) }),
+    p: (tagName, attribs) => ({ tagName, attribs: withoutClass(attribs) }),
+  },
   exclusiveFilter: (frame) => (frame.tag === 'p' || frame.tag === 'div' || frame.tag === 'span') && !frame.text.trim() && !frame.mediaChildren?.length,
 };
 
-/** Sanitize post HTML. Scripts, iframes, styles, event handlers and classes are dropped. */
+/** Sanitize post HTML. Scripts, iframes, styles, event handlers and classes are dropped (a WordPress Buttons
+ *  block keeps only the site button's classes, AFMBP-2569). */
 export function sanitize(html) {
   return sanitizeHtml(html, ALLOWED)
     .replace(/<div>\s*/g, '').replace(/\s*<\/div>/g, '')
     .replace(/<span>([\s\S]*?)<\/span>/g, '$1');
+}
+
+/**
+ * AFMBP-2569: a post that ends with a paragraph holding only a link that offers the free trial ("Try Bolt free for
+ * 30 days.") shows that link as the same blue button. The words and the link stay as written in WordPress.
+ */
+export function closingTrialButton(html) {
+  return html.replace(/<p>\s*<a ((?:(?!class=)[^>])*)>([^<]+)<\/a>\s*<\/p>\s*$/, (m, attrs, text) =>
+    (/\b(free|trial)\b/i.test(text) ? `<p class="post-cta"><a class="${BUTTON}" ${attrs}>${text}</a></p>` : m));
 }
 
 /** Hosts we will download images from: the WordPress site itself and WordPress.com's CDNs. */
@@ -161,7 +185,7 @@ export function extractFaq(html) {
 /** Full content pipeline for one post. Returns the HTML plus warnings for the build report. */
 export async function processContent(post, ctx) {
   const warnings = [];
-  let html = sanitize(post.contentHtml);
+  let html = closingTrialButton(sanitize(post.contentHtml));
   html = rewriteLinks(html, ctx);
   const imgs = [...html.matchAll(/<img\b[^>]*>/g)].map((m) => m[0]);
   const keepFiles = [];
