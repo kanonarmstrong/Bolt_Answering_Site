@@ -26,6 +26,8 @@
 
 // Mobile dropdown accordions (Trades, Community) — tap to expand/collapse; desktop keeps hover.
 // Opening one closes the other, and closing the hamburger menu collapses both.
+// AFMBP-2578: on desktop a click on a trigger does nothing at all: its bare "#" no longer jumps the page to the top
+// (the support pages' inline script already worked this way).
 (function () {
   var triggers = document.querySelectorAll('.nav__dropdown-trigger');
   if (!triggers.length) return;
@@ -35,8 +37,8 @@
   triggers.forEach(function (trigger) {
     var dropdown = trigger.closest('.nav__dropdown');
     trigger.addEventListener('click', function (e) {
+      e.preventDefault();
       if (window.matchMedia('(max-width: 768px)').matches) {
-        e.preventDefault();
         closeAll(dropdown);
         dropdown.classList.toggle('open');
       }
