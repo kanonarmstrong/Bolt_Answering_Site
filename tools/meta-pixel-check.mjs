@@ -3,7 +3,8 @@
 // Contact: picking a way into the demo, once per page, whichever way.
 // Run: node tools/meta-pixel-check.mjs [siteRoot]
 //      NC=<name> mutates the SERVED meta-pixel.js only; each must FAIL (see MUTATE).
-// Headless Chrome over CDP. Nothing leaves the machine: Meta's fbevents.js is replaced by a
+// Headless Chrome over CDP. Nothing leaves the machine: Chrome resolves no host but 127.0.0.1
+// (so Google's tags never reach the real network), Meta's fbevents.js is replaced by a
 // recording stub, the ingest and the demo API are stubbed in-page, and app.boltanswering.com
 // navigations are cancelled.
 import { spawn } from 'node:child_process';
@@ -46,7 +47,7 @@ const srv = createServer((req, res) => {
   } catch { res.writeHead(404); res.end(); }
 }).listen(PORT, '127.0.0.1');
 const PROFILE = mkdtempSync('/tmp/cdp-2021-'); // removed at exit (each run's profile is ~50-90 MB)
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 for (let i = 0; i < 100; i++) { try { if ((await fetch(`http://127.0.0.1:${PORT}/index.html`)).ok) break; } catch {} await sleep(100); }
 let ver; for (let i = 0; i < 50 && !ver; i++) { try { ver = await (await fetch(`http://127.0.0.1:${DBG}/json/version`)).json(); } catch { await sleep(200); } }

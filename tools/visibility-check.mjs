@@ -18,7 +18,9 @@ const srv = createServer((req, res) => {
 }).listen(PORT, '127.0.0.1');
 // Chrome's profile; the finally at the end deletes it on every way out (AFMBP-2364: it used to be left behind, ~60 MB a run).
 const PROFILE = mkdtempSync('/tmp/cdp-2010-');
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
+// Chrome resolves no host but 127.0.0.1: the pages' Google tags and Meta pixel never reach the real network
+// (each blocked load shows in the page errors below as "load failed: net::ERR_NAME_NOT_RESOLVED").
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 try {
