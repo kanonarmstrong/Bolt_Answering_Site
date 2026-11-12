@@ -133,6 +133,12 @@
 .bchy .article_list .article_item_cover:before { display: none; }
 .bchy .article_list .article_item_cover img { position: static; }
 .bchy .article_list .article_item_cover { margin-bottom: calc(3.93% + 0.27 * var(--bchy-rem, 10px)); }
+/* AFMBP-2579 (owner 11-12): every blog home post image as tall as the 11-12 post's ("The height of today's blog post is
+   the appropriate height"): a frame of that image's shape, 1408x768, filled edge to edge and trimmed evenly from the
+   centre, whatever shape WordPress sends, for current and future posts. The format (corners, gradient, logo) is drawn
+   on the frame, so it stays in the frame's corner. */
+.bchy .article_list .article_item_cover .bimg__in { aspect-ratio: 1408 / 768; }
+.bchy .article_list .article_item_cover .bimg__in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
 .bchy .article_list .infoline { padding-top: calc(0.42 * var(--bchy-rem, 10px)); padding-bottom: calc(1.2 * var(--bchy-rem, 10px)); margin-bottom: calc(1.26 * var(--bchy-rem, 10px)); }
 /* AFMBP-2574 (owner 11-12: "also applies to images in each individual post page"): on a post, the space from its image
    down to its date line is half the template's (cover margin 0.8 -> 0.4rem, date line top padding 1.4 -> 0.7rem). */
