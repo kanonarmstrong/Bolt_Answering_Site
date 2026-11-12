@@ -91,14 +91,22 @@ test('AFMBP-1938: a 1-month promo reads "1 month … is"; any other length reads
   assert.match(six.nodes['.chev-mobile'][0].attrs['aria-label'], / per month for first 6 months, then /);
 });
 
-test('AFMBP-1938: every page bakes the FALLBACK promo length with the agreeing unit (and the FAQ its verb)', () => {
+test('AFMBP-1938: every page bakes the FALLBACK promo length with the agreeing unit', () => {
   const doc = fakeDoc();
   P.apply(doc, P.FALLBACK);
   const period = `<span class="js-pm">${text(doc, '.js-pm')}</span> <span class="js-pm-unit">${text(doc, '.js-pm-unit')}</span>`;
   const pages = readdirSync('.').filter((f) => f.endsWith('.html') && readFileSync(f, 'utf8').includes('mchev__amt'));
   for (const f of pages) assert.ok(readFileSync(f, 'utf8').includes(period), `${f}: promo length is not "${period}"`);
+});
+
+test('AFMBP-2580: the support FAQ cost answer is the owner\'s text (11-12), its trial length from the feed hook', () => {
+  const doc = fakeDoc();
+  P.apply(doc, P.FALLBACK);
+  const td = `<span class="js-td">${text(doc, '.js-td')}</span>`;
   const faq = readFileSync('support/index.html', 'utf8');
-  assert.ok(faq.includes(`${period} <span class="js-pm-verb">${text(doc, '.js-pm-verb')}</span> discounted`), 'support FAQ: promo length/verb differ from the FALLBACK render');
+  const want = `<p>Your first ${td} days are free. To start, you verify a card. Bolt places a temporary $1 hold that&rsquo;s returned automatically, and your card isn&rsquo;t charged during the trial. On day ${td} your monthly subscription starts automatically. It&rsquo;s month to month, with no annual contract. See <a href="https://www.boltanswering.com/#pricing">current pricing</a>.</p>`;
+  assert.ok(faq.includes(`<div class="sup-faq__a">\n              ${want}\n            </div>`), 'support FAQ: the cost answer is not the owner\'s one paragraph');
+  assert.ok(!/discounted|js-pm/.test(faq), 'support FAQ: no promo-period sentence left');
 });
 
 test('0 is a real value — a 0-day trial is never shown as the 30-day fallback', () => {
