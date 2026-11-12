@@ -392,6 +392,42 @@ test('template CSS is scoped to the blog content and never styles the site heade
   assert.doesNotMatch(css, /(^|[};])\s*\.footer\s*\{/, 'no unscoped .footer rule');
 });
 
+test('AFMBP-2572: the blog home list is 60% of the template: post titles, and each gap between an excerpt and the next title', () => {
+  const blog = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
+  const tpl = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'benchy.css'), 'utf8');
+  // [where the original value is, the original declaration, the list's declaration]: the list's rem value is 60% of it.
+  // (The post's bottom margin also gives back 40% of the excerpt's last-line half-leading: the "- 1.56px" / "- 1.2px".)
+  const L = '.bchy .article_list';
+  const cases = [
+    [blog, '.bchy .article_title.h2 { font-size: calc(3.2 * var(--bchy-rem, 10px)); }', `${L} .article_title.h2 { font-size: calc(1.92 * var(--bchy-rem, 10px));`],
+    [tpl, '.bchy .article_item { margin-bottom: calc(10 * var(--bchy-rem, 10px)); }', `${L} .article_item { margin-bottom: calc(6 * var(--bchy-rem, 10px) - 1.56px); }`],
+    [tpl, '  .bchy .article_item { margin-bottom: calc(8 * var(--bchy-rem, 10px)); }', `  ${L} .article_item { margin-bottom: calc(4.8 * var(--bchy-rem, 10px) - 1.56px); }`],
+    [tpl, '  .bchy .article_item { margin-bottom: calc(6 * var(--bchy-rem, 10px)); }', `  ${L} .article_item { margin-bottom: calc(3.6 * var(--bchy-rem, 10px) - 1.2px); }`],
+    [tpl, '.bchy .article_txt p { padding: 0 0 calc(2.8 * var(--bchy-rem, 10px)) 0; }', `${L} .article_txt p.article_desc { padding-bottom: calc(1.68 * var(--bchy-rem, 10px));`],
+    [tpl, '  .bchy .article_txt p { padding-bottom: calc(2 * var(--bchy-rem, 10px)); }', `  ${L} .article_txt p.article_desc { padding-bottom: calc(1.2 * var(--bchy-rem, 10px));`],
+    [tpl, '.bchy .article_desc { margin: calc(0.7 * var(--bchy-rem, 10px)) 0 calc(2.9 * var(--bchy-rem, 10px)); }', 'margin-bottom: calc(1.74 * var(--bchy-rem, 10px)); }'],
+    [tpl, '  .bchy .article_desc { margin: calc(0.5 * var(--bchy-rem, 10px)) 0 calc(1.9 * var(--bchy-rem, 10px)); }', 'margin-bottom: calc(1.14 * var(--bchy-rem, 10px)); }'],
+    [tpl, '.bchy .article .infoline { margin-bottom: calc(2.1 * var(--bchy-rem, 10px)); padding: calc(1.4 * var(--bchy-rem, 10px)) 0 calc(2 * var(--bchy-rem, 10px)); }',
+      `${L} .infoline { padding-top: calc(0.84 * var(--bchy-rem, 10px)); padding-bottom: calc(1.2 * var(--bchy-rem, 10px)); margin-bottom: calc(1.26 * var(--bchy-rem, 10px)); }`],
+    [tpl, '  .bchy .article .infoline { margin-bottom: calc(1.5 * var(--bchy-rem, 10px)); padding: calc(1 * var(--bchy-rem, 10px)) 0 calc(1 * var(--bchy-rem, 10px)); }',
+      `  ${L} .infoline { padding-top: calc(0.6 * var(--bchy-rem, 10px)); padding-bottom: calc(0.6 * var(--bchy-rem, 10px)); margin-bottom: calc(0.9 * var(--bchy-rem, 10px)); }`],
+  ];
+  const nums = (decl) => [...decl.matchAll(/calc\(([\d.]+) \* var/g)].map((m) => +m[1]);
+  for (const [src, orig, list] of cases) {
+    assert.ok(src.includes(orig), `the original rule is no longer there: ${orig.trim()}`);
+    assert.ok(blog.includes(list), `blog.css is missing: ${list.trim()}`);
+    // every rem value in the list's declaration is 60% of a value in the original (the desc margin: the bottom one)
+    for (const v of nums(list)) assert.ok(nums(orig).some((o) => Math.abs(o * 0.6 - v) < 1e-9), `${list.trim()}: ${v} is not 60% of any of ${nums(orig)}`);
+  }
+  // The cover frame hugs its image; 60% of benchy's empty band (a 63.1% frame round a 2:1 image) + its 0.9rem margin.
+  assert.ok(tpl.includes('.bchy .article_item_cover:before { content: \'\'; display: block; padding-bottom: 63.1%; }'));
+  assert.ok(tpl.includes('.bchy .article_item_cover { position: relative; margin-bottom: calc(0.9 * var(--bchy-rem, 10px)); overflow: hidden; }'));
+  assert.ok(blog.includes(`${L} .article_item_cover:before { display: none; }`) && blog.includes(`${L} .article_item_cover img { position: static; }`));
+  assert.ok(blog.includes(`${L} .article_item_cover { margin-bottom: calc(7.86% + 0.54 * var(--bchy-rem, 10px)); }`), '0.6 x (63.1% - 50%) + 0.6 x 0.9rem');
+  // Only the list: nothing here touches post pages.
+  for (const m of blog.matchAll(/^\s*(\.bchy \.article_list[^{]*)\{/gm)) assert.match(m[1], /^\.bchy \.article_list /);
+});
+
 test('blog.css sizes follow the blog base size, not the site root', () => {
   const css = readFileSync(join(HERE, '..', '..', 'blog', 'assets', 'css', 'blog.css'), 'utf8');
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\d\s*rem\b/, 'no rem units (they would follow the site\'s 16px root)');
