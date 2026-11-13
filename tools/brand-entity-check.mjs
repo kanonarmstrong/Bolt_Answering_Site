@@ -21,7 +21,7 @@
 // independent; the blog generator names the site "Bolt Answering" (and, live, every blog page in the sitemap does).
 // Run: node tools/brand-entity-check.mjs [siteRoot]
 //      BASE=https://www.boltanswering.com node tools/brand-entity-check.mjs     the same checks on the live site
-//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|legal|llms|aboutnav|aboutdup|mobileart|aboutfooter|abouth1|aboutcopy|aboutld|sitemap   negative controls on
+//      NC=canonical|sitename|title|ogdesc|rating|offer|sameas|social|srspan|mobilealt|srcss|footer|lead|legal|llms|aboutnav|aboutdup|aboutart|aboutfooter|abouth1|aboutcopy|aboutld|sitemap   negative controls on
 //      the copy read (file or live); each must FAIL.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -86,11 +86,11 @@ function mutate(file, s) {
   if (NC === 'social' && file === 'electrical.html') return swap('<a href="https://www.instagram.com/boltanswering/" class="footer__icon"', '<a href="#" class="footer__icon"');
   if (NC === 'legal' && file === 'terms/index.html') return swap('refers to hlpr inc., 9180', 'refers to hlpr, 9180');
   if (NC === 'aboutdup' && file === 'about/index.html') return swap('<a href="/about/" aria-current="page">About</a>\n', '<a href="/about/" aria-current="page">About</a>\n      <a href="/about/">About</a>\n');
-  if (NC === 'mobileart' && file === 'about/index.html') return re(/<img class="about__art-m about__art-m--woman"[^>]*\/>\s*/, '');
+  if (NC === 'aboutart' && file === 'about/index.html') return swap('<div class="about__body">', '<div class="about__body">\n        <img class="about__art" src="/assets/about/bearded-man.webp" alt="" />');
   if (NC === 'aboutnav' && file === 'support/index.html') return swap('<li><a href="/about/">About</a></li>', '');
   if (NC === 'aboutfooter' && file === 'hvac.html') return swap('<a href="/about/">About</a>', '');
-  if (NC === 'abouth1' && file === 'about/index.html') return swap('<span class="sr-only">About Bolt Answering: </span>', '');
-  if (NC === 'aboutcopy' && file === 'about/index.html') return swap('Bolt has a smaller job', 'Bolt Answering has a smaller job');
+  if (NC === 'abouth1' && file === 'about/index.html') return swap('<span class="sr-only">About Bolt Answering</span>', '');
+  if (NC === 'aboutcopy' && file === 'about/index.html') return swap('Bolt makes sure that call reaches you.', 'Bolt Answering makes sure that call reaches you.');
   if (NC === 'aboutld' && file === 'about/index.html') return swap('"@id": "https://www.boltanswering.com/#organization"', '"@id": "https://www.boltanswering.com/#org"');
   if (NC === 'sitemap' && file === 'sitemap.xml') return swap('  <url><loc>https://www.boltanswering.com/about/</loc></url>\n', '');
   if (NC === 'srspan' && file === 'plumbing.html') return swap('<span class="sr-only">Bolt Answering for Plumbers: </span>', '');
@@ -220,8 +220,8 @@ for (const page of pages) {
   if (page === 'about/index.html') {
     check('about: title "About Bolt Answering — Never miss a job again"', () => assert.equal(title, 'About Bolt Answering — Never miss a job again'));
     check('about: the description is the owner\'s homepage description, verbatim', () => assert.equal(desc, HOME_DESC));
-    check('about: the H1 opens with screen-reader-only "About Bolt Answering: "', () =>
-      assert.ok(html.includes('<h1 class="hero__title about__title"><span class="sr-only">About Bolt Answering: </span>')));
+    check('about: the H1 is the node\'s "About us", read as "About Bolt Answering" by screen readers and search engines', () =>
+      assert.ok(html.includes('<h1 class="about__title marker"><span class="sr-only">About Bolt Answering</span><span aria-hidden="true">About us</span></h1>')));
     check('about: AboutPage JSON-LD points at the homepage\'s Organization and WebSite', () => {
       const d = jsonLd(html);
       assert.equal(d.length, 1);
@@ -230,15 +230,14 @@ for (const page of pages) {
       assert.deepEqual(d[0].about, { '@id': `${SITE}/#organization` });
       assert.deepEqual(d[0].isPartOf, { '@id': `${SITE}/#website` });
     });
-    check('about: phones get the node\'s four drawings too (decorative, alt=""), one before each passage', () => {
-      for (const [kind, before] of [['man', '<p>When the heat goes out'], ['attic', '<p>The usual answer is a receptionist.'], ['woman', '<ol class="about__list">'], ['wave', '<ol class="about__list about__list--last">']])
-        assert.match(html, new RegExp(`<img class="about__art-m about__art-m--${kind}" src="/assets/about/[a-z-]+\\.webp" alt="" [^>]*/>\\s*${before.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
-    });
+    check('about: no watermark drawings (owner removed them from the node, 11-13)', () =>
+      assert.doesNotMatch(html, /assets\/about\/|about__art/));
     check('about: the nav and footer mark About as the current page', () => assert.equal((html.match(/<a href="\/about\/" aria-current="page">About<\/a>/g) || []).length, 2));
     check('about: the owner\'s node copy, verbatim (first paragraph; 6 + 5 list items; the trial length follows pricing.js)', () => {
-      assert.ok(html.includes('<p>When the heat goes out in January or a pipe lets go on a Sunday, a family calls you. That trust took years to earn, and no assistant replaces it. Bolt has a smaller job: make sure that call reaches you.</p>'));
+      assert.ok(html.includes('<p class="about__p--5">When the heat goes out or a pipe bursts, a family calls you. Bolt makes sure that call reaches you.</p>'));
       assert.deepEqual([...html.matchAll(/<ol class="about__list[^"]*">([\s\S]*?)<\/ol>/g)].map((m) => (m[1].match(/<li>/g) || []).length), [6, 5]);
-      assert.equal((html.match(/<span class="js-td">30<\/span>/g) || []).length, 3);
+      assert.equal((html.match(/<span class="js-td">30<\/span>/g) || []).length, 2);
+      assert.match(html, /<a href="#" class="btn btn--blue about__talk" data-demo-open>Try a quick demo<\/a>/);
     });
   }
   if (TRADES[page]) {
@@ -263,10 +262,7 @@ for (const [file, words] of [['privacy/index.html', 'means hlpr inc., 9180 Alcos
 }
 
 const css = await read('styles.css');
-check('styles.css: the phone drawings show only on phones (hidden on desktop, absolute and behind the text on phones)', () => {
-  assert.ok(css.includes('.about__art-m{display:none}'));
-  assert.match(css, /@media \(max-width:768px\)\{\n  \.about__art\{display:none\}\n  \.about__art-m\{display:block;position:absolute;z-index:-1;/);
-});
+check('styles.css: no About watermark rules left', () => assert.doesNotMatch(css, /about__art/));
 check('styles.css: .sr-only takes no space and paints nothing', () => {
   const rule = (css.match(/\n\.sr-only\{([^}]*)\}/) || [])[1] || '';
   for (const d of ['position:absolute!important', 'width:1px!important', 'height:1px!important', 'overflow:hidden!important', 'clip-path:inset(50%)!important', 'white-space:nowrap!important', 'margin:-1px!important'])
