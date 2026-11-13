@@ -218,7 +218,7 @@ try {
   ok(/^[A-Za-z0-9-]{8,64}$/.test(vid || '') && api.visitors[0] === vid, `phone: the code request carries this visit's visitor id, so the call can be tied to the ad (AFMBP-2109) (${api.visitors[0] ? 'sent' : 'missing'})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
   // AFMBP-2090 / AFMBP-2189: the phone node has its own pitch (desktop keeps its title).
-  ok((await text('.demo-cm__h')) === 'One phone call can turn into real money' && !(await visible('.demo-choice__h')), `phone: the phone node's pitch, not the desktop title (${await text('.demo-cm__h')})`);
+  ok((await text('.demo-cm__h')) === 'How would you like to start the call?' && !(await visible('.demo-choice__h')), `phone: the phone node's question (2670:952, 11-12 update), not the desktop title (${await text('.demo-cm__h')})`);
   ok((await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `phone: "You call us" / "We call you" (${await text('.demo-choice__call')} / ${await text('.demo-choice__get')})`);
   // AFMBP-2189: the redrawn node has no "OR" between the two ways in, and a close button.
   ok(!(await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')) && (await visible('.demo-close')), 'phone: no "OR", no "Two", the close button showing');
@@ -349,7 +349,7 @@ try {
   await waitScreen('inbound-call');
   setState('expired');
   ok(await waitScreen('inbound-fail', 6000), 'phone: an expired code shows the failure card');
-  ok((await text('.demo-ifail')) === 'Sorry... that didn’t work Please try your call again later. Continue', `phone: failure copy, the phone node's (${await text('.demo-ifail')})`);
+  ok((await text('.demo-ifail')) === 'OOPs! Something’s wrong on our end. Try your call again later. Continue', `phone: failure copy, the phone node's (2670:1124, 11-12 update) (${await text('.demo-ifail')})`);
   ok(evs('demo_inbound_failed', (d) => d.reason === 'expired' && d.mode === 'inbound').length === 1, 'events: demo_inbound_failed reason expired');
   await shot('m-fail', '.demo-card');
   await tap('.demo-ifail__btn');

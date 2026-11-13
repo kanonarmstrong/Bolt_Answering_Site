@@ -49,6 +49,19 @@
   var CONSENT_LINK = 'Privacy Policy';
   var CONSENT_B = ', we will not share mobile information with third parties for promotional or marketing purposes.';
   var CONSENT_TEXT = CONSENT_A + CONSENT_LINK + CONSENT_B;
+  // AFMBP-2596 — phones: the form asks for the phone number only (Figma 2657:1639, the
+  // owner's 2026-11-12 update), so its consent leaves out email and marketing. Word for word
+  // as the node sets it (its straight apostrophe in "Answering's" too). The form sends the
+  // consent the visitor was shown: this one on a phone, CONSENT_TEXT on a computer.
+  var CONSENT_M_A = 'By providing your phone number and tapping “Continue”, you agree to (1) receive text ' +
+    'messages from Bolt Answering for (a) security verification and (2) automated phone calls from ' +
+    'Bolt Answering\'s virtual assistant at the number provided. Message frequency may vary. Standard ' +
+    'Message, Voice, and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. In accordance with our ';
+  var CONSENT_M_TEXT = CONSENT_M_A + CONSENT_LINK + CONSENT_B;
+  // With no business field on a phone, the call answers as the demo line does
+  // (EZ's DEMO_INBOUND_BUSINESS_NAME default): the server needs a business name to
+  // place a call (demo token: "businessName required").
+  var PHONE_BUSINESS = 'Bolt Services';
 
   // Trade is derived from the page (homepage -> general_contracting per owner decision).
   var TRADE = (function () {
@@ -182,14 +195,15 @@
     document.addEventListener('keydown', keepTab, true);
     document.addEventListener('focusin', keepFocus, true);
   }
-  // Warm the phone node art (the paintbrush watermark, brush underlines, the
-  // "What to expect" icons, OS lockups, chat icons, the in-card logo) when the
-  // modal opens, so every later screen paints complete instead of popping the
-  // art in on a slow connection (AFMBP-2150).
-  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-ul-money.svg', 'demo-m-close.svg', 'demo-m-ul-code.svg', 'demo-m-ul-rightnow.svg',
-    'demo-m-ul-never.svg', 'demo-m-star-lg.svg', 'demo-m-dot.svg', 'demo-m-ico-chat.svg', 'demo-m-ico-ask.svg',
+  // Warm the phone node art (the You call us card's paintbrush watermark, brush
+  // underline and "What to expect" icons, the close, stars and dot, OS lockups,
+  // chat icons) when the modal opens, so every later screen paints complete
+  // instead of popping the art in on a slow connection (AFMBP-2150). The other
+  // cards' brushes and the in-card logo left with the 11-12 update (AFMBP-2596).
+  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-close.svg', 'demo-m-ul-code.svg',
+    'demo-m-star-lg.svg', 'demo-m-dot.svg', 'demo-m-ico-chat.svg', 'demo-m-ico-ask.svg',
     'demo-m-ico-route.svg', 'demo-m-chat-assistant.svg', 'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg',
-    'demo-m-lockup-android.svg', 'logo.png'];
+    'demo-m-lockup-android.svg'];
   var artWarmed = false;
   function warmMobileArt() {
     if (artWarmed || !isMobile()) return;
@@ -395,10 +409,10 @@
   function dm(d, m) {
     return [h('span', { class: 'demo-d', text: d }), h('span', { class: 'demo-m', text: m })];
   }
-  // "What to expect" on the phone calling cards (2672:2064 / 2442:1191): three
-  // rows, each an icon (drawn by CSS) and its words. `who` is the business the
-  // assistant answers as: Bolt Services on the demo line, the visitor's own
-  // business when we call them (the call is set up with the name they typed).
+  // "What to expect" on the phone's You call us card (2672:2064): three rows, each
+  // an icon (drawn by CSS) and its words. `who` is the business the assistant
+  // answers as: Bolt Services on the demo line. (The We call you Calling card
+  // dropped its rows in the 2026-11-12 update, AFMBP-2596.)
   function expectRows(who) {
     return h('ul', { class: 'demo-xm demo-mb' }, [
       h('li', { class: 'demo-xm__row demo-xm__row--chat', text: 'Talk to the “' + who + '” receptionist' }),
@@ -474,16 +488,11 @@
         ])
       ]),
       h('p', { class: 'demo-choice__sub demo-db', text: 'Call us or we’ll call you' }),
-      // Phone (2670:952): the logo and "Available now", then the pitch. The logo
-      // and dot are drawn and hidden from screen readers; the words say it.
+      // Phone (2670:952, as updated 2026-11-12, AFMBP-2596): "Available now" (its dot is
+      // drawn and hidden from screen readers; the words say it), then the question.
       h('div', { class: 'demo-cm demo-mb' }, [
-        h('span', { class: 'demo-cm__logo', 'aria-hidden': 'true' }),
         h('p', { class: 'demo-cm__live', text: 'Available now' }),
-        h('h2', { class: 'demo-cm__h' }, [
-          'One phone call can turn into ',
-          h('span', { class: 'demo-mk demo-cm__mk', text: 'real money' })
-        ]),
-        h('p', { class: 'demo-cm__sub', text: 'Bolt answers calls and books customers, so you never miss an opportunity to make more money. Try it out:' })
+        h('h2', { class: 'demo-cm__h', text: 'How would you like to start the call?' })
       ]),
       h('div', { class: 'demo-choice__btns' }, [
         call,
@@ -496,7 +505,7 @@
       h('div', { class: 'demo-cr demo-mb' }, [
         h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“Easy to use & professional”' })
+        h('p', { class: 'demo-cm__quote', text: '“This sounds like a real person!”' })
       ]),
       helpLine()
     ], 'choice');
@@ -789,21 +798,17 @@
     step = 'inbound_failed';
     var btn = h('button', { class: 'demo-btn demo-ifail__btn', type: 'button', text: 'Continue' });
     btn.addEventListener('click', function () { renderChoice(); });
-    // Phones set the title on two lines and drop the first sentence (2670:1124).
+    // Phones read their node's words (2670:1124, as updated 2026-11-12, AFMBP-2596):
+    // "OOPs!" over "Something’s wrong on our end. Try your call again later."
     setBody([
       h('div', { class: 'demo-ifail' }, [
-        // Desktop keeps the title as one run of text (splitting it changes
-        // how the line is shaped); phones set it as two lines.
         h('p', { class: 'demo-ifail__title demo-mk' }, [
           h('span', { class: 'demo-d', text: 'Sorry... that didn’t work' }),
-          h('span', { class: 'demo-m' }, [
-            h('span', { class: 'demo-ifail__t1', text: 'Sorry... ' }),
-            h('span', { class: 'demo-ifail__t2', text: 'that didn’t work' })
-          ])
+          h('span', { class: 'demo-m', text: 'OOPs!' })
         ]),
         h('p', { class: 'demo-ifail__body' }, [
-          h('span', { class: 'demo-d' }, ['We weren’t able to connect.', h('br')]),
-          'Please try your call again later.'
+          h('span', { class: 'demo-d' }, ['We weren’t able to connect.', h('br'), 'Please try your call again later.']),
+          h('span', { class: 'demo-m', text: 'Something’s wrong on our end. Try your call again later.' })
         ]),
         btn
       ])
@@ -863,14 +868,18 @@
     opts = opts || {};
     step = opts.limit ? 'limit' : 'details';
     // Labels: desktop keeps "What’s your business called?" (owner, AFMBP-2003)
-    // and "(optional)"; phones read the redrawn node's "What’s your business
-    // name?" and "(Optional)" (2657:1639, AFMBP-2150). Phone + business name are
-    // required; email is optional (AFMBP-2000). The business placeholder is the
-    // owner's "Business name" (AFMBP-2003; node 2664:800), on every page.
-    var phone = field('What’s your phone number?', 'demo-phone', '(555) 555-1212', 'tel', state.display, true);
-    var biz = field(dm('What’s your business called?', 'What’s your business name?'), 'demo-business', 'Business name', 'text', state.business, true);
-    var email = field(['What’s your email? ', h('span', { class: 'demo-label__opt' }, dm('(optional)', '(Optional)'))],
-      'demo-email', 'yourname@example.com', 'email', state.email, false);
+    // and "(optional)". On a computer phone + business name are required and
+    // email is optional (AFMBP-2000); the business placeholder is the owner's
+    // "Business name" (AFMBP-2003; node 2664:800).
+    // AFMBP-2596: a phone asks for the number only, labelled "Phone number"
+    // (2657:1639, as updated 2026-11-12): the business and email fields are the
+    // computer's alone, and a phone's call answers as Bolt Services.
+    var phone = field(dm('What’s your phone number?', 'Phone number'), 'demo-phone', '(555) 555-1212', 'tel', state.display, true);
+    var biz = field('What’s your business called?', 'demo-business', 'Business name', 'text', state.bizTyped, true);
+    var email = field(['What’s your email? ', h('span', { class: 'demo-label__opt', text: '(optional)' })],
+      'demo-email', 'yourname@example.com', 'email', state.emailTyped, false);
+    biz.wrap.classList.add('demo-db');
+    email.wrap.classList.add('demo-db');
     var byKey = { phone: phone, business: biz, email: email };
 
     // Single form-level error message shown above the button, with the offending
@@ -889,7 +898,20 @@
       });
     }
     function hideFormErr() { formErr.style.display = 'none'; formErr.textContent = ''; }
-    function showFormErr(fields, msg) { clearAllErr(); fields.forEach(markErr); formErr.textContent = msg; formErr.style.display = 'block'; }
+    // Phones word the two form errors as their nodes do, with no full stop
+    // (2894:1135 "Please complete the form to continue", 2894:1108 "Please enter a
+    // valid US phone number"); any other message reads the same on both.
+    function phoneErr(msg) {
+      if (/^Please complete the form/.test(msg)) return 'Please complete the form to continue';
+      if (/^Invalid phone number/.test(msg)) return 'Please enter a valid US phone number';
+      return msg;
+    }
+    function showFormErr(fields, msg) {
+      clearAllErr(); fields.forEach(markErr);
+      formErr.textContent = '';
+      dm(msg, phoneErr(msg)).forEach(function (n) { formErr.appendChild(n); });
+      formErr.style.display = 'block';
+    }
     function clearFieldErr(f) {
       f.input.classList.remove('err');
       f.input.removeAttribute('aria-invalid');
@@ -917,17 +939,21 @@
     // The rules live in demo-format.js (unit-tested): Continue greys out until
     // the phone is a whole US number and the business name isn't blank
     // (AFMBP-2150); a tap then checks missing required -> phone -> business ->
-    // email (blank email is fine, a typed one must be valid).
-    function vals() { return { phone: phone.input.value, business: biz.input.value, email: email.input.value }; }
+    // email (blank email is fine, a typed one must be valid). On a phone only
+    // the number is asked, so only the number is checked (AFMBP-2596).
+    function vals() {
+      if (isMobile()) return { phone: phone.input.value, business: PHONE_BUSINESS, email: '' };
+      return { phone: phone.input.value, business: biz.input.value, email: email.input.value };
+    }
     function validateForm() {
       var bad = DF.checkForm(vals());
       return bad && { fields: bad.fields.map(function (k) { return byKey[k]; }), msg: bad.msg };
     }
 
+    // Each breakpoint shows its own consent (AFMBP-2596); the one shown is the one sent.
     var disclosure = h('p', { class: 'demo-disclosure' }, [
-      CONSENT_A,
-      h('a', { href: '/privacy/', target: '_blank', rel: 'noopener' }, [CONSENT_LINK]),
-      CONSENT_B
+      h('span', { class: 'demo-d' }, [CONSENT_A, h('a', { href: '/privacy/', target: '_blank', rel: 'noopener' }, [CONSENT_LINK]), CONSENT_B]),
+      h('span', { class: 'demo-m' }, [CONSENT_M_A, h('a', { href: '/privacy/', target: '_blank', rel: 'noopener' }, [CONSENT_LINK]), CONSENT_B])
     ]);
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Continue' });
     // Grey until the form can go (Figma 2657:1639 grey / 2670:1317 blue). It
@@ -949,8 +975,15 @@
 
       state.display = fmtPhone(phone.input.value);
       state.phone = e164(phone.input.value);            // normalized E.164 to the API
-      state.business = biz.input.value.trim();
-      state.email = DF.normEmail(email.input.value);    // '' = no email given
+      // What the computer's fields hold, to fill them again on the way back.
+      state.bizTyped = biz.input.value.trim();
+      state.emailTyped = email.input.value.trim();
+      // A phone asks for the number only: the call answers as Bolt Services, no
+      // email is sent, and the consent sent is the one the phone showed (AFMBP-2596).
+      var onPhone = isMobile();
+      state.business = onPhone ? PHONE_BUSINESS : state.bizTyped;
+      state.email = onPhone ? '' : DF.normEmail(email.input.value);    // '' = no email given
+      state.consent = onPhone ? CONSENT_M_TEXT : CONSENT_TEXT;
 
       busy(btn, 'Sending…');
       // has_email: whether an address was given, never the address itself.
@@ -983,14 +1016,14 @@
     ]) : null;
 
     setBody([
-      // Figma desktop 2387:9076 / mobile 2657:1639: one-line marker title (the
-      // phone node draws its yellow brush under "you now") + the sub; each
-      // breakpoint reads its own node's words (AFMBP-2150).
+      // Figma desktop 2387:9076: one-line marker title + the sub. Phones (2657:1639,
+      // as updated 2026-11-12, AFMBP-2596): the question and the sub, no marker or
+      // brush. Each breakpoint reads its own node's words.
       h('h2', { class: 'demo-h demo-h--form' }, [
         h('span', { class: 'demo-d' }, ['We’ll call you ', h('span', { class: 'demo-h__ul', text: 'right now' })]),
-        h('span', { class: 'demo-m' }, ['We’ll call ', h('span', { class: 'demo-h__ul', text: 'you now' })])
+        h('span', { class: 'demo-m', text: 'What number would you like the assistant to call?' })
       ]),
-      h('p', { class: 'demo-sub' }, dm('Get a one-time passcode', 'First, we’ll send a code')),
+      h('p', { class: 'demo-sub' }, dm('Get a one-time passcode', 'We’ll send a one-time passcode before we make the call.')),
       phone.wrap, biz.wrap, email.wrap,
       limitMsg,
       formErr,
@@ -1000,9 +1033,10 @@
   }
 
   // /api/demo/otp/send body, for the first send and every resend. No email ->
-  // no email key (the server then just skips the marketing-lead write).
+  // no email key (the server then just skips the marketing-lead write). The
+  // consent is the one the form showed when Continue was tapped (AFMBP-2596).
   function otpBody() {
-    return DF.otpSendBody({ phone: state.phone, business: state.business, email: state.email }, CONSENT_TEXT);
+    return DF.otpSendBody({ phone: state.phone, business: state.business, email: state.email }, state.consent || CONSENT_TEXT);
   }
 
   function waitMsg(r) {
@@ -1011,11 +1045,18 @@
   }
 
   // ---------- screen: code entry ----------
+  // AFMBP-2596 — phones (2670:1394 and its error states 2895:1339 wrong code, 2895:1370
+  // expired, 2895:1401 system error, the owner's 2026-11-12 update): "Enter the code", the
+  // six boxes and Back. An error is one line over the boxes, ending in a link that sends a
+  // new code where the node draws one. No Continue (the sixth digit checks the code) and no
+  // resend line: the links and Back are the ways to a new code. A computer keeps its screen.
+  // opts.kind names the phone's line: 'incorrect' | 'expired' | 'locked' | 'system' | 'wait'
+  // (opts.waitSecs: the server's wait, when it gave one). opts.error is the computer's line.
   function renderCode(opts) {
     opts = opts || {};
     step = 'code';
     var boxes = [];
-    var codeWrap = h('div', { class: 'demo-code' + (opts.error ? ' err' : '') });
+    var codeWrap = h('div', { class: 'demo-code' + (opts.error ? ' err' : '') + (opts.kind ? ' demo-code--err' : '') });
     for (var i = 0; i < 6; i++) {
       // Every box carries autocomplete="one-time-code" (not just the first) so
       // iOS QuickType and Android SMS autofill offer/distribute the code no
@@ -1056,8 +1097,8 @@
       });
     });
 
-    var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Continue' });
-    var errEl = opts.error ? h('div', { class: 'demo-error', text: opts.error }) : null;
+    var btn = h('button', { class: 'demo-btn demo-db', type: 'button', text: 'Continue' });
+    var errEl = opts.error ? h('div', { class: 'demo-error demo-db', text: opts.error }) : null;
 
     // AFMBP-2575 — one code check at a time, and none once the code is accepted. A phone can
     // fire two of the ways in above for one code: on 2026-11-12 an iPhone's code autofill
@@ -1069,8 +1110,8 @@
     // place. An answer that comes back after that is dropped, not drawn over what is there now.
     function shown() { return isOpen() && codeWrap.isConnected; }
 
-    // Resend control
-    var resendWrap = h('div', { class: 'demo-resend' });
+    // Resend control (a computer's)
+    var resendWrap = h('div', { class: 'demo-resend demo-db' });
     var resendBtn = h('button', { type: 'button', text: 'Request a new code' });
     resendWrap.appendChild(document.createTextNode("Didn’t get it? "));
     resendWrap.appendChild(resendBtn);
@@ -1080,6 +1121,33 @@
       if (!checking) doResend(resendBtn, function () { return shown() && !checking; });
     });
     if (opts.resendSecs) startResend(resendBtn, opts.resendSecs);
+
+    // A phone's error line, over the boxes (2895:1339 / 2895:1370 / 2895:1401): the red
+    // words first, then grey, then the blue link that sends a new code (the same rules as
+    // the computer's resend: nothing while a check is out). "Too many tries" and the wait
+    // have no node; they keep their words and take the expired line's look.
+    var errLine = null;
+    if (opts.kind) {
+      var red = function (t) { return h('span', { class: 'demo-codeerr__red', text: t }); };
+      var link = function (t) {
+        var a = h('button', { class: 'demo-codeerr__link', type: 'button', text: t });
+        a.addEventListener('click', function () {
+          if (!checking && !a.disabled) doResend(a, function () { return shown() && !checking; }, true);
+        });
+        return a;
+      };
+      var wait = 'Please wait ' + (opts.waitSecs ? opts.waitSecs + ' seconds' : 'a moment') + ' and try again';
+      errLine = h('p', { class: 'demo-codeerr demo-mb', role: 'alert' }, {
+        incorrect: [red('Wrong code. '), 'Please try again or ', link('request another code.')],
+        expired: [red('Code expired. '), link('Request new code')],
+        locked: [red('Too many tries. '), link('Request a new code')],
+        system: [red('Something went wrong on our side. '), 'Please try again'],
+        wait: [red(wait)]
+      }[opts.kind]);
+    }
+    // Back to the form, its number still in the field (a phone's).
+    var back = h('button', { class: 'demo-back demo-mb', type: 'button', text: 'Back' });
+    back.addEventListener('click', function () { clearResend(); renderPhone(); });
 
     function submit() {
       if (opts.locked || checking) return;
@@ -1097,42 +1165,58 @@
         if (!live) return;
         checking = false;
         unbusy(btn, 'Continue');
-        if (r.error === 'incorrect') renderCode({ error: 'Wrong code. Please try again or request another code.' });
-        else if (r.error === 'locked_out') renderCode({ error: 'Too many tries. Request a new code.', locked: true });
-        else if (r.error === 'no_active_code') renderCode({ error: 'That code has expired. Request a new code.', locked: true });
-        else if (r.error === 'rate_limited') renderCode({ error: null, resendSecs: retryAfter(r) });
-        else renderError();
+        if (r.error === 'incorrect') renderCode({ error: 'Wrong code. Please try again or request another code.', kind: 'incorrect' });
+        else if (r.error === 'locked_out') renderCode({ error: 'Too many tries. Request a new code.', locked: true, kind: 'locked' });
+        else if (r.error === 'no_active_code') renderCode({ error: 'That code has expired. Request a new code.', locked: true, kind: 'expired' });
+        else if (r.error === 'rate_limited') renderCode({ error: null, resendSecs: retryAfter(r), kind: 'wait', waitSecs: serverWait(r) });
+        else codeSystemError();
       });
     }
     btn.addEventListener('click', submit);
 
+    var help = helpLine();
+    help.classList.add('demo-db');
     setBody([
-      heading('One-time passcode'),
-      sub('We sent you a 6-digit one-time passcode to the number you provided.'),
-      h('label', { class: 'demo-label', style: 'margin-bottom:2px', text: 'Enter your passcode' }),
+      h('h2', { class: 'demo-h' }, dm('One-time passcode', 'Enter the code')),
+      h('p', { class: 'demo-sub demo-db', text: 'We sent you a 6-digit one-time passcode to the number you provided.' }),
+      h('label', { class: 'demo-label demo-db', style: 'margin-bottom:2px', text: 'Enter your passcode' }),
+      errLine,
       codeWrap,
       errEl,
       btn,
       resendWrap,
-      helpLine()
-    ]);
+      back,
+      help
+    ], 'code');
     setTimeout(focusFirstEmpty, 30);
   }
 
   function retryAfter(r) { return (r.data && (r.data.retryAfter || r.data.seconds || r.data.retry_after)) || 60; }
+  // The wait the server gave, in seconds, or null when it gave none.
+  function serverWait(r) { return (r.data && (r.data.retryAfter || r.data.seconds || r.data.retry_after)) || null; }
+  // Something went wrong on our side while on the code screen: a phone keeps the code
+  // screen and says so over the boxes (2895:1401, AFMBP-2596); a computer keeps its
+  // own error screen. Counted the same way on both.
+  function codeSystemError() {
+    if (!isMobile()) return renderError();
+    track('demo_error', { at: step });
+    renderCode({ kind: 'system' });
+  }
 
   // `current` says whether the code screen that asked still stands (AFMBP-2575). When it no
-  // longer does, the answer is still counted but nothing is drawn.
-  function doResend(btnEl, current) {
-    busy(btnEl, 'Sending…'); btnEl.classList.add('busy');
+  // longer does, the answer is still counted but nothing is drawn. `quiet`: a phone's error
+  // line link, which goes grey while the new code is on its way instead of reading "Sending…".
+  function doResend(btnEl, current, quiet) {
+    if (quiet) btnEl.disabled = true; else busy(btnEl, 'Sending…');
+    btnEl.classList.add('busy');
     apiPost('/api/demo/otp/send', otpBody()).then(function (r) {
       var live = !current || current();
       if (r.ok) { track('demo_code_resent'); if (live) renderCode({ resendSecs: 60 }); return; }
       track('demo_code_send_failed', { reason: reasonOf(r), resend: true });
       if (!live) return;
-      if (r.error === 'rate_limited') return renderCode({ resendSecs: retryAfter(r) });
+      if (r.error === 'rate_limited') return renderCode({ resendSecs: retryAfter(r), kind: 'wait', waitSecs: serverWait(r) });
       if (r.error === 'demo_limit_reached') return renderLimit();
-      renderError();
+      codeSystemError();
     });
   }
 
@@ -1167,7 +1251,7 @@
     }).then(function (r) {
       if (!r.ok) {
         track('demo_call_failed', { stage: 'token', reason: reasonOf(r) });
-        if (r.error === 'phone_not_verified') return renderCode({ error: 'That code has expired. Request a new code.', locked: true });
+        if (r.error === 'phone_not_verified') return renderCode({ error: 'That code has expired. Request a new code.', locked: true, kind: 'expired' });
         if (r.error === 'demo_limit_reached') return renderLimit();
         return renderCallFailed();
       }
@@ -1196,34 +1280,37 @@
     });
   }
 
-  // ---------- screen: Calling You — Figma desktop 2370:8769 / mobile 2442:1191 ----------
+  // ---------- screen: Calling You — Figma desktop 2370:8769 / mobile 2891:1072 ----------
   // Shown from the moment the code is accepted until the call resolves. Returns
-  // the number element so placeCall() can swap in the backend's caller-id.
-  // Copy is the mobile node's on both breakpoints (AFMBP-2000). Marker copy is mixed case
-  // (Permanent Marker renders lowercase as small caps); desktop CSS uppercases
-  // it. Title + "Calling you now from" are separate spans: inline on desktop,
-  // placed on one line at the node's offsets on mobile.
-  // Phones (2442:1191, AFMBP-2150): "ALL Set", "Calling from <number>" and the
-  // icon rows, whose first row names the business the assistant will answer as:
-  // the one typed on the form (the call is set up with it).
+  // what placeCall() sets to swap in the backend's caller-id (the number on both
+  // breakpoints' lines).
+  // Desktop: "All set!", "Calling you now from <number>" and What to expect
+  // (AFMBP-2000). Marker copy is mixed case (Permanent Marker renders lowercase as
+  // small caps); desktop CSS uppercases it.
+  // Phones (2891:1072, the owner's 2026-11-12 update, AFMBP-2596): "Your assistant
+  // is calling from: <number>" over the help line; no title, rows or brush.
   function renderCalling(fromNumber) {
     clearResend();
     var numberEl = h('b', { text: fmtDemoNumber(fromNumber) });
+    var numberM = h('span', { text: fmtDemoNumber(fromNumber) });
+    var help = helpLine();
+    help.classList.add('demo-mb');
     setBody([
       h('div', { class: 'demo-callcard' }, [
-        h('p', { class: 'demo-callcard__head' }, [
+        h('p', { class: 'demo-callcard__head demo-db' }, [
           h('span', { class: 'demo-mk demo-ul demo-callcard__title' }, dm('All set!', 'ALL Set')),
           h('span', { class: 'demo-callcard__from' }, dm(' Calling you now from ', 'Calling from ').concat([numberEl]))
         ]),
-        h('p', { class: 'demo-callcard__expect demo-mk', text: 'What to expect:' }),
+        h('p', { class: 'demo-callcard__expect demo-mk demo-db', text: 'What to expect:' }),
         h('ol', { class: 'demo-callcard__list demo-db' }, EXPECT.map(function (t) { return h('li', {}, [t]); }).concat([
           // A zero-width space keeps the "4." line beside DONE!.
           h('li', {}, ['\u200B', h('span', { class: 'demo-mk demo-ul demo-callcard__done', text: 'DONE!' })])
         ])),
-        expectRows(state.business || 'your business')
+        h('p', { class: 'demo-callcard__m demo-mb' }, ['Your assistant is calling from: ', numberM]),
+        help
       ])
     ], 'calling');
-    return numberEl;
+    return { set textContent(t) { numberEl.textContent = t; numberM.textContent = t; } };
   }
 
   // ---------- recap polling ----------
@@ -1376,16 +1463,21 @@
 
     setBody([
       h('div', { class: 'demo-success' }, [
-        // Copy = Figma 2441:811 on both breakpoints (AFMBP-2000).
-        h('h2', { class: 'demo-success-title' }, [
+        // Desktop: Figma 2370:8784's title (AFMBP-2000). Phones (2441:811 as updated
+        // 2026-11-12, AFMBP-2596) open on the pitch instead: no title, no brush.
+        h('h2', { class: 'demo-success-title demo-db' }, [
           h('span', { class: 'demo-mk demo-ul demo-success-never', text: 'NEVER' }),
           document.createTextNode(' '),
           h('span', { class: 'demo-success-rest', text: 'miss a job again' })
         ]),
-        // Phones read the redrawn node's pitch and label (AFMBP-2150).
-        h('p', { class: 'demo-success-sub' }, dm('Bolt handles bookings, qualifies leads, takes messages, and more so you can focus on making money!',
-          'Don\'t waste money on receptionists or lose leads to voicemail. Bolt qualifies leads and books jobs for under $3/day.')),
-        h('p', { class: 'demo-success-tlabel' }, dm('Here’s your transcript:', 'Here’s the transcript:')),
+        // Each breakpoint reads its own node's pitch and label; the phone's pitch is
+        // two paragraphs with a blank line between them, as the node sets it.
+        h('p', { class: 'demo-success-sub' }, [
+          h('span', { class: 'demo-d', text: 'Bolt handles bookings, qualifies leads, takes messages, and more so you can focus on making money!' }),
+          h('span', { class: 'demo-m' }, ['Stop wasting money on receptionists or losing leads to voicemail', h('br'), h('br'),
+            'Bolt qualifies leads and books jobs for less than $4/day.'])
+        ]),
+        h('p', { class: 'demo-success-tlabel' }, dm('Here’s your transcript:', 'Transcript')),
         h('div', { class: 'demo-chatwrap' }, [box, bar]),
         // The spaces are their own spans: the node sets them at 19.3px, between
         // the 15.5px words and the 28.6px "30 days".
@@ -1397,7 +1489,8 @@
           h('span', { class: 'demo-success-trial__gap', text: ' ' }),
           h('span', { class: 'demo-success-trial__sm', text: 'are on us!' })
         ]),
-        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start your free trial'])
+        // Phones: the node's blue "Start free 30-day trial" (2441:811, AFMBP-2596).
+        h('a', { class: 'demo-btn demo-btn--yellow demo-success-cta', href: 'https://app.boltanswering.com/signup', onClick: function () { track('demo_trial_clicked', modeProps({ from: 'recap', call_id: finishedFor })); } }, dm('Start your free trial', 'Start free 30-day trial'))
       ])
     ], 'recap');
     chatBar(box, bar);
@@ -1454,10 +1547,8 @@
       h('div', { class: 'demo-failcard' }, [
         h('p', { class: 'demo-failcard__head' }, [
           h('span', { class: 'demo-mk demo-failcard__title demo-d' }, ['that didn’t work ', h('span', { class: 'demo-failcard__sad', text: ':(' })]),
-          h('span', { class: 'demo-mk demo-failcard__title2 demo-m' }, [
-            h('span', { class: 'demo-failcard__t1', text: 'Sorry... ' }),
-            h('span', { class: 'demo-failcard__t2', text: 'that didn’t work' })
-          ])
+          // Phones: the node's "OOPs!" (2676:1163 as updated 2026-11-12, AFMBP-2596).
+          h('span', { class: 'demo-mk demo-failcard__title2 demo-m', text: 'OOPs!' })
         ]),
         h('div', { class: 'demo-failcard__body demo-db' }, [
           h('p', {}, [h('b', { text: 'Sometimes Bolt calls get spam blocked.' }), ' Here’s how to temporarily turn off spam blockers.']),
