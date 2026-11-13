@@ -149,9 +149,8 @@ try {
   await ev("document.querySelector('.demo-choice__get').click(), 1");
   await until(async () => (await ev("!!document.getElementById('demo-phone')")) === true, 15000);
   await sleep(1500);
+  // The form asks for the number only since AFMBP-2600 (BIZ and EMAIL stay in the needles).
   await typeInto('#demo-phone', PHONE);
-  await typeInto('#demo-business', BIZ);
-  await typeInto('#demo-email', EMAIL);
   await tap("[].slice.call(document.querySelectorAll('.demo-btn')).find(function(b){return /continue/i.test(b.textContent)})");
   await until(async () => (await ev("document.querySelectorAll('.demo-code input').length")) === 6, 8000);
   await ev("document.querySelector('.demo-code input').focus(), 1");

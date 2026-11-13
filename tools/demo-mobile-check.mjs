@@ -4,14 +4,14 @@
 // shared success (2441:811) and the failure card with its help links (2676:1163), plus the
 // "You call us" code on its card (2672:2064). Drives the real modal in headless Chrome with
 // touch taps and real key events against a fake Bolt API, and checks:
-//   - copy: each phone node's words; desktop keeps its own (unchanged);
+//   - copy: each phone node's words, on a computer too since AFMBP-2600 (one responsive demo);
 //   - the form: required phone + business name, optional email (blank is fine, a typed one
 //     must be valid), Continue grey until a whole phone and a business name, the incomplete
 //     state's message and flagged fields, values kept, focus on the first field to fix;
 //   - nothing is sent for an invalid form; one tap (or a double tap) sends one code, one
 //     verify, one call;
 //   - phones: Enter/Done closes the keyboard and sends nothing; the focused field and its
-//     message are scrolled into the visible area; desktop keeps Enter = Continue;
+//     message are scrolled into the visible area; a computer keeps Enter = Continue;
 //   - Calling: the caller id the API returns, and the business the call answers as;
 //   - success: the call's own transcript, counted once; the green CTA and its event;
 //   - failure: iPhone / Android help articles (the support center's, never swapped), each
@@ -24,8 +24,10 @@
 // marketing; the call answers as Bolt Services, which the server needs), errors show under the
 // field with the field outlined in red, the code card is "Enter the code" + boxes + Back, the
 // Calling card is one line and the help line, the success card opens on the pitch with a blue
-// "Start free 30-day trial", the failure card reads "OOPs!". A computer keeps its three fields,
-// its consent and its rules (checked in the desktop section).
+// "Start free 30-day trial", the failure card reads "OOPs!".
+// AFMBP-2600 (owner, 2026-11-13: one responsive demo): a computer shows these same cards, number
+// only, centred and scaled up as far as its screen's height allows (up to 125%); its Enter key
+// still sends the form (checked in the desktop section).
 // AFMBP-2597 (the owner's 11-13 update): every phone card draws the close button (the node's
 // cross 304px in and 17px down, the code card's 319px, in a 44px tap target on top) and a tap
 // on it closes the demo; every button is Inter Bold with the nodes' shadow; the help line is
@@ -37,7 +39,7 @@
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=phone_business |
 //      NC=old_consent | NC=old_form_fields | NC=old_calling | NC=old_err_look |
 //      NC=swap_help | NC=no_help_event | NC=old_inbound | NC=old_sub_size | NC=old_sub_color |
-//      NC=old_dy | NC=old_recap_label | NC=recap_tall | NC=old_field_size | NC=old_desk_field_size |
+//      NC=old_dy | NC=old_recap_label | NC=recap_tall | NC=old_field_size |
 //      NC=no_zoom_floor | NC=no_x | NC=code_x_off | NC=x_dead | NC=regular_btns | NC=flat_cta |
 //      NC=old_success_pitch | NC=no_never | NC=big_help | NC=no_tel — negative controls on the
 //      SERVED copy only; each must FAIL.
@@ -68,23 +70,23 @@ const MUTATE = {
   // Continue turns blue on anything typed again (the rule before AFMBP-2150).
   loose_gate: ['demo-format.js', (s) => cut(s, "return validPhone(str(v.phone)) && str(v.business).trim() !== '';", "return str(v.phone).trim() !== '' && str(v.business).trim() !== '';")],
   // Enter in a field sends the form on a phone too.
-  enter_submits: ['demo.js', (s) => cut(s, 'if (isMobile()) f.input.blur(); else btn.click();', 'btn.click();')],
+  enter_submits: ['demo.js', (s) => cut(s, 'if (isMobile()) phone.input.blur(); else btn.click();', 'btn.click();')],
   // The focused field is left wherever it is.
   no_keepvisible: ['demo.js', (s) => cut(s, '      if (hi + pad > bottom) backdrop.scrollTop', '      if (false) backdrop.scrollTop')],
   // A second tap on Continue before the first answers sends a second code.
   double_send: ['demo.js', (s) => cut(s, "      busy(btn, 'Sending…');\n      // has_email", "      // has_email")],
-  // AFMBP-2596: a phone sends the (empty) business field, which the server refuses.
-  phone_business: ['demo.js', (s) => cut(s, 'state.business = onPhone ? PHONE_BUSINESS : state.bizTyped;', 'state.business = state.bizTyped;')],
-  // AFMBP-2596: a phone sends the computer's consent, not the one it showed.
-  old_consent: ['demo.js', (s) => cut(s, 'state.consent = onPhone ? CONSENT_M_TEXT : CONSENT_TEXT;', 'state.consent = CONSENT_TEXT;')],
-  // AFMBP-2596: the phone form shows the business and email fields again.
-  old_form_fields: ['demo.js', (s) => cut(s, "    biz.wrap.classList.add('demo-db');\n    email.wrap.classList.add('demo-db');\n", '')],
-  // AFMBP-2596: the phone Calling card shows its old title and line again.
-  old_calling: ['demo.js', (s) => cut(s, "h('p', { class: 'demo-callcard__head demo-db' },", "h('p', { class: 'demo-callcard__head' },")],
+  // AFMBP-2596: the form sends an empty business name, which the server refuses (until EZ PR 1525).
+  phone_business: ['demo.js', (s) => cut(s, 'state.business = PHONE_BUSINESS;', "state.business = '';")],
+  // AFMBP-2596 / 2600: the consent's first line in the retired computer wording (shown and sent).
+  old_consent: ['demo.js', (s) => cut(s, "'By providing your phone number and tapping “Continue”, you agree to (1) receive text '", "'By providing your phone number and/or email address and tapping “Continue”, you agree to (1) receive text '")],
+  // AFMBP-2596 / 2600: the number field under another label.
+  old_form_fields: ['demo.js', (s) => cut(s, "var phone = field('Phone number',", "var phone = field('What’s your phone number?',")],
+  // AFMBP-2596: the Calling card's old line.
+  old_calling: ['demo.js', (s) => cut(s, "['Your assistant is calling from: ', numberEl]", "['Calling you now from ', numberEl]")],
   // AFMBP-2596: a field to fix back to the old pink, with no red outline.
   old_err_look: ['demo.css', (s) => cut(s, 'background:#ffefef;color:var(--navy);box-shadow:0 0 0 1.6px #f00', 'background:#fadddd;color:var(--navy)')],
-  // AFMBP-2274: the rows before the nodes' 10-16 update.
-  old_inbound: ['demo.js', (s) => cut(s, "h('div', { class: 'demo-ihow demo-mb' }, [", "h('div', { class: 'demo-ihow demo-db' }, [")],
+  // AFMBP-2600: the You call us card without its steps.
+  old_inbound: ['demo.js', (s) => cut(s, "h('div', { class: 'demo-ihow' }, [", "h('div', { class: 'demo-ihow', style: 'display:none' }, [")],
   // The form's sub at its old size (20px on 24px lines, the same centre).
   old_sub_size: ['demo.css', (s) => cut(s, 'top:95.4px;width:278px;max-width:none;margin:0;font-size:16px;line-height:19px;color:#707070;', 'top:95.4px;width:278px;max-width:none;margin:0;font-size:18px;line-height:22px;color:#707070;')],
   // The form's sub in its old light grey.
@@ -96,15 +98,13 @@ const MUTATE = {
   // A help-article tap is not counted.
   no_help_event: ['demo.js', (s) => cut(s, "a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });", '')],
   // AFMBP-2548: the end-of-call button keeps its old label.
-  old_recap_label: ['demo.js', (s) => cut(s, "dm('Start your free trial', 'Start free 30-day trial'))", "dm('Start your free trial', 'Start your free trial'))")],
+  old_recap_label: ['demo.js', (s) => cut(s, "['Start free 30-day trial'])", "['Start your free trial'])")],
   // AFMBP-2576: the phone fields' text back at the node's 21px.
   old_field_size: ['demo.css', (s) => cut(s, 'color:var(--navy);font-size:18px;line-height:22px;', 'color:var(--navy);font-size:16.8px;line-height:22px;')],
-  // AFMBP-2576: the computer fields' text back at the node's 22px.
-  old_desk_field_size: ['demo.css', (s) => cut(s, 'padding:0 9px;font-size:17.6px;border-radius:6px}', 'padding:0 9px;font-size:22px;border-radius:6px}')],
   // AFMBP-2576: no floor where the card is scaled down: 16.8px x .94 = 15.8px on a 320px phone.
   no_zoom_floor: ['demo.css', (s) => cut(s, '  @media (max-width:316px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:19.4px} }', '')],
-  // AFMBP-2548: the desktop end-of-call button back at 56px, taller than the Talk button.
-  recap_tall: ['demo.css', (s) => cut(s, '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:49px;', '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:56px;')],
+  // AFMBP-2548: the end-of-call button at 56px, not the node's 49.
+  recap_tall: ['demo.css', (s) => cut(s, 'position:absolute;left:39.46px;top:559.46px;width:253px;max-width:none;height:49px;', 'position:absolute;left:39.46px;top:559.46px;width:253px;max-width:none;height:56px;')],
   // AFMBP-2597: the phone cards hide the close button again (all but the choice, as before).
   no_x: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="code"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 303.496px)}', '.demo-backdrop[data-screen="code"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 303.496px)}\n  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}')],
   // AFMBP-2597: the code card's cross where the other cards draw theirs (the node moved it in 15px).
@@ -116,13 +116,13 @@ const MUTATE = {
   // AFMBP-2597: the success CTA without the nodes' shadow.
   flat_cta: ['demo.css', (s) => cut(s, 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);', 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:none;')],
   // AFMBP-2597: the success pitch before the 11-13 update.
-  old_success_pitch: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-m', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' })", "h('span', { class: 'demo-m', text: 'Bolt qualifies leads and books jobs for less than $4/day.' })")],
-  // AFMBP-2597: the success card without its title on a phone (as after the 11-12 update).
-  no_never: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-success-title' }, [", "h('h2', { class: 'demo-success-title demo-db' }, [")],
+  old_success_pitch: ['demo.js', (s) => cut(s, "h('p', { class: 'demo-success-sub', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' })", "h('p', { class: 'demo-success-sub', text: 'Bolt qualifies leads and books jobs for less than $4/day.' })")],
+  // AFMBP-2597: the success card without its title (as after the 11-12 update).
+  no_never: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-success-title' }, [", "h('h2', { class: 'demo-success-title', style: 'display:none' }, [")],
   // AFMBP-2597: the form's help line at 15px, as before the 11-13 update.
   big_help: ['demo.css', (s) => cut(s, 'top:495.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;', 'top:494.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;')],
   // AFMBP-2597: the You call us card's number as plain words (no tap to dial).
-  no_tel: ['demo.js', (s) => cut(s, "h('li', {}, ['Dial ', telLink('demo-ihow__tel')]),", "h('li', {}, ['Dial ', s.numberDisplay]),")],
+  no_tel: ['demo.js', (s) => cut(s, "number = h('a', { class: 'demo-ihow__tel', href: s.telUri, text: s.numberDisplay });", "number = h('b', { class: 'demo-ihow__tel', text: s.numberDisplay });")],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 // A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
@@ -172,7 +172,6 @@ function apiRespond(method, url, postData) {
 }
 const sent = (p) => api.calls.filter((c) => c.p === p);
 const evs = (type, pred = () => true) => api.events.filter((e) => e.type === type && pred(e.data));
-const CONSENT = 'By providing your phone number and/or email address and tapping “Continue”, you agree to (1) receive text messages and emails from Bolt Answering for (a) security verification and (b) marketing purposes, and (2) automated phone calls from Bolt Answering’s virtual assistant at the number provided. Message frequency may vary. Standard Message, Voice, and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. In accordance with our Privacy Policy, we will not share mobile information with third parties for promotional or marketing purposes.';
 // AFMBP-2596: a phone's consent, word for word from 2657:1639 (no email, no marketing clause).
 const CONSENT_M = 'By providing your phone number and tapping “Continue”, you agree to (1) receive text messages from Bolt Answering for (a) security verification and (2) automated phone calls from Bolt Answering\'s virtual assistant at the number provided. Message frequency may vary. Standard Message, Voice, and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. In accordance with our Privacy Policy, we will not share mobile information with third parties for promotional or marketing purposes.';
 
@@ -273,7 +272,7 @@ try {
   // AFMBP-2597: Inter Bold with the nodes' two shadows.
   const boldShadow = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null; var c=getComputedStyle(e); return c.fontWeight+'|'+/rgba\\(0, 0, 0, 0\\.3\\) 0px 1px 2px 0px, rgba\\(0, 0, 0, 0\\.15\\) 0px 2px 6px 2px/.test(c.boxShadow);})()`);
   const cardRel = async (sel) => { const c = await box('.demo-backdrop.open .demo-card'), b = await box(sel); return b && { x: b.x - c.x, y: b.y - c.y, w: b.w, h: b.h }; };
-  const flagged = () => ev("['demo-phone','demo-business','demo-email'].filter(function(id){var e=document.getElementById(id); return e.classList.contains('err') && e.getAttribute('aria-invalid')==='true' && e.getAttribute('aria-describedby')==='demo-formerr';})");
+  const flagged = () => ev("['demo-phone','demo-business','demo-email'].filter(function(id){var e=document.getElementById(id); return !!e && e.classList.contains('err') && e.getAttribute('aria-invalid')==='true' && e.getAttribute('aria-describedby')==='demo-formerr';})");
   const greyBtn = async () => (await attr('.demo-backdrop.open .demo-btn', 'aria-disabled')) === 'true' && (await ev("document.querySelector('.demo-backdrop.open .demo-btn').classList.contains('demo-btn--off')"));
 
   // ================= the form, empty (2657:1639 as updated 2026-11-12, AFMBP-2596) =================
@@ -514,7 +513,7 @@ try {
   await sleep(300);
   await ev("window.__vis='visible'; document.dispatchEvent(new Event('visibilitychange')); 1");
   await sleep(800);
-  ok((await text('.demo-backdrop.open .demo-ihow__list b')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-backdrop.open .demo-ihow__list b')}, ${api.sessions})`);
+  ok((await text('.demo-backdrop.open .demo-ihow__code')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-backdrop.open .demo-ihow__code')}, ${api.sessions})`);
   api.inState = 'connected'; api.inCallId = 'in-1'; api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'inbound: the linked call ends on the same success card');
   ok(/^For less than \$4 per day/.test(await text('.demo-success-sub')) && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
@@ -532,75 +531,74 @@ try {
   await tap('.demo-backdrop.open .demo-close', 400);
   ok((await screen()) === null && evs('demo_closed').length === 1, `close: a tap on the form's close button closes the demo, demo_closed once (${JSON.stringify(evs('demo_closed').map((e) => e.data.step))})`);
 
-  // ================= desktop: unchanged =================
-  console.log('[desktop] the form, Calling, success and failure keep their own copy; Enter = Continue');
+  // ================= a computer (AFMBP-2600): the same cards, bigger =================
+  // One responsive demo (owner, 2026-11-13): a computer shows the phone's form, Calling, success and
+  // failure cards, scaled up as far as the screen's height allows (up to 125%, never below the
+  // design size). Only the keyboard differs: Enter in the field sends (no "done" key).
+  console.log('[desktop] the phone cards, scaled up; Enter = Continue');
   await desktop();
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'desktop: the form');
-  ok((await text('.demo-h--form')) === 'We’ll call you right now' && (await text('.demo-sub')) === 'Get a one-time passcode', `desktop: its own heading and sub (${await text('.demo-h--form')} / ${await text('.demo-sub')})`);
-  ok((await text('.demo-field--business .demo-label')) === 'What’s your business called?' && (await text('.demo-field--email .demo-label')) === 'What’s your email? (optional)', 'desktop: its own labels');
+  ok((await text('.demo-h--form')) === 'What number would you like the assistant to call?' && (await text('.demo-sub')) === 'We’ll send a one-time passcode before we make the call.', `desktop: the phone form's heading and sub (${await text('.demo-h--form')} / ${await text('.demo-sub')})`);
+  ok((await ev("!document.getElementById('demo-business') && !document.getElementById('demo-email')")) === true && (await text('.demo-field--phone .demo-label')) === 'Phone number', 'desktop: the number only, labelled "Phone number" (no business name, no email)');
+  ok((await text('.demo-disclosure')) === CONSENT_M, 'desktop: the phone consent, the one sent');
   ok((await attr('#demo-phone', 'enterkeyhint')) === null, 'desktop: no "done" key hint');
-  // AFMBP-2576: the three fields' text 20% under the node's 22px, the placeholders with it.
-  const deskType = await ev("['demo-phone','demo-business','demo-email'].map(function(id){var e=document.getElementById(id); return getComputedStyle(e).fontSize+'/'+getComputedStyle(e,'::placeholder').fontSize;})");
-  ok(JSON.stringify(deskType) === JSON.stringify(['17.6px/17.6px', '17.6px/17.6px', '17.6px/17.6px']) && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px', `desktop: the three fields and their placeholders at 17.6px; labels 15px, Continue 22px (${JSON.stringify(deskType)})`);
-  // AFMBP-2596: phones ask for the number only; a computer keeps its three fields, its consent
-  // and the rules of AFMBP-2000 / AFMBP-2150 (phone + business name required, email optional).
-  ok((await visible('#demo-business')) && (await visible('#demo-email')) && (await text('.demo-field--phone .demo-label')) === 'What’s your phone number?', 'desktop: the phone, business name and email fields, its own phone label');
-  ok((await text('.demo-disclosure')) === CONSENT, 'desktop: its consent unchanged (the one the server hashes for a computer)');
-  ok((await ev("document.getElementById('demo-phone').required && document.getElementById('demo-business').required && !document.getElementById('demo-email').required && document.getElementById('demo-email').getAttribute('aria-required')===null")), 'desktop: phone and business name required, email optional');
+  const dz = await ev("parseFloat(getComputedStyle(document.querySelector('.demo-backdrop.open')).getPropertyValue('--demo-zoom'))");
+  const dcard = await box('.demo-backdrop.open .demo-card');
+  const dWant = Math.round(Math.max(1, Math.min(1.25, (900 - 32) / 535)) * 1000) / 1000;
+  ok(near(dz, dWant, 0.001) && near(dcard.w, 337 * dz, 0.6) && near(dcard.h, 535 * dz, 0.6) && near(dcard.x + dcard.w / 2, 640, 1), `desktop: the form card at ${(dz * 100).toFixed(1)}%, centred (${dcard.w.toFixed(1)}x${dcard.h.toFixed(1)} at ${dcard.x.toFixed(1)})`);
   await ev('document.activeElement && document.activeElement.blur(); 1');
   await tap('.demo-backdrop.open .demo-btn');
-  ok((await text('#demo-formerr')) === 'Please complete the form to continue.' && JSON.stringify(await flagged()) === '["demo-phone","demo-business"]', `desktop incomplete: its message, phone and business name flagged, email not (${await text('#demo-formerr')} ${JSON.stringify(await flagged())})`);
-  await type('#demo-business', '   ');
+  ok((await text('#demo-formerr')) === 'Please complete the form to continue' && JSON.stringify(await flagged()) === '["demo-phone"]', `desktop incomplete: the phone's message, the number flagged (${await text('#demo-formerr')} ${JSON.stringify(await flagged())})`);
+  ok(sent('/api/demo/otp/send').length === 0, 'desktop: nothing sent for an incomplete form');
   await type('#demo-phone', '4155551234');
-  ok(await greyBtn(), 'desktop gate: a business name of spaces only keeps Continue grey');
-  await clear('#demo-business'); await type('#demo-business', 'QA Test Co');
-  await type('#demo-email', 'james');
-  await ev('document.activeElement && document.activeElement.blur(); 1');
-  await tap('.demo-backdrop.open .demo-btn');
-  ok((await text('#demo-formerr')) === 'Invalid email address. Please try again.' && JSON.stringify(await flagged()) === '["demo-email"]', `desktop email: a malformed address is flagged (${await text('#demo-formerr')})`);
-  ok(sent('/api/demo/otp/send').length === 0, 'desktop: nothing sent for an invalid form');
-  await clear('#demo-email');
   await ev("document.getElementById('demo-phone').focus(); 1");
   await enter();
   await sleep(500);
-  ok(sent('/api/demo/otp/send').length === 1, `desktop: Enter in a field = Continue (${sent('/api/demo/otp/send').length})`);
+  ok(sent('/api/demo/otp/send').length === 1, `desktop: Enter in the field = Continue (${sent('/api/demo/otp/send').length})`);
   const db = (sent('/api/demo/otp/send')[0] || {}).body || {};
-  ok(db.consentText === CONSENT && db.businessName === 'QA Test Co' && !('email' in db), `desktop send: its own consent, the business typed, no email key (${JSON.stringify({ businessName: db.businessName, email: 'email' in db, consent: db.consentText === CONSENT })})`);
+  ok(db.consentText === CONSENT_M && db.businessName === 'Bolt Services' && !('email' in db), `desktop send: the phone consent, Bolt Services, no email key (${JSON.stringify({ businessName: db.businessName, email: 'email' in db, consent: db.consentText === CONSENT_M })})`);
   await ev("document.querySelectorAll('.demo-code input')[0].focus(); 1");
   await send('Input.insertText', { text: '123456' });
   ok(await waitScreen('calling', 6000), 'desktop: Calling');
-  ok((await text('.demo-callcard__title')) === 'ALL SET!' && (await text('.demo-callcard__from')) === 'Calling you now from (415) 555-0123', `desktop: its own Calling copy (${await text('.demo-callcard__title')} / ${await text('.demo-callcard__from')})`);
-  ok((await visible('.demo-callcard__list')) && !(await visible('.demo-xm')), 'desktop: its numbered list, not the phone rows');
+  ok((await text('.demo-callcard__m')) === 'Your assistant is calling from: (415) 555-0123', `desktop: the phone Calling card's line (${await text('.demo-callcard__m')})`);
   api.recap = { status: 'failed' };
   ok(await waitScreen('fail', 8000), 'desktop: failure card');
-  ok((await text('.demo-failcard__btn')) === 'Try again' && /Follow these instructions/.test(await text('.demo-failcard__body')) && !(await visible('.demo-failcard__body2')), 'desktop: its own failure copy and "Try again"');
+  ok((await text('.demo-failcard__title2')) === 'OOPs!' && (await text('.demo-failcard__btn')) === 'Continue', 'desktop: the phone failure card ("OOPs!", Continue)');
 
-  // AFMBP-2548 (owner, 11-10: "make the height of those buttons the same size as the height of the 'talk to
-  // your assistant' buttons"): on a computer the success card's trial button reads "Start your free trial" and is
-  // the height of the page's "Talk to your new assistant" button (it was 56px, the Talk button 49px).
-  console.log('[desktop] success: the trial button at the Talk button\'s height');
-  for (const [w, h] of [[1280, 900], [1920, 1080]]) {
+  // The success card at four computer sizes: the phone card scaled up with its blue "Start free
+  // 30-day trial", whole on screen (1366x700: the card at 105.5% fills the height exactly). A
+  // window too short for it (1280x600) keeps the design size: the card starts at the top and the
+  // shade scrolls down to its trial button.
+  console.log('[desktop] success: the phone success card, scaled up, whole on screen (or scrolled to)');
+  for (const [w, h] of [[1280, 900], [1920, 1080], [1366, 700], [1280, 600]]) {
     await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
     reset();
     await load('/hvac.html?talk=form');
-    ok(await waitScreen('phone'), `desktop ${w}: the form, for a call that completes`);
+    ok(await waitScreen('phone'), `desktop ${w}x${h}: the form, for a call that completes`);
     await type('#demo-phone', '4155551234');
-    await type('#demo-business', 'QA Test Co');
     await ev("document.getElementById('demo-phone').focus(); 1");
     await enter();
     await sleep(500);
     await ev("document.querySelectorAll('.demo-code input')[0].focus(); 1");
     await send('Input.insertText', { text: '123456' });
-    ok(await waitScreen('calling', 6000), `desktop ${w}: Calling`);
+    ok(await waitScreen('calling', 6000), `desktop ${w}x${h}: Calling`);
     api.recap = { status: 'completed', transcript: TRANSCRIPT };
-    ok(await waitScreen('recap', 8000), `desktop ${w}: the completed call -> the success card`);
+    ok(await waitScreen('recap', 8000), `desktop ${w}x${h}: the completed call -> the success card`);
     await sleep(400);
-    const talk = await box('.tphero .btn--blue'), cta = await box('.demo-backdrop.open .demo-success-cta');
-    ok((await text('.demo-success-cta')) === 'Start your free trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(252, 189, 17)', `desktop ${w}: the yellow "Start your free trial" (${await text('.demo-success-cta')})`);
-    ok(!!talk && !!cta && talk.h > 0 && near(cta.h, talk.h, 0.5), `desktop ${w}: the success card's trial button is ${cta && cta.h}px tall; "Talk to your new assistant" is ${talk && talk.h}px`);
-    ok(!!cta && (await ev("(function(){var a=document.querySelector('.demo-success-cta');return a.scrollWidth<=a.clientWidth&&a.scrollHeight<=a.clientHeight})()")) === true, `desktop ${w}: the label fits inside the button`);
+    const zs = Math.max(1, Math.min(1.25, (h - 32) / 633)), card = await box('.demo-backdrop.open .demo-card'), cta = await box('.demo-backdrop.open .demo-success-cta');
+    ok(near(card.w, 332 * zs, 0.6) && near(card.h, 633 * zs, 0.6), `desktop ${w}x${h}: the success card at ${(zs * 100).toFixed(1)}% (${card.w.toFixed(1)}x${card.h.toFixed(1)})`);
+    ok((await text('.demo-success-cta')) === 'Start free 30-day trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(43, 127, 253)' && near(cta.h, 49 * zs, 0.6), `desktop ${w}x${h}: the blue "Start free 30-day trial", ${(49 * zs).toFixed(1)}px tall (${cta.h.toFixed(1)})`);
+    if (633 + 32 <= h) {
+      ok(card.y >= 0 && cta.y + cta.h <= h, `desktop ${w}x${h}: the whole card and its trial button on screen, no scrolling (card from ${card.y.toFixed(1)}, button to ${(cta.y + cta.h).toFixed(1)} of ${h})`);
+    } else {
+      ok(near(card.y, 16, 1), `desktop ${w}x${h}: too short for the card, it starts at the top (${card.y.toFixed(1)})`);
+      await ev("(function(){var b=document.querySelector('.demo-backdrop.open'); b.scrollTop=b.scrollHeight; return 1})()");
+      await sleep(200);
+      const cta2 = await box('.demo-backdrop.open .demo-success-cta');
+      ok(cta2.y >= 0 && cta2.y + cta2.h <= h, `desktop ${w}x${h}: the shade scrolls down to the whole trial button (${cta2.y.toFixed(1)} to ${(cta2.y + cta2.h).toFixed(1)} of ${h})`);
+    }
   }
 
   console.log(bad ? `\n${bad} FAILED, ${good} passed${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS (${good} checks)${NC ? ` — negative control ${NC} did NOT bite` : ''}`);

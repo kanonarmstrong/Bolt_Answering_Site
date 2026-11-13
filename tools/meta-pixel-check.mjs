@@ -140,13 +140,13 @@ const DEMO = `(async () => {
   if (document.querySelector('.demo-choice__get')) document.querySelector('.demo-choice__get').click();
   for (let i = 0; i < 50 && !document.getElementById('demo-phone'); i++) await w(100);
   const set = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-  set(document.getElementById('demo-phone'), '4155552671');
-  set(document.getElementById('demo-business'), 'Harness HVAC');
+  set(document.getElementById('demo-phone'), '4155552671');   // the number only since AFMBP-2600
   document.querySelector('.demo-backdrop .demo-btn').click();
   for (let i = 0; i < 50 && document.querySelectorAll('.demo-code input').length < 6; i++) await w(100);
   const boxes = document.querySelectorAll('.demo-code input');
   boxes.forEach((b, i) => { b.value = String(i + 1); });
-  const btns = document.querySelectorAll('.demo-backdrop .demo-btn'); btns[btns.length - 1].click();
+  // The code card verifies on the sixth digit (no Continue on any screen since AFMBP-2600).
+  boxes[boxes.length - 1].dispatchEvent(new Event('input', { bubbles: true }));
   return true; })()`;
 
 console.log('[1] visible ad link, pixel ID set');

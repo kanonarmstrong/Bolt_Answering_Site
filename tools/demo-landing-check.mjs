@@ -8,9 +8,10 @@
 // Inter Bold with the nodes' shadow; everything under the question moved up; the rating is a
 // review in a bubble (the node's own bubble, four stars and a fifth cut flat, "Gus C." /
 // "Massachusetts", "“Sounds like a real receptionist!”"); the help line is Inter 14.
-// Desktop keeps its own node (2670:896). Drives the real modal in headless Chrome against a
-// fake Bolt API and checks:
-//   - content: the phone node's copy and art, none of the superseded copy; desktop unchanged;
+// AFMBP-2600 (owner, 2026-11-13: one responsive demo): a computer shows the same card, centred
+// and scaled up as far as its screen's height allows (up to 125%). Drives the real modal in
+// headless Chrome against a fake Bolt API and checks:
+//   - content: the phone node's copy and art, none of the superseded copy, at every width;
 //   - closing (AFMBP-2189): the node's close button sits on top where the node draws it, and a
 //     tap or Enter on it closes the demo (demo_closed once, from the choice) with no ring;
 //   - geometry: each piece where it sits once matched to the node's 3x export (card-relative);
@@ -21,9 +22,8 @@
 //   - accessibility: stars hidden from the accessibility tree, the rest in reading order;
 //     both ways in work from the keyboard, with a visible focus ring;
 //   - keyboard focus (AFMBP-2097): the dialog takes focus as it opens and draws no ring of
-//     its own; Tab reaches the first way in ("You call us" on a phone, "Call now" on a
-//     computer) first and goes round the dialog, and Tab / Shift+Tab never leave it, on every
-//     screen at both sizes; focus moved behind it comes back; closing it from the keyboard
+//     its own; Tab reaches the close button, then "You call us", and goes round the dialog,
+//     and Tab / Shift+Tab never leave it, on every screen at both sizes; focus moved behind it comes back; closing it from the keyboard
 //     gives focus back to the button that opened it, and closing it with a tap or a click
 //     moves no focus and leaves no ring (iOS Safari rings a button a script focuses after a
 //     tap on the shade);
@@ -56,12 +56,12 @@ const cut = (s, from, to) => { if (!s.includes(from)) throw new Error(`NC anchor
 const MUTATE = {
   // The two ways in swap places.
   swap_ctas: ['demo.js', (s) => cut(cut(cut(s, "'demo-btn demo-choice__btn demo-choice__call'", 'TMP_CALL'), "'demo-btn demo-choice__btn demo-choice__get'", "'demo-btn demo-choice__btn demo-choice__call'"), 'TMP_CALL', "'demo-btn demo-choice__btn demo-choice__get'")],
-  // The phone shows the desktop labels and title too ("Call now", "Two ways to…").
-  old_label: ['demo.css', (s) => cut(s, '  .demo-backdrop .demo-d,.demo-backdrop .demo-db{display:none}\n', '')],
+  // AFMBP-2600: a computer's card at its design size (not scaled up).
+  desktop_small: ['demo.js', (s) => cut(s, "backdrop.style.setProperty('--demo-zoom', String(Math.round(z * 1000) / 1000));", "backdrop.style.setProperty('--demo-zoom', '1');")],
   // The stars reach screen readers (as text stars, not hidden).
   noisy_stars: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-cr__stars', 'aria-hidden': 'true' })", "h('span', { class: 'demo-cr__stars' }, ['★★★★★'])")],
-  // The phone-only pieces leak onto desktop.
-  desktop_leak: ['demo.css', (s) => cut(s, '.demo-backdrop .demo-m,.demo-backdrop .demo-mb{display:none}\n', '')],
+  // AFMBP-2600: a computer keeps the phone frame's offsets (the card off centre).
+  desktop_offset: ['demo.css', (s) => cut(s, '[data-screen="recap"],[data-screen="fail"]){--demo-dx:0px;--demo-dy:0px}', '[data-screen="recap"],[data-screen="fail"]){}')],
   // "Get a call" is counted twice.
   double_select: ['demo.js', (s) => cut(s, "      track('demo_mode_selected', { mode: 'outbound' });\n", "      track('demo_mode_selected', { mode: 'outbound' });\n      track('demo_mode_selected', { mode: 'outbound' });\n")],
   // The wait-time line wraps.
@@ -473,8 +473,9 @@ try {
     const k1 = await ev(FOCUS);
     ok(k1.on === 'dialog' && k1.fv && k1.outline === 'none', `${where} restore: opened from the keyboard, focus is on the dialog and it draws no ring (${JSON.stringify({ on: k1.on, fv: k1.fv, outline: k1.outline })})`);
     if (!mobile) {
-      const d1 = await tab();
-      ok(d1.call, `${where} keyboard: the first Tab is on "Call now", the same link (${d1.desc})`);
+      // AFMBP-2600: a computer shows the phone card, so the close button comes first, as on a phone.
+      const d1 = await tab(), d2 = await tab();
+      ok(/^button\.demo-close /.test(d1.desc) && d2.call, `${where} keyboard: the first Tab is on the close button, the second on "You call us", the same link (${d1.desc} > ${d2.desc})`);
       const dk = [...(await tabs(6)), ...(await tabs(7, true))];
       ok(!outside(dk), `${where} keyboard: Tab and Shift+Tab never leave the dialog (${outside(dk)})`);
     }
@@ -560,10 +561,13 @@ try {
       // not clip the pitch, whose lines run within 16px of the card's edges).
       ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     } else {
-      ok((await text('.demo-choice__h')) === 'Two ways to talk to an assistant now', `${w}x${h}: desktop title unchanged (${await text('.demo-choice__h')})`);
-      ok((await text('.demo-choice__call')) === 'Call now' && (await text('.demo-choice__get')) === 'Get a call' && (await visible('.demo-choice__sub')), `${w}x${h}: desktop "Call now" / "Get a call" and the subtitle`);
-      ok(!(await visible('.demo-close')), `${w}x${h}: the desktop choice keeps no close button (its own node, 2670:896)`);
-      ok(!(await visible('.demo-cm')) && !(await visible('.demo-cr')) && !(await visible('.demo-choice__when')) && !(await visible('.demo-choice__or')) && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-m')).every(function(e){return !e.getClientRects().length})")) === true, `${w}x${h}: none of the phone pieces on desktop`);
+      // AFMBP-2600: a computer shows the phone card, centred, at up to 125% of its design size
+      // as far as the screen's height allows (16px of shade above and below), never smaller.
+      const zWant = Math.max(1, Math.min(1.25, (h - 32) / 423));
+      ok(Math.abs(c.w - 337 * zWant) < 0.6 && Math.abs(c.h - 423 * zWant) < 0.6, `${w}x${h}: the phone card at ${(zWant * 100).toFixed(1)}% (${c.w.toFixed(2)}x${c.h.toFixed(2)})`);
+      ok(Math.abs((c.x + c.w / 2) - w / 2) < 1 && c.y >= 0 && c.y + c.h <= h, `${w}x${h}: the card centred and on screen (${c.x.toFixed(1)},${c.y.toFixed(1)})`);
+      ok((await text('.demo-cm__h')) === PITCH && (await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you' && (await visible('.demo-cr')) && (await visible('.demo-close')), `${w}x${h}: the phone card's question, "You call us" / "We call you", the review and the close button`);
+      ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub, .demo-backdrop .demo-d, .demo-backdrop .demo-db, .demo-backdrop .demo-m, .demo-backdrop .demo-mb')")) === false, `${w}x${h}: no second, computer-only design in the page`);
       if (w === 1920) await shot('d-choice-1920x1200');
     }
   }
