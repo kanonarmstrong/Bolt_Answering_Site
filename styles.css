@@ -990,13 +990,18 @@ ul,ol{list-style:none}
 .btn.about__talk{width:calc(309 * var(--u));min-width:calc(12em + 44px);height:49px;padding:0;font-size:max(16px,calc(22 * var(--u)));font-weight:400}
 @media (max-width:768px){
   .about__inner{padding:calc(clamp(30px,4vw,56px) + 40px) var(--pad) 40px}   /* room for the floating CTA, as on the home page */
-  .about__title{font-size:32px;line-height:1.15;margin-bottom:6px}
+  /* Same rhythm as the node, on the phone's 25.5px line (17px x 1.5) instead of 30px: two blank lines
+     before most headings, one after a list, one + 7px before the last heading. */
+  .about__title{font-size:32px;line-height:1.15;margin-bottom:4px}
   .about__body{font-size:17px;line-height:1.5}
-  .about__h{margin-top:34px;font-size:23px;line-height:1.25}
-  .about__h--30,.about__h--38{margin-top:24px}
+  .about__body .about__p--6{margin-bottom:5px}
+  .about__h{margin-top:51px;font-size:23px;line-height:1.25}
+  .about__h--30{margin-top:26px}
+  .about__h--38{margin-top:32px}
   .about__h .marker{font-size:29px}
-  .about__h--8{margin-bottom:8px}
+  .about__h--8{margin-bottom:7px}
   .about__list{padding-left:24px}
-  .about__body .about__demo{margin-top:24px}
+  .about__list li{margin-bottom:7px}
+  .about__body .about__demo{margin-top:40px}
   .btn.about__talk{width:auto;height:49px;padding:0 22px;font-size:16px}
 }
