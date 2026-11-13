@@ -961,45 +961,41 @@ ul,ol{list-style:none}
   position:relative;max-width:calc(1296 * var(--u) + 2 * var(--pad));margin:0 auto;
   padding:calc(73 * var(--u)) var(--pad) calc(160 * var(--u));
 }
-.about__title{margin:0;color:var(--navy);font-weight:400;font-size:max(28px,calc(42 * var(--u)));line-height:calc(30 * var(--u));letter-spacing:0}
+.about__title{margin:0 0 calc(20 * var(--u));color:var(--navy);font-weight:400;font-size:max(28px,calc(42 * var(--u)));line-height:calc(30 * var(--u));letter-spacing:0}
 .about__body{
   max-width:calc(1158 * var(--u));
   font-size:max(16px,calc(20 * var(--u)));line-height:1.5;
 }
 .about__body p{margin:0}
-.about__body .about__p--6{margin-bottom:calc(6 * var(--u))}
+.about__body .about__p--5{margin-bottom:calc(5 * var(--u))}
 .about__body strong{font-weight:700}
-/* The node sets every line on a 30px grid and spaces sections with blank 30px lines: two before most
-   headings, one after a list (--30), one plus 8px before the last heading (--38); headings sit right on
-   the text below, or 8px above a list (--8). */
+/* The node sets every line on a 30px grid. One blank 30px line before each heading (35px after the
+   intro, whose paragraphs end 5px apart; 38px before the last), and 10px under every heading. */
 .about__h{
-  margin:calc(60 * var(--u)) 0 0;color:var(--navy);font-weight:400;
+  margin:calc(30 * var(--u)) 0 calc(10 * var(--u));color:var(--navy);font-weight:400;
   font-size:max(22px,calc(30 * var(--u)));line-height:calc(30 * var(--u));
 }
-.about__h--30{margin-top:calc(30 * var(--u))}
+.about__h--35{margin-top:calc(35 * var(--u))}
 .about__h--38{margin-top:calc(38 * var(--u))}
 .about__h .marker{font-size:max(28px,calc(40 * var(--u)));line-height:0;letter-spacing:0;white-space:nowrap}  /* the 40px marker words sit in the 30px line without growing it */
-.about__h--8{margin-bottom:calc(8 * var(--u))}
 .about__list{margin:0;padding-left:calc(30 * var(--u));list-style:decimal}
 .about__list--last li::marker{font-weight:700}  /* the node's numbers take each item's bold lead */
 .about__list li{margin-bottom:calc(8 * var(--u))}
 .about__list li:last-child{margin-bottom:0}
-.about__body .about__demo{margin-top:calc(61 * var(--u))}
+.about__body .about__demo{margin-top:calc(58 * var(--u))}
 /* The node's button (309 x 49, 22px) at 1920; below that it never gets smaller than the site's own
    "Talk to your new assistant" button (49px tall, 16px label). */
 .btn.about__talk{width:calc(309 * var(--u));min-width:calc(12em + 44px);height:49px;padding:0;font-size:max(16px,calc(22 * var(--u)));font-weight:400}
 @media (max-width:768px){
   .about__inner{padding:calc(clamp(30px,4vw,56px) + 40px) var(--pad) 40px}   /* room for the floating CTA, as on the home page */
-  /* Same rhythm as the node, on the phone's 25.5px line (17px x 1.5) instead of 30px: two blank lines
-     before most headings, one after a list, one + 7px before the last heading. */
-  .about__title{font-size:32px;line-height:1.15;margin-bottom:4px}
+  /* Same rhythm as the node, scaled to the phone's 25.5px line (17px x 1.5) instead of 30px. */
+  .about__title{font-size:32px;line-height:1.15;margin-bottom:17px}
   .about__body{font-size:17px;line-height:1.5}
-  .about__body .about__p--6{margin-bottom:5px}
-  .about__h{margin-top:51px;font-size:23px;line-height:1.25}
-  .about__h--30{margin-top:26px}
+  .about__body .about__p--5{margin-bottom:4px}
+  .about__h{margin:26px 0 9px;font-size:23px;line-height:1.25}
+  .about__h--35{margin-top:30px}
   .about__h--38{margin-top:32px}
   .about__h .marker{font-size:29px}
-  .about__h--8{margin-bottom:7px}
   .about__list{padding-left:24px}
   .about__list li{margin-bottom:7px}
   .about__body .about__demo{margin-top:40px}

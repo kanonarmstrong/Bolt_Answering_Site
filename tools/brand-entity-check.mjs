@@ -234,7 +234,7 @@ for (const page of pages) {
       assert.doesNotMatch(html, /assets\/about\/|about__art/));
     check('about: the nav and footer mark About as the current page', () => assert.equal((html.match(/<a href="\/about\/" aria-current="page">About<\/a>/g) || []).length, 2));
     check('about: the owner\'s node copy, verbatim (first paragraph; 6 + 5 list items; the trial length follows pricing.js)', () => {
-      assert.ok(html.includes('<p>When the heat goes out or a pipe bursts, a family calls you. Bolt makes sure that call reaches you.</p>'));
+      assert.ok(html.includes('<p class="about__p--5">When the heat goes out or a pipe bursts, a family calls you. Bolt makes sure that call reaches you.</p>'));
       assert.deepEqual([...html.matchAll(/<ol class="about__list[^"]*">([\s\S]*?)<\/ol>/g)].map((m) => (m[1].match(/<li>/g) || []).length), [6, 5]);
       assert.equal((html.match(/<span class="js-td">30<\/span>/g) || []).length, 2);
       assert.match(html, /<a href="#" class="btn btn--blue about__talk" data-demo-open>Try a quick demo<\/a>/);
