@@ -13,7 +13,7 @@
 // Run: node tools/demo-two-ways-check.mjs [siteRoot]
 //      SHOTS=<dir> also saves a screenshot of every new state (desktop 1920x1200 @1x,
 //      phone 402x753 @3x) plus boxes.json (each card's box), for the Figma comparison.
-//      NC=no_href | NC=no_reconcile | NC=no_reveal | NC=mode_leak | NC=trade_reuse | NC=no_gen | NC=no_visitor — negative controls on the
+//      NC=no_href | NC=no_reconcile | NC=no_dial_step | NC=mode_leak | NC=trade_reuse | NC=no_gen | NC=no_visitor — negative controls on the
 //      SERVED copy only; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
@@ -36,8 +36,8 @@ const MUTATE = {
   no_href: (s) => cut(s, "if (s) call.setAttribute('href', s.telUri);", ''),
   // Coming back to the page waits for the next scheduled poll instead of checking at once.
   no_reconcile: (s) => cut(s, "    if (f.callId) pollRecap(f.callId, inboundRecapOpts());\n    else pollInbound(f.session);\n", ''),
-  // A tap that never reached the dialer leaves no number on the phone card.
-  no_reveal: (s) => cut(s, 'if (inboundFlow === f && !f.hidden && !f.callId) revealDial();', ''),
+  // AFMBP-2597: the phone's You call us card without its number to dial.
+  no_dial_step: (s) => cut(s, "h('li', {}, ['Dial ', telLink('demo-ihow__tel')]),", "h('li', {}, ['Dial']),"),
   // The outbound demo's events start carrying a mode.
   mode_leak: (s) => cut(s, 'function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }', "function modeProps(p) { p.mode = recapMode || 'outbound'; return p; }"),
   // A code fetched on one trade page is reused on another (AFMBP-2096).
@@ -228,13 +228,14 @@ try {
   const c1 = await lastClick();
   ok(!!c1 && c1.href === 'tel:+18554973151,,4321' && c1.followed === true, `phone: the tap is left to the dialer (${JSON.stringify(c1)})`);
   ok(await waitScreen('inbound-call'), 'phone: call card after the tap');
-  ok((await text('.demo-incall__digits')) === '4321', 'phone: the card shows the code');
-  ok(!(await visible('.demo-incall__dial')), 'phone: number line hidden right after a tap that reached the dialer');
+  ok((await text('.demo-backdrop.open .demo-ihow__list b')) === '4321', 'phone: the card shows the code');
+  // AFMBP-2597 (2891:1090): the number to dial is the card's first step from the start.
+  ok((await visible('.demo-ihow__tel')) && !(await visible('.demo-incall__dial')), 'phone: the number to dial is the first step from the start, no separate number line');
   await shot('m-incall', '.demo-card');
   // The dialer took over: the page goes to the background before the 4s check.
   await setVis('hidden');
   await sleep(4500);
-  ok(!(await visible('.demo-incall__dial')), 'phone: number line still hidden while the page is behind the dialer');
+  ok((await visible('.demo-ihow__tel')) && !(await visible('.demo-incall__dial')), 'phone: the steps stay as they are while the page is behind the dialer');
   // Line up right after a scheduled check (answered "waiting"), so the next scheduled one is
   // ~3s away: a check within 450ms of coming back can only be the page reconciling.
   for (let n = api.statusGets.length, i = 0; api.statusGets.length === n && i < 100; i++) await sleep(20);
@@ -268,16 +269,16 @@ try {
   await sleep(300);
   ok(api.created === 2, `phone: and with a new code (${api.created})`);
 
-  console.log('[phone] tap never reached the dialer -> number shown');
+  console.log('[phone] tap never reached the dialer -> the number to dial is on the card');
   reset();
   await load('/hvac.html?talk=1');
   await waitScreen('choice'); await sleep(300);
   await tap('.demo-choice__call');
   await waitScreen('inbound-call');
   await sleep(4500);
-  ok(await visible('.demo-incall__dial'), 'phone: no dialer after 4s -> "Call (855) 497-3151" shown');
-  ok((await ev("document.querySelector('.demo-incall__tel').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: the number is the same tel: link');
-  ok((await text('.demo-incall__dial')) === 'Call (855) 497-3151', `phone: number line copy (${await text('.demo-incall__dial')})`);
+  ok(await visible('.demo-ihow__tel'), 'phone: no dialer after 4s -> the number to dial still on the card');
+  ok((await ev("document.querySelector('.demo-ihow__tel').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: the number is the same tel: link');
+  ok((await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151', `phone: the first step's words (${await text('.demo-backdrop.open .demo-ihow__list li')})`);
   await shot('m-incall-manual', '.demo-card');
 
   console.log('[phone] reload mid-call -> same call, to its recap');
@@ -351,6 +352,12 @@ try {
   ok(await waitScreen('inbound-fail', 6000), 'phone: an expired code shows the failure card');
   ok((await text('.demo-ifail')) === 'OOPs! Something’s wrong on our end. Try your call again later. Continue', `phone: failure copy, the phone node's (2670:1124, 11-12 update) (${await text('.demo-ifail')})`);
   ok(evs('demo_inbound_failed', (d) => d.reason === 'expired' && d.mode === 'inbound').length === 1, 'events: demo_inbound_failed reason expired');
+  // AFMBP-2597 (2670:1124 as updated 11-13): the words grey at 16px, Continue in Inter Bold with
+  // the nodes' shadow, and the close button where the node draws its cross (304px in, 17px down).
+  ok((await ev("(function(){var c=getComputedStyle(document.querySelector('.demo-ifail__body')); return c.fontSize+'|'+c.color})()")) === '16px|rgb(112, 112, 112)', `phone: the failure words grey at 16px (${await ev("getComputedStyle(document.querySelector('.demo-ifail__body')).fontSize")})`);
+  ok((await ev("(function(){var c=getComputedStyle(document.querySelector('.demo-ifail__btn')); return c.fontWeight+'|'+/rgba\\(0, 0, 0, 0\\.3\\) 0px 1px 2px 0px, rgba\\(0, 0, 0, 0\\.15\\) 0px 2px 6px 2px/.test(c.boxShadow)})()")) === '700|true', 'phone: Continue in Inter Bold with the nodes\' shadow');
+  const ifx = await ev("(function(){var c=document.querySelector('.demo-backdrop.open .demo-card'), b=document.querySelector('.demo-backdrop.open .demo-close'); var s=getComputedStyle(b); if(s.display==='none') return null; var cr=c.getBoundingClientRect(), r=b.getBoundingClientRect(); return {x:r.left-cr.left, y:r.top-cr.top, w:r.width, top:document.elementFromPoint(r.left+r.width/2, r.top+r.height/2)===b};})()");
+  ok(!!ifx && Math.abs(ifx.x - 288.496) < 0.05 && Math.abs(ifx.y - 1.497) < 0.05 && Math.abs(ifx.w - 44) < 0.05 && ifx.top === true, `phone: the close button where 2670:1124 draws its cross, on top (${JSON.stringify(ifx)})`);
   await shot('m-fail', '.demo-card');
   await tap('.demo-ifail__btn');
   ok(await waitScreen('choice'), 'phone: Continue -> the choice');

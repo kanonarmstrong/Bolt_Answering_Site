@@ -200,10 +200,9 @@
   // chat icons) when the modal opens, so every later screen paints complete
   // instead of popping the art in on a slow connection (AFMBP-2150). The other
   // cards' brushes and the in-card logo left with the 11-12 update (AFMBP-2596).
-  var MOBILE_ART = ['demo-m-brush.svg', 'demo-m-close.svg', 'demo-m-ul-code.svg',
-    'demo-m-star-lg.svg', 'demo-m-dot.svg', 'demo-m-ico-chat.svg', 'demo-m-ico-ask.svg',
-    'demo-m-ico-route.svg', 'demo-m-chat-assistant.svg', 'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg',
-    'demo-m-lockup-android.svg'];
+  var MOBILE_ART = ['demo-m-close.svg', 'demo-m-dot.svg', 'demo-m-bubble.svg', 'demo-m-stars4.svg',
+    'demo-m-star5.svg', 'demo-m-ul-success.svg', 'demo-m-star-lg.svg', 'demo-m-chat-assistant.svg',
+    'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg', 'demo-m-lockup-android.svg'];
   var artWarmed = false;
   function warmMobileArt() {
     if (artWarmed || !isMobile()) return;
@@ -397,7 +396,7 @@
   function unbusy(btn, label) { btn.disabled = false; btn.textContent = label; }
 
   // "What to expect" steps, shared by both calling cards (step 4 is DONE!).
-  // Desktop only since AFMBP-2150; phones show expectRows() below.
+  // Desktop only since AFMBP-2150.
   var EXPECT = ['She’ll act like your receptionist', 'Describe an issue or potential project', 'Share fake details to schedule'];
 
   // ---------- phone vs desktop copy (AFMBP-2150) ----------
@@ -408,17 +407,6 @@
   // rotation or resize across the breakpoint never leaves stale words behind.
   function dm(d, m) {
     return [h('span', { class: 'demo-d', text: d }), h('span', { class: 'demo-m', text: m })];
-  }
-  // "What to expect" on the phone's You call us card (2672:2064): three rows, each
-  // an icon (drawn by CSS) and its words. `who` is the business the assistant
-  // answers as: Bolt Services on the demo line. (The We call you Calling card
-  // dropped its rows in the 2026-11-12 update, AFMBP-2596.)
-  function expectRows(who) {
-    return h('ul', { class: 'demo-xm demo-mb' }, [
-      h('li', { class: 'demo-xm__row demo-xm__row--chat', text: 'Talk to the “' + who + '” receptionist' }),
-      h('li', { class: 'demo-xm__row demo-xm__row--ask', text: 'Tell her about your issue or project' }),
-      h('li', { class: 'demo-xm__row demo-xm__row--route', text: 'Share fake details for her to schedule' })
-    ]);
   }
 
   // ---------- screen: two ways to try it — Figma desktop 2670:896 / mobile 2670:952 ----------
@@ -500,12 +488,14 @@
         h('p', { class: 'demo-choice__when demo-mb' }, ['Avg. wait time: ', h('b', { text: '3 seconds' })]),
         get
       ]),
-      // Phone only: the rating and its quote, under the two ways in. The stars are
-      // drawn and hidden from screen readers; "4.9/5" says it.
+      // Phone only (2670:952 as updated 2026-11-13, AFMBP-2597): the review in its
+      // bubble, under the two ways in. The stars are drawn and hidden from screen
+      // readers; "4.9/5" says it.
       h('div', { class: 'demo-cr demo-mb' }, [
-        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
+        h('p', { class: 'demo-cr__who' }, [h('b', { text: 'Gus C.' }), ' ', h('span', { text: 'Massachusetts' })]),
+        h('span', { class: 'demo-cr__stars', 'aria-hidden': 'true' }),
         h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“This sounds like a real person!”' })
+        h('p', { class: 'demo-cm__quote', text: '“Sounds like a real receptionist!”' })
       ]),
       helpLine()
     ], 'choice');
@@ -643,18 +633,15 @@
     try { return !window.matchMedia('(hover:hover) and (pointer:fine)').matches; } catch (e) { return true; }
   }
 
-  // `manual`: no dialer took the tap, so the card shows the number to call.
+  // `manual`: no dialer took the tap (a computer). The card shows the number to call
+  // either way (a phone's as its first step since AFMBP-2597).
   function startInbound(s, manual) {
     s.tappedAt = Date.now();
     s.open = true;
     inboundSave();
-    var f = inboundFlow = { session: s, manual: !!manual, hidden: false, back: false, callId: null };
-    renderInboundCall(s, { manual: manual });
+    inboundFlow = { session: s, manual: !!manual, hidden: false, back: false, callId: null };
+    renderInboundCall(s);
     pollInbound(s);
-    // On a phone the dialer hides the page. If it is still in front a few
-    // seconds after the tap, the call never started (the visitor cancelled
-    // iOS's prompt, or an in-app browser ignored the link): show the number.
-    if (!manual) setTimeout(function () { if (inboundFlow === f && !f.hidden && !f.callId) revealDial(); }, 4000);
   }
   // Reopened (or reloaded) while a call this tab started may be live: let the
   // server say where it is. Not connected yet -> back to the choice.
@@ -663,41 +650,47 @@
     s.open = true;
     inboundSave();
     inboundFlow = { session: s, manual: true, hidden: false, back: true, callId: null };
-    renderInboundCall(s, { manual: true });
+    renderInboundCall(s);
     pollInbound(s, { resume: true });
   }
 
-  // ---------- screen: You call us, call in progress — Figma mobile 2672:2064 / desktop 2670:924 ----------
-  // The mobile node is the code and "What to expect". Desktop adds the number to
-  // call (owner, AFMBP-2083: the desktop node has no code block yet); mobile
-  // shows it only when no dialer took the tap (demo-incall--manual; kept by the
-  // owner on 10-08 though the node has no such line). Phones list what to
-  // expect as the node's icon rows; desktop keeps its numbered list.
-  function renderInboundCall(s, opts) {
-    opts = opts || {};
+  // ---------- screen: You call us, call in progress — Figma mobile 2891:1090 / desktop 2670:924 ----------
+  // Desktop: the code, the number to call (owner, AFMBP-2083: the desktop node has
+  // no code block yet) and the numbered "What to expect". Phones (2891:1090, the
+  // owner's 2026-11-13 update, AFMBP-2597): how to call, as two numbered steps (the
+  // number is a tap-to-dial link; the dial link enters the code by itself, the
+  // second step covers a phone that doesn't), then the help line.
+  function renderInboundCall(s) {
     clearResend();
     step = 'inbound_call';
-    var tel = h('a', { class: 'demo-incall__tel', href: s.telUri, text: s.numberDisplay });
-    tel.addEventListener('click', function () { track('demo_inbound_call_tapped', { mode: 'inbound', from: 'card' }); });
+    function telLink(cls) {
+      var a = h('a', { class: cls, href: s.telUri, text: s.numberDisplay });
+      a.addEventListener('click', function () { track('demo_inbound_call_tapped', { mode: 'inbound', from: 'card' }); });
+      return a;
+    }
     var done = h('span', { class: 'demo-mk demo-incall__done', text: 'DONE!' });
+    var help = helpLine();
+    help.classList.add('demo-mb');
     setBody([
-      h('div', { class: 'demo-incall' + (opts.manual ? ' demo-incall--manual' : '') }, [
-        h('div', { class: 'demo-incall__code', role: 'status' }, [
+      h('div', { class: 'demo-incall' }, [
+        h('div', { class: 'demo-incall__code demo-db', role: 'status' }, [
           h('p', { class: 'demo-incall__label', text: 'Your code' }),
           h('p', { class: 'demo-incall__digits', text: s.code })
         ]),
-        h('p', { class: 'demo-incall__dial' }, ['Call ', tel]),
-        h('p', { class: 'demo-incall__expect demo-mk', text: 'What to expect:' }),
+        h('p', { class: 'demo-incall__dial demo-db' }, ['Call ', telLink('demo-incall__tel')]),
+        h('p', { class: 'demo-incall__expect demo-mk demo-db', text: 'What to expect:' }),
         h('ol', { class: 'demo-incall__list demo-db' }, EXPECT.map(function (t) { return h('li', {}, [t]); })
           .concat([h('li', {}, ['​', done])])),
-        expectRows('Bolt Services')
+        h('div', { class: 'demo-ihow demo-mb' }, [
+          h('p', { class: 'demo-ihow__h', text: 'Here’s how to call your assistant:' }),
+          h('ol', { class: 'demo-ihow__list' }, [
+            h('li', {}, ['Dial ', telLink('demo-ihow__tel')]),
+            h('li', {}, ['Tap in this code: ', h('b', { text: s.code })])
+          ])
+        ]),
+        help
       ])
     ], 'inbound-call');
-  }
-  function revealDial() {
-    var card = body && body.querySelector('.demo-incall');
-    if (card) card.classList.add('demo-incall--manual');
-    if (inboundFlow) inboundFlow.manual = true;
   }
 
   // ---------- inbound polling ----------
@@ -733,7 +726,6 @@
           if ((st === 'connected' || st === 'completed') && res.d.callId) return followCall(f, String(res.d.callId));
           if (st === 'waiting') {
             if (resume) return renderChoice();   // never got through: choose again, same code
-            if (f.back) revealDial();
             return again(3000);
           }
           if (st === 'limit') {
@@ -1463,19 +1455,18 @@
 
     setBody([
       h('div', { class: 'demo-success' }, [
-        // Desktop: Figma 2370:8784's title (AFMBP-2000). Phones (2441:811 as updated
-        // 2026-11-12, AFMBP-2596) open on the pitch instead: no title, no brush.
-        h('h2', { class: 'demo-success-title demo-db' }, [
+        // Desktop: Figma 2370:8784's title (AFMBP-2000). Phones draw it as 2441:811
+        // does since the 2026-11-13 update (AFMBP-2597): black "NEVER" turned, the
+        // node's brush under it, "miss a job again" beside it (demo.css).
+        h('h2', { class: 'demo-success-title' }, [
           h('span', { class: 'demo-mk demo-ul demo-success-never', text: 'NEVER' }),
           document.createTextNode(' '),
           h('span', { class: 'demo-success-rest', text: 'miss a job again' })
         ]),
-        // Each breakpoint reads its own node's pitch and label; the phone's pitch is
-        // two paragraphs with a blank line between them, as the node sets it.
+        // Each breakpoint reads its own node's pitch and label.
         h('p', { class: 'demo-success-sub' }, [
           h('span', { class: 'demo-d', text: 'Bolt handles bookings, qualifies leads, takes messages, and more so you can focus on making money!' }),
-          h('span', { class: 'demo-m' }, ['Stop wasting money on receptionists or losing leads to voicemail', h('br'), h('br'),
-            'Bolt qualifies leads and books jobs for less than $4/day.'])
+          h('span', { class: 'demo-m', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' })
         ]),
         h('p', { class: 'demo-success-tlabel' }, dm('Here’s your transcript:', 'Transcript')),
         h('div', { class: 'demo-chatwrap' }, [box, bar]),
@@ -1609,7 +1600,7 @@
       open: function () { openModal('qa'); }, phone: renderPhone, code: renderCode, inCall: renderCalling,
       recap: renderRecap, fail: renderCallFailed, limit: renderLimit, error: renderError,
       choice: renderChoice,
-      inbound: function (code, manual) { renderInboundCall(qaSession(code), { manual: !!manual }); },
+      inbound: function (code) { renderInboundCall(qaSession(code)); },
       inboundFail: renderInboundFailed,
       state: state
     };
