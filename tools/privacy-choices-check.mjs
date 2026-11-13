@@ -9,8 +9,11 @@
 // test browser maps www.boltanswering.com to this server, so the real cookie domain is exercised.
 // Run: node tools/privacy-choices-check.mjs [siteRoot]
 //      NC=<name> node tools/privacy-choices-check.mjs   — one negative control (see MUTATE)
-// Headless Chrome. Nothing leaves the machine: Google's and Meta's scripts and endpoints, Bolt's
-// API and app.boltanswering.com are all answered locally, and the served pixel carries a test ID.
+// Headless Chrome. Nothing leaves the machine: Chrome resolves no host but 127.0.0.1 and
+// www.boltanswering.com (mapped to this server), so every request the Fetch interception below does
+// not answer (preconnects, Chrome's own background requests) fails to resolve. Google's and Meta's
+// scripts and endpoints, Bolt's API and app.boltanswering.com are answered locally by that
+// interception, and the served pixel carries a test ID.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -62,7 +65,9 @@ const srv = createServer((req, res) => {
 }).listen(PORT, '127.0.0.1');
 
 const PROFILE = mkdtempSync(join(tmpdir(), 'cdp-2019-')); // removed at exit
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', '--host-resolver-rules=MAP www.boltanswering.com 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
+// Chrome applies the first MAP rule that matches a host: www.boltanswering.com goes to this server,
+// and every other host but 127.0.0.1 fails to resolve.
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--window-size=1280,900', '--host-resolver-rules=MAP www.boltanswering.com 127.0.0.1 , MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'PASS' : 'FAIL'} ${m}`); if (!c) bad++; };
