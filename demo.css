@@ -274,7 +274,8 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:14.25px}
   .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:20.25px}
   .demo-backdrop[data-screen="phone"] .demo-label{margin:0 0 7.25px;font-size:15px;line-height:22.5px}
-  .demo-backdrop[data-screen="phone"] .demo-input{display:block;height:45px;padding:0 9px;font-size:22px;border-radius:6px}
+  /* 17.6px type: the node's 22px less 20% (owner, AFMBP-2576). */
+  .demo-backdrop[data-screen="phone"] .demo-input{display:block;height:45px;padding:0 9px;font-size:17.6px;border-radius:6px}
   .demo-backdrop[data-screen="phone"] .demo-btn{width:436px;height:49px;margin:85px 0 0 89px;font-size:22px;font-weight:400;border-radius:6px}
   .demo-backdrop[data-screen="phone"] .demo-disclosure{width:436px;margin:9px 0 0 89px;font-size:11px;line-height:13.32px}
   .demo-backdrop[data-screen="phone"] .demo-help{margin:28.64px 0 0;font-size:16px;line-height:19.37px}
@@ -610,11 +611,15 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="phone"] .demo-field--business .demo-label{left:27.82px;top:186.653px}
   .demo-backdrop[data-screen="phone"] .demo-field--email .demo-label{left:28.4px;top:263.653px}
   .demo-backdrop[data-screen="phone"] .demo-label__opt{font-size:15px;font-weight:400}
-  /* 21px type, so iOS doesn't zoom the page on focus (it does under 16px). */
+  /* 16.8px type: the node's 21px less 20% (owner, AFMBP-2576), still over the 16px under which
+     iOS zooms the page on focus. Under 337px the card is scaled down (zoom .94 / .83 above), so
+     there the type is set back up to keep the size on screen at 16px or more. */
   .demo-backdrop[data-screen="phone"] .demo-input{
     position:absolute;left:28.4px;width:285.2px;margin:0;padding:0 28.94px 0 5.56px;border:0;border-radius:4.372px;
-    box-shadow:inset 0 0 0 .6px #dee2e6;background:#fff;color:var(--navy);font-size:21px;line-height:25px;
+    box-shadow:inset 0 0 0 .6px #dee2e6;background:#fff;color:var(--navy);font-size:16.8px;line-height:25px;
   }
+  @media (max-width:336px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:17.1px} }   /* x .94 = 16.07px */
+  @media (max-width:316px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:19.4px} }   /* x .83 = 16.1px */
   .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-input{top:134.4px;height:36px;padding-top:1px}
   .demo-backdrop[data-screen="phone"] .demo-field--business .demo-input{top:205.4px;height:35px}
   .demo-backdrop[data-screen="phone"] .demo-field--email .demo-input{top:282.4px;height:38px;padding:1px 6px 0}

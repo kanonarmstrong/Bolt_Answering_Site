@@ -1059,23 +1059,43 @@
     var btn = h('button', { class: 'demo-btn', type: 'button', text: 'Continue' });
     var errEl = opts.error ? h('div', { class: 'demo-error', text: opts.error }) : null;
 
+    // AFMBP-2575 — one code check at a time, and none once the code is accepted. A phone can
+    // fire two of the ways in above for one code: on 2026-11-12 an iPhone's code autofill
+    // checked the same code twice, 36 ms apart. The first check passed and the call went out;
+    // the second found the code spent and put "That code has expired" over the Calling card.
+    // `checking` stays set after a pass: this screen's work is done.
+    var checking = false;
+    // Whether this screen still stands: the dialog is open and no other screen has taken its
+    // place. An answer that comes back after that is dropped, not drawn over what is there now.
+    function shown() { return isOpen() && codeWrap.isConnected; }
+
     // Resend control
     var resendWrap = h('div', { class: 'demo-resend' });
     var resendBtn = h('button', { type: 'button', text: 'Request a new code' });
     resendWrap.appendChild(document.createTextNode("Didn’t get it? "));
     resendWrap.appendChild(resendBtn);
-    resendBtn.addEventListener('click', function () { doResend(resendBtn); });
+    // While a code check is out, its answer decides what comes next: a tap here does nothing
+    // then, and a new code's answer that lands while a check is out is dropped (AFMBP-2575).
+    resendBtn.addEventListener('click', function () {
+      if (!checking) doResend(resendBtn, function () { return shown() && !checking; });
+    });
     if (opts.resendSecs) startResend(resendBtn, opts.resendSecs);
 
     function submit() {
-      if (opts.locked) return;
+      if (opts.locked || checking) return;
       var c = code();
       if (c.length !== 6) return;
+      checking = true;
       busy(btn, 'Verifying…');
       var meta = metaIds();
       apiPost('/api/demo/otp/verify', verifyBody(c, meta)).then(function (r) {
-        if (r.ok) { track('demo_code_verified', meta ? { event_id: meta.event_id } : null); return placeCall(); }
+        // The events record what the server said either way; a screen that has moved on is
+        // left as it is (AFMBP-2575).
+        var live = shown();
+        if (r.ok) { track('demo_code_verified', meta ? { event_id: meta.event_id } : null); if (live) placeCall(); return; }
         track('demo_code_failed', { reason: reasonOf(r) });
+        if (!live) return;
+        checking = false;
         unbusy(btn, 'Continue');
         if (r.error === 'incorrect') renderCode({ error: 'Wrong code. Please try again or request another code.' });
         else if (r.error === 'locked_out') renderCode({ error: 'Too many tries. Request a new code.', locked: true });
@@ -1101,11 +1121,15 @@
 
   function retryAfter(r) { return (r.data && (r.data.retryAfter || r.data.seconds || r.data.retry_after)) || 60; }
 
-  function doResend(btnEl) {
+  // `current` says whether the code screen that asked still stands (AFMBP-2575). When it no
+  // longer does, the answer is still counted but nothing is drawn.
+  function doResend(btnEl, current) {
     busy(btnEl, 'Sending…'); btnEl.classList.add('busy');
     apiPost('/api/demo/otp/send', otpBody()).then(function (r) {
-      if (r.ok) { track('demo_code_resent'); return renderCode({ resendSecs: 60 }); }
+      var live = !current || current();
+      if (r.ok) { track('demo_code_resent'); if (live) renderCode({ resendSecs: 60 }); return; }
       track('demo_code_send_failed', { reason: reasonOf(r), resend: true });
+      if (!live) return;
       if (r.error === 'rate_limited') return renderCode({ resendSecs: retryAfter(r) });
       if (r.error === 'demo_limit_reached') return renderLimit();
       renderError();

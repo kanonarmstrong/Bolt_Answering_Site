@@ -21,7 +21,11 @@
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=bolt_services |
 //      NC=swap_help | NC=no_help_event | NC=old_rows | NC=old_sub_size | NC=old_sub_color |
-//      NC=old_dy | NC=old_recap_label | NC=recap_tall — negative controls on the SERVED copy only; each must FAIL.
+//      NC=old_dy | NC=old_recap_label | NC=recap_tall | NC=old_field_size | NC=old_desk_field_size |
+//      NC=no_zoom_floor — negative controls on the SERVED copy only; each must FAIL.
+// AFMBP-2576 (owner, 2026-11-12): the text in the form's three fields is 20% smaller: 16.8px on
+// a phone (the node's 21px), 17.6px on a computer (22px), placeholders with it; where the phone
+// card is scaled down (under 337px) the size on screen never drops under 16px.
 // AFMBP-2274 (the nodes as updated 2026-10-16): the calling cards' rows read "Talk to the “…”
 // receptionist" / "Tell her about your issue or project", the form's sub is #707070 at 18px,
 // and the "You call us" card sits centred (.5px low) as 2672:2064 now puts it.
@@ -67,6 +71,12 @@ const MUTATE = {
   no_help_event: ['demo.js', (s) => cut(s, "a.addEventListener('click', function () { track('demo_help_clicked', { os: os }); });", '')],
   // AFMBP-2548: the end-of-call button keeps its old label.
   old_recap_label: ['demo.js', (s) => cut(s, "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start your free trial'])", "modeProps({ from: 'recap', call_id: finishedFor })); } }, ['Start now'])")],
+  // AFMBP-2576: the phone fields' text back at the node's 21px.
+  old_field_size: ['demo.css', (s) => cut(s, 'color:var(--navy);font-size:16.8px;line-height:25px;', 'color:var(--navy);font-size:21px;line-height:25px;')],
+  // AFMBP-2576: the computer fields' text back at the node's 22px.
+  old_desk_field_size: ['demo.css', (s) => cut(s, 'padding:0 9px;font-size:17.6px;border-radius:6px}', 'padding:0 9px;font-size:22px;border-radius:6px}')],
+  // AFMBP-2576: no floor where the card is scaled down: 16.8px x .94 = 15.8px on a 320px phone.
+  no_zoom_floor: ['demo.css', (s) => cut(s, '  @media (max-width:336px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:17.1px} }', '')],
   // AFMBP-2548: the desktop end-of-call button back at 56px, taller than the Talk button.
   recap_tall: ['demo.css', (s) => cut(s, '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:49px;', '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:56px;')],
 };
@@ -230,7 +240,11 @@ try {
   ok(['#demo-phone', '#demo-business', '#demo-email'].every(Boolean) && (await ev("['demo-phone','demo-business','demo-email'].every(function(id){return document.getElementById(id).getAttribute('enterkeyhint')==='done'})")), 'form: the keyboard key reads "done" on a phone');
   ok((await ev("document.getElementById('demo-phone').required && document.getElementById('demo-business').required && !document.getElementById('demo-email').required && document.getElementById('demo-email').getAttribute('aria-required')===null")), 'form: phone and business name required, email optional');
   ok((await ev("['demo-phone','demo-business','demo-email'].every(function(id){var e=document.getElementById(id), l=document.querySelector('label[for='+id+']'); return !!l && e.labels && e.labels[0]===l;})")), 'a11y: each field has its label');
-  ok((await css('#demo-phone', 'fontSize')) === '21px' && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px' && (await css('.demo-sub', 'fontSize')) === '18px', 'form: the redrawn sizes (21px fields, 15px labels, 22px Continue, 18px sub; no zoom on focus)');
+  ok((await css('#demo-phone', 'fontSize')) === '16.8px' && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px' && (await css('.demo-sub', 'fontSize')) === '18px', 'form: the sizes (16.8px fields, 15px labels, 22px Continue, 18px sub)');
+  // AFMBP-2576 (owner, 11-12): the text in the three fields 20% under the node's 21px, the
+  // placeholders with it; still over the 16px under which iOS zooms the page on focus.
+  const fieldType = await ev("['demo-phone','demo-business','demo-email'].map(function(id){var e=document.getElementById(id); return getComputedStyle(e).fontSize+'/'+getComputedStyle(e,'::placeholder').fontSize+'/'+getComputedStyle(e).lineHeight;})");
+  ok(JSON.stringify(fieldType) === JSON.stringify(['16.8px/16.8px/25px', '16.8px/16.8px/25px', '16.8px/16.8px/25px']), `form: the three fields and their placeholders at 16.8px on the 25px line (${JSON.stringify(fieldType)})`);
   ok((await css('.demo-sub', 'color')) === 'rgb(112, 112, 112)', `form: the sub in the node's #707070 (${await css('.demo-sub', 'color')})`);
   const fs = await cardRel('.demo-sub');
   ok(fs && near(fs.y, 67.33) && near(fs.h, 22), `form: the sub's line on the node's centre line (y 77.4 + the .6 border, set down a third of a pixel) (${JSON.stringify(fs)})`);
@@ -240,6 +254,17 @@ try {
     const b = await cardRel(sel);
     ok(b && near(b.x, x) && near(b.y, y) && near(b.w, w) && near(b.h, h), `form: ${sel} where it matches the node (${JSON.stringify(b)})`);
   }
+  // AFMBP-2576: under 337px the card is scaled down (zoom .94, then .83 under 317px). There the
+  // field type is set back up, so its size on screen stays at 16px or more (iOS zooms under 16).
+  for (const [w, z] of [[402, 1], [375, 1], [337, 1], [336, 0.94], [320, 0.94], [317, 0.94], [316, 0.83], [280, 0.83]]) {
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: 700, deviceScaleFactor: 3, mobile: true });
+    await sleep(150);
+    const r = await ev("['demo-phone','demo-business','demo-email'].map(function(id){var e=document.getElementById(id); return [parseFloat(getComputedStyle(e).fontSize), e.currentCSSZoom];})");
+    const shown = r.map(([f, zz]) => +(f * zz).toFixed(3));
+    ok(r.every(([f, zz]) => near(zz, z, 0.001) && f * zz >= 16 && (w > 336 ? f === 16.8 : f > 16.8)), `form ${w}px: the field type on screen ${JSON.stringify(shown)}px (size x the card's zoom ${z}) never under 16px`);
+  }
+  await phone();
+  await sleep(150);
   ok(await greyBtn(), 'form: Continue starts grey (aria-disabled, never disabled)');
   ok((await css('.demo-backdrop.open .demo-btn', 'backgroundColor')) === 'rgb(184, 182, 185)', `form: grey is the node's #b8b6b9 (${await css('.demo-backdrop.open .demo-btn', 'backgroundColor')})`);
   ok(!(await ev("document.querySelector('.demo-backdrop.open .demo-btn').disabled")), 'form: the grey Continue still takes a tap');
@@ -440,6 +465,9 @@ try {
   ok((await text('.demo-h--form')) === 'We’ll call you right now' && (await text('.demo-sub')) === 'Get a one-time passcode', `desktop: its own heading and sub (${await text('.demo-h--form')} / ${await text('.demo-sub')})`);
   ok((await text('.demo-field--business .demo-label')) === 'What’s your business called?' && (await text('.demo-field--email .demo-label')) === 'What’s your email? (optional)', 'desktop: its own labels');
   ok((await attr('#demo-phone', 'enterkeyhint')) === null, 'desktop: no "done" key hint');
+  // AFMBP-2576: the three fields' text 20% under the node's 22px, the placeholders with it.
+  const deskType = await ev("['demo-phone','demo-business','demo-email'].map(function(id){var e=document.getElementById(id); return getComputedStyle(e).fontSize+'/'+getComputedStyle(e,'::placeholder').fontSize;})");
+  ok(JSON.stringify(deskType) === JSON.stringify(['17.6px/17.6px', '17.6px/17.6px', '17.6px/17.6px']) && (await css('.demo-field--phone .demo-label', 'fontSize')) === '15px' && (await css('.demo-backdrop.open .demo-btn', 'fontSize')) === '22px', `desktop: the three fields and their placeholders at 17.6px; labels 15px, Continue 22px (${JSON.stringify(deskType)})`);
   await type('#demo-phone', '4155551234');
   await type('#demo-business', 'QA Test Co');
   await ev("document.getElementById('demo-phone').focus(); 1");
