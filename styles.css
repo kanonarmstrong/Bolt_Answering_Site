@@ -988,16 +988,18 @@ ul,ol{list-style:none}
 .btn.about__talk{width:calc(309 * var(--u));min-width:calc(12em + 44px);height:49px;padding:0;font-size:max(16px,calc(22 * var(--u)));font-weight:400}
 @media (max-width:768px){
   .about__inner{padding:calc(clamp(30px,4vw,56px) + 40px) var(--pad) 40px}   /* room for the floating CTA, as on the home page */
-  /* Same rhythm as the node, scaled to the phone's 25.5px line (17px x 1.5) instead of 30px. */
-  .about__title{font-size:32px;line-height:1.15;margin-bottom:17px}
-  .about__body{font-size:17px;line-height:1.5}
+  /* Owner's phone sizes (11-13): title 20px, headings 18px, copy 16px. The marker words in a heading
+     match the title (as at 1920, where they are 40px against the title's 42px). Spacing is the node's,
+     scaled to the phone's 24px line (16px x 1.5) instead of 30px. */
+  .about__title{font-size:20px;line-height:1.2;margin-bottom:16px}
+  .about__body{font-size:16px;line-height:1.5}
   .about__body .about__p--5{margin-bottom:4px}
-  .about__h{margin:26px 0 9px;font-size:23px;line-height:1.25}
-  .about__h--35{margin-top:30px}
-  .about__h--38{margin-top:32px}
-  .about__h .marker{font-size:29px}
-  .about__list{padding-left:24px}
-  .about__list li{margin-bottom:7px}
-  .about__body .about__demo{margin-top:40px}
+  .about__h{margin:24px 0 8px;font-size:18px;line-height:1.3}
+  .about__h--35{margin-top:28px}
+  .about__h--38{margin-top:30px}
+  .about__h .marker{font-size:20px}
+  .about__list{padding-left:22px}
+  .about__list li{margin-bottom:6px}
+  .about__body .about__demo{margin-top:46px}
   .btn.about__talk{width:auto;height:49px;padding:0 22px;font-size:16px}
 }
