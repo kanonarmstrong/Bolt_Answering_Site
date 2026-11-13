@@ -10,8 +10,10 @@
 // "still" = the finished Home screen that reduced-motion visitors get (renderStill()).
 // Re-render whenever a hero screen, the pose (POSE), the loop's start or the phone look changes.
 //
-// Headless Chrome on the real GPU where available. Nothing leaves the machine except the page's
-// own files: Google, Meta, Streamable, jsDelivr and Bolt's API are answered locally.
+// Headless Chrome on the real GPU where available. Nothing leaves the machine: Chrome resolves no
+// host but 127.0.0.1 (iframes, preconnects and Chrome's own background requests included), and the
+// page's requests to any other host (Google, Meta, Streamable, jsDelivr, Bolt's API) are answered
+// locally by the Fetch interception below.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -53,7 +55,7 @@ const srv = createServer((req, res) => {
 }).listen(PORT, '127.0.0.1');
 
 const PROFILE = mkdtempSync(join(tmpdir(), 'cdp-heroframe-'));
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--window-size=1280,900', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${DBG}`, `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--window-size=1280,900', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0;
 const ok = (c, m) => { console.log(`  ${c ? 'PASS' : 'FAIL'} ${m}`); if (!c) bad++; };
