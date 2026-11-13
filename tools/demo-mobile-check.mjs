@@ -495,6 +495,7 @@ try {
   await tap('.demo-choice__call');
   ok(await waitScreen('inbound-call'), 'inbound: the call card');
   ok((await text('.demo-ihow__h')) === 'Here’s how to call your assistant:', `inbound: the node's title (${await text('.demo-ihow__h')})`);
+  ok((await visible('.demo-backdrop.open .demo-ihow__h')) && (await visible('.demo-backdrop.open .demo-ihow__list')) && (await visible('.demo-backdrop.open .demo-ihow__tel')), 'inbound: the title and the two steps show (not just in the page)');
   const steps = await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-ihow__list li')).map(function(l){return l.innerText.replace(/\\s+/g,' ').trim()})");
   ok(JSON.stringify(steps) === JSON.stringify(['Dial (855) 497-3151', 'Tap in this code: 4321']), `inbound: the two steps, with this session's number and code (${JSON.stringify(steps)})`);
   ok((await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-ihow__list li')).map(function(l){return getComputedStyle(l,'::before').content}).join('|')")) === 'counter(demo-ihow) "."|counter(demo-ihow) "."' && (await css('.demo-ihow__list li', 'color')) === 'rgb(112, 112, 112)', 'inbound: the steps numbered by a counter ("1." / "2."; the pixels were matched to the node), in grey');

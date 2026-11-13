@@ -370,7 +370,9 @@ try {
   // reading order follows the picture: availability, question, call + its wait, we call you, reviewer, rating, quote, help
   const order = ['.demo-cm__live', '.demo-cm__h', '.demo-choice__call', '.demo-choice__when', '.demo-choice__get', '.demo-cr__who', '.demo-cm__score', '.demo-cm__quote', '.demo-help'];
   ok((await ev(`(function(){var s=${JSON.stringify(order)}.map(function(q){return document.querySelector(q)}); for(var i=1;i<s.length;i++){ if(!(s[i-1].compareDocumentPosition(s[i]) & Node.DOCUMENT_POSITION_FOLLOWING)) return false; } return true;})()`)) === true, 'a11y: reading order matches the picture');
-  ok((await axIgnored('.demo-cr__stars')) === true, 'a11y: the stars are hidden from screen readers');
+  // The stars' own span is a bare container, which Chrome's tree leaves out whatever it holds;
+  // what keeps them from screen readers is aria-hidden on it, with no words inside.
+  ok((await ev("(function(){var s=document.querySelector('.demo-cr__stars'); return !!s && s.getAttribute('aria-hidden')==='true' && s.textContent===''})()")) === true, 'a11y: the stars are hidden from screen readers (aria-hidden, no words)');
   ok((await axIgnored('.demo-cr__who')) === false && (await axIgnored('.demo-cm__score')) === false && (await axIgnored('.demo-cm__quote')) === false && (await axIgnored('.demo-cm__live')) === false, 'a11y: reviewer, rating, quote and availability are read');
   ok((await ev("document.querySelector('.demo-cm__h').tagName")) === 'H2' && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the question is the one heading on the phone');
   // routing: "You call us" is the call, with this browser's code
