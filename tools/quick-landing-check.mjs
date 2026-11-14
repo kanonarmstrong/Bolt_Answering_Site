@@ -9,7 +9,9 @@
 //     sets' optimization event, "Landing page: Start now tap");
 //   - the close goes to the home page and logs demo_closed {step: signup_offer};
 //   - the page is noindex and is not in the sitemap.
-// The ingest and the pixel are stubbed in the page; nothing reaches production.
+// The ingest and the pixel are stubbed in the page; nothing reaches production. Nothing leaves the
+// machine either: Chrome resolves no host but 127.0.0.1, so the page's requests to other hosts, its
+// preconnects and prefetches, and Chrome's own background requests all fail to resolve.
 // Run: node tools/quick-landing-check.mjs [siteRoot]
 //      NC=<name> node tools/quick-landing-check.mjs   — one negative control (see MUTATE); each must FAIL.
 // The warm-up is checked against a stubbed preload list with good and bad entries.
@@ -82,7 +84,7 @@ const near = (a, b, tol = 1) => Math.abs(a - b) <= tol;
 
 const prof = mkdtempSync(join(tmpdir(), 'ql-check-'));
 const port = 9600 + Math.floor(Math.random() * 300);
-const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, '--no-first-run', '--host-resolver-rules=MAP app.boltanswering.com 127.0.0.1:9, MAP *.facebook.com 127.0.0.1:9, MAP *.facebook.net 127.0.0.1:9, MAP www.googletagmanager.com 127.0.0.1:9, MAP browser.sentry-cdn.com 127.0.0.1:9', 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, '--no-first-run', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
 let ws;
 try {
   let wsUrl;
