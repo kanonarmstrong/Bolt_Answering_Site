@@ -240,7 +240,7 @@ const WALK = `(async () => {
   document.querySelector('.demo-choice__get').click();
   for (let i = 0; i < 50 && !document.getElementById('demo-phone'); i++) await w(100);
   const set = (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-  set('demo-phone', '${PHONE}'); set('demo-business', '${BIZ}'); set('demo-email', '${EMAIL}');
+  set('demo-phone', '${PHONE}');   // the number only since AFMBP-2600 (BIZ and EMAIL stay in the needles)
   [...document.querySelectorAll('.demo-backdrop .demo-btn')].find((b) => /continue/i.test(b.textContent)).click();
   for (let i = 0; i < 50 && document.querySelectorAll('.demo-code input').length < 6; i++) await w(100);
   const b = document.querySelectorAll('.demo-code input'); b[0].value = '123456'; b[0].dispatchEvent(new Event('input', { bubbles: true }));

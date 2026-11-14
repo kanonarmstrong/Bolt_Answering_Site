@@ -29,10 +29,11 @@
 // Back (2670:1394), with no Continue and no resend line; an error is a line over the boxes
 // (2895:1339 wrong code, 2895:1370 expired, 2895:1401 system error) whose link sends a new code,
 // and a system error stays on the card. The phone runs reach a new code through that link (after
-// a wrong code), Back is checked too, and a computer's screen is checked as it was.
+// a wrong code), Back is checked too. AFMBP-2600: a computer shows the same card, so both views
+// are held to the same expectations.
 // Run: node tools/demo-code-check.mjs [siteRoot]
 //      NC=no_single_flight | NC=verify_answer_always | NC=resend_answer_always |
-//      NC=resend_while_checking | NC=link_while_checking | NC=no_inline_system_error — negative
+//      NC=link_while_checking | NC=no_inline_system_error — negative
 //      controls on the SERVED copy only; each must FAIL.
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request
 // (Bolt's API, Meta, Google) is answered here.
@@ -58,12 +59,10 @@ const MUTATE = {
   verify_answer_always: ['demo.js', (s) => cut(s, '        var live = shown();\n', '        var live = true;\n')],
   // A new code's answer is drawn whatever is on the screen now.
   resend_answer_always: ['demo.js', (s) => cut(s, 'var live = !current || current();', 'var live = true;')],
-  // "Request a new code" sends one while a check is out.
-  resend_while_checking: ['demo.js', (s) => cut(s, 'if (!checking) doResend(resendBtn,', 'doResend(resendBtn,')],
   // AFMBP-2596: a phone's error-line link sends a new code while a check is out.
   link_while_checking: ['demo.js', (s) => cut(s, 'if (!checking && !a.disabled) doResend(a,', 'if (!a.disabled) doResend(a,')],
-  // AFMBP-2596: a system error on a phone's code card takes the old full error screen.
-  no_inline_system_error: ['demo.js', (s) => cut(s, 'if (!isMobile()) return renderError();', 'return renderError();')],
+  // AFMBP-2596 / 2600: a system error on the code card takes the old full error screen.
+  no_inline_system_error: ['demo.js', (s) => cut(s, "    track('demo_error', { at: step });\n    renderCode({ kind: 'system' });\n", "    track('demo_error', { at: step });\n    renderError();\n")],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 // A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
@@ -228,8 +227,7 @@ try {
     await load('/hvac.html?talk=form');
     if (!(await waitScreen('phone'))) return false;
     await type('#demo-phone', '4155551234');
-    // A phone asks for the number only (AFMBP-2596); a computer also wants a business name.
-    if (await ev("document.getElementById('demo-business').getClientRects().length > 0")) await type('#demo-business', 'QA Test Co');
+    // The number only, on every device (AFMBP-2596 / AFMBP-2600).
     await ev('document.activeElement && document.activeElement.blur(); 1');
     await tap('.demo-backdrop.open .demo-btn');
     const up = await waitFor(CODE_UP);
@@ -256,7 +254,10 @@ try {
   const LINK = '.demo-backdrop.open .demo-codeerr__link';
   for (const view of ['phone', 'desktop']) {
     if (view === 'phone') await phone(); else await desktop();
-    const V = `[${view}]`, P = view === 'phone';
+    // AFMBP-2600: one responsive demo. A computer shows the phone's code card too ("Enter the
+    // code", the boxes, the error line and its link, Back), so both views hold it to the same
+    // expectations; the computer run proves the same flow on a computer's screen and keyboard.
+    const V = `[${view}]`, P = true;
     // A new code: the computer's resend button, a phone's error-line link (after a wrong code).
     const RESEND = P ? LINK : '.demo-backdrop.open .demo-resend button';
     console.log(`${V} code screen`);

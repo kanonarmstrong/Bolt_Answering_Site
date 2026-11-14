@@ -10,6 +10,9 @@
 //   - expired / failed / limit / no code; Continue starts over with a new code;
 //   - analytics: the inbound branch carries mode:'inbound', success is counted once, and the
 //     outbound demo's events are exactly as before (no mode, same steps).
+// AFMBP-2600 (owner, 2026-11-13: one responsive demo): a computer shows the phone's cards,
+// centred and scaled up as far as its screen's height allows (up to 125%); there the number to
+// dial is plain text, as a computer has no dialer to hand a tel: link to.
 // Run: node tools/demo-two-ways-check.mjs [siteRoot]
 //      SHOTS=<dir> also saves a screenshot of every new state (desktop 1920x1200 @1x,
 //      phone 402x753 @3x) plus boxes.json (each card's box), for the Figma comparison.
@@ -36,15 +39,15 @@ const MUTATE = {
   no_href: (s) => cut(s, "if (s) call.setAttribute('href', s.telUri);", ''),
   // Coming back to the page waits for the next scheduled poll instead of checking at once.
   no_reconcile: (s) => cut(s, "    if (f.callId) pollRecap(f.callId, inboundRecapOpts());\n    else pollInbound(f.session);\n", ''),
-  // AFMBP-2597: the phone's You call us card without its number to dial.
-  no_dial_step: (s) => cut(s, "h('li', {}, ['Dial ', telLink('demo-ihow__tel')]),", "h('li', {}, ['Dial']),"),
+  // AFMBP-2597: the You call us card without its number to dial.
+  no_dial_step: (s) => cut(s, "h('li', {}, ['Dial ', number]),", "h('li', {}, ['Dial']),"),
   // The outbound demo's events start carrying a mode.
   mode_leak: (s) => cut(s, 'function modeProps(p) { if (recapMode) p.mode = recapMode; return p; }', "function modeProps(p) { p.mode = recapMode || 'outbound'; return p; }"),
   // A code fetched on one trade page is reused on another (AFMBP-2096).
   trade_reuse: (s) => cut(s, 'return !!s && s.trade === TRADE && s.expiresAt', 'return !!s && s.expiresAt'),
-  // Answers from superseded checks are processed again (AFMBP-2099).
   // The code request goes without the visitor id (AFMBP-2109).
   no_visitor: (s) => cut(s, "body.sessionId = window.boltAttr.visitorId();", ';'),
+  // Answers from superseded checks are processed again (AFMBP-2099).
   no_gen: (s) => cut(cut(s, 'if (gen !== inboundGen) return;   // superseded while it was out', ''), 'if (gen !== recapGen) return;   // superseded while it was out', ''),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
@@ -228,7 +231,7 @@ try {
   const c1 = await lastClick();
   ok(!!c1 && c1.href === 'tel:+18554973151,,4321' && c1.followed === true, `phone: the tap is left to the dialer (${JSON.stringify(c1)})`);
   ok(await waitScreen('inbound-call'), 'phone: call card after the tap');
-  ok((await text('.demo-backdrop.open .demo-ihow__list b')) === '4321', 'phone: the card shows the code');
+  ok((await text('.demo-backdrop.open .demo-ihow__code')) === '4321', 'phone: the card shows the code');
   // AFMBP-2597 (2891:1090): the number to dial is the card's first step from the start.
   ok((await visible('.demo-ihow__tel')) && !(await visible('.demo-incall__dial')), 'phone: the number to dial is the first step from the start, no separate number line');
   await shot('m-incall', '.demo-card');
@@ -388,39 +391,47 @@ try {
   await tap('.demo-choice__get');
   ok(await waitScreen('phone'), 'phone: "Get a call" opens the outbound form');
 
-  // ================= desktop =================
+  // ================= a computer (AFMBP-2600: the phone's cards, scaled up) =================
   await desktop();
-  console.log('[desktop 1920x1200] choice, call card with the number, outbound unchanged');
+  console.log('[desktop 1920x1200] the phone cards scaled up; the number as plain text; outbound unchanged');
+  // The open card against its node size (--demo-w x --demo-h) times the zoom, and centred.
+  const scaled = () => ev(`(function(){var b=document.querySelector('.demo-backdrop.open'), cs=getComputedStyle(b), z=parseFloat(cs.getPropertyValue('--demo-zoom')), w=parseFloat(cs.getPropertyValue('--demo-w')), h=parseFloat(cs.getPropertyValue('--demo-h')), r=b.querySelector('.demo-card').getBoundingClientRect(); return {z:z, ok: Math.abs(r.width - w*z) < 0.6 && Math.abs(r.height - h*z) < 0.6 && Math.abs(r.left + r.width/2 - innerWidth/2) < 1 && Math.abs(r.top + r.height/2 - innerHeight/2) < 1, w:r.width, h:r.height};})()`);
   reset();
   await load('/hvac.html?talk=1');
   ok((await ev("matchMedia('(hover:hover) and (pointer:fine)').matches")) === true, 'desktop: emulated as a mouse device');
   ok(await waitScreen('choice'), 'desktop: ?talk=1 opens on the choice');
   await sleep(300);
-  ok((await text('.demo-choice__h')) === 'Two ways to talk to an assistant now', `desktop: heading copy (${await text('.demo-choice__h')})`);
-  ok(!(await visible('.demo-choice__or')), 'desktop: no "OR"');
+  ok((await text('.demo-cm__h')) === 'How would you like to start the call?' && (await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `desktop: the phone card's question, "You call us" / "We call you" (${await text('.demo-cm__h')})`);
+  ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub')")) === false && !(await visible('.demo-choice__or')), 'desktop: no computer-only title, no "OR"');
+  const sc1 = await scaled();
+  ok(sc1.ok && sc1.z === 1.25, `desktop: the choice card at 125%, centred (${JSON.stringify(sc1)})`);
   await shot('d-choice', '.demo-card');
   await tap('.demo-choice__call');
   const c2 = await lastClick();
-  ok(!!c2 && c2.followed === false, `desktop: "Call now" does not hand the link to the OS (${JSON.stringify(c2)})`);
+  ok(!!c2 && c2.followed === false, `desktop: "You call us" does not hand the link to the OS (${JSON.stringify(c2)})`);
   ok(await waitScreen('inbound-call'), 'desktop: call card');
-  ok(await visible('.demo-incall__dial'), 'desktop: number to call shown');
-  ok((await text('.demo-incall__code')) === 'Your code 4321', `desktop: code block (${await text('.demo-incall__code')})`);
-  ok(!(await visible('.demo-xm')) && (await visible('.demo-incall__list')), 'desktop: its numbered "What to expect", not the phone\'s icon rows');
+  ok((await text('.demo-ihow__h')) === 'Here’s how to call your assistant:' && (await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151' && (await text('.demo-backdrop.open .demo-ihow__code')) === '4321', `desktop: the phone card's two steps, the number and this session's code (${await text('.demo-backdrop.open .demo-ihow__list')})`);
+  ok((await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-ihow__tel'); return e ? e.tagName + '|' + (e.getAttribute('href') || '') : null})()")) === 'B|', 'desktop: the number to dial as plain text, no tel: link');
+  ok(!(await visible('.demo-incall__dial')) && !(await visible('.demo-incall__list')), 'desktop: none of the old computer card\'s pieces');
+  const sc2 = await scaled();
+  ok(sc2.ok && sc2.z === 1.25, `desktop: the You call us card at 125%, centred (${JSON.stringify(sc2)})`);
   ok(evs('demo_mode_selected', (d) => d.mode === 'inbound' && d.dial === 'manual').length === 1, 'events: desktop selection is manual dial');
   await shot('d-incall', '.demo-card');
   setState('failed');
   ok(await waitScreen('inbound-fail', 6000), 'desktop: failed -> failure card');
-  ok((await text('.demo-ifail')) === 'Sorry... that didn’t work We weren’t able to connect. Please try your call again later. Continue', `desktop: failure copy unchanged (${await text('.demo-ifail')})`);
+  ok((await text('.demo-ifail')) === 'OOPs! Something’s wrong on our end. Try your call again later. Continue', `desktop: the phone failure copy (${await text('.demo-ifail')})`);
+  const sc3 = await scaled();
+  ok(sc3.ok && sc3.z === 1.25, `desktop: the failure card at 125%, centred (${JSON.stringify(sc3)})`);
   await shot('d-fail', '.demo-card');
 
   console.log('[desktop] outbound demo, end to end: unchanged events');
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'desktop: ?talk=form opens straight on the outbound form');
-  ok((await text('.demo-h--form')) === 'We’ll call you right now', 'desktop: outbound form heading unchanged');
+  ok((await text('.demo-h--form')) === 'What number would you like the assistant to call?', `desktop: the phone form's heading (${await text('.demo-h--form')})`);
   await ev(`(function(){
     function set(id,v){var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true}));}
-    set('demo-phone','(555) 555-1212'); set('demo-business','QA HVAC'); return 1; })()`);
+    set('demo-phone','(555) 555-1212'); return 1; })()`);
   await tap('.demo-backdrop.open .demo-btn');
   await sleep(600);
   await ev(`(function(){var b=document.querySelectorAll('.demo-code input'); b[0].value='123456'; b[0].dispatchEvent(new Event('input',{bubbles:true})); return 1;})()`);

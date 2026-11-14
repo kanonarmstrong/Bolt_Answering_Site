@@ -52,7 +52,6 @@ body.demo-lock{overflow:hidden}
 /* ---- form ---- */
 .demo-field{margin-bottom:14px}
 .demo-label{display:block;font-size:15px;font-weight:700;color:#707070;margin-bottom:6px}
-.demo-label__opt{font-weight:400;font-size:.83em}
 .demo-input{
   width:100%;height:46px;box-sizing:border-box;
   border:1px solid #dee2e6;border-radius:6px;padding:0 12px;
@@ -69,12 +68,12 @@ body.demo-lock{overflow:hidden}
 }
 .demo-btn:hover{background:#1f6fe6}
 .demo-btn:disabled{opacity:.55;cursor:not-allowed}
-.demo-btn--ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
-.demo-btn--ghost:hover{background:rgba(43,127,253,.06)}
+/* No demo card uses it since AFMBP-2600; kept because the sign-up offer's check
+   (tools/signup-offer-check.mjs, yellow_cta) adds it to prove a yellow CTA fails. */
 .demo-btn--yellow{background:var(--yellow);color:var(--navy)}
 .demo-btn--yellow:hover{background:#eab00c}
-/* Continue before phone + business name are filled (Figma 2664:800): grey, but
-   still tappable — the tap shows what's missing. */
+/* Continue before the form is complete (Figma 2664:800): grey, but still
+   tappable — the tap shows what's missing. */
 .demo-btn.demo-btn--off,.demo-btn.demo-btn--off:hover{background:#c0c0c0;color:#fff;cursor:not-allowed}
 
 .demo-spinner{
@@ -91,9 +90,6 @@ body.demo-lock{overflow:hidden}
 .demo-help{text-align:center;font-size:14px;color:rgba(33,37,41,.75);margin-top:22px}
 .demo-help a{color:var(--blue);text-decoration:none;cursor:pointer}
 .demo-help a:hover{text-decoration:underline}
-
-.demo-error{color:#d64545;font-size:13.5px;line-height:1.45;margin:4px 2px 0}
-.demo-note{color:var(--gray);font-size:13.5px;line-height:1.45;margin:4px 2px 10px;text-align:center}
 
 /* ---- validation error state (Figma 2548:3438/3480/3522/3561) ---- */
 /* Offending field: red border + pink fill + red text; single message above CTA. */
@@ -116,24 +112,8 @@ body.demo-lock{overflow:hidden}
 .demo-code.err input{border-color:#d64545}
 .demo-code input:disabled{background:#f5f6f7;color:var(--gray)}
 
-.demo-resend{text-align:center;margin-top:14px;font-size:14px;color:var(--gray)}
-.demo-resend button{background:none;border:0;padding:0;color:var(--blue);cursor:pointer;font:inherit;font-weight:600}
-.demo-resend button:disabled{color:var(--gray);cursor:default;font-weight:400}
-
-/* ---- success / status ---- */
-.demo-expect{background:#f9fbff;border:1px solid #eef2f9;border-radius:12px;padding:20px 22px;margin-top:20px;text-align:left}
-.demo-expect h4{margin:0 0 10px;font-size:15px;font-weight:700;color:var(--navy)}
-.demo-expect ul{margin:0;padding-left:18px}
-.demo-expect li{font-size:14.5px;line-height:1.55;color:#3a3a45;margin-bottom:6px}
-.demo-expect li:last-child{margin-bottom:0}
-
-
-/* ---- call success (completed call) — Figma 2370:8784 / 2512:1239 ---- */
+/* ---- call success (completed call); its layout is 2441:811's, below ---- */
 .demo-success{position:relative;text-align:center}
-.demo-success::before{
-  content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;
-  background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05;
-}
 .demo-success>*{position:relative;z-index:1}
 
 .demo-success-title{margin:2px 0 14px;line-height:1.05;color:var(--navy);font-weight:400}
@@ -167,15 +147,6 @@ body.demo-lock{overflow:hidden}
 .demo-chatwrap{position:relative}
 .demo-chat__bar{position:absolute;visibility:hidden}
 
-/* "First 30 days are on us!" */
-.demo-success-trial{
-  display:inline-block;color:var(--navy);text-transform:uppercase;
-  line-height:1;margin:6px 0 16px;transform:rotate(-3deg);
-}
-.demo-success-trial__sm{font-size:clamp(24px,4.4vw,30px)}
-.demo-success-trial__big{font-size:clamp(40px,7.2vw,55px)}
-.demo-success-trial__gap{font-size:clamp(24px,4.4vw,30px)}
-
 .demo-success-cta{
   max-width:340px;margin:2px auto 0;height:49px;
   display:flex;align-items:center;justify-content:center;text-decoration:none;
@@ -184,7 +155,6 @@ body.demo-lock{overflow:hidden}
   font-size:clamp(20.7px,2.76vw,25.3px);
 }
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400}
-
 
 /* ---- assistant mascot icon + heading (phone entry 2387:9076) ---- */
 .demo-h--icon{display:flex;align-items:center;justify-content:center;gap:10px}
@@ -199,40 +169,13 @@ body.demo-lock{overflow:hidden}
 
 /* ---- "calling you" + failure cards (2442:1191 / 2511:1027 / 2370:8769 / 2370:8833) ---- */
 .demo-callcard,.demo-failcard{position:relative;text-align:left}
-.demo-callcard::before,.demo-failcard::before{content:"";position:absolute;inset:-30px -44px;z-index:0;pointer-events:none;background:url('assets/demo-checker.svg') center top/cover no-repeat;opacity:.05}
 .demo-callcard>*,.demo-failcard>*{position:relative;z-index:1}
 .demo-mk{font-family:'Permanent Marker',cursive;font-weight:400;color:var(--navy)}
 
-/* Calling You (Figma 2370:8769) — roomier + responsive so it never crams. */
-.demo-callcard__head{font-size:clamp(16px,2.1vw,19px);line-height:1.5;color:var(--navy);margin:0 0 22px}
-.demo-callcard__head .demo-mk{font-size:clamp(22px,3vw,25px);margin-right:6px}
-.demo-callcard__head b{font-weight:700}
-.demo-callcard__expect{font-size:clamp(22px,3.2vw,26px);margin:0 0 18px}
-.demo-callcard__list{margin:0;padding-left:28px;color:#3a3a45;font-size:clamp(16px,2.2vw,18px);line-height:1.5;list-style:decimal}
-.demo-callcard__list li{margin-bottom:14px}
-.demo-callcard__list li:last-child{margin-bottom:0}
-.demo-callcard__list .demo-mk{font-size:clamp(19px,2.6vw,22px)}
-
-.demo-failcard__head{font-size:18px;line-height:1.45;color:var(--gray);margin:0 0 12px}
-.demo-failcard__head .demo-mk{font-size:23px;margin-right:8px}
-.demo-failcard__body{font-size:15.5px;line-height:1.55;color:var(--ink);margin:0 0 16px}
-.demo-failcard__body p{margin:0}
-.demo-failcard__body p + p{margin-top:.9em}
-.demo-failcard__body b{font-weight:600}
-.demo-failcard__sad{color:#f00}
 .demo-failcard__links{display:flex;flex-direction:column;gap:8px;margin:0 0 22px}
 .demo-failcard__link{color:var(--blue);text-decoration:none;font-size:15.5px;font-weight:600}
 .demo-failcard__link:hover{text-decoration:underline}
 .demo-failcard__btn{max-width:340px;margin:0 auto;display:block}
-
-/* Marker copy is authored mixed-case for the mobile nodes (Permanent Marker
-   renders lowercase as small caps); desktop keeps its all-caps look. */
-.demo-callcard__title,.demo-callcard__expect,.demo-failcard__title{text-transform:uppercase}
-/* Mobile-only decoration (Figma mobile 2511:1027 OS lockups). */
-.demo-failcard__os{display:none}
-/* Desktop underline: flat 4px bar (unchanged). The mobile node screens replace
-   it with the node's yellow brush strokes (see the mobile block below). */
-.demo-ul{background:linear-gradient(var(--yellow),var(--yellow)) 0 100%/100% 4px no-repeat;padding-bottom:1px}
 
 /* ---- mobile ---- */
 @media (max-width:768px){
@@ -249,55 +192,14 @@ body.demo-lock{overflow:hidden}
   .demo-success-sub{max-width:none}
   .demo-chat{padding:15px 16px;border-radius:18px;max-height:262px}
   .demo-bubble{max-width:86%;font-size:14.5px}
-  .demo-success-trial{margin:4px 0 14px}
   .demo-success-cta{max-width:none}
 }
 
 /* ============================================================
-   "Talk to your assistant" form — desktop, pixel-matched to Figma 2387:9076
-   (617x741 card). Offsets are the node's, card-relative; the card's 1px border
-   is subtracted. No in-card logo / close, as in the node (click outside or Esc).
+   Two ways to try it (AFMBP-2083): the choice, the "You call us" call in
+   progress and its failure card. Their layouts are the phone nodes' (2670:952 /
+   2891:1090 / 2670:1124), below, at every width since AFMBP-2600.
    ============================================================ */
-@media (min-width:769px){
-  .demo-backdrop[data-screen="phone"] .demo-card{padding:37.2px 0 38.8px}
-  .demo-backdrop[data-screen="phone"] :is(.demo-logo,.demo-close){display:none}
-  /* checker-plate watermark (368x501 at 119,12; mirrored) behind the form */
-  .demo-backdrop[data-screen="phone"] .demo-card::before{
-    content:"";position:absolute;left:118px;top:11px;width:368px;height:501px;pointer-events:none;
-    background:url('assets/demo-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
-  }
-  .demo-backdrop[data-screen="phone"] .demo-body{position:relative;z-index:1}
-  .demo-backdrop[data-screen="phone"] .demo-h--form{margin:0;font-family:'Permanent Marker',cursive;font-weight:400;font-size:32px;line-height:41.6px}
-  .demo-backdrop[data-screen="phone"] .demo-sub{margin:1.2px auto 0;max-width:none;font-size:15px;line-height:24px}
-  .demo-backdrop[data-screen="phone"] .demo-field{margin:0 0 0 88px;width:436px}
-  .demo-backdrop[data-screen="phone"] .demo-field--phone{margin-top:53.25px}
-  .demo-backdrop[data-screen="phone"] .demo-field--business{margin-top:14.25px}
-  .demo-backdrop[data-screen="phone"] .demo-field--email{margin-top:20.25px}
-  .demo-backdrop[data-screen="phone"] .demo-label{margin:0 0 7.25px;font-size:15px;line-height:22.5px}
-  /* 17.6px type: the node's 22px less 20% (owner, AFMBP-2576). */
-  .demo-backdrop[data-screen="phone"] .demo-input{display:block;height:45px;padding:0 9px;font-size:17.6px;border-radius:6px}
-  .demo-backdrop[data-screen="phone"] .demo-btn{width:436px;height:49px;margin:85px 0 0 89px;font-size:22px;font-weight:400;border-radius:6px}
-  .demo-backdrop[data-screen="phone"] .demo-disclosure{width:436px;margin:9px 0 0 89px;font-size:11px;line-height:13.32px}
-  .demo-backdrop[data-screen="phone"] .demo-help{margin:28.64px 0 0;font-size:16px;line-height:19.37px}
-  /* validation / limit messages sit inside the 85px gap above Continue */
-  .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){width:436px;margin:24px 0 0 88px;font-size:14px;line-height:20px}
-  .demo-backdrop[data-screen="phone"] .demo-formerr[style*="block"] + .demo-btn,
-  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{margin-top:41px} /* 24 + 20 + 41 = the node's 85 gap */
-}
-
-/* ============================================================
-   Two ways to try it (AFMBP-2083): the choice, "You call us" call in progress,
-   and its failure card. Figma desktop 2670:896 / 2670:924 / 2670:1097, mobile
-   2670:952 / 2672:2064 / 2670:1124. Values are the nodes' own, in CSS px.
-   Deviations agreed with the owner: no consent line on the choice (the desktop
-   node still has one, so the help line moves up into its place and the card is
-   shorter); the desktop call card adds the code and the number to call above
-   "What to expect" (its node has no code block yet), and the mobile card
-   (2891:1090 since AFMBP-2597) shows the number to dial as its first step; the
-   failure card uses the mobile node's copy on desktop too.
-   ============================================================ */
-.demo-choice__h,.demo-choice__l1,.demo-choice__l2{display:block}
-/* The phone node's own pieces (2670:952) carry .demo-mb; see the phone block. */
 .demo-choice__btn{text-decoration:none}
 .demo-choice__call{background:#2b7ffd}
 .demo-choice__get{background:#83b5ff}
@@ -306,72 +208,9 @@ body.demo-lock{overflow:hidden}
 .demo-choice__btn .demo-spinner{flex:0 0 auto}
 .demo-incall,.demo-ifail{position:relative;text-align:left}
 .demo-incall>*,.demo-ifail>*{position:relative;z-index:1}
-.demo-incall::before,.demo-ifail::before{
-  content:"";position:absolute;z-index:0;pointer-events:none;
-  background:url('assets/demo-m-checker.svg') center/100% 100% no-repeat;transform:scaleX(-1);
-}
 .demo-incall p,.demo-ifail p{margin:0}
-.demo-incall__label,.demo-incall__digits,.demo-incall__dial{text-align:center;color:var(--navy)}
-.demo-incall__label{font-weight:700}
-.demo-incall__tel{color:var(--blue);text-decoration:none;white-space:nowrap}
-.demo-incall__tel:hover{text-decoration:underline}
-.demo-incall__expect,.demo-incall__done,.demo-ifail__title{color:var(--navy);white-space:nowrap;transform:rotate(-.44deg) skewX(-.22deg)}
-.demo-incall__list{margin:0;padding:0;list-style:none;counter-reset:demo-istep;color:var(--navy)}
-.demo-incall__list li{position:relative;white-space:nowrap;counter-increment:demo-istep}
-/* Numbers drawn here ("1. " ending where the text starts, as a decimal marker
-   does) so every engine places them the same. */
-.demo-incall__list li::before{content:counter(demo-istep) ". ";white-space:pre;position:absolute;right:100%;top:0}
-.demo-incall__list li:last-child::after{content:"";position:absolute;pointer-events:none;background:center/100% 100% no-repeat}
-.demo-incall__done{position:absolute;left:0;top:0}
-.demo-ifail__body{color:var(--navy)}
+.demo-ifail__title{color:var(--navy);white-space:nowrap;transform:rotate(-.44deg) skewX(-.22deg)}
 .demo-ifail__btn{display:flex;align-items:center;justify-content:center;margin:0;padding:0;border-radius:6px;font-size:22px;font-weight:400;line-height:21px}
-
-@media (min-width:769px){
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"]) :is(.demo-logo,.demo-close){display:none}
-
-  /* ---- choice (2670:896): 617-wide card, 1px border; offsets from the padding box ---- */
-  .demo-backdrop[data-screen="choice"] .demo-card{padding:43.4px 0 37.8px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__h{margin:0;font-size:32px;line-height:41.6px;font-weight:400;color:var(--navy);text-align:center}
-  /* Yellow brush under "talk to an assistant now" (node vector 2670:989). */
-  .demo-backdrop[data-screen="choice"] .demo-card::after{
-    content:"";position:absolute;left:116px;top:121.078px;width:387.994px;height:9.643px;pointer-events:none;
-    background:url('assets/demo-ul-twoways.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-choice__sub{margin:14.4px 0 0;padding-left:2px;font-size:15px;line-height:24px;color:#839393;text-align:center}
-  .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:flex;gap:89px;margin:32px 0 0;padding-left:89px}
-  /* padding-top 2px: the labels sat ~1px above the node's (as on mobile). */
-  .demo-backdrop[data-screen="choice"] .demo-choice__btn{
-    width:171px;height:49px;margin:0;padding:2px 0 0;border-radius:6px;display:flex;align-items:center;justify-content:center;
-    font-size:22px;font-weight:400;line-height:21px;color:#fff;
-  }
-  /* The node's help line sat under the consent text; it takes that text's place. */
-  .demo-backdrop[data-screen="choice"] .demo-help{margin:44px 0 0;font-size:16px;line-height:19.37px}
-
-  /* ---- call in progress (2670:924 + the code block): 674-wide card, 1px border ---- */
-  .demo-backdrop[data-screen="inbound-call"] .demo-card{max-width:674px;padding:0;border-radius:20.09px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall{height:452px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall::before{left:241.266px;top:143.39px;width:187.508px;height:255.657px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__code{position:absolute;left:0;right:0;top:29px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__label{font-size:24px;line-height:32px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__digits{margin-top:2px;font-size:32px;line-height:40px;letter-spacing:.04em}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__dial{position:absolute;left:0;right:0;top:109px;font-size:22px;line-height:30px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__expect{position:absolute;left:71.9px;top:170.98px;font-size:32.834px;line-height:26px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list{position:absolute;left:129px;top:223.05px;font-size:23.635px;line-height:30px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li{height:29.544px;margin:0 0 15.757px 35.45px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child{margin-bottom:0}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__list li:last-child::after{
-    left:3.15px;top:31.106px;width:90.603px;height:8.168px;background-image:url('assets/demo-ul-done.svg');
-  }
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__done{left:-.34px;top:-.506px;font-size:32.834px;line-height:26px}
-
-  /* ---- didn't connect (2670:1097, mobile copy): 674x311, no border ---- */
-  .demo-backdrop[data-screen="inbound-fail"] .demo-card{max-width:674px;padding:0;border:0;border-radius:20.09px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:311px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail::before{display:none}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__title{position:absolute;left:75.62px;top:60.2px;font-size:32.834px;line-height:26px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:100px;top:124px;width:532px;font-size:23.635px;line-height:29.544px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:119px;top:231px;width:436px;height:49px}
-}
 
 /* ============================================================
    Phone demo (AFMBP-2150): all nine phone screens redrawn for readability,
@@ -383,15 +222,11 @@ body.demo-lock{overflow:hidden}
    Card and input hairlines are painted (inset shadow), not borders, so they
    never shift the children; line heights are whole px where the node's are
    AUTO (Inter 21 -> 25, 20 -> 24, 15 -> 18) because WebKit truncates
-   fractional ones. Desktop is untouched: its rules sit in the
-   min-width:769px blocks above, and the copy each breakpoint reads is split
-   in demo.js (.demo-d/.demo-db desktop, .demo-m/.demo-mb phones).
+   fractional ones. AFMBP-2600 (owner, 2026-11-13: "make the demo experience
+   responsive so we only change it in one place"): these cards are the demo at
+   every width. A computer shows the same card, centred and scaled up (the
+   block at the end of this section). The ad sign-up offer below is its own.
    ============================================================ */
-.demo-backdrop .demo-m,.demo-backdrop .demo-mb{display:none}
-@media (max-width:768px){
-  .demo-backdrop .demo-d,.demo-backdrop .demo-db{display:none}
-  .demo-backdrop .demo-m{display:inline}
-  .demo-backdrop .demo-mb{display:block}
 
   /* ---- the frame every phone node screen shares ----
      AFMBP-2596 (the owner's 2026-11-12 update): each card's size and its offset
@@ -453,7 +288,6 @@ body.demo-lock{overflow:hidden}
     .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.83}
   }
   /* The older checker-plate art is not in these nodes. */
-  .demo-backdrop :is(.demo-incall,.demo-ifail,.demo-callcard,.demo-failcard,.demo-success)::before{display:none}
 
   /* Every phone button since the 2026-11-13 update (AFMBP-2597) is Inter Bold with
      the nodes' two shadows (0/1 blur 2 at 30%, 0/2 blur 6 spread 2 at 15%): each
@@ -539,8 +373,7 @@ body.demo-lock{overflow:hidden}
   /* ---- You call us, call in progress (2891:1090, 2026-11-13, AFMBP-2597): card 337x215 ----
      One text block at 43/28, 239 wide, on 24.95px lines: the title (Inter Semi Bold
      19.03), 12px on, the two numbered steps (Inter 16, grey, the number and code
-     navy) 3px apart; the help line; the cross. The computer card's code, number and
-     list are its own (.demo-db). */
+     navy) 3px apart; the help line; the cross. */
   .demo-backdrop[data-screen="inbound-call"] .demo-card{height:215px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
   .demo-backdrop[data-screen="inbound-call"] .demo-body{height:215px}
   .demo-backdrop[data-screen="inbound-call"] .demo-incall{height:215px}
@@ -765,6 +598,16 @@ body.demo-lock{overflow:hidden}
     box-shadow:var(--demo-btn-shadow);
   }
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#1f6fe6}
+
+/* ---- a computer (AFMBP-2600): the same cards, bigger ----
+   The phone frame's offsets from the screen centre belong to a phone, so a computer
+   centres the card; demo.js's fitCard scales it (--demo-zoom) up to 125%, as far as
+   the screen's height allows, never below its design size (owner: "bigger on desktop").
+   A transform, not zoom: the card lays out at its phone size (the same line breaks as
+   on a phone) and is magnified whole. Safari's zoom left some of the text unscaled. */
+@media (min-width:769px){
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]){--demo-dx:0px;--demo-dy:0px}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{transform:scale(var(--demo-zoom,1));transform-origin:50% 50%}
 }
 
 /* ============================================================
