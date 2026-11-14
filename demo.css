@@ -292,8 +292,8 @@ body.demo-lock{overflow:hidden}
    Deviations agreed with the owner: no consent line on the choice (the desktop
    node still has one, so the help line moves up into its place and the card is
    shorter); the desktop call card adds the code and the number to call above
-   "What to expect" (its node has no code block yet), and the mobile card shows
-   the number only when no dialer took the tap (.demo-incall--manual); the
+   "What to expect" (its node has no code block yet), and the mobile card
+   (2891:1090 since AFMBP-2597) shows the number to dial as its first step; the
    failure card uses the mobile node's copy on desktop too.
    ============================================================ */
 .demo-choice__h,.demo-choice__l1,.demo-choice__l2{display:block}
@@ -396,9 +396,9 @@ body.demo-lock{overflow:hidden}
   /* ---- the frame every phone node screen shares ----
      AFMBP-2596 (the owner's 2026-11-12 update): each card's size and its offset
      from the screen centre as its node draws it, the code screen (2670:1394) now
-     one of them. The You call us card (2672:2064) has no new node and keeps its own. */
+     one of them. AFMBP-2597 (2026-11-13): the You call us card is 2891:1090. */
   .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:423px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
-  .demo-backdrop[data-screen="inbound-call"]{--demo-w:331px;--demo-h:404px;--demo-dx:-.5px;--demo-dy:.5px;--demo-bw:.536px}
+  .demo-backdrop[data-screen="inbound-call"]{--demo-w:337px;--demo-h:215px;--demo-dx:-1.5px;--demo-dy:32px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:234px;--demo-dx:0px;--demo-dy:.5px;--demo-bw:0px}
   .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:535px;--demo-dx:-1.5px;--demo-dy:-13px;--demo-bw:.6px}
   .demo-backdrop[data-screen="code"]{--demo-w:352px;--demo-h:210px;--demo-dx:0px;--demo-dy:-25.5px;--demo-bw:.54px}
@@ -427,8 +427,22 @@ body.demo-lock{overflow:hidden}
     left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
   }
   .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-logo{display:none}
-  /* Of these nodes only the choice draws a close button (2683:1599, AFMBP-2189); see its block. */
-  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}
+  /* The close button (component 2683:1597): every node draws it since the 2026-11-13
+     update (AFMBP-2597). The node's 13px cross sits 304px in from the card's left
+     edge and 17px down (the code card's 319px), in a 44px tap target centred on it,
+     above the body (which would take the tap). It closes the demo the way the shade
+     does. The choice card's cross sits at 294/27 (its block). */
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{
+    z-index:2;left:calc((100% - var(--demo-w)) / 2 + 288.496px);top:1.497px;right:auto;
+    width:44px;height:44px;border-radius:0;background:transparent;
+  }
+  .demo-backdrop[data-screen="code"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 303.496px)}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close:hover{background:transparent}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close svg{display:none}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close::before{
+    content:"";width:12.992px;height:12.993px;pointer-events:none;
+    background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
+  }
   /* Under 337px of screen the node's words run too close to the card's edges
      to clip: the whole card scales down instead (zoom keeps every offset in
      proportion). 320px phones get 94%, a 280px folding phone's cover 83%. */
@@ -441,46 +455,18 @@ body.demo-lock{overflow:hidden}
   /* The older checker-plate art is not in these nodes. */
   .demo-backdrop :is(.demo-incall,.demo-ifail,.demo-callcard,.demo-failcard,.demo-success)::before{display:none}
 
-  /* The paintbrush watermark ("Decorative line"), drawn as a mask in the node's
-     navy at 11%, placed as 2672:2064 places it; the card clips it. Since the
-     11-12 update (AFMBP-2596) only the You call us card, which has no new node,
-     still draws it. */
-  .demo-backdrop[data-screen="inbound-call"] .demo-body::before{
-    content:"";position:absolute;z-index:-1;pointer-events:none;background:rgba(24,10,83,.11);
-    -webkit-mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;
-    left:-406.751px;top:-69.181px;width:829.145px;height:689.992px;
-  }
+  /* Every phone button since the 2026-11-13 update (AFMBP-2597) is Inter Bold with
+     the nodes' two shadows (0/1 blur 2 at 30%, 0/2 blur 6 spread 2 at 15%): each
+     button's own rule below sets them, as --demo-btn-shadow. */
+  .demo-backdrop{--demo-btn-shadow:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15)}
 
-  /* ---- "What to expect" rows, the You call us card (2672:2064) ----
-     Words at x 90, 221 wide, 21/25; a blank line between rows; each row's
-     icon at the node's offset from its first line. The rows flow, so a long
-     business name wraps and the card grows under it. */
-  .demo-xm{position:relative;width:221px;margin:0 0 0 89.4px;padding:0 0 51.54px;list-style:none;font-size:21px;line-height:25px;color:var(--navy)}
-  .demo-xm__row{position:relative;margin:0 0 25px;overflow-wrap:anywhere}
-  .demo-xm__row:last-child{margin-bottom:0}
-  .demo-xm__row::before{content:"";position:absolute;pointer-events:none;background:center/100% 100% no-repeat}
-  .demo-xm__row--chat::before{left:-55.94px;top:5px;width:45px;height:36px;background-image:url('assets/demo-m-ico-chat.svg')}
-  .demo-xm__row--ask::before{left:-54.94px;top:2px;width:43px;height:43px;background-image:url('assets/demo-m-ico-ask.svg')}
-  .demo-xm__row--route::before{left:-55.94px;top:3px;width:45px;height:45px;background-image:url('assets/demo-m-ico-route.svg')}
-
-  /* ---- choice (2670:952, as updated 2026-11-12, AFMBP-2596): card 337x423 ----
+  /* ---- choice (2670:952, as updated 2026-11-13, AFMBP-2597): card 337x423 ----
      Numbers are body-relative (the body sits inside the node's .6px stroke), each
      piece where it sits once matched to the node's 3x export. */
   .demo-backdrop[data-screen="choice"] .demo-card{height:423px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
   .demo-backdrop[data-screen="choice"] .demo-body{height:423px}
-  /* The close button (2683:1599): the node's 13px cross where the node draws it, in
-     a 44px tap target centred on it, above the body (which would take the tap). It
-     closes the demo the way the shade does. */
-  .demo-backdrop[data-screen="choice"] .demo-close{
-    z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);top:11.497px;right:auto;
-    width:44px;height:44px;border-radius:0;background:transparent;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-close:hover{background:transparent}
-  .demo-backdrop[data-screen="choice"] .demo-close svg{display:none}
-  .demo-backdrop[data-screen="choice"] .demo-close::before{
-    content:"";width:12.992px;height:12.993px;pointer-events:none;
-    background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
-  }
+  /* Here the node's cross (2683:1599) sits at 294/27; the shared block draws it. */
+  .demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 278.496px);top:11.497px}
   /* "Available now" (its text box at 61.94/28), the node's green dot 15.94px to its left. */
   .demo-backdrop[data-screen="choice"] .demo-cm__live{
     position:absolute;left:61.34px;top:27.4px;width:86px;margin:0;font-size:13.324px;line-height:11px;color:#707070;text-align:center;white-space:nowrap;
@@ -491,80 +477,96 @@ body.demo-lock{overflow:hidden}
   }
   /* The question: Inter Semi Bold 19.032 on two 23px lines, in the node's 266px box. */
   .demo-backdrop[data-screen="choice"] .demo-cm__h{
-    position:absolute;left:45.4px;top:59.4px;width:266px;margin:0;font-size:19.032px;font-weight:600;line-height:23px;color:var(--navy);
+    position:absolute;left:45.4px;top:56.4px;width:266px;margin:0;font-size:19.032px;font-weight:600;line-height:23px;color:var(--navy);
   }
+  /* The two ways in: 151x43.27, corners 10, Inter Bold 19.43 on an 18.54px line. */
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
-    position:absolute;left:80.4px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;
-    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;color:#fff;
+    position:absolute;left:92.4px;width:151px;height:43.269px;margin:0;padding:0;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-size:19.427px;font-weight:700;line-height:18.544px;color:#fff;
+    box-shadow:var(--demo-btn-shadow);
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:132.4px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:230.4px;padding-right:1px}
-  /* Every button: the flex-centred label drew .67px above the node's, so the
-     padding sets it down onto it. */
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:120.4px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:204.4px;padding-right:1px}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{padding-top:1.33px}
   .demo-backdrop[data-screen="choice"] .demo-choice__when{
-    position:absolute;left:80.4px;top:191.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:80.4px;top:175.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__when b{font-weight:600}
-  /* Rating, under the buttons: five stars 21.552 apart from x 86.1, each drawn
-     20.497x19.494 .528px into its box; "4.9/5" centred in the node's text box,
-     the quote centred on the ink of the node's, in a box 20px wider than its 205px (the
-     site's slanted Inter sets it ~3px wider than Figma's italic, which would
-     overflow the node's box to the right). */
-  .demo-backdrop[data-screen="choice"] .demo-cm__stars{position:absolute;left:85.5px;top:306.4px;display:flex}
-  .demo-backdrop[data-screen="choice"] .demo-cm__stars span{
-    width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
+  /* The review (group 2900:1475, 270x78 at 33/277): the node's bubble (2903:1491, its
+     shape and both shadows, drawn 7.5/5.7 out from the shape for the shadows; the file
+     drops the 1.88px spread Figma's SVG export adds, which Figma itself does not draw
+     on a vector), the reviewer on two lines, four stars and the fifth cut flat at its
+     top (the node's clip), "4.9/5" and the quote (centred on the node's ink: the
+     site's slanted Inter runs wider than Figma's italic). Offsets are from the
+     bubble's top left. */
+  .demo-backdrop[data-screen="choice"] .demo-cr{position:absolute;left:32.4px;top:276.4px;width:270.153px;height:77.652px}
+  .demo-backdrop[data-screen="choice"] .demo-cr::before{
+    content:"";position:absolute;left:-7.537px;top:-5.653px;width:285.228px;height:92.727px;pointer-events:none;
+    background:url('assets/demo-m-bubble.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-cr__who{
+    position:absolute;left:13px;top:11.48px;width:120px;height:26px;margin:0;display:flex;flex-direction:column;justify-content:center;
+    font-size:11.306px;line-height:12.2px;color:var(--navy);white-space:nowrap;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-cr__who b{font-size:13.399px;font-weight:700}
+  /* Figma sets the smaller second line 1.67px lower on its 12.2px line than a browser does. */
+  .demo-backdrop[data-screen="choice"] .demo-cr__who span{position:relative;top:1.67px}
+  .demo-backdrop[data-screen="choice"] .demo-cr__stars{
+    position:absolute;left:136.564px;top:11.396px;width:67.055px;height:16.331px;
+    background:url('assets/demo-m-stars4.svg') center/100% 100% no-repeat;
+  }
+  .demo-backdrop[data-screen="choice"] .demo-cr__stars::after{
+    content:"";position:absolute;left:67.469px;top:3.669px;width:16.972px;height:14.166px;
+    background:url('assets/demo-m-star5.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__score{
-    position:absolute;left:194.92px;top:309.8px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+    position:absolute;left:222.307px;top:15.068px;width:35.47px;height:13.376px;margin:0;display:flex;align-items:center;justify-content:center;
+    font-size:13.399px;font-weight:700;line-height:12.2px;color:var(--navy);white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__quote{
-    position:absolute;left:50.73px;top:331.36px;width:225px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:20.83px;top:42.25px;width:225.16px;height:18.023px;margin:0;display:flex;align-items:center;justify-content:center;
+    font-size:12.248px;font-style:italic;font-weight:400;line-height:14.94px;color:var(--navy);white-space:nowrap;
   }
-  /* Set up a third of a pixel (both engines drew it low). */
+  /* The help line: Inter 14 since the 2026-11-13 update. Here and on the form, Calling and
+     You call us cards it sits half a pixel under the node: Chrome draws it on the node's
+     line and iPhone Safari 1px above it. The same split sets "4.9/5", the quote, "NEVER"
+     and "miss a job again" between the two engines. */
   .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:43.4px;top:376.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:377.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
   }
 
-  /* ---- You call us, call in progress (2672:2064): card 331x404 ----
-     With the number to call shown (no dialer took the tap; not in the node,
-     kept by the owner) everything from "What to expect" down moves 36px. */
-  .demo-backdrop[data-screen="inbound-call"] .demo-card{border-radius:9.654px;box-shadow:inset 0 0 0 .536px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall{--demo-dial:0px;display:flow-root}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall--manual{--demo-dial:36px}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__code{position:absolute;left:0;top:0;width:331px;height:0}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__label{
-    position:absolute;left:27.5px;top:39.804px;width:118px;margin:0;font-family:'Permanent Marker',cursive;font-weight:400;font-size:25px;line-height:22.312px;white-space:nowrap;
+  /* ---- You call us, call in progress (2891:1090, 2026-11-13, AFMBP-2597): card 337x215 ----
+     One text block at 43/28, 239 wide, on 24.95px lines: the title (Inter Semi Bold
+     19.03), 12px on, the two numbered steps (Inter 16, grey, the number and code
+     navy) 3px apart; the help line; the cross. The computer card's code, number and
+     list are its own (.demo-db). */
+  .demo-backdrop[data-screen="inbound-call"] .demo-card{height:215px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="inbound-call"] .demo-body{height:215px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-incall{height:215px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow{position:absolute;left:42.4px;top:28.4px;width:239px;margin:0;color:#707070}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__h{position:relative;top:-.33px;margin:0;font-size:19.03px;font-weight:600;line-height:24.95px;color:var(--navy)}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__list{margin:12px 0 0;padding:0;list-style:none;counter-reset:demo-ihow;font-size:16px;line-height:24.95px}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__list li{position:relative;padding-left:24px;counter-increment:demo-ihow}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__list li + li{margin-top:3px}
+  /* Figma sets list numbers in tabular figures: "1." sits as wide as "2.". */
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__list li::before{content:counter(demo-ihow) ".";position:absolute;left:4px;top:0;font-variant-numeric:tabular-nums}
+  .demo-backdrop[data-screen="inbound-call"] .demo-ihow__list :is(a,b){font-weight:400;color:var(--navy);text-decoration:none}
+  .demo-backdrop[data-screen="inbound-call"] .demo-help{
+    position:absolute;left:43.4px;top:177.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
   }
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__digits{
-    position:absolute;left:152.5px;top:36.46px;width:82px;margin:0;font-size:25px;font-weight:600;line-height:30px;
-  }
-  /* Yellow brush under "Your code" (vector 2676:1562). */
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__code::after{
-    content:"";position:absolute;left:27.46px;top:64.569px;width:117.984px;height:8.501px;pointer-events:none;
-    background:url('assets/demo-m-ul-code.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__dial{
-    display:none;position:absolute;left:0;top:98px;width:331px;margin:0;font-size:21px;line-height:25px;
-  }
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall--manual .demo-incall__dial{display:block}
-  .demo-backdrop[data-screen="inbound-call"] .demo-incall__expect{
-    position:absolute;left:27.472px;top:calc(111.879px + var(--demo-dial));width:212.231px;height:19.536px;margin:0;
-    font-size:25px;line-height:12.872px;transform:rotate(-.77deg) skewX(-.64deg);
-  }
-  .demo-backdrop[data-screen="inbound-call"] .demo-xm{margin-top:calc(152.46px + var(--demo-dial))}
 
-  /* ---- You call us didn't connect (2670:1124, as updated 2026-11-12): card 332x234,
-     no border: "OOPs!" in the marker, the words at 18px on 22px lines, Continue ---- */
+  /* ---- You call us didn't connect (2670:1124, as updated 2026-11-13): card 332x234,
+     no border: "OOPs!" in the marker, the words in grey at 16px on 19px lines,
+     Continue, the cross ---- */
   .demo-backdrop[data-screen="inbound-fail"] .demo-card{height:234px;border-radius:9.872px}
   .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:234px}
   .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__title{
     position:absolute;left:37px;top:34.236px;width:248.836px;margin:0;font-size:25px;line-height:28px;white-space:nowrap;
     transform-origin:0 0;transform:rotate(-.44deg) skewX(-.22deg);
   }
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:37px;top:83px;width:258px;margin:0;font-size:18px;line-height:22px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:33px;top:153px;width:253px;height:49px;padding:1.33px 4px 0 0}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:37px;top:82px;width:258px;margin:0;font-size:16px;line-height:19px;color:#707070}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:33px;top:153px;width:253px;height:49px;padding:1.33px 4px 0 0;font-weight:700;box-shadow:var(--demo-btn-shadow)}
 
   /* ---- We call you, the form (2657:1639, as updated 2026-11-12, AFMBP-2596): card
      337x535, the phone number only (the business and email fields are a computer's).
@@ -603,7 +605,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="phone"] .demo-input.err::placeholder{color:#c0c0c0}
   .demo-backdrop[data-screen="phone"] .demo-btn{
     position:absolute;left:44.4px;top:244.4px;width:253px;height:49px;margin:0;padding:1.33px 4px 0 0;border-radius:6px;
-    font-size:22px;font-weight:400;line-height:21px;
+    font-size:22px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);
   }
   .demo-backdrop[data-screen="phone"] .demo-btn.demo-btn--off,.demo-backdrop[data-screen="phone"] .demo-btn.demo-btn--off:hover{background:#b8b6b9}
   .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){
@@ -616,7 +618,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="phone"] .demo-disclosure-wrap{position:absolute;left:44.4px;top:309.4px;width:256px}
   .demo-backdrop[data-screen="phone"] .demo-disclosure{margin:0;font-size:11px;line-height:13px;color:#787888}
   .demo-backdrop[data-screen="phone"] .demo-help{
-    position:absolute;left:43.4px;top:494.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:495.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
   }
 
   /* ---- We call you, the code (2670:1394; errors 2895:1339 / 2895:1370 / 2895:1401, the
@@ -663,16 +665,34 @@ body.demo-lock{overflow:hidden}
     position:absolute;left:42.4px;top:28.4px;width:264px;margin:0;font-size:21px;font-weight:600;line-height:24.95px;color:var(--navy);text-align:left;
   }
   .demo-backdrop[data-screen="calling"] .demo-help{
-    position:absolute;left:43.4px;top:104.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:105.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
   }
 
-  /* ---- shared success (2441:811, as updated 2026-11-12, AFMBP-2596): card 332x633:
-     the pitch (Inter Semi Bold 18 on 22px lines, a blank line between its two
-     paragraphs), "Transcript", the transcript and the blue CTA; no title or brush ---- */
+  /* ---- shared success (2441:811, as updated 2026-11-13, AFMBP-2597): card 332x633:
+     the title (black "NEVER" in the marker, turned 5.68deg from its top left, the
+     node's yellow brush under it turned 4.94deg, "miss a job again" in Inter Semi
+     Bold 17.37), the pitch (Inter 16 in grey), "Transcript", the transcript, the
+     blue CTA and the cross ---- */
   .demo-backdrop[data-screen="recap"] .demo-card{height:633px;border-radius:9.67px;box-shadow:inset 0 0 0 .54px rgba(0,0,0,.18)}
   .demo-backdrop[data-screen="recap"] .demo-success{height:633px;text-align:left}
+  .demo-backdrop[data-screen="recap"] .demo-success-title{position:absolute;left:0;top:0;width:0;height:0;margin:0;font-size:0;line-height:0}
+  .demo-backdrop[data-screen="recap"] .demo-success-never{
+    position:absolute;left:33.46px;top:37.44px;width:112.597px;height:61.251px;display:flex;align-items:center;
+    padding:0;background:none;font-size:34.748px;line-height:14.247px;color:#000;white-space:nowrap;
+    transform-origin:0 0;transform:rotate(-5.677deg);
+  }
+  /* The brush (2904:1540) is drawn 2.5px above its line's box (the stroke's half). */
+  .demo-backdrop[data-screen="recap"] .demo-success-title::after{
+    content:"";position:absolute;left:35.196px;top:85px;width:136.814px;height:10.0915px;pointer-events:none;
+    background:url('assets/demo-m-ul-success.svg') center/100% 100% no-repeat;
+    transform-origin:0 2.504px;transform:rotate(-4.936deg);
+  }
+  .demo-backdrop[data-screen="recap"] .demo-success-rest{
+    position:absolute;left:151.255px;top:56.148px;width:144.204px;height:19.111px;display:flex;align-items:center;
+    font-size:17.374px;font-weight:600;line-height:7.645px;color:var(--navy);white-space:nowrap;
+  }
   .demo-backdrop[data-screen="recap"] .demo-success-sub{
-    position:absolute;left:37.46px;top:24.46px;width:270px;max-width:none;margin:0;font-size:18px;font-weight:600;line-height:22px;color:var(--navy);text-align:left;
+    position:absolute;left:36.46px;top:104.46px;width:270px;max-width:none;margin:0;font-size:16px;font-weight:400;line-height:19px;color:#707070;text-align:left;
   }
   /* The node's label is " Transcript": its leading space sets the word in by a space. */
   .demo-backdrop[data-screen="recap"] .demo-success-tlabel{
@@ -708,17 +728,17 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:16px;height:16px;flex-basis:16px;margin-top:.64px}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:12px;line-height:15px}
   .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:15px;line-height:18px;color:#787888;padding:130px 16px}
-  /* The node's blue CTA, Inter 21 on a 21px line (the node sets it at 21px; AFMBP-2482's
+  /* The node's blue CTA, Inter Bold 21 on a 21px line (the node sets it at 21px; AFMBP-2482's
      +15% belonged to the green button it replaces). */
   .demo-backdrop[data-screen="recap"] .demo-success-cta{
     position:absolute;left:39.46px;top:559.46px;width:253px;max-width:none;height:49px;margin:0;padding:0;border-radius:6px;
-    background:var(--blue);color:#fff;font-size:21px;font-weight:400;line-height:21px;box-shadow:none;
+    background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);
   }
   .demo-backdrop[data-screen="recap"] .demo-success-cta:hover{background:#1f6fe6}
 
-  /* ---- We call you didn't work (2676:1163, as updated 2026-11-12): card 332x445, no
+  /* ---- We call you didn't work (2676:1163, as updated 2026-11-13): card 332x445, no
      border: "OOPs!" (the node turns it .44deg with a .22deg skew, from its top left),
-     the words at 18px on 22px lines, the help links, Continue ---- */
+     the words at 18px on 22px lines, the help links, Continue, the cross ---- */
   .demo-backdrop[data-screen="fail"] .demo-card{height:445px;border-radius:9.872px}
   .demo-backdrop[data-screen="fail"] .demo-failcard{height:445px}
   .demo-backdrop[data-screen="fail"] .demo-failcard__head{margin:0;height:0}
@@ -741,7 +761,8 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="fail"] .demo-failcard__link + .demo-failcard__link .demo-failcard__os{top:-.44px;width:123.185px}
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn{
     position:absolute;left:33px;top:364px;width:253px;max-width:none;height:49px;margin:0;padding:1.33px 4px 0 0;
-    display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:22px;font-weight:400;line-height:21px;background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:22px;font-weight:700;line-height:21px;background:var(--blue);color:#fff;
+    box-shadow:var(--demo-btn-shadow);
   }
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#1f6fe6}
 }

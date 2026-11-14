@@ -1,0 +1,21 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="285.228" height="92.7271" viewBox="0 0 285.228 92.7271" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Speech bubble" filter="url(#filter0_dd_0_8)">
+<path d="M249.398 5.65309C265.024 5.65314 277.691 15.189 277.691 26.9519V53.0603C277.691 58.5507 274.93 63.5551 270.398 67.3318L272.684 74.8826C274.362 80.4235 267.888 85.1346 262.077 82.6023L244.452 74.9226C244.073 74.7573 243.72 74.566 243.39 74.3582H35.8304C20.2049 74.3581 7.53776 64.823 7.53745 53.0603V26.9519C7.53745 15.189 20.2047 5.65317 35.8304 5.65309H249.398Z" fill="#F9F9F9"/>
+</g>
+<defs>
+<filter id="filter0_dd_0_8" x="-1.19209e-07" y="0" width="285.228" height="92.7271" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="0.942181"/>
+<feGaussianBlur stdDeviation="0.942181"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_8"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1.88436"/>
+<feGaussianBlur stdDeviation="2.82654"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+<feBlend mode="normal" in2="effect1_dropShadow_0_8" result="effect2_dropShadow_0_8"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_0_8" result="shape"/>
+</filter>
+</defs>
+</svg>

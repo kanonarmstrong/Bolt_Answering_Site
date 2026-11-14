@@ -25,14 +25,22 @@
 // field with the field outlined in red, the code card is "Enter the code" + boxes + Back, the
 // Calling card is one line and the help line, the success card opens on the pitch with a blue
 // "Start free 30-day trial", the failure card reads "OOPs!". A computer keeps its three fields,
-// its consent and its rules (checked in the desktop section). The "You call us" card has no new
-// node and stays as it was.
+// its consent and its rules (checked in the desktop section).
+// AFMBP-2597 (the owner's 11-13 update): every phone card draws the close button (the node's
+// cross 304px in and 17px down, the code card's 319px, in a 44px tap target on top) and a tap
+// on it closes the demo; every button is Inter Bold with the nodes' shadow; the help line is
+// Inter 14; the success card opens on black "NEVER" in the marker with the node's yellow brush
+// and "miss a job again", then "For less than $4 per day, …" in grey 16px; the "You call us"
+// card is 2891:1090: "Here’s how to call your assistant:" and two numbered steps (the number a
+// tap-to-dial link with this session's code, then the code), the help line, no rows or brush.
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=phone_business |
 //      NC=old_consent | NC=old_form_fields | NC=old_calling | NC=old_err_look |
-//      NC=swap_help | NC=no_help_event | NC=old_rows | NC=old_sub_size | NC=old_sub_color |
+//      NC=swap_help | NC=no_help_event | NC=old_inbound | NC=old_sub_size | NC=old_sub_color |
 //      NC=old_dy | NC=old_recap_label | NC=recap_tall | NC=old_field_size | NC=old_desk_field_size |
-//      NC=no_zoom_floor — negative controls on the SERVED copy only; each must FAIL.
+//      NC=no_zoom_floor | NC=no_x | NC=code_x_off | NC=x_dead | NC=regular_btns | NC=flat_cta |
+//      NC=old_success_pitch | NC=no_never | NC=big_help | NC=no_tel — negative controls on the
+//      SERVED copy only; each must FAIL.
 // AFMBP-2576 (owner, 2026-11-12): the text in the form's three fields is 20% smaller: 16.8px on
 // a phone (the node's 21px), 17.6px on a computer (22px), placeholders with it; where the phone
 // card is scaled down (under 337px) the size on screen never drops under 16px.
@@ -76,13 +84,13 @@ const MUTATE = {
   // AFMBP-2596: a field to fix back to the old pink, with no red outline.
   old_err_look: ['demo.css', (s) => cut(s, 'background:#ffefef;color:var(--navy);box-shadow:0 0 0 1.6px #f00', 'background:#fadddd;color:var(--navy)')],
   // AFMBP-2274: the rows before the nodes' 10-16 update.
-  old_rows: ['demo.js', (s) => cut(cut(s, "text: 'Talk to the “' + who + '” receptionist'", "text: 'Receptionist for ' + who"), "text: 'Tell her about your issue or project'", "text: 'She’ll ask about your issue or project'")],
+  old_inbound: ['demo.js', (s) => cut(s, "h('div', { class: 'demo-ihow demo-mb' }, [", "h('div', { class: 'demo-ihow demo-db' }, [")],
   // The form's sub at its old size (20px on 24px lines, the same centre).
   old_sub_size: ['demo.css', (s) => cut(s, 'top:95.4px;width:278px;max-width:none;margin:0;font-size:16px;line-height:19px;color:#707070;', 'top:95.4px;width:278px;max-width:none;margin:0;font-size:18px;line-height:22px;color:#707070;')],
   // The form's sub in its old light grey.
   old_sub_color: ['demo.css', (s) => cut(s, 'font-size:16px;line-height:19px;color:#707070;text-align:center;', 'font-size:16px;line-height:19px;color:#b8b6b9;text-align:center;')],
   // The "You call us" card back where it sat, 13.5px above the centre.
-  old_dy: ['demo.css', (s) => cut(s, '--demo-h:404px;--demo-dx:-.5px;--demo-dy:.5px;', '--demo-h:404px;--demo-dx:-.5px;--demo-dy:-13.5px;')],
+  old_dy: ['demo.css', (s) => cut(s, '--demo-h:215px;--demo-dx:-1.5px;--demo-dy:32px;', '--demo-h:215px;--demo-dx:-1.5px;--demo-dy:0px;')],
   // The iPhone and Android articles trade places.
   swap_help: ['demo.js', (s) => cut(cut(cut(s, "osLink('/support/hca/disable-ios-spam-blockers'", 'TMP_IOS'), "osLink('/support/hca/disable-android-spam-blockers'", "osLink('/support/hca/disable-ios-spam-blockers'"), 'TMP_IOS', "osLink('/support/hca/disable-android-spam-blockers'")],
   // A help-article tap is not counted.
@@ -97,6 +105,24 @@ const MUTATE = {
   no_zoom_floor: ['demo.css', (s) => cut(s, '  @media (max-width:316px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:19.4px} }', '')],
   // AFMBP-2548: the desktop end-of-call button back at 56px, taller than the Talk button.
   recap_tall: ['demo.css', (s) => cut(s, '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:49px;', '.demo-success-cta{\n  max-width:340px;margin:2px auto 0;height:56px;')],
+  // AFMBP-2597: the phone cards hide the close button again (all but the choice, as before).
+  no_x: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="code"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 303.496px)}', '.demo-backdrop[data-screen="code"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 303.496px)}\n  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}')],
+  // AFMBP-2597: the code card's cross where the other cards draw theirs (the node moved it in 15px).
+  code_x_off: ['demo.css', (s) => cut(s, '+ 303.496px)}', '+ 288.496px)}')],
+  // AFMBP-2597: the close button shows but does nothing.
+  x_dead: ['demo.js', (s) => cut(s, "var close = h('button', { class: 'demo-close', 'aria-label': 'Close', onClick: closeModal }, [", "var close = h('button', { class: 'demo-close', 'aria-label': 'Close' }, [")],
+  // AFMBP-2597: the phone form's Continue in regular Inter.
+  regular_btns: ['demo.css', (s) => cut(s, 'font-size:22px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);', 'font-size:22px;font-weight:400;line-height:21px;box-shadow:var(--demo-btn-shadow);')],
+  // AFMBP-2597: the success CTA without the nodes' shadow.
+  flat_cta: ['demo.css', (s) => cut(s, 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);', 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:none;')],
+  // AFMBP-2597: the success pitch before the 11-13 update.
+  old_success_pitch: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-m', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' })", "h('span', { class: 'demo-m', text: 'Bolt qualifies leads and books jobs for less than $4/day.' })")],
+  // AFMBP-2597: the success card without its title on a phone (as after the 11-12 update).
+  no_never: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-success-title' }, [", "h('h2', { class: 'demo-success-title demo-db' }, [")],
+  // AFMBP-2597: the form's help line at 15px, as before the 11-13 update.
+  big_help: ['demo.css', (s) => cut(s, 'top:495.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;', 'top:494.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;')],
+  // AFMBP-2597: the You call us card's number as plain words (no tap to dial).
+  no_tel: ['demo.js', (s) => cut(s, "h('li', {}, ['Dial ', telLink('demo-ihow__tel')]),", "h('li', {}, ['Dial ', s.numberDisplay]),")],
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 // A missing anchor fails here, before anything runs: thrown while serving, it would 404 the
@@ -239,6 +265,13 @@ try {
     await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   };
   const near = (a, b, tol = 0.05) => Math.abs(a - b) <= tol;
+  // AFMBP-2597: the close button on the open card, card-relative, whether it is on top at its
+  // centre, and whether it draws the node's cross.
+  const closeAt = () => ev("(function(){var c=document.querySelector('.demo-backdrop.open .demo-card'), b=document.querySelector('.demo-backdrop.open .demo-close'); if(!c||!b) return {none:true}; var s=getComputedStyle(b); if(s.display==='none'||s.visibility==='hidden') return {hidden:true}; var cr=c.getBoundingClientRect(), r=b.getBoundingClientRect(); return {x:r.left-cr.left, y:r.top-cr.top, w:r.width, h:r.height, top:document.elementFromPoint(r.left+r.width/2, r.top+r.height/2)===b, art:/demo-m-close\\.svg/.test(getComputedStyle(b,'::before').backgroundImage)};})()");
+  // The node's 13px cross at `gx` (card-relative), 17px down, centred in a 44px target.
+  const closeFits = (c, gx) => !!c && near(c.x, gx - 15.504) && near(c.y, 1.497) && near(c.w, 44) && near(c.h, 44) && c.top === true && c.art === true;
+  // AFMBP-2597: Inter Bold with the nodes' two shadows.
+  const boldShadow = (sel) => ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return null; var c=getComputedStyle(e); return c.fontWeight+'|'+/rgba\\(0, 0, 0, 0\\.3\\) 0px 1px 2px 0px, rgba\\(0, 0, 0, 0\\.15\\) 0px 2px 6px 2px/.test(c.boxShadow);})()`);
   const cardRel = async (sel) => { const c = await box('.demo-backdrop.open .demo-card'), b = await box(sel); return b && { x: b.x - c.x, y: b.y - c.y, w: b.w, h: b.h }; };
   const flagged = () => ev("['demo-phone','demo-business','demo-email'].filter(function(id){var e=document.getElementById(id); return e.classList.contains('err') && e.getAttribute('aria-invalid')==='true' && e.getAttribute('aria-describedby')==='demo-formerr';})");
   const greyBtn = async () => (await attr('.demo-backdrop.open .demo-btn', 'aria-disabled')) === 'true' && (await ev("document.querySelector('.demo-backdrop.open .demo-btn').classList.contains('demo-btn--off')"));
@@ -268,7 +301,7 @@ try {
   ok(fs && near(fs.y, 96) && near(fs.h, 38), `form: the sub's two 19px lines where the node sets them (${JSON.stringify(fs)})`);
   const fc = await box('.demo-backdrop.open .demo-card');
   ok(near(fc.w, 337) && near(fc.h, 535) && near(fc.y, 96), `form: card 337x535 where the node puts it (${fc.w}x${fc.h} at ${fc.y})`);
-  for (const [sel, x, y, w, h] of [['#demo-phone', 44, 181, 254, 36], ['.demo-backdrop.open .demo-btn', 45, 245, 253, 49], ['.demo-backdrop.open .demo-help', 44, 495, 249.5, 18]]) {
+  for (const [sel, x, y, w, h] of [['#demo-phone', 44, 181, 254, 36], ['.demo-backdrop.open .demo-btn', 45, 245, 253, 49], ['.demo-backdrop.open .demo-help', 44, 496.5, 249.5, 17]]) {
     const b = await cardRel(sel);
     ok(b && near(b.x, x) && near(b.y, y) && near(b.w, w) && near(b.h, h), `form: ${sel} where it matches the node (${JSON.stringify(b)})`);
   }
@@ -369,7 +402,9 @@ try {
   ok(codeUp && (await screen()) === 'code', 'send: the code card follows the one send');
   // The code card (2670:1394): "Enter the code", six boxes, Back; no Continue, no resend line, no help line.
   ok((await text('.demo-backdrop.open .demo-h')) === 'Enter the code' && (await visible('.demo-back')) && (await text('.demo-back')) === 'Back', `code: "Enter the code" and Back (${await text('.demo-backdrop.open .demo-h')})`);
-  ok(!(await visible('.demo-backdrop.open .demo-btn')) && !(await visible('.demo-resend')) && !(await visible('.demo-backdrop.open .demo-help')) && !(await visible('.demo-backdrop.open .demo-sub')) && !(await visible('.demo-close')) && !(await visible('.demo-logo')), 'code: no Continue, resend line, help line, sub, close or logo on the phone card');
+  ok(!(await visible('.demo-backdrop.open .demo-btn')) && !(await visible('.demo-resend')) && !(await visible('.demo-backdrop.open .demo-help')) && !(await visible('.demo-backdrop.open .demo-sub')) && !(await visible('.demo-logo')), 'code: no Continue, resend line, help line, sub or logo on the phone card');
+  const kx = await closeAt();
+  ok(closeFits(kx, 319), `code: the close button where 2670:1394 draws its cross (319px in), on top (${JSON.stringify(kx)})`);
   const kc = await box('.demo-backdrop.open .demo-card');
   ok(near(kc.w, 352) && near(kc.h, 210) && near(kc.y, 246), `code: card 352x210 where the node puts it (${kc.w}x${kc.h} at ${kc.y})`);
   const bx = await ev("[].slice.call(document.querySelectorAll('.demo-code input')).map(function(i){var r=i.getBoundingClientRect();return [+(r.width).toFixed(2), +(r.height).toFixed(2)]})");
@@ -383,7 +418,9 @@ try {
   ok((await text('.demo-callcard__m')) === 'Your assistant is calling from: (415) 555-0123', `calling: the node's line with the caller id the API returned (${await text('.demo-callcard__m')})`);
   ok((await css('.demo-callcard__m', 'fontSize')) === '21px' && (await css('.demo-callcard__m', 'fontWeight')) === '600', 'calling: Inter Semi Bold 21px');
   ok(!(await visible('.demo-callcard__head')) && !(await visible('.demo-callcard__expect')) && !(await visible('.demo-xm')) && !(await visible('.demo-callcard__list')), 'calling: no title, "What to expect" or rows (the 11-12 node dropped them)');
-  ok((await visible('.demo-backdrop.open .demo-help')) && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.', 'calling: the help line');
+  ok((await visible('.demo-backdrop.open .demo-help')) && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.' && (await css('.demo-backdrop.open .demo-help', 'fontSize')) === '14px', 'calling: the help line, Inter 14');
+  const cx = await closeAt();
+  ok(closeFits(cx, 304), `calling: the close button where 2891:1072 draws its cross, on top (${JSON.stringify(cx)})`);
   const cc = await box('.demo-backdrop.open .demo-card');
   ok(near(cc.w, 337) && near(cc.h, 151) && near(cc.y, 301), `calling: card 337x151 where the node puts it (${cc.w}x${cc.h} at ${cc.y})`);
   ok(evs('demo_call_placed', (d) => d.call_id === 'out-1').length === 1, 'events: demo_call_placed once');
@@ -393,8 +430,13 @@ try {
   api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'success: the completed call -> the success card');
   await sleep(3500);   // a few more status answers arrive: still counted once
-  ok(!(await visible('.demo-success-title')), 'success: no title (the 11-12 node opens on the pitch)');
-  ok((await text('.demo-success-sub')) === 'Stop wasting money on receptionists or losing leads to voicemail Bolt qualifies leads and books jobs for less than $4/day.' && (await ev("document.querySelectorAll('.demo-success-sub .demo-m br').length")) === 2, `success: the node's pitch, a blank line between its two paragraphs (${await text('.demo-success-sub')})`);
+  ok((await visible('.demo-success-never')) && (await text('.demo-success-never')) === 'NEVER' && (await visible('.demo-success-rest')) && (await text('.demo-success-rest')) === 'miss a job again', 'success: the node\'s title, "NEVER" and "miss a job again"');
+  ok((await css('.demo-success-never', 'fontFamily')).includes('Permanent Marker') && (await css('.demo-success-never', 'color')) === 'rgb(0, 0, 0)' && /^matrix\(0\.995/.test(await css('.demo-success-never', 'transform')) && (await css('.demo-success-rest', 'fontWeight')) === '600' && (await css('.demo-success-rest', 'fontSize')) === '17.374px', `success: "NEVER" black in the marker and turned as the node turns it; "miss a job again" Inter Semi Bold 17.37 (${await css('.demo-success-never', 'transform')})`);
+  ok(/demo-m-ul-success\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-success-title'),'::after').backgroundImage")), 'success: the node\'s yellow brush under "NEVER"');
+  ok((await text('.demo-success-sub')) === 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' && (await css('.demo-success-sub', 'fontSize')) === '16px' && (await css('.demo-success-sub', 'fontWeight')) === '400' && (await css('.demo-success-sub', 'color')) === 'rgb(112, 112, 112)', `success: the node's pitch, Inter 16 in grey (${await text('.demo-success-sub')})`);
+  ok((await boldShadow('.demo-success-cta')) === '700|true', `success: the CTA in Inter Bold with the nodes' shadow (${await boldShadow('.demo-success-cta')})`);
+  const sx = await closeAt();
+  ok(closeFits(sx, 304), `success: the close button where 2441:811 draws its cross, on top (${JSON.stringify(sx)})`);
   ok((await text('.demo-success-tlabel')) === 'Transcript', `success: "Transcript" (${await text('.demo-success-tlabel')})`);
   ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-chat .demo-bubble')).map(function(e){return e.innerText})")) === JSON.stringify(TRANSCRIPT.map((t) => t.content)), 'success: the call\'s own transcript, not the node\'s sample');
   ok((await text('.demo-success-cta')) === 'Start free 30-day trial' && (await css('.demo-success-cta', 'backgroundColor')) === 'rgb(43, 127, 253)' && (await css('.demo-success-cta', 'fontSize')) === '21px' && (await attr('.demo-success-cta', 'href')) === 'https://app.boltanswering.com/signup', `success: the node's blue "Start free 30-day trial" to sign-up (${await text('.demo-success-cta')})`);
@@ -432,7 +474,9 @@ try {
   ok(evs('demo_help_clicked', (d) => d.os === 'ios').length === 1 && evs('demo_help_clicked', (d) => d.os === 'android').length === 1, `events: each help tap counted once, by platform (${JSON.stringify(evs('demo_help_clicked').map((e) => e.data.os))})`);
   // `browser` (AFMBP-2565) rides on every event: a closed class like "ios_browser", never the user agent.
   ok(evs('demo_help_clicked').every((e) => Object.keys(e.data).filter((k) => !['os', 'trade', 'qa', 'attr', 'page', 'automated', 'browser'].includes(k)).length === 0 && /^(ios|android|desktop)_[a-z]+$/.test(e.data.browser)), 'events: the help event carries the platform only (no phone, email or business)');
-  ok((await text('.demo-failcard__btn')) === 'Continue', 'failure: "Continue"');
+  ok((await text('.demo-failcard__btn')) === 'Continue' && (await boldShadow('.demo-failcard__btn')) === '700|true', `failure: "Continue", Inter Bold with the nodes' shadow (${await boldShadow('.demo-failcard__btn')})`);
+  const fx2 = await closeAt();
+  ok(closeFits(fx2, 304), `failure: the close button where 2676:1163 draws its cross, on top (${JSON.stringify(fx2)})`);
   const before = sent('/api/demo/call').length;
   api.recap = { status: 'in_call', transcript: null };
   await tap('.demo-failcard__btn');
@@ -441,7 +485,7 @@ try {
   ok(sent('/api/demo/call').length === before + 1, `failure: exactly one more call (${sent('/api/demo/call').length - before})`);
 
   // ================= "You call us": the code stays this session's =================
-  // (Its call card, 2672:2064, has no node in the 11-12 update and stays as it was.)
+  // (Its call card is 2891:1090 since the 11-13 update, AFMBP-2597.)
   console.log('[phone] "You call us": this session\'s code, stable when the page comes back');
   reset();
   await load('/hvac.html?talk=1');
@@ -450,22 +494,43 @@ try {
   ok(api.sessions === 1, `inbound: one code fetched (${api.sessions})`);
   await tap('.demo-choice__call');
   ok(await waitScreen('inbound-call'), 'inbound: the call card');
-  ok((await text('.demo-incall__digits')) === '4321', `inbound: the card shows this session's code (${await text('.demo-incall__digits')})`);
+  ok((await text('.demo-ihow__h')) === 'Here’s how to call your assistant:', `inbound: the node's title (${await text('.demo-ihow__h')})`);
+  ok((await visible('.demo-backdrop.open .demo-ihow__h')) && (await visible('.demo-backdrop.open .demo-ihow__list')) && (await visible('.demo-backdrop.open .demo-ihow__tel')), 'inbound: the title and the two steps show (not just in the page)');
+  const steps = await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-ihow__list li')).map(function(l){return l.innerText.replace(/\\s+/g,' ').trim()})");
+  ok(JSON.stringify(steps) === JSON.stringify(['Dial (855) 497-3151', 'Tap in this code: 4321']), `inbound: the two steps, with this session's number and code (${JSON.stringify(steps)})`);
+  ok((await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-ihow__list li')).map(function(l){return getComputedStyle(l,'::before').content}).join('|')")) === 'counter(demo-ihow) "."|counter(demo-ihow) "."' && (await css('.demo-ihow__list li', 'color')) === 'rgb(112, 112, 112)', 'inbound: the steps numbered by a counter ("1." / "2."; the pixels were matched to the node), in grey');
+  ok((await attr('.demo-ihow__tel', 'href')) === 'tel:+18554973151,,4321' && (await css('.demo-ihow__tel', 'color')) === 'rgb(24, 10, 83)' && (await css('.demo-ihow__list b', 'color')) === 'rgb(24, 10, 83)', `inbound: the number dials this session's line and code; number and code in navy (${await attr('.demo-ihow__tel', 'href')})`);
+  ok(!(await visible('.demo-incall__digits')) && !(await visible('.demo-incall__expect')) && !(await visible('.demo-incall__dial')) && !(await visible('.demo-incall__list')) && (await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before').content")) === 'none', 'inbound: no big code, "What to expect", rows or paintbrush (the 11-13 node dropped them)');
+  ok((await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.' && (await css('.demo-backdrop.open .demo-help', 'fontSize')) === '14px', 'inbound: the help line, Inter 14');
   const ic = await box('.demo-backdrop.open .demo-card');
-  ok(near(ic.w, 331) && near(ic.y - (753 - ic.h) / 2, 0.5), `inbound: the card centred .5px low, where 2672:2064 puts it (${ic.w}x${ic.h} at ${ic.y})`);
-  ok((await css('.demo-incall__digits', 'fontSize')) === '25px' && (await css('.demo-incall__label', 'fontFamily')).includes('Permanent Marker'), 'inbound: "Your code" in the marker, the code at 25px');
-  ok(JSON.stringify(await ev("[].slice.call(document.querySelectorAll('.demo-xm__row')).map(function(e){return e.innerText})")) === JSON.stringify(['Talk to the “Bolt Services” receptionist', 'Tell her about your issue or project', 'Share fake details for her to schedule']), 'inbound: the rows name Bolt Services (the line answers as it)');
-  ok((await ev("['chat','ask','route'].every(function(k){return new RegExp('demo-m-ico-'+k+'\\\\.svg').test(getComputedStyle(document.querySelector('.demo-xm__row--'+k),'::before').backgroundImage)})")) === true && /demo-m-brush\.svg/.test(await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before');return s.webkitMaskImage||s.maskImage})()")), 'inbound: each row\'s node icon and the paintbrush watermark, as before');
+  ok(near(ic.w, 337) && near(ic.h, 215) && near(ic.y, 301), `inbound: card 337x215 where 2891:1090 puts it (${ic.w}x${ic.h} at ${ic.y})`);
+  const ix = await closeAt();
+  ok(closeFits(ix, 304), `inbound: the close button where 2891:1090 draws its cross, on top (${JSON.stringify(ix)})`);
+  // A tap on the number is counted, from the card (navigation to tel: held back here).
+  await ev("(function(){var a=document.querySelector('.demo-ihow__tel'); a.addEventListener('click', function(e){e.preventDefault()}, {once:true}); a.click(); return 1})()");
+  await sleep(300);
+  ok(evs('demo_inbound_call_tapped', (d) => d.from === 'card').length === 1, `inbound: a tap on the number counted once, from the card (${evs('demo_inbound_call_tapped').length})`);
   await ev("window.__vis='hidden'; document.dispatchEvent(new Event('visibilitychange')); 1");
   await sleep(300);
   await ev("window.__vis='visible'; document.dispatchEvent(new Event('visibilitychange')); 1");
   await sleep(800);
-  ok((await text('.demo-incall__digits')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-incall__digits')}, ${api.sessions})`);
+  ok((await text('.demo-backdrop.open .demo-ihow__list b')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-backdrop.open .demo-ihow__list b')}, ${api.sessions})`);
   api.inState = 'connected'; api.inCallId = 'in-1'; api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'inbound: the linked call ends on the same success card');
-  ok(/^Stop wasting money on receptionists/.test(await text('.demo-success-sub')) && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
+  ok(/^For less than \$4 per day/.test(await text('.demo-success-sub')) && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
   await sleep(3500);
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'in-1' && d.mode === 'inbound').length === 1, 'events: inbound success counted once, mode inbound');
+
+  // ================= the close button on a phone card (AFMBP-2597) =================
+  console.log('[phone] the close button on the form: a tap closes the demo, as the shade does');
+  reset();
+  await load('/hvac.html?talk=form');
+  ok(await waitScreen('phone'), 'close: the form');
+  const ffx = await closeAt();
+  ok(closeFits(ffx, 304), `form: the close button where 2657:1639 draws its cross, on top (${JSON.stringify(ffx)})`);
+  ok((await boldShadow('.demo-backdrop.open .demo-btn')) === '700|true' && (await css('.demo-backdrop.open .demo-help', 'fontSize')) === '14px', `form: Continue in Inter Bold with the nodes' shadow; the help line Inter 14 (${await boldShadow('.demo-backdrop.open .demo-btn')})`);
+  await tap('.demo-backdrop.open .demo-close', 400);
+  ok((await screen()) === null && evs('demo_closed').length === 1, `close: a tap on the form's close button closes the demo, demo_closed once (${JSON.stringify(evs('demo_closed').map((e) => e.data.step))})`);
 
   // ================= desktop: unchanged =================
   console.log('[desktop] the form, Calling, success and failure keep their own copy; Enter = Continue');
