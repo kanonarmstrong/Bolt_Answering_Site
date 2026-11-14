@@ -393,17 +393,21 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop .demo-m{display:inline}
   .demo-backdrop .demo-mb{display:block}
 
-  /* ---- the frame every phone node screen shares ---- */
-  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:611px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
+  /* ---- the frame every phone node screen shares ----
+     AFMBP-2596 (the owner's 2026-11-12 update): each card's size and its offset
+     from the screen centre as its node draws it, the code screen (2670:1394) now
+     one of them. The You call us card (2672:2064) has no new node and keeps its own. */
+  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:423px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-call"]{--demo-w:331px;--demo-h:404px;--demo-dx:-.5px;--demo-dy:.5px;--demo-bw:.536px}
-  .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:268px;--demo-dx:0px;--demo-dy:-93.5px;--demo-bw:0px}
-  .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:7px;--demo-bw:.6px}
-  .demo-backdrop[data-screen="calling"]{--demo-w:331px;--demo-h:414px;--demo-dx:-.5px;--demo-dy:-18.5px;--demo-bw:.536px}
-  .demo-backdrop[data-screen="recap"]{--demo-w:332px;--demo-h:702px;--demo-dx:0px;--demo-dy:5.5px;--demo-bw:.537px}
-  .demo-backdrop[data-screen="fail"]{--demo-w:332px;--demo-h:479px;--demo-dx:0px;--demo-dy:12px;--demo-bw:0px}
+  .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:234px;--demo-dx:0px;--demo-dy:.5px;--demo-bw:0px}
+  .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:535px;--demo-dx:-1.5px;--demo-dy:-13px;--demo-bw:.6px}
+  .demo-backdrop[data-screen="code"]{--demo-w:352px;--demo-h:210px;--demo-dx:0px;--demo-dy:-25.5px;--demo-bw:.54px}
+  .demo-backdrop[data-screen="calling"]{--demo-w:337px;--demo-h:151px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
+  .demo-backdrop[data-screen="recap"]{--demo-w:332px;--demo-h:633px;--demo-dx:0px;--demo-dy:0px;--demo-bw:.54px}
+  .demo-backdrop[data-screen="fail"]{--demo-w:332px;--demo-h:445px;--demo-dx:0px;--demo-dy:0px;--demo-bw:0px}
   /* 0.3 shade; 16px clear above and below, and up to 16px at the sides so a
      360px phone still gets the node's full card width. */
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]){
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]){
     background:rgba(0,0,0,.3);padding:16px clamp(0px,calc((100vw - var(--demo-w)) / 2),16px);
   }
   /* Each node offsets its children by its own stroke (--demo-bw), so the body
@@ -413,46 +417,41 @@ body.demo-lock{overflow:hidden}
      screen it starts at the top and the shade scrolls. Under 337px of room
      the card narrows and clips the empty edges of the node's boxes, which
      stay centred on it, instead of the screen scrolling sideways. */
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{
     width:var(--demo-w);max-width:100%;min-height:var(--demo-h);padding:0;border:0;box-shadow:none;background:#fff;
     position:relative;left:var(--demo-dx);top:max(var(--demo-dy),min(0px,calc((var(--demo-h) - 100%) / 2)));
     overflow:hidden;overflow:clip;
   }
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-body{
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-body{
     position:relative;z-index:1;width:var(--demo-w);min-height:var(--demo-h);
     left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2);top:var(--demo-bw);
   }
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-logo{display:none}
+  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-logo{display:none}
   /* Of these nodes only the choice draws a close button (2683:1599, AFMBP-2189); see its block. */
-  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}
+  .demo-backdrop:is([data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-close{display:none}
   /* Under 337px of screen the node's words run too close to the card's edges
      to clip: the whole card scales down instead (zoom keeps every offset in
      proportion). 320px phones get 94%, a 280px folding phone's cover 83%. */
   @media (max-width:336px){
-    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.94;left:0}
+    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.94;left:0}
   }
   @media (max-width:316px){
-    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.83}
+    .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.83}
   }
-  .demo-backdrop:is([data-screen="calling"],[data-screen="recap"]) .demo-ul{background:none;padding-bottom:0}
   /* The older checker-plate art is not in these nodes. */
   .demo-backdrop :is(.demo-incall,.demo-ifail,.demo-callcard,.demo-failcard,.demo-success)::before{display:none}
 
-  /* The paintbrush watermark ("Decorative line"): one shape for every screen,
-     drawn as a mask so the navy (most screens) and green (success) washes,
-     the node's fill at 11%, share one file. Placed and turned as each node
-     places it; the card clips it. */
-  .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="phone"],[data-screen="calling"],[data-screen="recap"]) .demo-body::before{
+  /* The paintbrush watermark ("Decorative line"), drawn as a mask in the node's
+     navy at 11%, placed as 2672:2064 places it; the card clips it. Since the
+     11-12 update (AFMBP-2596) only the You call us card, which has no new node,
+     still draws it. */
+  .demo-backdrop[data-screen="inbound-call"] .demo-body::before{
     content:"";position:absolute;z-index:-1;pointer-events:none;background:rgba(24,10,83,.11);
     -webkit-mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;mask:url('assets/demo-m-brush.svg') 0 0/100% 100% no-repeat;
+    left:-406.751px;top:-69.181px;width:829.145px;height:689.992px;
   }
-  .demo-backdrop[data-screen="choice"] .demo-body::before{left:-477.448px;top:-.15px;width:828.071px;height:688.679px;transform:scaleX(-1)}
-  .demo-backdrop[data-screen="phone"] .demo-body::before{left:-477.455px;top:-.251px;width:829.268px;height:690.133px;transform:scaleX(-1)}
-  .demo-backdrop[data-screen="inbound-call"] .demo-body::before{left:-406.751px;top:-69.181px;width:829.145px;height:689.992px}
-  .demo-backdrop[data-screen="calling"] .demo-body::before{left:-406.751px;top:-59.181px;width:829.145px;height:689.992px}
-  .demo-backdrop[data-screen="recap"] .demo-body::before{left:-406.19px;top:-63.171px;width:828.038px;height:688.721px;transform:scaleY(-1);background:rgba(0,154,21,.11)}
 
-  /* ---- "What to expect" rows, both calling cards (2672:2064 / 2442:1191) ----
+  /* ---- "What to expect" rows, the You call us card (2672:2064) ----
      Words at x 90, 221 wide, 21/25; a blank line between rows; each row's
      icon at the node's offset from its first line. The rows flow, so a long
      business name wraps and the card grows under it. */
@@ -464,16 +463,16 @@ body.demo-lock{overflow:hidden}
   .demo-xm__row--ask::before{left:-54.94px;top:2px;width:43px;height:43px;background-image:url('assets/demo-m-ico-ask.svg')}
   .demo-xm__row--route::before{left:-55.94px;top:3px;width:45px;height:45px;background-image:url('assets/demo-m-ico-route.svg')}
 
-  /* ---- choice (2670:952, redrawn 2026-10-15, AFMBP-2189): card 337x611 ----
+  /* ---- choice (2670:952, as updated 2026-11-12, AFMBP-2596): card 337x423 ----
      Numbers are body-relative (the body sits inside the node's .6px stroke), each
      piece where it sits once matched to the node's 3x export. */
-  .demo-backdrop[data-screen="choice"] .demo-card{height:611px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="choice"] .demo-body{height:611px}
+  .demo-backdrop[data-screen="choice"] .demo-card{height:423px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="choice"] .demo-body{height:423px}
   /* The close button (2683:1599): the node's 13px cross where the node draws it, in
      a 44px tap target centred on it, above the body (which would take the tap). It
      closes the demo the way the shade does. */
   .demo-backdrop[data-screen="choice"] .demo-close{
-    z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);top:21.497px;right:auto;
+    z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 277.896px);top:11.497px;right:auto;
     width:44px;height:44px;border-radius:0;background:transparent;
   }
   .demo-backdrop[data-screen="choice"] .demo-close:hover{background:transparent}
@@ -482,65 +481,50 @@ body.demo-lock{overflow:hidden}
     content:"";width:12.992px;height:12.993px;pointer-events:none;
     background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
   }
-  /* The in-card logo is the site's logo.png, cropped as the node crops it (2676:945). */
-  .demo-backdrop[data-screen="choice"] .demo-cm__logo{
-    position:absolute;left:46.402px;top:34.4px;width:63.636px;height:29.167px;
-    background:url('assets/logo.png') -11.588px -27.51px/84.744px 84.85px no-repeat;
-  }
-  /* "Available now" (2676:1567), the node's green dot (2676:1568) 15.94px to its left. */
+  /* "Available now" (its text box at 61.94/28), the node's green dot 15.94px to its left. */
   .demo-backdrop[data-screen="choice"] .demo-cm__live{
-    position:absolute;left:137.338px;top:49.4px;width:86px;margin:0;font-size:13.324px;line-height:11px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:61.34px;top:27.4px;width:86px;margin:0;font-size:13.324px;line-height:11px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__live::before{
     content:"";position:absolute;left:-15.938px;top:0;width:10.359px;height:10.359px;pointer-events:none;
     background:url('assets/demo-m-dot.svg') center/100% 100% no-repeat;
   }
-  /* The pitch (2670:1026, as updated 2026-10-16): Inter 19.032, its two lines on 26px
-     lines with "real money" in the marker on a line of its own, then a blank line the
-     node draws 27.6px tall (its zero-width space falls back to another font), then the
-     body on 23px lines. */
-  .demo-backdrop[data-screen="choice"] :is(.demo-cm__h,.demo-cm__sub){
-    position:absolute;left:45.4px;width:265.538px;margin:0;font-size:19.032px;font-weight:400;line-height:23px;color:var(--navy);
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__h{top:90.4px;line-height:26px}
-  /* The marker sits lower in its line than the node draws it; lifted onto it. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__mk{display:block;position:relative;top:-3.34px;font-size:26px;line-height:26px}
-  .demo-backdrop[data-screen="choice"] .demo-cm__sub{top:169px}
-  /* Yellow brush under "real money" (vector 2683:1607). */
-  .demo-backdrop[data-screen="choice"] .demo-cm::before{
-    content:"";position:absolute;left:43.4px;top:139.509px;width:141.986px;height:8.501px;pointer-events:none;
-    background:url('assets/demo-m-ul-money.svg') center/100% 100% no-repeat;
+  /* The question: Inter Semi Bold 19.032 on two 23px lines, in the node's 266px box. */
+  .demo-backdrop[data-screen="choice"] .demo-cm__h{
+    position:absolute;left:45.4px;top:59.4px;width:266px;margin:0;font-size:19.032px;font-weight:600;line-height:23px;color:var(--navy);
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
     position:absolute;left:80.4px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;
     display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:400;line-height:21px;color:#fff;
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:287.4px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:390.4px;padding-right:1px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:132.4px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:230.4px;padding-right:1px}
   /* Every button: the flex-centred label drew .67px above the node's, so the
      padding sets it down onto it. */
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{padding-top:1.33px}
   .demo-backdrop[data-screen="choice"] .demo-choice__when{
-    position:absolute;left:80.4px;top:346.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:80.4px;top:191.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__when b{font-weight:600}
-  /* Rating (2676:916), under the buttons: five stars 21.552 apart from x 84.5, each
-     drawn 20.497x19.494 .528px into its box; "4.9/5" and the quote centred in the
-     node's text boxes. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__stars{position:absolute;left:84.504px;top:471.4px;display:flex}
+  /* Rating, under the buttons: five stars 21.552 apart from x 86.1, each drawn
+     20.497x19.494 .528px into its box; "4.9/5" centred in the node's text box,
+     the quote centred on the ink of the node's, in a box 20px wider than its 205px (the
+     site's slanted Inter sets it ~3px wider than Figma's italic, which would
+     overflow the node's box to the right). */
+  .demo-backdrop[data-screen="choice"] .demo-cm__stars{position:absolute;left:85.5px;top:306.4px;display:flex}
   .demo-backdrop[data-screen="choice"] .demo-cm__stars span{
     width:21.552px;height:21.552px;background:url('assets/demo-m-star-lg.svg') .528px 0/20.497px 19.494px no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__score{
-    position:absolute;left:193.918px;top:474.802px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
+    position:absolute;left:194.92px;top:309.8px;width:45px;margin:0;font-size:17.015px;font-weight:700;line-height:16px;color:var(--navy);text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-cm__quote{
-    position:absolute;left:72.4px;top:496.355px;width:183px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:50.73px;top:331.36px;width:225px;margin:0;font-size:13.612px;font-style:italic;font-weight:400;line-height:16px;color:#707070;text-align:center;white-space:nowrap;
   }
-  /* Set up a third of a pixel, like the first line of the pitch (both engines drew it low). */
+  /* Set up a third of a pixel (both engines drew it low). */
   .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:43.4px;top:557.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:376.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
   }
 
   /* ---- You call us, call in progress (2672:2064): card 331x404 ----
@@ -571,128 +555,134 @@ body.demo-lock{overflow:hidden}
   }
   .demo-backdrop[data-screen="inbound-call"] .demo-xm{margin-top:calc(152.46px + var(--demo-dial))}
 
-  /* ---- You call us didn't connect (2670:1124): card 332x268, no border ---- */
-  .demo-backdrop[data-screen="inbound-fail"] .demo-card{height:268px;border-radius:9.872px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:268px}
+  /* ---- You call us didn't connect (2670:1124, as updated 2026-11-12): card 332x234,
+     no border: "OOPs!" in the marker, the words at 18px on 22px lines, Continue ---- */
+  .demo-backdrop[data-screen="inbound-fail"] .demo-card{height:234px;border-radius:9.872px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail{height:234px}
   .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__title{
-    position:absolute;left:37.03px;top:27.291px;width:248.836px;height:17.236px;margin:0;font-size:25px;line-height:28px;white-space:normal;
+    position:absolute;left:37px;top:34.236px;width:248.836px;margin:0;font-size:25px;line-height:28px;white-space:nowrap;
+    transform-origin:0 0;transform:rotate(-.44deg) skewX(-.22deg);
   }
-  .demo-backdrop[data-screen="inbound-fail"] :is(.demo-ifail__t1,.demo-ifail__t2){display:block;white-space:nowrap}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:37px;top:108px;width:258px;margin:0;font-size:21px;line-height:25px}
-  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:33px;top:197px;width:253px;height:49px;padding:1.33px 4px 0 0}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__body{position:absolute;left:37px;top:83px;width:258px;margin:0;font-size:18px;line-height:22px}
+  .demo-backdrop[data-screen="inbound-fail"] .demo-ifail__btn{position:absolute;left:33px;top:153px;width:253px;height:49px;padding:1.33px 4px 0 0}
 
-  /* ---- We call you, the form (2657:1639 / 2670:1317 / 2676:1272): card 337x629.
-     The three nodes place the fields up to 5px apart and only two draw the
-     brush; the empty node's layout and brush hold for all three (owner), so
-     nothing moves while someone types. The error line sits where 2676:1272
-     draws it, between the email field and Continue. ---- */
-  .demo-backdrop[data-screen="phone"] .demo-card{height:629px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="phone"] .demo-body{height:629px}
+  /* ---- We call you, the form (2657:1639, as updated 2026-11-12, AFMBP-2596): card
+     337x535, the phone number only (the business and email fields are a computer's).
+     2891:986 (filled) and 2894:1108 / 2894:1135 (errors) set the title 4px higher;
+     the empty node's layout holds for all four, so nothing moves while someone types.
+     An error is a red line under the field, the field outlined in red (1.6px). ---- */
+  .demo-backdrop[data-screen="phone"] .demo-card{height:535px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="phone"] .demo-body{height:535px}
   .demo-backdrop[data-screen="phone"] .demo-h--form{
-    position:absolute;left:.5px;top:29.025px;width:336px;margin:0;font-family:'Permanent Marker',cursive;font-weight:400;
-    font-size:25px;line-height:24.95px;color:var(--navy);text-align:center;white-space:nowrap;
+    position:absolute;left:42.4px;top:30.4px;width:274px;margin:0;font-size:21px;font-weight:600;line-height:24.95px;color:var(--navy);text-align:left;
   }
-  /* Yellow brush under "you now" (vector 2657:1711). */
-  .demo-backdrop[data-screen="phone"] .demo-h--form::after{
-    content:"";position:absolute;left:192px;top:23.03px;width:106.993px;height:5.242px;pointer-events:none;
-    background:url('assets/demo-m-ul-rightnow.svg') center/100% 100% no-repeat;
-  }
-  /* "First, we’ll send a code" (2657:1691, as updated 2026-10-16: #707070 at 18px), on
-     the node's centre line. Both engines drew it .33-.67px above the node's (Chrome at a
-     true 3x, iPhone Safari): set down a third of a pixel. */
+  /* "We’ll send a one-time passcode before we make the call.": #707070, 16px on 19px lines, centred. */
   .demo-backdrop[data-screen="phone"] .demo-sub{
-    position:absolute;left:25.5px;top:66.73px;width:278px;max-width:none;margin:0;font-size:18px;line-height:22px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:25.4px;top:95.4px;width:278px;max-width:none;margin:0;font-size:16px;line-height:19px;color:#707070;text-align:center;
   }
   .demo-backdrop[data-screen="phone"] .demo-field{position:static;margin:0}
   .demo-backdrop[data-screen="phone"] .demo-label{
     position:absolute;margin:0;font-size:15px;font-weight:700;line-height:13.495px;color:#707070;white-space:nowrap;
   }
-  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-label{left:27.4px;top:115.653px}
-  .demo-backdrop[data-screen="phone"] .demo-field--business .demo-label{left:27.82px;top:186.653px}
-  .demo-backdrop[data-screen="phone"] .demo-field--email .demo-label{left:28.4px;top:263.653px}
-  .demo-backdrop[data-screen="phone"] .demo-label__opt{font-size:15px;font-weight:400}
-  /* 16.8px type: the node's 21px less 20% (owner, AFMBP-2576), still over the 16px under which
-     iOS zooms the page on focus. Under 337px the card is scaled down (zoom .94 / .83 above), so
-     there the type is set back up to keep the size on screen at 16px or more. */
+  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-label{left:43.4px;top:161.4px}
+  /* 18px type, as the node sets it (the 16.8px of AFMBP-2576 was 20% under the old node's 21px),
+     over the 16px under which iOS zooms the page on focus. Under 317px the card is scaled down
+     to .83 (above), so there the type is set up to keep its size on screen at 16px or more. The
+     node's hairline is drawn outside the field. */
   .demo-backdrop[data-screen="phone"] .demo-input{
-    position:absolute;left:28.4px;width:285.2px;margin:0;padding:0 28.94px 0 5.56px;border:0;border-radius:4.372px;
-    box-shadow:inset 0 0 0 .6px #dee2e6;background:#fff;color:var(--navy);font-size:16.8px;line-height:25px;
+    position:absolute;left:43.4px;width:254px;margin:0;padding:0 12px 0 13px;border:0;border-radius:4.372px;
+    box-shadow:0 0 0 .6px #dee2e6;background:#fff;color:var(--navy);font-size:18px;line-height:22px;
   }
-  @media (max-width:336px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:17.1px} }   /* x .94 = 16.07px */
   @media (max-width:316px){ .demo-backdrop[data-screen="phone"] .demo-input{font-size:19.4px} }   /* x .83 = 16.1px */
-  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-input{top:134.4px;height:36px;padding-top:1px}
-  .demo-backdrop[data-screen="phone"] .demo-field--business .demo-input{top:205.4px;height:35px}
-  .demo-backdrop[data-screen="phone"] .demo-field--email .demo-input{top:282.4px;height:38px;padding:1px 6px 0}
+  .demo-backdrop[data-screen="phone"] .demo-field--phone .demo-input{top:180.4px;height:36px;padding-top:2px}
   .demo-backdrop[data-screen="phone"] .demo-input::placeholder{color:#c0c0c0;opacity:1}
-  .demo-backdrop[data-screen="phone"] .demo-input:focus{box-shadow:inset 0 0 0 .6px var(--blue),0 0 0 2.13px rgba(43,127,253,.15)}
-  /* A field to fix (2676:1272): pink fill, the same grey hairline. */
-  .demo-backdrop[data-screen="phone"] .demo-input.err{background:#fadddd;color:var(--navy)}
+  .demo-backdrop[data-screen="phone"] .demo-input:focus{box-shadow:0 0 0 .6px var(--blue),0 0 0 2.73px rgba(43,127,253,.15)}
+  /* A field to fix (2894:1108 / 2894:1135): pink fill, outlined in red, also while it has focus. */
+  .demo-backdrop[data-screen="phone"] .demo-input.err,
+  .demo-backdrop[data-screen="phone"] .demo-input.err:focus{background:#ffefef;color:var(--navy);box-shadow:0 0 0 1.6px #f00}
   .demo-backdrop[data-screen="phone"] .demo-input.err::placeholder{color:#c0c0c0}
-  .demo-backdrop[data-screen="phone"] .demo-input.err:focus{box-shadow:inset 0 0 0 .6px var(--blue),0 0 0 2.13px rgba(43,127,253,.15)}
   .demo-backdrop[data-screen="phone"] .demo-btn{
-    position:absolute;left:44.4px;top:348.4px;width:253px;height:49px;margin:0;padding:1.33px 4px 0 0;border-radius:6px;
+    position:absolute;left:44.4px;top:244.4px;width:253px;height:49px;margin:0;padding:1.33px 4px 0 0;border-radius:6px;
     font-size:22px;font-weight:400;line-height:21px;
   }
   .demo-backdrop[data-screen="phone"] .demo-btn.demo-btn--off,.demo-backdrop[data-screen="phone"] .demo-btn.demo-btn--off:hover{background:#b8b6b9}
   .demo-backdrop[data-screen="phone"] :is(.demo-formerr,.demo-limitmsg){
-    position:absolute;left:44.4px;top:330.98px;width:254.2px;margin:0;font-size:10px;line-height:13.495px;color:#f00;text-align:left;
+    position:absolute;left:44.4px;top:227.4px;width:254px;margin:0;font-size:10px;line-height:13.495px;color:#f00;text-align:left;
   }
   /* The demo-limit line (no node of its own) runs to two lines: Continue and
      the disclosure step down under it. */
-  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{top:362.4px}
-  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-disclosure-wrap{top:416.4px}
-  .demo-backdrop[data-screen="phone"] .demo-disclosure-wrap{position:absolute;left:45px;top:403.07px;width:256px}
+  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-btn{top:258.4px}
+  .demo-backdrop[data-screen="phone"] .demo-limitmsg ~ .demo-disclosure-wrap{top:323.4px}
+  .demo-backdrop[data-screen="phone"] .demo-disclosure-wrap{position:absolute;left:44.4px;top:309.4px;width:256px}
   .demo-backdrop[data-screen="phone"] .demo-disclosure{margin:0;font-size:11px;line-height:13px;color:#787888}
   .demo-backdrop[data-screen="phone"] .demo-help{
-    position:absolute;left:43.5px;top:588.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
+    position:absolute;left:43.4px;top:494.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
   }
 
-  /* ---- We call you, Calling (2442:1191): card 331x414 ---- */
-  .demo-backdrop[data-screen="calling"] .demo-card{border-radius:9.654px;box-shadow:inset 0 0 0 .536px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="calling"] .demo-callcard{display:flow-root}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__head{margin:0;height:0}
-  .demo-backdrop[data-screen="calling"] .demo-callcard__title{
-    position:absolute;left:10.5px;top:23.804px;width:120px;margin:0;font-size:25px;line-height:22.312px;text-align:center;white-space:nowrap;text-transform:none;
+  /* ---- We call you, the code (2670:1394; errors 2895:1339 / 2895:1370 / 2895:1401, the
+     owner's 2026-11-12 update, AFMBP-2596): card 352x210, 25.5px above the centre.
+     "Enter the code", six 42.42x40.44 boxes 7.3px apart (the node spaces them 6-8.6px
+     apart, by hand) and Back. An error line sits over the boxes, which turn pink with a
+     red 1.6px outline. ---- */
+  .demo-backdrop[data-screen="code"] .demo-card{height:210px;border-radius:9.65px;box-shadow:inset 0 0 0 .54px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="code"] .demo-body{height:210px}
+  .demo-backdrop[data-screen="code"] .demo-h{
+    position:absolute;left:10.46px;top:22.46px;width:331px;margin:0;font-size:18px;font-weight:600;line-height:22.31px;color:var(--navy);text-align:center;
   }
-  /* Yellow brush under "ALL Set" (vector 2676:1520). */
-  .demo-backdrop[data-screen="calling"] .demo-callcard__head::after{
-    content:"";position:absolute;left:20.46px;top:47.569px;width:95.892px;height:8.375px;pointer-events:none;
-    background:url('assets/demo-m-ul-never.svg') center/100% 100% no-repeat;
+  .demo-backdrop[data-screen="code"] .demo-code{position:absolute;left:30.46px;top:73.96px;width:291px;margin:0;gap:7.296px;justify-content:flex-start}
+  .demo-backdrop[data-screen="code"] .demo-code input{
+    flex:0 0 42.42px;width:42.42px;max-width:none;height:40.44px;padding:0;border:0;border-radius:3.98px;
+    box-shadow:0 0 0 .66px #828282;background:#fff;font-size:21px;line-height:normal;color:var(--navy);
   }
-  .demo-backdrop[data-screen="calling"] .demo-callcard__from{
-    position:absolute;left:.42px;top:66.804px;width:331px;font-size:21px;line-height:22.312px;color:var(--navy);text-align:center;white-space:nowrap;
+  .demo-backdrop[data-screen="code"] .demo-code input:focus{box-shadow:0 0 0 .66px var(--blue),0 0 0 2.79px rgba(43,127,253,.15)}
+  .demo-backdrop[data-screen="code"] .demo-code.demo-code--err input,
+  .demo-backdrop[data-screen="code"] .demo-code.demo-code--err input:focus{background:#ffefef;box-shadow:0 0 0 1.6px #f00;color:var(--navy)}
+  .demo-backdrop[data-screen="code"] .demo-code input:disabled{color:var(--navy);opacity:1}
+  /* The error line: Inter 10px, red words, then grey, then the blue link. */
+  .demo-backdrop[data-screen="code"] .demo-codeerr{
+    position:absolute;left:30.46px;top:56.46px;width:291px;margin:0;font-size:10px;line-height:13.495px;color:#707070;text-align:left;white-space:nowrap;
   }
-  .demo-backdrop[data-screen="calling"] .demo-callcard__expect{
-    position:absolute;left:21.472px;top:121.879px;width:212.231px;height:19.536px;margin:0;
-    font-size:25px;line-height:12.872px;white-space:nowrap;text-transform:none;transform:rotate(-.77deg) skewX(-.64deg);
+  .demo-backdrop[data-screen="code"] .demo-codeerr__red{color:#f00}
+  .demo-backdrop[data-screen="code"] .demo-codeerr__link{
+    display:inline;margin:0;padding:0;border:0;background:none;font:inherit;line-height:inherit;color:var(--blue);cursor:pointer;
   }
-  .demo-backdrop[data-screen="calling"] .demo-xm{margin-top:162.46px}
+  .demo-backdrop[data-screen="code"] .demo-codeerr__link:disabled{color:#707070;cursor:default}
+  /* Back: Inter Semi Bold 22, centred under the boxes; a 44px tall tap target
+     centred on the node's 21px line. */
+  .demo-backdrop[data-screen="code"] .demo-back{
+    position:absolute;left:38.46px;top:138.96px;width:276px;height:44px;margin:0;padding:0;border:0;background:none;
+    font:inherit;font-size:22px;font-weight:600;line-height:44px;color:var(--navy);text-align:center;cursor:pointer;
+  }
 
-  /* ---- shared success (2441:811): card 332x702 ---- */
-  .demo-backdrop[data-screen="recap"] .demo-card{height:702px;border-radius:9.67px;box-shadow:inset 0 0 0 .537px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="recap"] .demo-success{height:702px;text-align:left}
-  .demo-backdrop[data-screen="recap"] .demo-success-title{
-    position:absolute;left:18.5px;top:41.914px;width:293px;height:12.893px;margin:0;text-align:center;white-space:nowrap;
-    font-family:'Permanent Marker',cursive;font-size:20.413px;font-weight:400;line-height:12.893px;
+  /* ---- We call you, Calling (2891:1072, the owner's 2026-11-12 update): card 337x151:
+     "Your assistant is calling from: <number>" (Inter Semi Bold 21 on 24.95px lines)
+     over the help line ---- */
+  .demo-backdrop[data-screen="calling"] .demo-card{height:151px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="calling"] .demo-callcard{height:151px}
+  .demo-backdrop[data-screen="calling"] .demo-callcard__m{
+    position:absolute;left:42.4px;top:28.4px;width:264px;margin:0;font-size:21px;font-weight:600;line-height:24.95px;color:var(--navy);text-align:left;
   }
-  .demo-backdrop[data-screen="recap"] .demo-success-never{font-size:28px;line-height:12.893px}
-  .demo-backdrop[data-screen="recap"] .demo-success-rest{font-family:var(--body,'Inter',sans-serif);font-size:25px;line-height:12.893px}
-  /* Yellow brush under NEVER (vector 2511:1018). */
-  .demo-backdrop[data-screen="recap"] .demo-success::after{
-    content:"";position:absolute;z-index:1;left:20.46px;top:63.569px;width:95.892px;height:8.375px;pointer-events:none;
-    background:url('assets/demo-m-ul-never.svg') center/100% 100% no-repeat;
+  .demo-backdrop[data-screen="calling"] .demo-help{
+    position:absolute;left:43.4px;top:104.4px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;
   }
+
+  /* ---- shared success (2441:811, as updated 2026-11-12, AFMBP-2596): card 332x633:
+     the pitch (Inter Semi Bold 18 on 22px lines, a blank line between its two
+     paragraphs), "Transcript", the transcript and the blue CTA; no title or brush ---- */
+  .demo-backdrop[data-screen="recap"] .demo-card{height:633px;border-radius:9.67px;box-shadow:inset 0 0 0 .54px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="recap"] .demo-success{height:633px;text-align:left}
   .demo-backdrop[data-screen="recap"] .demo-success-sub{
-    position:absolute;left:37.5px;top:92.46px;width:270px;max-width:none;margin:0;font-size:21px;line-height:25px;color:var(--navy);text-align:left;
+    position:absolute;left:37.46px;top:24.46px;width:270px;max-width:none;margin:0;font-size:18px;font-weight:600;line-height:22px;color:var(--navy);text-align:left;
   }
+  /* The node's label is " Transcript": its leading space sets the word in by a space. */
   .demo-backdrop[data-screen="recap"] .demo-success-tlabel{
-    position:absolute;left:37px;top:249.46px;margin:0;font-size:15px;font-weight:700;line-height:18px;color:#707070;
+    position:absolute;left:36.46px;top:180.46px;margin:0;padding-left:3.38px;font-size:15px;font-weight:700;line-height:18px;color:#707070;
   }
-  /* Transcript (2442:1152): 259x334 at 37/275; the scroller fills it and the thin
-     bar is drawn by demo.js only while it can scroll. */
+  /* Transcript: 259x334 at 37/206; the scroller fills it and the thin bar is drawn by
+     demo.js only while it can scroll. */
   .demo-backdrop[data-screen="recap"] .demo-chatwrap{
-    position:absolute;left:37px;top:275px;width:259px;height:334px;border-radius:11.504px;background:#fff;
-    box-shadow:inset 0 0 0 .256px #e6e5ee,0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);
+    position:absolute;left:37.13px;top:206.46px;width:259px;height:334px;border-radius:11.504px;background:#fdfdfd;
+    box-shadow:inset 0 0 0 .256px #e6e5ee,0 .63px 2.52px rgba(12,12,13,.1),0 .63px 2.52px rgba(12,12,13,.05);
   }
   .demo-backdrop[data-screen="recap"] .demo-chat{
     position:absolute;inset:0;max-height:none;margin:0;padding:11px 0 12px;background:none;border:0;border-radius:inherit;
@@ -718,26 +708,29 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="recap"] .demo-chatrow--caller .demo-chatmeta__icon{width:16px;height:16px;flex-basis:16px;margin-top:.64px}
   .demo-backdrop[data-screen="recap"] .demo-chatmeta__label{font-size:12px;line-height:15px}
   .demo-backdrop[data-screen="recap"] .demo-chat__empty{font-size:15px;line-height:18px;color:#787888;padding:130px 16px}
+  /* The node's blue CTA, Inter 21 on a 21px line (the node sets it at 21px; AFMBP-2482's
+     +15% belonged to the green button it replaces). */
   .demo-backdrop[data-screen="recap"] .demo-success-cta{
-    position:absolute;left:39.4px;top:628.46px;width:253px;max-width:none;height:49px;margin:0;padding:0;border-radius:6px;
-    background:#009a15;color:#fff;font-size:24.15px;font-weight:400;line-height:24.15px;box-shadow:none; /* 21px + 15% (AFMBP-2482) */
+    position:absolute;left:39.46px;top:559.46px;width:253px;max-width:none;height:49px;margin:0;padding:0;border-radius:6px;
+    background:var(--blue);color:#fff;font-size:21px;font-weight:400;line-height:21px;box-shadow:none;
   }
-  .demo-backdrop[data-screen="recap"] .demo-success-cta:hover{background:#00820f}
+  .demo-backdrop[data-screen="recap"] .demo-success-cta:hover{background:#1f6fe6}
 
-  /* ---- We call you didn't work (2676:1163): card 332x479, no border ---- */
-  .demo-backdrop[data-screen="fail"] .demo-card{height:479px;border-radius:9.872px}
-  .demo-backdrop[data-screen="fail"] .demo-failcard{height:479px}
+  /* ---- We call you didn't work (2676:1163, as updated 2026-11-12): card 332x445, no
+     border: "OOPs!" (the node turns it .44deg with a .22deg skew, from its top left),
+     the words at 18px on 22px lines, the help links, Continue ---- */
+  .demo-backdrop[data-screen="fail"] .demo-card{height:445px;border-radius:9.872px}
+  .demo-backdrop[data-screen="fail"] .demo-failcard{height:445px}
   .demo-backdrop[data-screen="fail"] .demo-failcard__head{margin:0;height:0}
   .demo-backdrop[data-screen="fail"] .demo-failcard__title2{
-    position:absolute;left:37.03px;top:27.291px;width:248.836px;height:17.236px;margin:0;font-size:25px;line-height:28px;
-    color:var(--navy);transform:rotate(-.44deg) skewX(-.22deg);
+    position:absolute;left:37px;top:34.236px;width:248.836px;margin:0;font-size:25px;line-height:28px;white-space:nowrap;
+    color:var(--navy);transform-origin:0 0;transform:rotate(-.44deg) skewX(-.22deg);
   }
-  .demo-backdrop[data-screen="fail"] :is(.demo-failcard__t1,.demo-failcard__t2){display:block;white-space:nowrap}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__body2{position:absolute;left:37px;top:112px;width:258px;margin:0;font-size:21px;line-height:25px;color:var(--navy)}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__body2{position:absolute;left:37px;top:89px;width:258px;margin:0;font-size:18px;line-height:22px;color:var(--navy)}
   .demo-backdrop[data-screen="fail"] .demo-failcard__body2 p{margin:0}
   .demo-backdrop[data-screen="fail"] .demo-failcard__body2 p + p{margin-top:12px}
   .demo-backdrop[data-screen="fail"] .demo-failcard__body2 b{font-weight:600}
-  .demo-backdrop[data-screen="fail"] .demo-failcard__links{position:absolute;left:60px;top:287px;margin:0;display:block}
+  .demo-backdrop[data-screen="fail"] .demo-failcard__links{position:absolute;left:60px;top:240px;margin:0;display:block}
   .demo-backdrop[data-screen="fail"] .demo-failcard__link{
     display:block;position:relative;width:-webkit-fit-content;width:fit-content;height:23.161px;
     font-size:18.855px;line-height:23.161px;font-weight:400;color:var(--blue);
@@ -747,7 +740,7 @@ body.demo-lock{overflow:hidden}
   .demo-backdrop[data-screen="fail"] .demo-failcard__os{display:block;position:absolute;left:102.56px;top:1.79px;width:89.246px;height:18.855px;max-width:none}
   .demo-backdrop[data-screen="fail"] .demo-failcard__link + .demo-failcard__link .demo-failcard__os{top:-.44px;width:123.185px}
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn{
-    position:absolute;left:33px;top:391px;width:253px;max-width:none;height:49px;margin:0;padding:1.33px 4px 0 0;
+    position:absolute;left:33px;top:364px;width:253px;max-width:none;height:49px;margin:0;padding:1.33px 4px 0 0;
     display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:22px;font-weight:400;line-height:21px;background:var(--blue);color:#fff;
   }
   .demo-backdrop[data-screen="fail"] .demo-failcard__btn:hover{background:#1f6fe6}
