@@ -8,6 +8,9 @@
 // Inter Bold with the nodes' shadow; everything under the question moved up; the rating is a
 // review in a bubble (the node's own bubble, four stars and a fifth cut flat, "Gus C." /
 // "Massachusetts", "“Sounds like a real receptionist!”"); the help line is Inter 14.
+// The owner's 11-14 update (AFMBP-2606): the question leaves the picture (it stays for screen
+// readers, as the dialog's one heading); the two ways in are 188x43, with a wider gap before
+// "We call you"; the review and the help line moved up; the card is 337x393.
 // AFMBP-2600 (owner, 2026-11-13: one responsive demo): a computer shows the same card, centred
 // and scaled up as far as its screen's height allows (up to 125%). Drives the real modal in
 // headless Chrome against a fake Bolt API and checks:
@@ -65,11 +68,11 @@ const MUTATE = {
   // "Get a call" is counted twice.
   double_select: ['demo.js', (s) => cut(s, "      track('demo_mode_selected', { mode: 'outbound' });\n", "      track('demo_mode_selected', { mode: 'outbound' });\n      track('demo_mode_selected', { mode: 'outbound' });\n")],
   // The wait-time line wraps.
-  wrap_when: ['demo.css', (s) => cut(s, '    position:absolute;left:80.4px;top:175.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;', '    position:absolute;left:120px;top:175.4px;width:60px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;')],
+  wrap_when: ['demo.css', (s) => cut(s, '    position:absolute;left:80.4px;top:125.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;', '    position:absolute;left:120px;top:125.4px;width:60px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;')],
   // The landing touch is dropped from every event.
   no_attr: ['attribution.js', (s) => cut(s, 'if (touch) data.attr = touch;', '')],
   // "You call us" moves off the node.
-  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{top:120.4px}', '.demo-choice__call{top:125.4px}')],
+  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{top:70.535px;', '.demo-choice__call{top:75.535px;')],
   // AFMBP-2189: the phone choice hides its close button again (as before the redraw).
   no_close: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 278.496px);top:11.497px}', '.demo-backdrop[data-screen="choice"] .demo-close{display:none}')],
   // The close button sits under the body, which takes the tap.
@@ -77,25 +80,37 @@ const MUTATE = {
   // The close button moves off the node.
   close_off: ['demo.css', (s) => cut(s, '+ 278.496px);top:11.497px}', '+ 268.496px);top:11.497px}')],
   // AFMBP-2596: the card at its size before the owner's 11-12 update (337x611).
-  old_card: ['demo.css', (s) => cut(cut(s, '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:423px;', '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:611px;'), '.demo-backdrop[data-screen="choice"] .demo-card{height:423px;', '.demo-backdrop[data-screen="choice"] .demo-card{height:611px;')],
+  old_card: ['demo.css', (s) => cut(cut(s, '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:393px;', '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:611px;'), '.demo-backdrop[data-screen="choice"] .demo-card{height:393px;', '.demo-backdrop[data-screen="choice"] .demo-card{height:611px;')],
+  // AFMBP-2606: the card at its 11-13 size (337x423).
+  old_card_1113: ['demo.css', (s) => cut(cut(s, '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:393px;', '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:423px;'), '.demo-backdrop[data-screen="choice"] .demo-card{height:393px;', '.demo-backdrop[data-screen="choice"] .demo-card{height:423px;')],
+  // AFMBP-2606: the question drawn again, as on the 11-13 card.
+  visible_question: ['demo.css', (s) => cut(s, 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;', 'position:absolute;left:45.4px;top:56.4px;width:266px;margin:0;font-size:19.032px;font-weight:600;line-height:23px;color:var(--navy);')],
+  // AFMBP-2606: the question gone from screen readers too (dropped from the page).
+  no_question: ['demo.js', (s) => cut(s, "        h('h2', { class: 'demo-cm__h', text: 'How would you like to start the call?' })\n", '')],
+  // AFMBP-2606: "We call you" at the 11-13 gap under the wait line.
+  old_gap: ['demo.css', (s) => cut(s, '.demo-choice__get{top:164.535px;', '.demo-choice__get{top:154.535px;')],
   // AFMBP-2596: the pitch before the 11-12 update, in place of the question.
   old_pitch: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-cm__h', text: 'How would you like to start the call?' })", "h('h2', { class: 'demo-cm__h', text: 'One phone call can turn into real money' })")],
   // AFMBP-2597: the quote before the 11-13 update.
   old_quote: ['demo.js', (s) => cut(s, "text: '“Sounds like a real receptionist!”'", "text: '“This sounds like a real person!”'")],
   // AFMBP-2597: the two ways in at their 11-12 size and corners.
-  old_buttons: ['demo.css', (s) => cut(s, 'position:absolute;left:92.4px;width:151px;height:43.269px;margin:0;padding:0;border-radius:10px;', 'position:absolute;left:80.4px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;')],
+  old_buttons: ['demo.css', (s) => cut(s, 'position:absolute;left:74.4px;width:188px;height:43px;margin:0;padding:0;border-radius:10px;', 'position:absolute;left:80.4px;width:171px;height:49px;margin:0;padding:0;border-radius:6px;')],
+  // AFMBP-2606: the two ways in at their 11-13 size (151x43.27).
+  old_buttons_1113: ['demo.css', (s) => cut(s, 'position:absolute;left:74.4px;width:188px;height:43px;margin:0;padding:0;border-radius:10px;', 'position:absolute;left:92.4px;width:151px;height:43.269px;margin:0;padding:0;border-radius:10px;')],
   // AFMBP-2597: the two ways in in regular Inter (as before the 11-13 update).
   regular_buttons: ['demo.css', (s) => cut(s, 'font-size:19.427px;font-weight:700;line-height:18.544px;color:#fff;', 'font-size:19.427px;font-weight:400;line-height:18.544px;color:#fff;')],
   // AFMBP-2597: the two ways in without the nodes' shadow.
   flat_buttons: ['demo.css', (s) => cut(s, '    box-shadow:var(--demo-btn-shadow);\n  }\n  .demo-backdrop[data-screen="choice"] .demo-choice__call', '  }\n  .demo-backdrop[data-screen="choice"] .demo-choice__call')],
   // AFMBP-2597: the review without its bubble.
-  no_bubble: ['demo.css', (s) => cut(s, "background:url('assets/demo-m-bubble.svg') center/100% 100% no-repeat;", '')],
+  no_bubble: ['demo.css', (s) => cut(s, "background:url('assets/demo-m-bubble-flat.svg') center/100% 100% no-repeat;", '')],
+  // AFMBP-2606: the bubble drawn as on the 11-13 card (its two shadows, no line), at that art's size.
+  shadow_bubble: ['demo.css', (s) => cut(s, "content:\"\";position:absolute;left:0;top:0;width:271px;height:78px;pointer-events:none;\n    background:url('assets/demo-m-bubble-flat.svg')", "content:\"\";position:absolute;left:-7.537px;top:-5.653px;width:285.228px;height:92.727px;pointer-events:none;\n    background:url('assets/demo-m-bubble.svg')")],
   // AFMBP-2597: the fifth star whole (the node cuts it flat at its top).
   whole_star: ['demo.css', (s) => cut(s, "background:url('assets/demo-m-star5.svg') center/100% 100% no-repeat;", "background:url('assets/demo-m-star-lg.svg') center/100% 100% no-repeat;")],
   // AFMBP-2597: the review without the reviewer.
   no_reviewer: ['demo.js', (s) => cut(s, "        h('p', { class: 'demo-cr__who' }, [h('b', { text: 'Gus C.' }), ' ', h('span', { text: 'Massachusetts' })]),\n", '')],
   // AFMBP-2597: the help line at 15px, as before the 11-13 update.
-  big_help: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:377.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;', 'position:absolute;left:43.4px;top:376.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;')],
+  big_help: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:347.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;', 'position:absolute;left:43.4px;top:346.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;')],
   // A narrow phone clips the pitch instead of scaling the card down.
   no_zoom: ['demo.css', (s) => cut(s, '.demo-card{zoom:.94;left:0}', '.demo-card{left:0}')],
   // AFMBP-2097, one piece at a time, then all of it.
@@ -160,29 +175,25 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0, good = 0;
 const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); } };
 
-// The phone node (2670:952 as updated 2026-11-13, AFMBP-2597), card-relative CSS px, as
+// The phone node (2670:952 as updated 2026-11-14, AFMBP-2606), card-relative CSS px, as
 // matched to its 3x export (Chrome at a true 3x and iPhone Safari): the node's children sit
 // inside its .6px stroke.
 const NODE = {
-  card: { w: 337, h: 423 },
-  call: { x: 93, y: 121, w: 151, h: 43.269 },
-  get: { x: 93, y: 205, w: 151, h: 43.269 },
+  card: { w: 337, h: 393 },
+  call: { x: 75, y: 71.135, w: 188, h: 43 },
+  get: { x: 75, y: 165.135, w: 188, h: 43 },
   // The four whole stars (2904:1497); the fifth, cut flat, is their ::after.
-  stars: { x: 169.564, y: 288.396, w: 67.055, h: 16.331 },
+  stars: { x: 169.564, y: 258.396, w: 67.055, h: 16.331 },
   // The close button: a 44px tap target centred on the node's 13px cross (294-307, 27-40).
   close: { x: 278.496, y: 11.497, w: 44, h: 44 },
   // Centred lines: [the glyph run's centre x, the line box's centre y].
   // (AFMBP-2597, the 11-13 node: the quote's run sits 1.2px left of and .5px under the node's
-  // centre so its slanted ink lands on the node's ink, 75.7-261 x 322.7-334.3; "4.9/5", the
+  // centre so its slanted ink lands on the node's ink, 75.7-261 x 292.7-304.3; "4.9/5", the
   // quote and the help line split the difference between Chrome and iPhone Safari.)
   centres: {
-    '.demo-cm__score': [273.01, 298.734], '.demo-cm__live': [105.19, 33.484], '.demo-cm__quote': [166.38, 328.242],
-    '.demo-choice__when': [166.48, 181.984], '.demo-help': [168.73, 386.984],
+    '.demo-cm__score': [273.01, 268.734], '.demo-cm__live': [105.19, 33.484], '.demo-cm__quote': [166.38, 298.242],
+    '.demo-choice__when': [166.48, 131.984], '.demo-help': [168.73, 356.984],
   },
-  // The question: left edge and line count.
-  pitch: { '.demo-cm__h': [46, 2] },
-  // The question's two 23px lines: [line boxes' top, height], inside the stroke.
-  pitchY: { '.demo-cm__h': [57, 46] },
 };
 
 try {
@@ -328,7 +339,7 @@ try {
   ok(!(await visible('.demo-choice__sub')) && !(await visible('.demo-choice__h')), 'phone: no desktop title or subtitle');
   // art: the node's own vectors (stars, close, dot); no logo or brush since the 11-12 update
   ok((await ev("(function(){var s=document.querySelector('.demo-cr__stars'); if(!s) return false; var a=getComputedStyle(s,'::after'); return /demo-m-stars4\\.svg/.test(getComputedStyle(s).backgroundImage) && /demo-m-star5\\.svg/.test(a.backgroundImage) && Math.abs(parseFloat(a.width) - 16.972) < .01 && Math.abs(parseFloat(a.height) - 14.166) < .01})()")) === true, 'phone: the node\'s four stars and its fifth, cut flat');
-  ok((await ev("(function(){var c=document.querySelector('.demo-cr'); if(!c) return false; var b=getComputedStyle(c,'::before'); return /demo-m-bubble\\.svg/.test(b.backgroundImage) && Math.abs(parseFloat(b.width) - 285.228) < .01 && Math.abs(parseFloat(b.height) - 92.727) < .01})()")) === true, 'phone: the review in the node\'s bubble');
+  ok((await ev("(function(){var c=document.querySelector('.demo-cr'); if(!c) return false; var b=getComputedStyle(c,'::before'); return /demo-m-bubble-flat\\.svg/.test(b.backgroundImage) && Math.abs(parseFloat(b.width) - 271) < .01 && Math.abs(parseFloat(b.height) - 78) < .01 && b.left === '0px' && b.top === '0px'})()")) === true, 'phone: the review in the node\'s bubble (since the 11-14 update: a grey line, no shadow; its own 271x78 art)');
   ok((await ev("[].slice.call(document.querySelectorAll('.demo-choice__btn')).map(function(b){var c=getComputedStyle(b); return [c.fontWeight, c.fontSize, c.borderRadius, /rgba\\(0, 0, 0, 0\\.3\\) 0px 1px 2px 0px, rgba\\(0, 0, 0, 0\\.15\\) 0px 2px 6px 2px/.test(c.boxShadow)].join(':')}).join('|')")) === '700:19.427px:10px:true|700:19.427px:10px:true', 'phone: both ways in in Inter Bold 19.43, corners of 10, the nodes\' shadow');
   ok((await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-help')).fontSize")) === '14px', 'phone: the help line in Inter 14');
   ok((await ev("getComputedStyle(document.querySelector('.demo-cm'),'::before').content")) === 'none' && !(await ev("!!document.querySelector('.demo-cm__logo')")), 'phone: no brush and no in-card logo (the 11-12 node dropped both)');
@@ -338,13 +349,14 @@ try {
   // Figma draws the quote as a slanted roman Inter (double-storey "a"), which is what the
   // browser synthesizes from the site's Inter; Inter 4's true italic has other letterforms.
   ok((await ev("getComputedStyle(document.querySelector('.demo-cm__quote')).fontStyle")) === 'italic' && /^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__quote')).fontFamily")), 'phone: the quote in italic Inter');
-  ok(/^'?Inter/.test(await ev("getComputedStyle(document.querySelector('.demo-cm__h')).fontFamily")) && (await ev("getComputedStyle(document.querySelector('.demo-cm__h')).fontWeight")) === '600' && (await ev("getComputedStyle(document.querySelector('.demo-cm__h')).fontSize")) === '19.032px', 'phone: the question in Inter Semi Bold 19.032px');
+  // AFMBP-2606: the 11-14 node drops the question from the picture; screen readers keep it.
+  ok((await ev("(function(){var e=document.querySelector('.demo-cm__h'); if(!e) return false; var r=e.getBoundingClientRect(), c=getComputedStyle(e); return r.width<=1 && r.height<=1 && c.overflow==='hidden' && c.clipPath==='inset(50%)';})()")) === true && (await axIgnored('.demo-cm__h')) === false, 'phone: the question is drawn nowhere (the 11-14 node dropped it) and screen readers still get it');
   // geometry, card-relative
   const card = await rect('.demo-backdrop.open .demo-card');
   const rel = (b) => b && { x: b.x - card.x, y: b.y - card.y, w: b.w, h: b.h, cx: b.cx - card.x, cy: b.cy - card.y, lines: b.lines };
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
-  ok(near(card.w, 337, 0.01) && near(card.h, 423, 0.01), `phone: card 337x423 (${card.w}x${card.h})`);
-  ok(near(card.y, 165, 0.01), `phone: card where the node puts it, centred: 165px from the top of a 753px screen (${card.y})`);
+  ok(near(card.w, 337, 0.01) && near(card.h, 393, 0.01), `phone: card 337x393 (${card.w}x${card.h})`);
+  ok(near(card.y, 180, 0.01), `phone: card where the node puts it, centred: 180px from the top of a 753px screen (${card.y})`);
   for (const k of ['call', 'get', 'stars', 'close']) {
     const sel = k === 'stars' ? '.demo-cr__stars' : k === 'close' ? '.demo-close' : `.demo-choice__${k}`;
     const b = rel(await rect(sel)), n = NODE[k];
@@ -356,25 +368,17 @@ try {
     const g = rel(await run(sel)), b = rel(await rect(sel));
     ok(g && b && near(g.cx, cx, 0.5) && near(b.cy, cy, 0.05) && g.lines === 1, `phone: ${sel} centred where it matches the node, one line (${g && b && [g.cx.toFixed(2), b.cy.toFixed(3), g.lines]} vs ${cx},${cy})`);
   }
-  for (const [sel, [x, lines]] of Object.entries(NODE.pitch)) {
-    const g = rel(await run(sel));
-    ok(g && near(g.x, x, 0.05) && g.lines === lines, `phone: ${sel} from x ${x} on ${lines} lines, as the node wraps it (${g && [g.x.toFixed(2), g.lines]})`);
-  }
-  for (const [sel, [y, h]] of Object.entries(NODE.pitchY)) {
-    const b = rel(await rect(sel));
-    ok(b && near(b.y, y, 0.05) && near(b.h, h, 0.05), `phone: ${sel} at y ${y}, ${h}px tall, where the 11-12 node sets it (${b && [b.y.toFixed(2), b.h.toFixed(2)]})`);
-  }
   // The close button is on top at its own centre: the body (above the card's other children)
   // would otherwise take the tap.
   ok((await ev("(function(){var b=document.querySelector('.demo-close'), r=b.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2) === b;})()")) === true, 'phone: the close button takes a tap at its centre (nothing on top of it)');
-  // reading order follows the picture: availability, question, call + its wait, we call you, reviewer, rating, quote, help
+  // reading order follows the picture: availability, the question (read, not drawn), call + its wait, we call you, reviewer, rating, quote, help
   const order = ['.demo-cm__live', '.demo-cm__h', '.demo-choice__call', '.demo-choice__when', '.demo-choice__get', '.demo-cr__who', '.demo-cm__score', '.demo-cm__quote', '.demo-help'];
   ok((await ev(`(function(){var s=${JSON.stringify(order)}.map(function(q){return document.querySelector(q)}); for(var i=1;i<s.length;i++){ if(!(s[i-1].compareDocumentPosition(s[i]) & Node.DOCUMENT_POSITION_FOLLOWING)) return false; } return true;})()`)) === true, 'a11y: reading order matches the picture');
   // The stars' own span is a bare container, which Chrome's tree leaves out whatever it holds;
   // what keeps them from screen readers is aria-hidden on it, with no words inside.
   ok((await ev("(function(){var s=document.querySelector('.demo-cr__stars'); return !!s && s.getAttribute('aria-hidden')==='true' && s.textContent===''})()")) === true, 'a11y: the stars are hidden from screen readers (aria-hidden, no words)');
   ok((await axIgnored('.demo-cr__who')) === false && (await axIgnored('.demo-cm__score')) === false && (await axIgnored('.demo-cm__quote')) === false && (await axIgnored('.demo-cm__live')) === false, 'a11y: reviewer, rating, quote and availability are read');
-  ok((await ev("document.querySelector('.demo-cm__h').tagName")) === 'H2' && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the question is the one heading on the phone');
+  ok((await ev("document.querySelector('.demo-cm__h').tagName")) === 'H2' && (await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open h2')).filter(function(e){return e.getClientRects().length}).length")) === 1, 'a11y: the question (read, not drawn) is the one heading on the phone');
   // routing: "You call us" is the call, with this browser's code
   ok(api.created === 1 && (await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "You call us" is the tel: link with the line, a pause and the code');
   await tap('.demo-choice__call');
@@ -547,8 +551,8 @@ try {
     if (phoneLayout) {
       ok(c.x >= 0 && c.x + c.w <= w, `${w}x${h}: the card inside the viewport (${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
       const one = ['.demo-cm__score', '.demo-cm__quote', '.demo-cm__live', '.demo-choice__call', '.demo-choice__when', '.demo-choice__get', '.demo-help'];
-      for (const sel of one.concat(['.demo-cm__h', '.demo-cr__who'])) {
-        const g = await run(sel), want = sel === '.demo-cm__h' || sel === '.demo-cr__who' ? 2 : 1;
+      for (const sel of one.concat(['.demo-cr__who'])) {
+        const g = await run(sel), want = sel === '.demo-cr__who' ? 2 : 1;
         ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]} in ${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
       }
       const s = await rect('.demo-cr__stars');
@@ -557,14 +561,14 @@ try {
       // above the top edge), inside the card, a usable tap target even where the card zooms.
       const x = await rect('.demo-close');
       ok(!!x && (await visible('.demo-close')) && x.x >= c.x && x.x + x.w <= c.x + c.w && x.y >= c.y && x.y >= 0 && x.y + x.h <= h && x.w >= 36 && x.h >= 36, `${w}x${h}: the close button inside the card and on screen, at least 36px (${x && [x.x.toFixed(1), x.y.toFixed(1), x.w.toFixed(1)]})`);
-      // From 337px the card is the node's own size; under it the card scales down (it must
-      // not clip the pitch, whose lines run within 16px of the card's edges).
+      // From 337px the card is the node's own size; under it the card scales down (zoom keeps
+      // every piece in proportion instead of clipping the words at the card's edges).
       ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     } else {
       // AFMBP-2600: a computer shows the phone card, centred, at up to 125% of its design size
       // as far as the screen's height allows (16px of shade above and below), never smaller.
-      const zWant = Math.max(1, Math.min(1.25, (h - 32) / 423));
-      ok(Math.abs(c.w - 337 * zWant) < 0.6 && Math.abs(c.h - 423 * zWant) < 0.6, `${w}x${h}: the phone card at ${(zWant * 100).toFixed(1)}% (${c.w.toFixed(2)}x${c.h.toFixed(2)})`);
+      const zWant = Math.max(1, Math.min(1.25, (h - 32) / 393));
+      ok(Math.abs(c.w - 337 * zWant) < 0.6 && Math.abs(c.h - 393 * zWant) < 0.6, `${w}x${h}: the phone card at ${(zWant * 100).toFixed(1)}% (${c.w.toFixed(2)}x${c.h.toFixed(2)})`);
       ok(Math.abs((c.x + c.w / 2) - w / 2) < 1 && c.y >= 0 && c.y + c.h <= h, `${w}x${h}: the card centred and on screen (${c.x.toFixed(1)},${c.y.toFixed(1)})`);
       ok((await text('.demo-cm__h')) === PITCH && (await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you' && (await visible('.demo-cr')) && (await visible('.demo-close')), `${w}x${h}: the phone card's question, "You call us" / "We call you", the review and the close button`);
       ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub, .demo-backdrop .demo-d, .demo-backdrop .demo-db, .demo-backdrop .demo-m, .demo-backdrop .demo-mb')")) === false, `${w}x${h}: no second, computer-only design in the page`);

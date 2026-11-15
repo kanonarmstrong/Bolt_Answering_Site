@@ -185,7 +185,7 @@
   // success brush, the OS lockups, the chat icons) when the modal opens, so every
   // later screen paints complete instead of popping the art in on a slow
   // connection (AFMBP-2150). Every width since AFMBP-2600: one responsive demo.
-  var MOBILE_ART = ['demo-m-close.svg', 'demo-m-dot.svg', 'demo-m-bubble.svg', 'demo-m-stars4.svg',
+  var MOBILE_ART = ['demo-m-close.svg', 'demo-m-dot.svg', 'demo-m-bubble-flat.svg', 'demo-m-stars4.svg',
     'demo-m-star5.svg', 'demo-m-ul-success.svg', 'demo-m-star-lg.svg', 'demo-m-chat-assistant.svg',
     'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg', 'demo-m-lockup-android.svg'];
   var artWarmed = false;

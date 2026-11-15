@@ -232,7 +232,7 @@ body.demo-lock{overflow:hidden}
      AFMBP-2596 (the owner's 2026-11-12 update): each card's size and its offset
      from the screen centre as its node draws it, the code screen (2670:1394) now
      one of them. AFMBP-2597 (2026-11-13): the You call us card is 2891:1090. */
-  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:423px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
+  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:393px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-call"]{--demo-w:337px;--demo-h:215px;--demo-dx:-1.5px;--demo-dy:32px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:234px;--demo-dx:0px;--demo-dy:.5px;--demo-bw:0px}
   .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:535px;--demo-dx:-1.5px;--demo-dy:-13px;--demo-bw:.6px}
@@ -294,11 +294,11 @@ body.demo-lock{overflow:hidden}
      button's own rule below sets them, as --demo-btn-shadow. */
   .demo-backdrop{--demo-btn-shadow:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15)}
 
-  /* ---- choice (2670:952, as updated 2026-11-13, AFMBP-2597): card 337x423 ----
+  /* ---- choice (2670:952, as updated 2026-11-14, AFMBP-2606): card 337x393 ----
      Numbers are body-relative (the body sits inside the node's .6px stroke), each
      piece where it sits once matched to the node's 3x export. */
-  .demo-backdrop[data-screen="choice"] .demo-card{height:423px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="choice"] .demo-body{height:423px}
+  .demo-backdrop[data-screen="choice"] .demo-card{height:393px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
+  .demo-backdrop[data-screen="choice"] .demo-body{height:393px}
   /* Here the node's cross (2683:1599) sits at 294/27; the shared block draws it. */
   .demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 278.496px);top:11.497px}
   /* "Available now" (its text box at 61.94/28), the node's green dot 15.94px to its left. */
@@ -309,35 +309,38 @@ body.demo-lock{overflow:hidden}
     content:"";position:absolute;left:-15.938px;top:0;width:10.359px;height:10.359px;pointer-events:none;
     background:url('assets/demo-m-dot.svg') center/100% 100% no-repeat;
   }
-  /* The question: Inter Semi Bold 19.032 on two 23px lines, in the node's 266px box. */
+  /* The question left the card in the 2026-11-14 update (AFMBP-2606). It stays for
+     screen readers as the dialog's one heading, and is drawn nowhere. */
   .demo-backdrop[data-screen="choice"] .demo-cm__h{
-    position:absolute;left:45.4px;top:56.4px;width:266px;margin:0;font-size:19.032px;font-weight:600;line-height:23px;color:var(--navy);
+    position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
   }
-  /* The two ways in: 151x43.27, corners 10, Inter Bold 19.43 on an 18.54px line. */
+  /* The two ways in: 188x43 since the 2026-11-14 update, corners 10, Inter Bold 19.43 on an
+     18.54px line; the wait under "You call us" and a wider gap before "We call you". Each
+     label sits where the node's does: "You call us" .5px and "We call you" 1px left of the
+     button's centre. */
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
-    position:absolute;left:92.4px;width:151px;height:43.269px;margin:0;padding:0;border-radius:10px;
+    position:absolute;left:74.4px;width:188px;height:43px;margin:0;padding:0;border-radius:10px;
     display:flex;align-items:center;justify-content:center;font-size:19.427px;font-weight:700;line-height:18.544px;color:#fff;
     box-shadow:var(--demo-btn-shadow);
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:120.4px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:204.4px;padding-right:1px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:70.535px;padding-right:1px}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:164.535px;padding-right:2px}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{padding-top:1.33px}
   .demo-backdrop[data-screen="choice"] .demo-choice__when{
-    position:absolute;left:80.4px;top:175.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
+    position:absolute;left:80.4px;top:125.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
   }
   .demo-backdrop[data-screen="choice"] .demo-choice__when b{font-weight:600}
-  /* The review (group 2900:1475, 270x78 at 33/277): the node's bubble (2903:1491, its
-     shape and both shadows, drawn 7.5/5.7 out from the shape for the shadows; the file
-     drops the 1.88px spread Figma's SVG export adds, which Figma itself does not draw
-     on a vector), the reviewer on two lines, four stars and the fifth cut flat at its
-     top (the node's clip), "4.9/5" and the quote (centred on the node's ink: the
-     site's slanted Inter runs wider than Figma's italic). Offsets are from the
+  /* The review (group 2900:1475, 270x78 at 33/247): the node's bubble (2903:1491; since
+     the 2026-11-14 update a #d9d9d9 line inside its edge and no shadow, the node's own
+     SVG export at its 271x78 size), the reviewer on two lines, four stars and the fifth
+     cut flat at its top (the node's clip), "4.9/5" and the quote (centred on the node's
+     ink: the site's slanted Inter runs wider than Figma's italic). Offsets are from the
      bubble's top left. */
-  .demo-backdrop[data-screen="choice"] .demo-cr{position:absolute;left:32.4px;top:276.4px;width:270.153px;height:77.652px}
+  .demo-backdrop[data-screen="choice"] .demo-cr{position:absolute;left:32.4px;top:246.4px;width:270.153px;height:77.652px}
   .demo-backdrop[data-screen="choice"] .demo-cr::before{
-    content:"";position:absolute;left:-7.537px;top:-5.653px;width:285.228px;height:92.727px;pointer-events:none;
-    background:url('assets/demo-m-bubble.svg') center/100% 100% no-repeat;
+    content:"";position:absolute;left:0;top:0;width:271px;height:78px;pointer-events:none;
+    background:url('assets/demo-m-bubble-flat.svg') center/100% 100% no-repeat;
   }
   .demo-backdrop[data-screen="choice"] .demo-cr__who{
     position:absolute;left:13px;top:11.48px;width:120px;height:26px;margin:0;display:flex;flex-direction:column;justify-content:center;
@@ -367,7 +370,7 @@ body.demo-lock{overflow:hidden}
      line and iPhone Safari 1px above it. The same split sets "4.9/5", the quote, "NEVER"
      and "miss a job again" between the two engines. */
   .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:43.4px;top:377.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
+    position:absolute;left:43.4px;top:347.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
   }
 
   /* ---- You call us, call in progress (2891:1090, 2026-11-13, AFMBP-2597): card 337x215 ----
