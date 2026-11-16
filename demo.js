@@ -47,9 +47,10 @@
     'Message, Voice, and Data Rates may apply. Reply STOP to opt out. Reply HELP for help. In accordance with our ';
   var CONSENT_TEXT = CONSENT_A + CONSENT_LINK + CONSENT_B;
   // With no business field, the call answers as the demo line does (EZ's
-  // DEMO_INBOUND_BUSINESS_NAME default): the server needs a business name to place
-  // a call until AFMBP-2598 ships (demo token: "businessName required").
-  var PHONE_BUSINESS = 'Bolt Services';
+  // DEMO_INBOUND_BUSINESS_NAME): "Bolt Home Services" since AFMBP-2610 (owner,
+  // 2026-11-16; was "Bolt Services"). The server has taken a call without a name
+  // since AFMBP-2598; the site still sends it so both ways in greet the same.
+  var PHONE_BUSINESS = 'Bolt Home Services';
 
   // Trade is derived from the page (homepage -> general_contracting per owner decision).
   var TRADE = (function () {
@@ -894,7 +895,7 @@
 
       state.display = fmtPhone(phone.input.value);
       state.phone = e164(phone.input.value);            // normalized E.164 to the API
-      // The number only: the call answers as Bolt Services, no email is sent, and
+      // The number only: the call answers as Bolt Home Services, no email is sent, and
       // the consent sent is the one the form showed (AFMBP-2596 / AFMBP-2600).
       state.business = PHONE_BUSINESS;
       state.email = '';

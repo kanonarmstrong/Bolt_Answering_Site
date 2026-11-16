@@ -21,7 +21,7 @@
 // AFMBP-2596 (the owner's 11-12 update; nodes 2657:1639 empty, 2891:986 filled, 2894:1135 /
 // 2894:1108 errors, 2670:1394 code, 2891:1072 Calling, 2441:811 success, 2676:1163 failure):
 // a phone asks for the number only ("Phone number", the node's consent without email or
-// marketing; the call answers as Bolt Services, which the server needs), errors show under the
+// marketing; the call answers as Bolt Home Services, AFMBP-2610), errors show under the
 // field with the field outlined in red, the code card is "Enter the code" + boxes + Back, the
 // Calling card is one line and the help line, the success card opens on the pitch with a blue
 // "Start free 30-day trial", the failure card reads "OOPs!".
@@ -382,7 +382,7 @@ try {
   await phone();
 
   // ================= one tap, one code, one call; the code card; Calling (2891:1072) =================
-  console.log('[phone] a double tap sends one code (as Bolt Services, the phone consent); the code card; one verify, one call; Calling');
+  console.log('[phone] a double tap sends one code (as Bolt Home Services, the phone consent); the code card; one verify, one call; Calling');
   reset();
   await load('/hvac.html?talk=form');
   await waitScreen('phone');
@@ -394,7 +394,7 @@ try {
   api.sendDelayMs = 0;
   ok(sent('/api/demo/otp/send').length === 1, `send: a second tap while the first is on its way sends nothing (${sent('/api/demo/otp/send').length})`);
   const sb = (sent('/api/demo/otp/send')[0] || {}).body || {};
-  ok(sb.consentText === CONSENT_M && sb.phone === '+14155551234' && sb.businessName === 'Bolt Services' && !('email' in sb), `send: E.164 phone, the phone's consent as rendered, Bolt Services, no email key (${JSON.stringify({ phone: sb.phone, businessName: sb.businessName, email: 'email' in sb, consent: sb.consentText === CONSENT_M })})`);
+  ok(sb.consentText === CONSENT_M && sb.phone === '+14155551234' && sb.businessName === 'Bolt Home Services' && !('email' in sb), `send: E.164 phone, the phone's consent as rendered, Bolt Home Services, no email key (${JSON.stringify({ phone: sb.phone, businessName: sb.businessName, email: 'email' in sb, consent: sb.consentText === CONSENT_M })})`);
   ok(evs('demo_details_submitted', (d) => d.has_email === false).length === 1, 'events: demo_details_submitted once, has_email false');
   let codeUp = false;
   for (let i = 0; i < 40 && !codeUp; i++) { codeUp = (await ev("!!document.querySelector('.demo-backdrop.open .demo-code input')")) === true; if (!codeUp) await sleep(100); }
@@ -413,7 +413,7 @@ try {
   ok(await waitScreen('calling', 6000), 'call: the sixth digit checks the code -> the Calling card');
   await sleep(800);
   ok(sent('/api/demo/otp/verify').length === 1 && sent('/api/demo/token').length === 1 && sent('/api/demo/call').length === 1, `call: one verify, one token, one call (${['/api/demo/otp/verify', '/api/demo/token', '/api/demo/call'].map((p) => sent(p).length)})`);
-  ok(((sent('/api/demo/token')[0] || {}).body || {}).businessName === 'Bolt Services', 'call: the call is set up as Bolt Services (the server needs a business name)');
+  ok(((sent('/api/demo/token')[0] || {}).body || {}).businessName === 'Bolt Home Services', 'call: the call is set up as Bolt Home Services');
   ok((await text('.demo-callcard__m')) === 'Your assistant is calling from: (415) 555-0123', `calling: the node's line with the caller id the API returned (${await text('.demo-callcard__m')})`);
   ok((await css('.demo-callcard__m', 'fontSize')) === '21px' && (await css('.demo-callcard__m', 'fontWeight')) === '600', 'calling: Inter Semi Bold 21px');
   ok(!(await visible('.demo-callcard__head')) && !(await visible('.demo-callcard__expect')) && !(await visible('.demo-xm')) && !(await visible('.demo-callcard__list')), 'calling: no title, "What to expect" or rows (the 11-12 node dropped them)');
@@ -558,7 +558,7 @@ try {
   await sleep(500);
   ok(sent('/api/demo/otp/send').length === 1, `desktop: Enter in the field = Continue (${sent('/api/demo/otp/send').length})`);
   const db = (sent('/api/demo/otp/send')[0] || {}).body || {};
-  ok(db.consentText === CONSENT_M && db.businessName === 'Bolt Services' && !('email' in db), `desktop send: the phone consent, Bolt Services, no email key (${JSON.stringify({ businessName: db.businessName, email: 'email' in db, consent: db.consentText === CONSENT_M })})`);
+  ok(db.consentText === CONSENT_M && db.businessName === 'Bolt Home Services' && !('email' in db), `desktop send: the phone consent, Bolt Home Services, no email key (${JSON.stringify({ businessName: db.businessName, email: 'email' in db, consent: db.consentText === CONSENT_M })})`);
   await ev("document.querySelectorAll('.demo-code input')[0].focus(); 1");
   await send('Input.insertText', { text: '123456' });
   ok(await waitScreen('calling', 6000), 'desktop: Calling');

@@ -106,7 +106,7 @@ function apiRespond(method, url, postData) {
   return [200, {}];
 }
 const TRANSCRIPT = [
-  { role: 'assistant', content: "Hi, you've reached Bolt Services. Nobody's available right now, but I'm Bolt Services's smart assistant." },
+  { role: 'assistant', content: "Hi, you've reached Bolt Home Services. Nobody's available right now, but I'm Bolt Home Services's smart assistant." },
   { role: 'user', content: 'My AC stopped blowing cold air.' },
 ];
 const lastSession = () => [...api.sessions.entries()].pop();
@@ -253,7 +253,7 @@ try {
   api.recaps.set('in-1', { status: 'completed', transcript: TRANSCRIPT, durationSec: 41 });
   ok(await waitScreen('recap', 8000), 'phone: the linked call goes to the shared recap');
   await sleep(400);
-  ok(/Bolt Services/.test((await text('.demo-chat')) || ''), 'phone: recap shows the call transcript');
+  ok(/Bolt Home Services/.test((await text('.demo-chat')) || ''), 'phone: recap shows the call transcript');
   ok((await stored()) === null, 'phone: finished flow leaves nothing to resume');
   ok(evs('demo_mode_selected', (d) => d.mode === 'inbound' && d.dial === 'auto').length === 1, 'events: demo_mode_selected inbound/auto once');
   ok(evs('demo_inbound_call_tapped', (d) => d.from === 'choice' && d.mode === 'inbound').length === 1, 'events: demo_inbound_call_tapped once');
