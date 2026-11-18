@@ -8,7 +8,9 @@
 //     placement "signup_offer" on the button, and Meta's StartTrialClick from that tap (the ad
 //     sets' optimization event, "Landing page: Start now tap");
 //   - the close goes to the home page and logs demo_closed {step: signup_offer};
-//   - the page is noindex and is not in the sitemap.
+//   - the page is noindex and is not in the sitemap;
+//   - at 320 and 300 wide the card zooms and the iOS-only rule that turns iPad Safari's text
+//     autosizing off reaches it; at 337 neither (AFMBP-2602).
 // The ingest and the pixel are stubbed in the page; nothing reaches production. Nothing leaves the
 // machine either: Chrome resolves no host but 127.0.0.1, so the page's requests to other hosts, its
 // preconnects and prefetches, and Chrome's own background requests all fail to resolve.
@@ -38,7 +40,20 @@ const MUTATE = {
   noindex: (p, s) => s.replace('<meta name="robots" content="noindex" />', ''),
   prefetch: (p, s) => s.replace("l.rel = 'prefetch'; l.href", "l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href"),
   position: (p, s) => s.replace('.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:70px 0 40px}', '.ql{position:relative;display:flex;justify-content:center;align-items:flex-start;padding:90px 0 40px}'),
+  // AFMBP-2602: iPad Safari's text autosizing left on in the zoomed card, or set to 100% (which does not fix it).
+  ios_autosize: (p, s) => s.replace('.ql-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '.ql-card{}'),
+  ios_tsa_100: (p, s) => s.replace('.ql-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '.ql-card{-webkit-text-size-adjust:100%;text-size-adjust:100%}'),
 };
+// AFMBP-2602: the text-size-adjust of every iOS-only rule (inside @supports (-webkit-touch-callout:none))
+// that reaches an element here, each @media evaluated against this window and each selector against
+// the element. Chrome never applies those rules, so they are read from the style sheets.
+const IOS_TSA = `function iosTsa(el){var hit=[];
+  function walk(list, ios){for(var i=0;i<list.length;i++){var r=list[i];
+    if(r instanceof CSSSupportsRule) walk(r.cssRules, ios||/-webkit-touch-callout\\s*:\\s*none/.test(r.conditionText));
+    else if(r instanceof CSSMediaRule){if(matchMedia(r.media.mediaText).matches) walk(r.cssRules, ios);}
+    else if(ios && r instanceof CSSStyleRule && el.matches(r.selectorText)) hit.push(r.style.getPropertyValue('text-size-adjust'));}}
+  for(var s=0;s<document.styleSheets.length;s++){try{walk(document.styleSheets[s].cssRules,false);}catch(e){}}
+  return hit;}`;
 if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2', '.xml': 'application/xml' };
@@ -143,6 +158,19 @@ try {
     await sleep(300);
     const closed = await ev(`window.__events.filter((e) => e.type === 'demo_closed').map((e) => e.data)`);
     check(`close tap: demo_closed {step: signup_offer, trade: ${TRADE[page]}}`, closed.length === 1 && closed[0].step === 'signup_offer' && closed[0].trade === TRADE[page], closed);
+  }
+
+  // AFMBP-2602: under 337px the card zooms (.94, then .83 under 317px), and iPad Safari's text autosizing
+  // must be off on it, or every word draws at its unzoomed size. At 337px nothing zooms and no iOS text
+  // rule reaches the card.
+  for (const page of PAGES) {
+    console.log(`[${page}, narrow phones]`);
+    for (const [w, zWant] of [[337, 1], [320, 0.94], [300, 0.83]]) {
+      await send('Emulation.setDeviceMetricsOverride', { width: w, height: 640, deviceScaleFactor: 1, mobile: true });
+      await load(`${BASE}/${page}`);
+      const t = await ev(`(() => { ${IOS_TSA} const k = document.querySelector('.ql-card'); return k ? { zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k) } : null; })()`);
+      check(`${w}px: the card ${zWant < 1 ? `zooms to ${zWant} and iOS turns text autosizing off on it` : 'does not zoom and no iOS text rule reaches it'}`, t && Math.abs(t.zoom - zWant) < 1e-6 && (zWant < 1 ? t.ios.join() === 'none' : t.ios.length === 0), t);
+    }
   }
 } finally {
   try { ws && ws.close(); } catch {}

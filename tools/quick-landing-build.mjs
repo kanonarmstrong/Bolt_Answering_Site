@@ -183,6 +183,9 @@ ${GTAG}
     }
     @media (max-width:336px){ .ql-card{zoom:.94;left:0} }
     @media (max-width:316px){ .ql-card{zoom:.83} }
+    /* iPad Safari's text autosizing ignores that zoom (every word drew at its unzoomed size):
+       off on the card, iOS WebKit only, as in demo.css (AFMBP-2602). The body's 100% does not fix it. */
+    @supports (-webkit-touch-callout:none){ @media (max-width:336px){ .ql-card{-webkit-text-size-adjust:none;text-size-adjust:none} } }
     .ql-body{position:relative;z-index:1;left:.6px;top:.6px;width:337px;height:629px}
     /* The close: the node's 13px cross in a 44px tap target. It goes to the home page (owner, 11-12). */
     .ql-close{
