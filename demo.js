@@ -159,7 +159,7 @@
   // (Figma 2441:811) at every width since AFMBP-2600 (one responsive demo).
   function chatIcon(who) {
     return h('picture', { class: 'demo-chatmeta__pic' }, [
-      h('img', { class: 'demo-chatmeta__icon', src: 'assets/demo-m-chat-' + who + '.svg', alt: '' })
+      h('img', { class: 'demo-chatmeta__icon', src: '/assets/demo-m-chat-' + who + '.svg', alt: '' })
     ]);
   }
   // Confetti webp behind the card — MOBILE ONLY, plays on load of the in-call +
@@ -173,7 +173,7 @@
     var close = h('button', { class: 'demo-close', 'aria-label': 'Close', onClick: closeModal }, [
       svg('<path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')
     ]);
-    var logo = h('img', { class: 'demo-logo', src: 'assets/logo-wordmark.png', alt: 'Bolt' });
+    var logo = h('img', { class: 'demo-logo', src: '/assets/logo-wordmark.png', alt: 'Bolt' });
     // tabindex -1: the dialog itself can take focus (as it opens), but Tab never stops on it.
     card = h('div', { class: 'demo-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Talk to your new assistant', tabindex: '-1' }, [close, logo, body]);
     backdrop = h('div', { class: 'demo-backdrop', onClick: function (e) { if (e.target === backdrop) closeModal(e); } }, [card]);
@@ -193,7 +193,7 @@
   function warmMobileArt() {
     if (artWarmed) return;
     artWarmed = true;
-    MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = 'assets/' + n; });
+    MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = '/assets/' + n; });
   }
   // AFMBP-2564 — warm the app's sign-up page while the sign-up offer is up, so its one button
   // opens a page whose code is already in the browser. The app publishes the files that page
@@ -377,8 +377,8 @@
   // Assistant mascot icon (Figma 2434:586 / 2434:631) — two stacked SVG layers.
   function assistIcon() {
     return h('span', { class: 'demo-assist' }, [
-      h('img', { class: 'demo-assist__g', src: 'assets/demo-assist-group.svg', alt: '' }),
-      h('img', { class: 'demo-assist__l', src: 'assets/demo-assist-layer.svg', alt: '' })
+      h('img', { class: 'demo-assist__g', src: '/assets/demo-assist-group.svg', alt: '' }),
+      h('img', { class: 'demo-assist__l', src: '/assets/demo-assist-layer.svg', alt: '' })
     ]);
   }
   // Heading with the mascot icon to its right (phone entry 2387:9076).
@@ -1390,8 +1390,8 @@
           h('p', {}, ['Here’s how to temporarily turn off spam blockers before you try again:'])
         ]),
         h('div', { class: 'demo-failcard__links' }, [
-          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', 'assets/demo-m-lockup-iphone.svg', 'ios'),
-          osLink('/support/hca/disable-android-spam-blockers', 'Androids', 'assets/demo-m-lockup-android.svg', 'android')
+          osLink('/support/hca/disable-ios-spam-blockers', 'iPhones', '/assets/demo-m-lockup-iphone.svg', 'ios'),
+          osLink('/support/hca/disable-android-spam-blockers', 'Androids', '/assets/demo-m-lockup-android.svg', 'android')
         ]),
         btn
       ])
