@@ -53,7 +53,13 @@
   function visitorId() {
     var v = get('bolt_vid');
     if (v && ID_RE.test(v)) return v;
-    if (!memoryVid) memoryVid = newId();
+    // AFMBP-2612: a /start/ page decides the visitor's arm before this script runs, from the id it
+    // read or made (window.boltXp.vid). With storage blocked, this page load keeps that same id, so
+    // the platform hears from the subject the arm was decided for.
+    if (!memoryVid) {
+      var x = window.boltXp;
+      memoryVid = x && typeof x.vid === 'string' && ID_RE.test(x.vid) ? x.vid : newId();
+    }
     set('bolt_vid', memoryVid);
     return memoryVid;
   }
@@ -66,6 +72,95 @@
   if (params.get('bolt_qa') === '1') set('bolt_qa', '1');
   else if (params.get('bolt_qa') === '0') remove('bolt_qa');
   function isQa() { return get('bolt_qa') === '1' || /[?&]demoqa=1(&|$)/.test(window.location.search); }
+
+  // ---------- experiments: the landing A/B (AFMBP-2612, the experiment platform) ----------
+  // The /start/ pages decide the visitor's arm before they paint (an inline script, from bolt_vid
+  // and a baked definition) and leave it in window.boltXp. Once the page is seen, the page calls
+  // xpExpose(), which reports the exposure twice, from one call with one arm: to the platform
+  // through EZ's gateway (as the platform's own web SDK sends it), and to Bolt's own funnel as
+  // `xp_exposed`. It also keeps the arm, so every sign-up link on any page carries it to the app
+  // (xp=<key>.<variation>.<configVersion>, next to bvid), and a trial tap goes to the platform as
+  // `start_trial_clicked`. Our own test browsers (bolt_qa) send nothing to the platform; a QA
+  // browser's forced arm (?bolt_xp=<variation>) is kept for its browser session only. Opted-out
+  // and GPC browsers count like everyone else (owner, 2026-11-17): nothing here reads bolt_optout
+  // or Global Privacy Control, and none of these events is one meta-pixel.js forwards.
+  var XP_KEYS = ['landing_demo_buttons'];
+  // The SPEC's format: keys and variations match [a-z][a-z0-9_]*, so dots separate them.
+  var XP_RE = /^([a-z][a-z0-9_]*)\.([a-z][a-z0-9_]*)\.([1-9][0-9]*)$/;
+  var XP_GATEWAY = API + '/api/public/experiments/v1/events';
+  function xpParse(s) {
+    var m = XP_RE.exec(String(s || ''));
+    if (!m || XP_KEYS.indexOf(m[1]) < 0) return null;
+    return { experimentKey: m[1], variation: m[2], configVersion: parseInt(m[3], 10) };
+  }
+  function xpString(c) { return c.experimentKey + '.' + c.variation + '.' + c.configVersion; }
+  // The arm this page shows, from the /start/ pages' inline decide; null on other pages and for a
+  // visitor outside the test.
+  function xpPage() {
+    var x = window.boltXp;
+    return x && x.variation ? xpParse(x.key + '.' + x.variation + '.' + x.configVersion) : null;
+  }
+  // The arm a sign-up link carries: a QA browser's forced arm (this browser session), else the
+  // arm this page shows, else the one kept from the visitor's exposure.
+  function xpContext() {
+    if (isQa()) { var f = xpParse(get('bolt_xp', 'session')); if (f) return f; }
+    return xpPage() || xpParse(get('bolt_xp'));
+  }
+  // A version 4 UUID: the platform's events require one as eventId.
+  function uuid4() {
+    try { if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID(); } catch (e) {}
+    var b = [], i;
+    try { var r = new Uint8Array(16); window.crypto.getRandomValues(r); for (i = 0; i < 16; i++) b.push(r[i]); }
+    catch (e) { for (i = 0; i < 16; i++) b.push(Math.floor(Math.random() * 256)); }
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var hex = '';
+    for (i = 0; i < 16; i++) hex += (b[i] + 0x100).toString(16).slice(1);
+    return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+  }
+  // The platform's per-tab session id (any 1-200 characters).
+  var xpSid = null;
+  function xpSession() {
+    if (xpSid) return xpSid;
+    xpSid = get('bolt_xp_sid', 'session');
+    if (!xpSid || !ID_RE.test(xpSid)) { xpSid = uuid4(); set('bolt_xp_sid', xpSid, 'session'); }
+    return xpSid;
+  }
+  // One event to the platform through EZ's gateway: JSON + keepalive (EZ parses JSON only), fire
+  // and forget. EZ adds its ingest key; the browser holds none. Never for our own test browsers.
+  function xpSend(name, type, ctx, props) {
+    if (isQa()) return;
+    try {
+      window.fetch(XP_GATEWAY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          eventId: uuid4(), eventName: name, eventType: type, platform: 'web',
+          anonymousId: visitorId(), sessionId: xpSession(),
+          url: window.location.origin + window.location.pathname,
+          sdkVersion: 'bolt-site-1', timestamp: new Date().toISOString(),
+          experiments: [ctx], properties: props || {}
+        })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  // The /start/ pages call this once the page is seen (whenVisible, as site_landed). Once per
+  // browser tab session per visitor and arm, as the platform's own web SDK sends exposures (a new
+  // visitor id in the same tab, its storage cleared or blocked, is a new subject and is reported).
+  function xpExpose() {
+    var c = xpPage();
+    if (!c) return null;
+    var s = xpString(c), forced = !!window.boltXp.forced, mark = visitorId() + ' ' + s;
+    if (forced) set('bolt_xp', s, 'session'); else set('bolt_xp', s);
+    if (get('bolt_xp_sent', 'session') === mark) return c;
+    set('bolt_xp_sent', mark, 'session');
+    xpSend('experiment_exposed', 'exposure', c, {});
+    var p = { experiment_key: c.experimentKey, variation: c.variation, config_version: c.configVersion };
+    if (forced) p.forced = true;
+    track('xp_exposed', p);
+    return c;
+  }
 
   // ---------- count only a page someone sees (AFMBP-2010) ----------
   // A page can run without anyone looking at it: browsers prerender likely next
@@ -198,6 +293,12 @@
       // Other first-party scripts follow the funnel through this event rather
       // than hooking track(): meta-pixel.js (AFMBP-2021) maps a few steps to Meta.
       try { window.dispatchEvent(new CustomEvent('bolt:track', { detail: { event: event, data: data } })); } catch (e) {}
+      // AFMBP-2612: a trial tap by a visitor in the landing A/B also goes to the platform, on any
+      // page (the SPEC's fallback primary, `start_trial_clicked`).
+      if (event === 'trial_link_clicked' || event === 'demo_trial_clicked') {
+        var xc = xpContext();
+        if (xc) xpSend('start_trial_clicked', 'track', xc, { from: String(data.from || data.placement || 'site') });
+      }
       return sent;
     } catch (e) {}
   }
@@ -225,6 +326,10 @@
       // Opted out under "Your Privacy Choices": the app keeps it for its own origin.
       if (get('bolt_optout') === '1') u.searchParams.set('bolt_optout', '1');
       else u.searchParams.delete('bolt_optout');
+      // AFMBP-2612: the visitor's arm in the landing A/B, for the app's sign-up page event.
+      var xc = xpContext();
+      if (xc) u.searchParams.set('xp', xpString(xc));
+      else u.searchParams.delete('xp');
       return u.toString();
     } catch (e) { return href; }
   }
@@ -376,6 +481,8 @@
 
   window.boltAttr = {
     track: track, visitorId: visitorId, touch: getTouch, decorate: decorate, whenVisible: whenVisible, isQa: isQa, isAutomated: isAutomated,
+    // AFMBP-2612: the landing A/B's exposure (called by the /start/ pages) and the arm links carry.
+    xpExpose: xpExpose, xp: xpContext,
     // AFMBP-2565: this page's browser, and the rule itself (tools/engagement-exit-check.mjs
     // holds it to bolt-web's own user-agent table).
     browser: BROWSER,

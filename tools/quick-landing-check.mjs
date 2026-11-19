@@ -31,9 +31,9 @@ const UA = 'Mozilla/5.0 (Linux; Android 14; SM-A146U; wv) AppleWebKit/537.36 (KH
 
 // Negative controls: break the served copy one way each; the run must then fail.
 const MUTATE = {
-  placement: (p, s) => s.replace('class="signup_offer ql-card"', 'class="ql-card"'),
+  placement: (p, s) => s.replace('class="signup_offer ql-card ql-card--c"', 'class="ql-card ql-card--c"'),
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
-  opened: (p, s) => s.replace("A.track('signup_offer_opened'", "A.track('signup_offer_seen'"),
+  opened: (p, s) => s.replace("A.track(T ? 'demo_card_opened' : 'signup_offer_opened'", "A.track(T ? 'demo_card_opened' : 'signup_offer_seen'"),
   trade: (p, s) => s.replace("{ trigger: 'quick_landing', trade: TRADE }", "{ trigger: 'quick_landing' }"),
   noindex: (p, s) => s.replace('<meta name="robots" content="noindex" />', ''),
   prefetch: (p, s) => s.replace("l.rel = 'prefetch'; l.href", "l.rel = 'prefetch'; l.crossOrigin = 'anonymous'; l.href"),
