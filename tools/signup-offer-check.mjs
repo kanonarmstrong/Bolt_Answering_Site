@@ -23,7 +23,9 @@
 //     dialog, Tab goes round the cross and "Start your free trial";
 //   - regressions: ?talk=1 still opens the demo; a plain page opens nothing;
 //   - sizes: phones 280-430, tablet 768, desktop 1024-1920 (the same card everywhere, no
-//     desktop node yet): no horizontal overflow, every piece on screen and inside the card.
+//     desktop node yet): no horizontal overflow, every piece on screen and inside the card;
+//     where the card zooms (under 337px), the iOS-only rule that turns iPad Safari's text
+//     autosizing off on it, and nowhere else (AFMBP-2602).
 // Run: node tools/signup-offer-check.mjs [siteRoot]
 //      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE).
 // Nothing leaves the machine: Chrome resolves no host but 127.0.0.1, and every other request is
@@ -96,6 +98,10 @@ const MUTATE = {
   off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:412.4px;width:252px;height:49px;', 'position:absolute;left:43.4px;top:417.4px;width:252px;height:49px;')],
   // A narrow phone clips the card instead of scaling it down.
   no_zoom: ['demo.css', (s) => cut(s, '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }', '@media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{left:0} }')],
+  // AFMBP-2602: iPad Safari's text autosizing left on in the zoomed card, or set to 100% (which does
+  // not fix it).
+  ios_autosize: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '.demo-backdrop[data-screen="signup"] .demo-card{}')],
+  ios_tsa_100: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '.demo-backdrop[data-screen="signup"] .demo-card{-webkit-text-size-adjust:100%;text-size-adjust:100%}')],
   // "Start your free trial" loses its shadow.
   flat_button: ['demo.css', (s) => cut(s, '  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);\n  display:flex;', '  display:flex;')],
   // The testimonial is kept on one line.
@@ -146,6 +152,16 @@ const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chro
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0, good = 0;
 const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); } };
+// AFMBP-2602: the text-size-adjust of every iOS-only rule (inside @supports (-webkit-touch-callout:none))
+// that reaches an element here, each @media evaluated against this window and each selector against
+// the element. Chrome never applies those rules, so they are read from the style sheets.
+const IOS_TSA = `function iosTsa(el){var hit=[];
+  function walk(list, ios){for(var i=0;i<list.length;i++){var r=list[i];
+    if(r instanceof CSSSupportsRule) walk(r.cssRules, ios||/-webkit-touch-callout\\s*:\\s*none/.test(r.conditionText));
+    else if(r instanceof CSSMediaRule){if(matchMedia(r.media.mediaText).matches) walk(r.cssRules, ios);}
+    else if(ios && r instanceof CSSStyleRule && el.matches(r.selectorText)) hit.push(r.style.getPropertyValue('text-size-adjust'));}}
+  for(var s=0;s<document.styleSheets.length;s++){try{walk(document.styleSheets[s].cssRules,false);}catch(e){}}
+  return hit;}`;
 
 // The node (2718:3312, the "New jobs are calling" design of 2026-11-02, AFMBP-2495), card-relative
 // CSS px, as matched to its glyphs (Chrome at a true 3x and iPhone Safari). The card's children sit
@@ -457,6 +473,10 @@ try {
       const g = await run(`.demo-backdrop.open ${sel}`);
       ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]})`);
     }
+    // AFMBP-2602: where the card zooms, iPad Safari's text autosizing must be off on it, or every word
+    // draws at its unzoomed size; where it does not, no iOS text rule reaches it.
+    const t = await ev(`(function(){${IOS_TSA} var k=document.querySelector('.demo-backdrop.open .demo-card'); return k ? {zoom:parseFloat(getComputedStyle(k).zoom), ios:iosTsa(k)} : null;})()`);
+    ok(!!t && (t.zoom < 1 ? t.ios.join() === 'none' : t.ios.length === 0), `${w}x${h}: ${t && t.zoom < 1 ? `the card zooms to ${t.zoom} and iOS turns text autosizing off on it` : 'the card does not zoom and no iOS text rule reaches it'} (${t && JSON.stringify(t.ios)})`);
   }
 
   console.log(bad ? `\n${bad} FAILED, ${good} passed${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS (${good} checks)${NC ? ` — negative control ${NC} did NOT bite` : ''}`);

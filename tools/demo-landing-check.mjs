@@ -32,7 +32,9 @@
 //     tap on the shade);
 //   - responsive: phones 280-430, tablet 768, desktop 1024-1920: no horizontal overflow,
 //     both buttons inside the viewport, every word inside the card (under 337px the card
-//     scales down rather than clip).
+//     scales down rather than clip); wherever a card zooms (all eight card screens, swapped
+//     in turn), the iOS-only rule that turns iPad Safari's text autosizing off on it, and
+//     nowhere else (AFMBP-2602).
 // Run: node tools/demo-landing-check.mjs [siteRoot]
 //      SHOTS=<dir> saves the choice at 402x753 @3x and 1920x1200 @1x (plus each phone size).
 //      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE). no_fix takes out
@@ -113,6 +115,11 @@ const MUTATE = {
   big_help: ['demo.css', (s) => cut(s, 'position:absolute;left:43.4px;top:347.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;', 'position:absolute;left:43.4px;top:346.07px;width:249.5px;margin:0;font-size:15px;line-height:18px;text-align:center;')],
   // A narrow phone clips the pitch instead of scaling the card down.
   no_zoom: ['demo.css', (s) => cut(s, '.demo-card{zoom:.94;left:0}', '.demo-card{left:0}')],
+  // AFMBP-2602: iPad Safari's text autosizing left on in the zoomed cards, set to 100% (which does
+  // not fix it), or let out to cards that do not zoom.
+  ios_autosize: ['demo.css', (s) => cut(s, '[data-screen="fail"]) .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '[data-screen="fail"]) .demo-card{}')],
+  ios_tsa_100: ['demo.css', (s) => cut(s, '[data-screen="fail"]) .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '[data-screen="fail"]) .demo-card{-webkit-text-size-adjust:100%;text-size-adjust:100%}')],
+  ios_tsa_wide: ['demo.css', (s) => cut(s, '@supports (-webkit-touch-callout:none){\n    @media (max-width:336px){', '@supports (-webkit-touch-callout:none){\n    @media (max-width:768px){')],
   // AFMBP-2097, one piece at a time, then all of it.
   // Opening the demo leaves keyboard focus where it was.
   no_focus_in: ['demo.js', (s) => cut(s, '    focusDialog();\n    // A reload in the middle', '    // A reload in the middle')],
@@ -174,6 +181,23 @@ const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chro
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let bad = 0, good = 0;
 const ok = (c, m) => { if (c) good++; else { bad++; console.log(`  FAIL ${m}`); } };
+// AFMBP-2602: the text-size-adjust of every iOS-only rule (inside @supports (-webkit-touch-callout:none))
+// that reaches an element here, each @media evaluated against this window and each selector against
+// the element. Chrome never applies those rules, so they are read from the style sheets.
+const IOS_TSA = `function iosTsa(el){var hit=[];
+  function walk(list, ios){for(var i=0;i<list.length;i++){var r=list[i];
+    if(r instanceof CSSSupportsRule) walk(r.cssRules, ios||/-webkit-touch-callout\\s*:\\s*none/.test(r.conditionText));
+    else if(r instanceof CSSMediaRule){if(matchMedia(r.media.mediaText).matches) walk(r.cssRules, ios);}
+    else if(ios && r instanceof CSSStyleRule && el.matches(r.selectorText)) hit.push(r.style.getPropertyValue('text-size-adjust'));}}
+  for(var s=0;s<document.styleSheets.length;s++){try{walk(document.styleSheets[s].cssRules,false);}catch(e){}}
+  return hit;}`;
+// The demo's card screens, each one's card zoom and iOS text rules in turn: the backdrop's
+// data-screen swapped and put back in one go, so no frame ever shows a swapped screen.
+const SCREENS = ['choice', 'inbound-call', 'inbound-fail', 'phone', 'code', 'calling', 'recap', 'fail'];
+const SCREEN_TSA = `(function(){${IOS_TSA} var b=document.querySelector('.demo-backdrop.open'), k=b&&b.querySelector('.demo-card'), was=b&&b.getAttribute('data-screen'), out=[];
+  if(!k) return null;
+  ${JSON.stringify(SCREENS)}.forEach(function(n){b.setAttribute('data-screen',n); out.push({screen:n, zoom:parseFloat(getComputedStyle(k).zoom), ios:iosTsa(k)});});
+  b.setAttribute('data-screen',was); return out;})()`;
 
 // The phone node (2670:952 as updated 2026-11-14, AFMBP-2606), card-relative CSS px, as
 // matched to its 3x export (Chrome at a true 3x and iPhone Safari): the node's children sit
@@ -574,6 +598,11 @@ try {
       ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub, .demo-backdrop .demo-d, .demo-backdrop .demo-db, .demo-backdrop .demo-m, .demo-backdrop .demo-mb')")) === false, `${w}x${h}: no second, computer-only design in the page`);
       if (w === 1920) await shot('d-choice-1920x1200');
     }
+    // AFMBP-2602: wherever a card zooms, iPad Safari's text autosizing must be off on it, or every
+    // word draws at its unzoomed size; nowhere else does the iOS rule reach a card.
+    const zs = (await ev(SCREEN_TSA)) || [];
+    ok(zs.length === SCREENS.length, `${w}x${h}: every card screen measured (${zs.length} of ${SCREENS.length})`);
+    for (const z of zs) ok(z.zoom < 1 ? z.ios.join() === 'none' : z.ios.length === 0, `${w}x${h}: ${z.screen}: ${z.zoom < 1 ? `the card zooms to ${z.zoom} and iOS turns text autosizing off on it` : 'the card does not zoom and no iOS text rule reaches it'} (${JSON.stringify(z.ios)})`);
   }
 
   console.log(bad ? `\n${bad} FAILED, ${good} passed${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS (${good} checks)${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
