@@ -12,6 +12,10 @@
 //     engaged and lcp_ms as the page itself measured them; a page nobody saw sends nothing; time
 //     hidden before the page was seen doesn't count; a page back from the back/forward cache is a
 //     new view;
+//   - AFMBP-2657: site_exit's inp_ms is the view's slowest interaction (not its first) and its cls
+//     the largest burst of shifts nobody caused (not their sum, not a shift right after a tap), each
+//     as the page's own Event Timing and Layout Instability entries say; a view with no tap sends
+//     inp_ms null, and a view back from the back/forward cache starts both again;
 //   - the same flags as every event: qa on a QA visit, automated in an automated browser, and an
 //     opt-out keeps Bolt's own first-party events running, as it always has for site_landed;
 //   - the warm-up: every page with a sign-up link (and the blog template) opens the app's
@@ -58,7 +62,15 @@ const MUTATE = {
   // The view starts before anyone sees the page: a preload sends site_exit.
   exit_unseen: ['attribution.js', (s) => cut(s, 'whenVisible(landed); whenVisible(firstView); }', 'whenVisible(landed); firstView(); }')],
   // A page back from the back/forward cache is not a new view.
-  no_new_view: ['attribution.js', (s) => cut(s, '    if (e && e.persisted) whenVisible(function () { startView(sinceStart()); });\n', '')],
+  no_new_view: ['attribution.js', (s) => cut(s, '      whenVisible(function () { startView(sinceStart()); });\n', '')],
+  // AFMBP-2657: INP is the first interaction, not the slowest.
+  inp_first: ['attribution.js', (s) => cut(s, '      inp.slowest.sort(function (a, b) { return b.ms - a.ms; });\n', '')],
+  // A shift right after an input counts.
+  cls_input: ['attribution.js', (s) => cut(s, '      if (e.hadRecentInput) continue;\n', '')],
+  // Every shift adds up: no bursts.
+  cls_sum: ['attribution.js', (s) => cut(s, 'if (burst.sum && e.startTime - burst.last < 1000 && e.startTime - burst.first < 5000) burst.sum += e.value;', 'if (burst.sum) burst.sum += e.value;')],
+  // A view back from the back/forward cache keeps the last view's taps and shifts.
+  view_carry: ['attribution.js', (s) => cut(s, '      resetInp();\n      if (cls !== null) { cls = 0; burst = { sum: 0, first: 0, last: 0 }; }\n', '')],
   // The deepest point is not kept: scroll_pct is where the screen was at the end.
   last_depth: ['attribution.js', (s) => cut(s, '    if (view && !view.done) view.bottom = Math.max(view.bottom, screenBottom());', '    if (view && !view.done) view.bottom = screenBottom();')],
   // A trade page loses the app's crossorigin preconnect (the preload list's).
@@ -435,6 +447,58 @@ try {
     await close(ctx);
   }
 
+  // ================= AFMBP-2657: tap speed (INP) and layout shift (CLS) on site_exit =================
+  console.log('[pixel 7] tap speed and layout shift');
+  {
+    // The page's own Event Timing and Layout Instability entries, recorded beside attribution.js's,
+    // and worked out here as Chrome defines INP and CLS.
+    const REC = `window.__ev = []; window.__ls = [];
+      var ev = function (l) { l.getEntries().forEach(function (e) { window.__ev.push({ id: e.interactionId, d: e.duration }); }); };
+      new PerformanceObserver(ev).observe({ type: 'event', buffered: true, durationThreshold: 16 });
+      new PerformanceObserver(ev).observe({ type: 'first-input', buffered: true });
+      new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { window.__ls.push({ v: e.value, t: e.startTime, input: e.hadRecentInput }); }); }).observe({ type: 'layout-shift', buffered: true }); true`;
+    const refInp = (ev) => { const by = new Map(); for (const e of ev) if (e.id) by.set(e.id, Math.max(by.get(e.id) || 0, Math.round(e.d))); const v = [...by.values()].sort((a, b) => b - a); return v.length ? v[Math.min(v.length - 1, Math.floor(by.size / 50))] : null; };
+    const bursts = (ls) => { const out = []; let b = null; for (const e of ls) { if (e.input) continue; if (b && e.t - b.last < 1000 && e.t - b.first < 5000) b.sum += e.v; else out.push(b = { sum: e.v, first: e.t }); b.last = e.t; } return out.map((x) => x.sum); };
+    const r4 = (x) => Math.round(x * 10000) / 10000;
+    const push = (px) => `(function(){ var d = document.createElement('div'); d.style.height = '${px}px'; document.body.insertBefore(d, document.body.firstChild); return true; })()`;
+    const ctx = await context(); const tab = await openTab(ctx);
+    await tab.go('/terms/?bolt_qa=1');
+    await sleep(800);
+    await tab.ev(REC);
+    // A quick tap first, then two slow ones (180 ms in a click handler): INP is a slow one.
+    await tab.tapPlain();
+    await tab.ev(`document.addEventListener('click', function () { var t = performance.now(); while (performance.now() - t < 180) {} }); true`);
+    await tab.tapPlain();
+    await sleep(800);   // past the 500 ms after an input in which a shift doesn't count
+    // Two shifts nobody caused, over a second apart (two bursts, the second larger); then the
+    // largest, right after a tap.
+    await tab.ev(push(60)); await sleep(1300);
+    await tab.ev(push(140)); await sleep(1300);
+    await tab.ev(`document.addEventListener('click', function () { var d = document.createElement('div'); d.style.height = '320px'; document.body.insertBefore(d, document.body.firstChild); }); true`);
+    await tab.tapPlain();
+    await sleep(900);
+    await hide(ctx, tab); await sleep(400);
+    const rec = await tab.ev('({ ev: window.__ev, ls: window.__ls })');
+    const ex = tab.of('site_exit', '/terms/'), d = ex[0] && ex[0].data;
+    const ids = new Set(rec.ev.filter((e) => e.id).map((e) => e.id)), wantInp = refInp(rec.ev);
+    const b = bursts(rec.ls), wantCls = r4(Math.max(0, ...b)), sum = r4(b.reduce((a, x) => a + x, 0));
+    const withTap = r4(Math.max(0, ...bursts(rec.ls.map((e) => ({ ...e, input: false })))));
+    ok(ex.length === 1 && !!d, `inp/cls: hidden sends one site_exit (${ex.length})`);
+    ok(ids.size === 3 && rec.ls.filter((e) => e.input).length >= 1 && b.length >= 2 && withTap > wantCls && sum > wantCls, `inp/cls: the page saw 3 taps, shifts nobody caused in ${b.length} bursts ${show(b.map(r4))}, and a larger shift right after a tap (${withTap})`);
+    ok(!!d && typeof d.inp_ms === 'number' && d.inp_ms >= 180 && d.inp_ms === wantInp, `inp: inp_ms is the slowest tap, as the page's own entries say (${d && d.inp_ms}, entries say ${wantInp}; a slow tap spends 180 ms in its handler)`);
+    ok(!!d && typeof d.cls === 'number' && d.cls === wantCls, `cls: cls is the largest burst nobody caused, not their sum (${sum}) nor the tap's shift (${withTap}) (${d && d.cls}, entries say ${wantCls})`);
+    sample.site_exit_inp_cls = ex[0];
+    await front(tab);
+    await tab.go('/privacy/?bolt_qa=1');
+    const restored = await tab.back();
+    ok(restored, `bfcache: Back restores /terms/ from the back/forward cache (${restored ? 'restored' : 'not restored: ' + show(tab.notCached)})`);
+    await sleep(900);
+    await hide(ctx, tab); await sleep(300);
+    const ex2 = tab.of('site_exit', '/terms/'), d2 = ex2[1] && ex2[1].data;
+    ok(ex2.length === 2 && !!d2 && d2.inp_ms === null && d2.cls === 0, `bfcache: the restored view starts again: no tap yet (inp_ms null), nothing moved (cls 0) (${show(d2 && { inp_ms: d2.inp_ms, cls: d2.cls })})`);
+    await close(ctx);
+  }
+
   // ================= a key; a script's own events and a box scrolling are not a person =================
   console.log('[mac] a key; [pixel 7] what is not a person');
   {
@@ -518,7 +582,7 @@ try {
   }
 
   console.log('\nsample payloads:');
-  for (const k of ['site_landed', 'site_engaged', 'site_exit', 'fb']) if (sample[k]) console.log(`  ${k === 'fb' ? 'site_landed (Facebook on Android)' : k}: ${show(sample[k].data)}`);
+  for (const k of ['site_landed', 'site_engaged', 'site_exit', 'site_exit_inp_cls', 'fb']) if (sample[k]) console.log(`  ${k === 'fb' ? 'site_landed (Facebook on Android)' : k}: ${show(sample[k].data)}`);
   for (const k of ['prodLogs', 'logs_404', 'logs_offline', 'logs_json']) console.log(`  the browser's own console lines (${k === 'prodLogs' ? "today's answer" : k.slice(5)}): ${show(sample[k] || [])}`);
   console.log(`\n${good}/${good + bad} passed${NC ? ` (NC=${NC})` : ''}`);
   ws.close();

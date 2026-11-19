@@ -287,7 +287,8 @@ try {
   const art = (await ev("(function(){var s=getComputedStyle(document.querySelector('.demo-backdrop.open .demo-card'));return {img:s.backgroundImage,size:s.backgroundSize,pos:s.backgroundPosition,rep:s.backgroundRepeat};})()")) || {};
   ok(/assets\/demo-so-card\.webp/.test(art.img) && art.size === 'cover' && art.pos === '50% 50%' && art.rep === 'no-repeat', `phone: the card's art is the node's image, covering the card from its centre (${JSON.stringify(art)})`);
   const artW = await ev("new Promise(function(r){var i=new Image();i.onload=function(){r(i.naturalWidth+'x'+i.naturalHeight)};i.onerror=function(){r(null)};i.src='assets/demo-so-card.webp';})");
-  ok(artW === '941x1670', `phone: the art loads, at the node's 941x1670 (${artW})`);
+  // AFMBP-2657: the node's 941x1670 image at twice the size the card draws it (354x629, cover).
+  ok(artW === '709x1258', `phone: the art loads, at 709x1258, twice the size the card draws it (${artW})`);
   // The headline is in the art: its words are the one heading, for screen readers only.
   const h2 = (await ev("(function(){var e=document.querySelectorAll('.demo-backdrop.open h2'); if(e.length!==1) return {n:e.length}; var s=getComputedStyle(e[0]), r=e[0].getBoundingClientRect(); return {n:1, t:e[0].textContent, clip:s.clipPath, w:r.width, h:r.height, display:s.display, vis:s.visibility};})()")) || {};
   ok(h2.n === 1 && h2.t === HEAD && h2.clip === 'inset(50%)' && h2.w <= 1 && h2.h <= 1 && h2.display !== 'none' && h2.vis === 'visible', `a11y: one heading, "${HEAD}", read out but not drawn over the art (${JSON.stringify(h2)})`);

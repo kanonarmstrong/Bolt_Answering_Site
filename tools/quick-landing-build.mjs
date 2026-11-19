@@ -10,6 +10,7 @@
 // anything paints, from bolt_vid and the definition baked in tools/xp/landing_demo_buttons.json,
 // with the platform's own assignment (tools/xp/bolt-assign-es5.js). See tools/xp-landing-check.mjs.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { staleCopies } from './demo-min.mjs';
 const src = readFileSync('handyman.html', 'utf8');
 const g0 = src.indexOf('  <!-- Google tag (gtag.js)');
 const g1 = src.indexOf('</script>', g0) + '</script>'.length;
@@ -24,12 +25,15 @@ const tag = (name) => {
 };
 const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), reddit: tag('reddit-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
 // The demo's files at the versions the trade pages load (the treatment card loads them after it
-// has painted).
+// has painted). AFMBP-2657: their minified copies (tools/demo-min.mjs), at the sources' versions;
+// no build while a copy is older than its source.
+const stale = staleCopies();
+if (stale.length) throw new Error(`older than their sources: ${stale.join(', ')}. Run node tools/demo-min.mjs first`);
 const ver = (re, what) => { const m = src.match(re); if (!m) throw new Error(`${what} not found in handyman.html`); return m[1]; };
 const DEMO = {
-  css: `/demo.css?v=${ver(/href="\/?demo\.css\?v=(\d+)"/, 'demo.css')}`,
-  format: `/demo-format.js?v=${ver(/src="\/?demo-format\.js\?v=(\d+)"/, 'demo-format.js')}`,
-  js: `/demo.js?v=${ver(/src="\/?demo\.js\?v=(\d+)"/, 'demo.js')}`,
+  css: `/demo.min.css?v=${ver(/href="\/?demo\.css\?v=(\d+)"/, 'demo.css')}`,
+  format: `/demo-format.min.js?v=${ver(/src="\/?demo-format\.js\?v=(\d+)"/, 'demo-format.js')}`,
+  js: `/demo.min.js?v=${ver(/src="\/?demo\.js\?v=(\d+)"/, 'demo.js')}`,
 };
 
 // AFMBP-2612: the baked definition and the platform's assignment, inlined in <head>.
