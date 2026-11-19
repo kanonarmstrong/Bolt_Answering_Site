@@ -241,6 +241,7 @@ try {
   await openOutboundDemo();
   // The form asks for the number only since AFMBP-2600 (BIZ and EMAIL stay in the needles).
   await typeInto('#demo-phone', PHONE);
+  await sleep(6000); // a person takes a few seconds, and Reddit's scanner re-reads the page every 0.5–10 s
   await tap("[].slice.call(document.querySelectorAll('.demo-btn')).find(function(b){return /continue/i.test(b.textContent)})");
   await until(async () => (await ev("document.querySelectorAll('.demo-code input').length")) === 6, 8000);
   await ev("document.querySelector('.demo-code input').focus(), 1");
@@ -253,13 +254,17 @@ try {
   await sleep(4000);
   const m2 = sent.length;
 
-  let rstate = null;
+  let rstate = null, mTap = Infinity;
   if (RPIXEL) {
-    console.log('[2] an email typed into the "Stay in touch" box (handyman.html), then one more page');
+    console.log('[2] an email typed into the "Stay in touch" box (handyman.html), a start-trial tap on that page, then one more page');
     await send('Page.navigate', { url: ORIGIN + '/handyman.html' });
     await sleep(3000);
     await typeEmailBox();
     await sleep(6000);
+    // The Lead goes out on the page where the email was typed (what Reddit's matching would attach it to).
+    mTap = sent.length;
+    ok(await tap("[].slice.call(document.querySelectorAll('a')).find(function(a){return /app\\.boltanswering\\.com\\/signup/.test(a.href) && !a.closest('.demo-backdrop')})"), 'a start-trial link was tapped on handyman.html');
+    await sleep(2500);
     await send('Page.navigate', { url: ORIGIN + '/electrical.html' });
     await sleep(5000);
     rstate = { aam: JSON.parse(await ev("JSON.stringify(window.rdt && window.rdt.aam || null)")), cookies: await cookieNames() };
@@ -315,7 +320,8 @@ try {
     ok(REDDIT_SRC.includes(CLEANUP_CALL), 'reddit-pixel.js deletes the cookies Reddit stored while matching was on (clearRedditMatchCookies)');
     ok(libErrors.length === 0, `Reddit's served script and settings were read ${libErrors.length ? JSON.stringify(libErrors) : ''}`);
     ok(served.reddit - reddit1 >= 1 && reddit.some((s) => text(s).includes(RPIXEL)), `Reddit's real script ran and sent to pixel ${RPIXEL}`);
-    ok(reddit.some((s) => /PageVisit/.test(text(s))) && reddit.some((s) => /\bLead\b/.test(text(s))), 'Reddit got PageVisit and Lead');
+    const leadIn = (a, b) => sent.slice(a, b).filter(isReddit).some((s) => /\bLead\b/.test(text(s)));
+    ok(reddit.some((s) => /PageVisit/.test(text(s))) && leadIn(m1, m2) && leadIn(mTap), 'Reddit got PageVisit, and a Lead from both start-trial taps (the demo recap, handyman.html)');
     ok(redditServedOff, `Reddit serves automatic matching OFF for pixel ${RPIXEL} (${redditServed}). If ON: Reddit Ads → Events Manager → pixel ${RPIXEL} → Settings → automatic advanced matching off for email and phone number`);
     ok(!(rstate.aam && (rstate.aam.email || rstate.aam.phoneNumber)), `no automatic matching ran in Reddit's script (rdt.aam ${JSON.stringify(rstate.aam)})`);
     const auto = reddit.filter((s) => /auto_(pn|em)/.test(text(s)));
