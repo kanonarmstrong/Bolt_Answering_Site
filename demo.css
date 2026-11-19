@@ -287,6 +287,16 @@ body.demo-lock{overflow:hidden}
   @media (max-width:316px){
     .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{zoom:.83}
   }
+  /* iPad Safari runs desktop-class, with its text autosizing on, and the autosizing
+     ignores zoom: every word in a zoomed card drew at its unzoomed size (6% big at
+     .94, 20% at .83) and rewrapped (AFMBP-2602). Turning it off on the card fixes
+     that; 100% does not. Only iOS WebKit supports -webkit-touch-callout, so no other
+     browser gets the rule (Chrome on Android keeps its large-text setting). */
+  @supports (-webkit-touch-callout:none){
+    @media (max-width:336px){
+      .demo-backdrop:is([data-screen="choice"],[data-screen="inbound-call"],[data-screen="inbound-fail"],[data-screen="phone"],[data-screen="code"],[data-screen="calling"],[data-screen="recap"],[data-screen="fail"]) .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}
+    }
+  }
   /* The older checker-plate art is not in these nodes. */
 
   /* Every phone button since the 2026-11-13 update (AFMBP-2597) is Inter Bold with
@@ -655,6 +665,9 @@ body.demo-lock{overflow:hidden}
 }
 @media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.94;left:0} }
 @media (max-width:316px){ .demo-backdrop[data-screen="signup"] .demo-card{zoom:.83} }
+/* iPad Safari's text autosizing ignores that zoom: off on the card, iOS WebKit only,
+   as on the demo cards (AFMBP-2602). */
+@supports (-webkit-touch-callout:none){ @media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none} } }
 .demo-backdrop[data-screen="signup"] .demo-logo{display:none}
 /* The close button: the node's 13px cross (2718:3345, at 299/25 on the card) in a
    44px tap target, above the body. */
