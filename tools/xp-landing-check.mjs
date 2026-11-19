@@ -89,6 +89,13 @@ const server = createServer(async (req, res) => {
     if (t === s) { console.error(`the test bake did not land in ${rel}`); process.exit(2); }
     text = t;
   }
+  // AFMBP-2654: this checks what reddit-pixel.js does, not whether the live pixel ID is switched on
+  // today, so the served copy carries a test ID (as in reddit-pixel-check.mjs).
+  if (rel === 'reddit-pixel.js') {
+    const s = text ?? raw.toString('utf8'); const ID_LINE = /var PIXEL_ID = '[A-Za-z0-9_]*';/;
+    if ((s.match(new RegExp(ID_LINE.source, 'g')) || []).length !== 1) { console.error('reddit-pixel.js must carry exactly one PIXEL_ID line'); process.exit(2); }
+    text = s.replace(ID_LINE, "var PIXEL_ID = 't2_testpixel0001';");
+  }
   if (NC) {
     const [target, fn] = MUTATE[NC];
     if (target === rel || (target === 'start' && rel.startsWith('start/'))) {
