@@ -12,6 +12,9 @@
 //   - at 320 and 300 wide both cards (the sign-up card and the landing A/B's demo card) zoom and
 //     the iOS-only rule that turns iPad Safari's text autosizing off reaches them; at 337 neither
 //     (AFMBP-2602).
+//   - AFMBP-2657: the demo card loads the demo's minified copies (tools/demo-min.mjs) at the versions
+//     the trade pages load the sources; each copy names its source as it is now; and demo.min.css is,
+//     to Chrome, the same style sheet as demo.css, rule for rule.
 // The ingest and the pixel are stubbed in the page; nothing reaches production. Nothing leaves the
 // machine either: Chrome resolves no host but 127.0.0.1, so the page's requests to other hosts, its
 // preconnects and prefetches, and Chrome's own background requests all fail to resolve.
@@ -23,6 +26,7 @@ import { spawn } from 'node:child_process';
 import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
+import { staleCopies } from './demo-min.mjs';
 
 const ROOT = resolve(process.argv[2] || '.');
 const NC = process.env.NC || '';
@@ -55,7 +59,13 @@ const IOS_TSA = `function iosTsa(el){var hit=[];
     else if(ios && r instanceof CSSStyleRule && el.matches(r.selectorText)) hit.push(r.style.getPropertyValue('text-size-adjust'));}}
   for(var s=0;s<document.styleSheets.length;s++){try{walk(document.styleSheets[s].cssRules,false);}catch(e){}}
   return hit;}`;
-if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
+// AFMBP-2657: controls on the demo's minified copies, served broken.
+const MUTATE_FILE = {
+  min_css: ['demo.min.css', (s) => s.replace('overflow:hidden;overflow:clip', 'overflow:hidden')],
+  min_load: ['start/handyman.html', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
+};
+if (NC && MUTATE_FILE[NC]) MUTATE[NC] = null;
+if (NC && MUTATE[NC] === undefined) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2', '.xml': 'application/xml' };
 const server = createServer((req, res) => {
@@ -64,7 +74,11 @@ const server = createServer((req, res) => {
   if (!file.startsWith(ROOT) || !existsSync(file)) { res.writeHead(404); return res.end(); }
   let body = readFileSync(file);
   const rel = file.slice(ROOT.length + 1);
-  if (NC && PAGES.includes(rel)) {
+  if (NC && MUTATE_FILE[NC] && MUTATE_FILE[NC][0] === rel) {
+    const s = body.toString('utf8'); const t = MUTATE_FILE[NC][1](s);
+    if (t === s) { console.error(`NC=${NC}: the mutation did not land in ${rel}`); process.exit(2); }
+    body = Buffer.from(t);
+  } else if (NC && MUTATE[NC] && PAGES.includes(rel)) {
     const s = body.toString('utf8'); const t = MUTATE[NC](rel, s);
     if (t === s) { console.error(`NC=${NC}: the mutation did not land in ${rel}`); process.exit(2); }
     body = Buffer.from(t);
@@ -175,6 +189,23 @@ try {
       check(`${w}px: all ${Array.isArray(t) ? t.length : 0} cards ${zWant < 1 ? `zoom to ${zWant} and iOS turns text autosizing off on them` : 'do not zoom and no iOS text rule reaches them'}`, Array.isArray(t) && t.length > 0 && t.every(good), t);
     }
   }
+
+  // AFMBP-2657: the demo's minified copies.
+  console.log('[the demo\'s minified copies]');
+  const stale = staleCopies(ROOT);
+  check('demo.min.css, demo-format.min.js and demo.min.js each name their source as it is now', stale.length === 0, stale);
+  const trade = readFileSync(join(ROOT, 'handyman.html'), 'utf8');
+  const v = (re) => (trade.match(re) || [])[1];
+  const want = [`'/demo.min.css?v=${v(/href="\/?demo\.css\?v=(\d+)"/)}'`, `'/demo-format.min.js?v=${v(/src="\/?demo-format\.js\?v=(\d+)"/)}'`, `'/demo.min.js?v=${v(/src="\/?demo\.js\?v=(\d+)"/)}'`];
+  for (const page of PAGES) {
+    const html = await (await fetch(`${BASE}/${page}`)).text();
+    check(`${page}: the demo card loads the copies at the trade pages' versions (${want.join(', ')}), none of the sources`, want.every((w) => html.includes(w)) && !/'\/demo(-format)?\.(js|css)\?/.test(html), html.match(/'\/demo[^']*'/g));
+  }
+  await load(`${BASE}/start/handyman.html`);
+  const rules = await ev(`Promise.all(['/demo.css', '/demo.min.css'].map((f) => fetch(f, { cache: 'no-store' }).then((r) => r.text()).then((t) => { const k = new CSSStyleSheet(); k.replaceSync(t); return [].map.call(k.cssRules, (r) => r.cssText); })))`);
+  const same = Array.isArray(rules) && rules[0].length > 50 && JSON.stringify(rules[0]) === JSON.stringify(rules[1]);
+  const at = same || !Array.isArray(rules) ? -1 : rules[0].findIndex((r, i) => r !== rules[1][i]);
+  check(`demo.min.css is the same style sheet as demo.css to Chrome (${Array.isArray(rules) ? rules[0].length : 0} rules, each the same)`, same, at < 0 ? rules : { rule: at, css: rules[0][at], min: rules[1][at] });
 } finally {
   try { ws && ws.close(); } catch {}
   chrome.kill('SIGKILL'); server.close();

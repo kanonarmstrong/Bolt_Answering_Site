@@ -13,6 +13,7 @@
 //   - the demo card's buttons run today's demo: "She calls you" opens the form, "You call her" is a
 //     tel: link with the demo line's code before the tap and opens the call card; coming back after
 //     the dial is logged (demo_inbound_returned); a tap before demo.js has loaded is carried out;
+//     the demo comes as its minified copies (tools/demo-min.mjs, AFMBP-2657), never the sources;
 //   - unbaked, a real visitor sees the sign-up card and nothing goes to the gateway;
 //   - QA (?bolt_qa=1&bolt_xp=<arm>): the forced card, nothing to the gateway, and every sign-up
 //     link on the four surfaces (the card, the home floating Start, the demo recap and the demo
@@ -30,6 +31,8 @@
 // (Reddit's host doesn't resolve). Nothing reaches production; Chrome resolves no host but 127.0.0.1.
 // Run: node tools/xp-landing-check.mjs [siteRoot]
 //      NC=<name> node tools/xp-landing-check.mjs   — one negative control (see MUTATE); each must FAIL.
+//      A control on a demo source (demo.js) is served in its minified copy's place, so it still
+//      reaches the page.
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
@@ -61,6 +64,7 @@ const MUTATE = {
   returned: ['demo.js', (s) => s.replace("      track('demo_inbound_returned', ", "      void ('demo_inbound_returned', ")],
   arm_call: ['demo.js', (s) => s.replace("        a.setAttribute('href', s.telUri);\n        // A code is offered", '        // A code is offered')],
   pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
+  full_demo: ['start', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
   strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
   geometry: ['start', (s) => s.replace('.qlt-call{top:354.53px;', '.qlt-call{top:358.53px;')],
   copy: ['start', (s) => s.replace('Two options to talk to <b>Sierra</b> now', 'Two ways to talk to <b>Sierra</b> now')],
@@ -69,6 +73,8 @@ const MUTATE = {
   reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
   reddit_optout: ['reddit-pixel.js', (s) => s.replace("    if (get('bolt_optout') === '1') return 'opted_out';\n", '')],
 };
+// AFMBP-2657: the pages load these copies of the demo's files.
+const MIN_OF = { 'demo.min.js': 'demo.js', 'demo-format.min.js': 'demo-format.js', 'demo.min.css': 'demo.css' };
 if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -98,13 +104,14 @@ const server = createServer(async (req, res) => {
   }
   if (NC) {
     const [target, fn] = MUTATE[NC];
-    if (target === rel || (target === 'start' && rel.startsWith('start/'))) {
-      const s = text ?? raw.toString('utf8'); const t = fn(s);
+    const source = MIN_OF[rel] === target ? readFileSync(join(ROOT, target), 'utf8') : null;
+    if (target === rel || source !== null || (target === 'start' && rel.startsWith('start/'))) {
+      const s = source ?? text ?? raw.toString('utf8'); const t = fn(s);
       if (t === s) { console.error(`NC=${NC}: the mutation did not land in ${rel}`); process.exit(2); }
       text = t;
     }
   }
-  if (rel === 'demo.js' && hold.demoMs) await sleep(hold.demoMs);
+  if ((rel === 'demo.min.js' || rel === 'demo.js') && hold.demoMs) await sleep(hold.demoMs);
   res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
   res.end(text ?? raw);
 });
@@ -272,7 +279,9 @@ try {
   check('funnel: one xp_exposed, treatment (the same arm as the exposure)', xe.length === 1 && xe[0].data.variation === 'treatment' && xe[0].data.config_version === CV, xe);
   const dco = typesOf(s, 'demo_card_opened');
   check('funnel: demo_card_opened {trigger quick_landing, trade handyman} once, no signup_offer_opened', dco.length === 1 && dco[0].data.trigger === 'quick_landing' && dco[0].data.trade === 'handyman' && typesOf(s, 'signup_offer_opened').length === 0, s.events.map((e) => e.type));
-  check('demo.js and demo.css load after the card has painted', await until(`!!(window.boltDemo && window.boltDemo.ready) && !!document.querySelector('link[rel=stylesheet][href^="/demo.css"]')`));
+  check('demo.js and demo.css load after the card has painted', await until(`!!(window.boltDemo && window.boltDemo.ready) && !!document.querySelector('link[rel=stylesheet][href^="/demo.min.css"]')`));
+  const demoFiles = await ev(`performance.getEntriesByType('resource').map((r) => new URL(r.name).pathname).filter((p) => /^\\/demo[.-]/.test(p))`);
+  check('the demo comes minified: demo.min.css, demo-format.min.js and demo.min.js, none of the sources', ['/demo.min.css', '/demo-format.min.js', '/demo.min.js'].every((f) => demoFiles.includes(f)) && !demoFiles.some((f) => !/\.min\.(js|css)$/.test(f)), demoFiles);
   check('"You call her" is the demo line\'s tel: link (with the code) before any tap', await until(`document.querySelector('.qlt-call').getAttribute('href') === 'tel:+18554973151,,1234'`), await ev(`document.querySelector('.qlt-call').getAttribute('href')`));
   s = await state();
   const sess = s.api.filter((a) => a.u === 'https://bolt-staging.fly.dev/api/demo/inbound/session');

@@ -8,7 +8,8 @@
      nothing);
    - logs, once the page is seen, the visitor's first tap, key or scroll
      (`site_engaged`) and, when the page is first hidden or left, how long it
-     was on screen and how far down it was read (`site_exit`) (AFMBP-2565);
+     was on screen and how far down it was read (`site_exit`) (AFMBP-2565),
+     with how fast it answered taps and how much it jumped (AFMBP-2657);
    - names the browser on every event (`browser`), by the web app's sign-up
      page's rules (AFMBP-2565);
    - hands both to the app on every signup link (?bvid=…&utm_*=…), so a
@@ -384,7 +385,7 @@
   // site_landed) and go out through track(): the same flags, the same keepalive send.
   //   site_engaged {ms}: the visitor's first tap, key or scroll of the page, once per page
   //     load; ms since the navigation started.
-  //   site_exit {visible_ms, scroll_pct, engaged, lcp_ms}: when the page is first hidden
+  //   site_exit {visible_ms, scroll_pct, engaged, lcp_ms, inp_ms, cls}: when the page is first hidden
   //     (another tab or app, the screen off) or left, whichever comes first; once per view.
   //     A page brought back from the back/forward cache is a new view.
   //       visible_ms  how long this view was on screen (a page seen as it loaded counts
@@ -395,6 +396,16 @@
   //       engaged     whether site_engaged was sent
   //       lcp_ms      Largest Contentful Paint, ms since the navigation started, or null
   //                   where the browser doesn't report it
+  //     AFMBP-2657, the landing A/B's speed guardrail (SPEC G1: LCP and INP at +20% p75; CLS is
+  //     only looked at):
+  //       inp_ms      Interaction to Next Paint: this view's slowest tap, click or key press,
+  //                   from the input to the next frame drawn, in ms (past 50 of them, one
+  //                   slowest per 50 is set aside, as Chrome counts it). null where the browser
+  //                   doesn't report it, or when nobody tapped, clicked or typed
+  //       cls         Cumulative Layout Shift: this view's largest burst of layout shifts nobody
+  //                   caused (shifts under 1 s apart, at most 5 s in all; a shift right after
+  //                   an input doesn't count), to 4 decimals; 0 when nothing moved, null where
+  //                   the browser doesn't report it (Safari and Firefox don't)
   function sinceStart() {
     try { if (window.performance && typeof window.performance.now === 'function') return window.performance.now(); } catch (e) {}
     return Date.now() - loadedAt;
@@ -410,6 +421,65 @@
       lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
     }
   } catch (e) { lcpObserver = null; }
+
+  // INP: the 10 slowest interactions so far, each at its slowest event. An event the browser
+  // took under 16 ms isn't reported, but the first interaction always is (first-input).
+  var inp, inpObservers = [];
+  function interactionCount() {
+    try { if (typeof window.performance.interactionCount === 'number') return window.performance.interactionCount; } catch (e) {}
+    return inp.seen;
+  }
+  function resetInp() { inp = { slowest: [], ids: {}, seen: 0 }; inp.base = interactionCount(); }
+  resetInp();
+  function onEvents(entries) {
+    for (var i = 0; i < entries.length; i++) {
+      var id = entries[i].interactionId, ms = Math.round(entries[i].duration), j;
+      if (!id) continue;   // a scroll, a hover: not an interaction
+      if (!inp.ids[id]) { inp.ids[id] = true; inp.seen++; }
+      for (j = 0; j < inp.slowest.length && inp.slowest[j].id !== id; j++) {}
+      if (j < inp.slowest.length) inp.slowest[j].ms = Math.max(inp.slowest[j].ms, ms);
+      else inp.slowest.push({ id: id, ms: ms });
+      inp.slowest.sort(function (a, b) { return b.ms - a.ms; });
+      if (inp.slowest.length > 10) inp.slowest.length = 10;
+    }
+  }
+  function inpMs() {
+    if (!inpObservers.length || !inp.slowest.length) return null;
+    var n = Math.max(0, interactionCount() - inp.base);
+    return inp.slowest[Math.min(inp.slowest.length - 1, Math.floor(n / 50))].ms;
+  }
+  // CLS: shifts under 1 s apart (at most 5 s in all) add up; the largest such burst counts.
+  var cls = null, clsObserver = null, burst = { sum: 0, first: 0, last: 0 };
+  function onShifts(entries) {
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      if (e.hadRecentInput) continue;
+      if (burst.sum && e.startTime - burst.last < 1000 && e.startTime - burst.first < 5000) burst.sum += e.value;
+      else burst = { sum: e.value, first: e.startTime, last: e.startTime };
+      burst.last = e.startTime;
+      if (burst.sum > cls) cls = burst.sum;
+    }
+  }
+  try {
+    var perfTypes = (window.PerformanceObserver && window.PerformanceObserver.supportedEntryTypes) || [];
+    if (perfTypes.indexOf('event') > -1 && window.PerformanceEventTiming && 'interactionId' in window.PerformanceEventTiming.prototype) {
+      var events = new window.PerformanceObserver(function (list) { onEvents(list.getEntries()); });
+      events.observe({ type: 'event', buffered: true, durationThreshold: 16 });
+      inpObservers.push(events);
+      if (perfTypes.indexOf('first-input') > -1) {
+        var first = new window.PerformanceObserver(function (list) { onEvents(list.getEntries()); });
+        first.observe({ type: 'first-input', buffered: true });
+        inpObservers.push(first);
+      }
+    }
+  } catch (e) { inpObservers = []; }
+  try {
+    if (perfTypes.indexOf('layout-shift') > -1) {
+      clsObserver = new window.PerformanceObserver(function (list) { onShifts(list.getEntries()); });
+      clsObserver.observe({ type: 'layout-shift', buffered: true });
+      cls = 0;
+    }
+  } catch (e) { clsObserver = null; cls = null; }
 
   var engaged = false;
   var ENGAGE = ['pointerdown', 'touchstart', 'keydown'];
@@ -450,13 +520,17 @@
     view.bottom = Math.max(view.bottom, screenBottom());
     // The latest LCP may not have reached the observer's callback yet.
     try { if (lcpObserver) onLcp(lcpObserver.takeRecords()); } catch (e) {}
+    for (var o = 0; o < inpObservers.length; o++) { try { onEvents(inpObservers[o].takeRecords()); } catch (e) {} }
+    try { if (clsObserver) onShifts(clsObserver.takeRecords()); } catch (e) {}
     var de = document.documentElement, b = document.body;
     var height = Math.max((de && de.scrollHeight) || 0, (b && b.scrollHeight) || 0);
     track('site_exit', {
       visible_ms: Math.round(view.visibleMs),
       scroll_pct: height > 0 ? Math.max(0, Math.min(100, Math.round(view.bottom / height * 100))) : 0,
       engaged: engaged,
-      lcp_ms: lcpMs
+      lcp_ms: lcpMs,
+      inp_ms: inpMs(),
+      cls: cls === null ? null : Math.round(cls * 10000) / 10000
     });
   }
   // A prerendered page counts from when it was shown, not from when it was made.
@@ -472,7 +546,12 @@
   });
   window.addEventListener('pagehide', exitView);
   window.addEventListener('pageshow', function (e) {
-    if (e && e.persisted) whenVisible(function () { startView(sinceStart()); });
+    // A new view: its own taps and shifts only.
+    if (e && e.persisted) {
+      resetInp();
+      if (cls !== null) { cls = 0; burst = { sum: 0, first: 0, last: 0 }; }
+      whenVisible(function () { startView(sinceStart()); });
+    }
   });
 
   function init() { decorateAll(); whenVisible(landed); whenVisible(firstView); }
