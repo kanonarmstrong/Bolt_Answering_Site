@@ -3,7 +3,9 @@
 // Lead on the first start-trial tap. It must load nothing for Global Privacy Control, an opt-out
 // (this page, the next, and mid-page), our QA traffic (unless ?bolt_pixel_debug=1), or an automated
 // browser. Every page that carries the Meta pixel must carry this one too, the blog template and the
-// card-page builder included, so the blog bot's rebuilds keep it.
+// card-page builder included, so the blog bot's rebuilds keep it. AFMBP-2654: the cookies where
+// Reddit's automatic matching kept hashed phone numbers and emails (_rdt_pn, _rdt_em) are gone before
+// pixel.js runs, for every visitor. (tools/real-tags-check.mjs proves the same with Reddit's real script.)
 // Run: node tools/reddit-pixel-check.mjs [siteRoot]
 //      NC=<name> mutates the SERVED reddit-pixel.js only; each must FAIL (see MUTATE).
 // Headless Chrome over CDP. Nothing leaves the machine: Chrome resolves no host but 127.0.0.1;
@@ -33,6 +35,8 @@ const MUTATE = {
   no_wait: (s) => cut(s, '  if (whenVisible) whenVisible(loadPixel);\n', '  if (whenVisible) loadPixel();\n'),
   // Switching off mid-page does not stop the Lead on that page.
   no_midpage: (s) => cut(s, '    if (blockedBy() !== null) { window.boltReddit.enabled = false; return; }\n', ''),
+  // The cookies Reddit's automatic matching filled on 2026-11-19 are left in place.
+  no_cleanup: (s) => cut(s, '  clearRedditMatchCookies();\n', ''),
 };
 if (NC && !MUTATE[NC]) throw new Error(`unknown NC "${NC}"; one of ${Object.keys(MUTATE).join(', ')}`);
 if (NC) { const src = readFileSync(join(ROOT, 'reddit-pixel.js'), 'utf8'); if (MUTATE[NC](src) === src) throw new Error(`NC ${NC} leaves reddit-pixel.js unchanged`); }
@@ -96,8 +100,11 @@ async function scenario({ name, steps, pre = '', automated = false }) {
     if (m.sessionId !== sessionId) return;
     if (m.method === 'Fetch.requestPaused') {
       const u = m.params.request.url; const js = !u.startsWith('https://app.boltanswering.com/');
-      if (u.startsWith('https://www.redditstatic.com/')) { loads++; loadUrls.push(u); }
-      await send('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200, responseHeaders: [{ name: 'content-type', value: js ? 'text/javascript' : 'text/html' }], body: Buffer.from(js ? '/* stub */' : '<p>stub</p>').toString('base64') }, sessionId).catch(() => {});
+      const rd = u.startsWith('https://www.redditstatic.com/');
+      if (rd) { loads++; loadUrls.push(u); }
+      // Reddit's pixel.js stub notes the cookies it would see, for [10].
+      const body = rd ? 'window.__rdtCookieAtLoad = document.cookie;' : js ? '/* stub */' : '<p>stub</p>';
+      await send('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200, responseHeaders: [{ name: 'content-type', value: js ? 'text/javascript' : 'text/html' }], body: Buffer.from(body).toString('base64') }, sessionId).catch(() => {});
     }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
   };
@@ -117,6 +124,7 @@ async function scenario({ name, steps, pre = '', automated = false }) {
       hasRdt: await evalv("typeof window.rdt === 'function'"),
       sent: JSON.parse(await evalv('JSON.stringify(window.__sent || [])')),
       loads, loadUrls: [...loadUrls],
+      probe: step.probe ? await evalv(step.probe) : undefined,
     });
   }
   listeners.splice(listeners.indexOf(onMsg), 1);
@@ -204,6 +212,19 @@ ok(tracks(r8, 'PageVisit').length === 1 && tracks(r8, 'Lead').length === 0 && r8
 console.log('[9] a blog page (built from the template) loads it');
 const [r9] = await scenario({ name: 'blog', steps: [{ path: '/blog/index.html?utm_source=reddit', until: VISIT }] });
 ok(r9.loads === 1 && tracks(r9, 'PageVisit').length === 1, `one PageVisit (${calls(r9)})`);
+
+console.log("[10] the cookies Reddit's automatic matching filled on 11-19 (_rdt_pn, _rdt_em) are gone before pixel.js runs");
+const SEED = "document.cookie = '_rdt_pn=:500~seedphonehash; path=/'; document.cookie = '_rdt_em=seed|400~seedemailhash; path=/'; window.__seeded = document.cookie;";
+const COOKIES = "JSON.stringify({ seeded: window.__seeded || '', atLoad: window.__rdtCookieAtLoad === undefined ? null : window.__rdtCookieAtLoad, now: document.cookie })";
+const hasRdtCookies = (s) => /(^|; )_rdt_(pn|em)=/.test(s || '');
+const [r10] = await scenario({ name: 'cookies', pre: SEED, steps: [{ path: AD, until: 'window.__rdtCookieAtLoad !== undefined', probe: COOKIES }] });
+const c10 = JSON.parse(r10.probe);
+ok(hasRdtCookies(c10.seeded), 'setup: both cookies are there when the page starts');
+ok(r10.loads === 1 && c10.atLoad !== null && !hasRdtCookies(c10.atLoad), `gone when pixel.js runs (it saw: ${c10.atLoad === null ? 'pixel.js never ran' : c10.atLoad || 'no cookies'})`);
+ok(!hasRdtCookies(c10.now), 'and still gone after');
+const [r10b] = await scenario({ name: 'cookies-gpc', pre: SEED + GPC, steps: [{ path: AD, waitMs: 2000, probe: COOKIES }] });
+const c10b = JSON.parse(r10b.probe);
+ok(r10b.loads === 0 && hasRdtCookies(c10b.seeded) && !hasRdtCookies(c10b.now), 'deleted for a visitor the pixel never loads for (GPC) too');
 
 console.log(fails ? `\n${fails} FAILED${NC ? ` (negative control: ${NC})` : ''}` : `\nALL PASS${NC ? ` — negative control ${NC} did NOT bite` : ''}`);
 ws.close(); chrome.kill('SIGKILL'); srv.close(); await sleep(300); rmSync(PROFILE, { recursive: true, force: true }); process.exit(fails ? 1 : 0);

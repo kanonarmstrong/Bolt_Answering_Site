@@ -21,6 +21,14 @@
    ID and nothing else. Reddit's "advanced matching" (email, phone number,
    external id, device ids) is deliberately not used, and nothing typed on the
    site is passed to any event.
+   Reddit's AUTOMATIC advanced matching (Reddit Ads → Events Manager → this
+   pixel → Settings) must stay OFF for email and phone number. With it on,
+   Reddit's own pixel.js reads phone numbers and emails typed on the page,
+   hashes them and sends them to Reddit, whatever this file does (AFMBP-2654,
+   2026-11-19). Two checks hold that line: tools/real-tags-check.mjs runs
+   Reddit's real script with this pixel's served settings and fails if anything
+   typed reaches Reddit, and tools/reddit-settings-check.mjs (daily, GitHub
+   Actions) fails if Reddit serves matching on for this pixel.
    window.boltReddit = { enabled, blockedBy } says whether it runs here.
    ============================================================ */
 (function () {
@@ -28,12 +36,9 @@
 
   // Reddit Ads → Events Manager → the pixel ID. Not a secret: it is visible in
   // the page either way. Empty = the pixel is off.
-  // OFF since 2026-11-19 (AFMBP-2654): Reddit had automatic advanced matching on
-  // for this pixel, so Reddit's own script hashed phone numbers and emails typed
-  // on the page and sent them to Reddit. Put 'a2_k1ltn5n0w25j' back only with
-  // that ticket's re-enable change: matching off in Reddit, the _rdt_pn/_rdt_em
-  // cookie cleanup, and the real-script check.
-  var PIXEL_ID = '';
+  // Off 2026-11-19 (AFMBP-2654) and back on only with automatic matching off in
+  // Reddit, the cookie cleanup below, and the two checks named above.
+  var PIXEL_ID = 'a2_k1ltn5n0w25j';
 
   function store(kind) {
     try { return kind === 'session' ? window.sessionStorage : window.localStorage; } catch (e) { return null; }
@@ -41,6 +46,27 @@
   function get(key, kind) { try { var s = store(kind); return s ? s.getItem(key) : null; } catch (e) { return null; } }
   function set(key, value, kind) { try { var s = store(kind); if (s) s.setItem(key, value); } catch (e) {} }
   function remove(key) { try { var s = store(); if (s) s.removeItem(key); } catch (e) {} }
+
+  // AFMBP-2654. While automatic matching was on (2026-11-19), Reddit's pixel.js
+  // kept the hashed phone numbers and emails it found in these two first-party
+  // cookies (90 days, on .boltanswering.com), and it sends them with every
+  // event, even after matching is switched off. Delete them on every page view,
+  // before pixel.js can load, at every domain level Reddit may have used and
+  // host-only. Runs for every visitor, including those the pixel never loads
+  // for. Leaves window.rdt alone.
+  function clearRedditMatchCookies() {
+    var host = String(window.location.hostname || '').replace(/\.$/, '');
+    var domains = [''];
+    if (/^[0-9.]+$/.test(host) || host.indexOf(':') !== -1) domains.push(host);
+    else { var parts = host.split('.'); for (var i = 0; i < parts.length - 1; i++) domains.push(parts.slice(i).join('.')); }
+    var names = ['_rdt_pn', '_rdt_em'];
+    for (var n = 0; n < names.length; n++) {
+      for (var d = 0; d < domains.length; d++) {
+        try { document.cookie = names[n] + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' + (domains[d] ? '; domain=' + domains[d] : ''); } catch (e) {}
+      }
+    }
+  }
+  clearRedditMatchCookies();
 
   var params;
   try { params = new URLSearchParams(window.location.search); } catch (e) { params = { get: function () { return null; } }; }

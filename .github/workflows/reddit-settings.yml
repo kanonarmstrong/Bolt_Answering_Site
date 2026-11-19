@@ -1,0 +1,31 @@
+name: Reddit pixel settings
+
+# AFMBP-2654. Reddit serves each pixel's settings with its script. With automatic advanced matching
+# on, Reddit's own pixel.js reads phone numbers and emails typed on our pages, hashes them and sends
+# them to Reddit, which the privacy policy says never happens. This run fails, and GitHub emails the
+# failure, if Reddit serves matching on for the pixel in reddit-pixel.js (or if the settings can't be
+# read). Fix: Reddit Ads → Events Manager → the pixel → Settings → automatic advanced matching off for
+# email and phone number; until then, PIXEL_ID = '' in reddit-pixel.js switches the pixel off.
+# Daily, on demand (Actions tab → Run workflow), and on pull requests that touch the Reddit pixel.
+# GitHub pauses schedules in a repo with no commits for 60 days; re-enable on the Actions tab.
+
+on:
+  schedule:
+    - cron: '23 13 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths: ['reddit-pixel.js', 'tools/reddit-settings-check.mjs', '.github/workflows/reddit-settings.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node tools/reddit-settings-check.mjs
