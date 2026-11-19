@@ -17,7 +17,7 @@ const tag = (name) => {
   if (!m) throw new Error(`${name}.js tag not found in handyman.html`);
   return m[0];
 };
-const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
+const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), reddit: tag('reddit-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
 const TRADES = [
   { slug: 'handyman', trade: 'handyman', title: 'Bolt Answering for Handymen — Never miss a job again' },
   { slug: 'plumbing', trade: 'plumbing', title: 'Bolt Answering for Plumbers — Never miss a job again' },
@@ -30,6 +30,7 @@ ${GTAG}
   <!-- Funnel attribution + events, Bolt's own analytics (AFMBP-1968) -->
   ${SCRIPTS.attribution}
   ${SCRIPTS.pixel}
+  ${SCRIPTS.reddit}
   ${SCRIPTS.privacy}
   <!-- JavaScript error reports (Sentry), behind one switch in sentry-init.js (AFMBP-2130) -->
   ${SCRIPTS.sentry}
