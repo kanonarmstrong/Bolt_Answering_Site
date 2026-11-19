@@ -9,8 +9,9 @@
 //     sets' optimization event, "Landing page: Start now tap");
 //   - the close goes to the home page and logs demo_closed {step: signup_offer};
 //   - the page is noindex and is not in the sitemap;
-//   - at 320 and 300 wide the card zooms and the iOS-only rule that turns iPad Safari's text
-//     autosizing off reaches it; at 337 neither (AFMBP-2602).
+//   - at 320 and 300 wide both cards (the sign-up card and the landing A/B's demo card) zoom and
+//     the iOS-only rule that turns iPad Safari's text autosizing off reaches them; at 337 neither
+//     (AFMBP-2602).
 // The ingest and the pixel are stubbed in the page; nothing reaches production. Nothing leaves the
 // machine either: Chrome resolves no host but 127.0.0.1, so the page's requests to other hosts, its
 // preconnects and prefetches, and Chrome's own background requests all fail to resolve.
@@ -160,16 +161,18 @@ try {
     check(`close tap: demo_closed {step: signup_offer, trade: ${TRADE[page]}}`, closed.length === 1 && closed[0].step === 'signup_offer' && closed[0].trade === TRADE[page], closed);
   }
 
-  // AFMBP-2602: under 337px the card zooms (.94, then .83 under 317px), and iPad Safari's text autosizing
-  // must be off on it, or every word draws at its unzoomed size. At 337px nothing zooms and no iOS text
-  // rule reaches the card.
+  // AFMBP-2602: under 337px the cards zoom (.94, then .83 under 317px), and iPad Safari's text autosizing
+  // must be off on them, or every word draws at its unzoomed size. At 337px nothing zooms and no iOS text
+  // rule reaches a card. Every card on the page is measured: the sign-up card and the landing A/B's demo
+  // card (AFMBP-2612), whichever one shows (neither the zoom nor the rule depends on that).
   for (const page of PAGES) {
     console.log(`[${page}, narrow phones]`);
     for (const [w, zWant] of [[337, 1], [320, 0.94], [300, 0.83]]) {
       await send('Emulation.setDeviceMetricsOverride', { width: w, height: 640, deviceScaleFactor: 1, mobile: true });
       await load(`${BASE}/${page}`);
-      const t = await ev(`(() => { ${IOS_TSA} const k = document.querySelector('.ql-card'); return k ? { zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k) } : null; })()`);
-      check(`${w}px: the card ${zWant < 1 ? `zooms to ${zWant} and iOS turns text autosizing off on it` : 'does not zoom and no iOS text rule reaches it'}`, t && Math.abs(t.zoom - zWant) < 1e-6 && (zWant < 1 ? t.ios.join() === 'none' : t.ios.length === 0), t);
+      const t = await ev(`(() => { ${IOS_TSA} return [].map.call(document.querySelectorAll('.ql-card'), (k) => ({ card: k.className, zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k) })); })()`);
+      const good = (c) => Math.abs(c.zoom - zWant) < 1e-6 && (zWant < 1 ? c.ios.join() === 'none' : c.ios.length === 0);
+      check(`${w}px: all ${Array.isArray(t) ? t.length : 0} cards ${zWant < 1 ? `zoom to ${zWant} and iOS turns text autosizing off on them` : 'do not zoom and no iOS text rule reaches them'}`, Array.isArray(t) && t.length > 0 && t.every(good), t);
     }
   }
 } finally {
