@@ -30,7 +30,7 @@
 
   var COPY = {
     title: 'Your Privacy Choices',
-    body: 'We use cookies and similar tools from Meta and Google to measure our ads and to show our ads to people who have visited this site. You can turn them off for this browser.',
+    body: 'We use cookies and similar tools from Meta, Reddit, and Google to measure our ads and to show our ads to people who have visited this site. You can turn them off for this browser.',
     first: 'Our own anonymous site analytics keep running either way. They are never shared with advertising platforms.',
     toggle: 'Allow advertising and analytics cookies',
     gpc: 'Your browser is sending a Global Privacy Control signal, so these stay off.',
