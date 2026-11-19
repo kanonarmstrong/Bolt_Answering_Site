@@ -19,11 +19,15 @@
 //     limit page) carries the forced arm; a real visitor's ?bolt_xp is ignored; ?bolt_xp leaves the
 //     address before any tag reads it;
 //   - opted-out (?bolt_optout=1) and Global Privacy Control browsers, neither QA, send the exposure
-//     and xp_exposed in both arms, with the Meta Pixel and the Google tag off;
+//     and xp_exposed in both arms, with the Meta Pixel, the Reddit pixel and the Google tag off;
 //   - with storage blocked, the exposure's visitor is the visitor the arm was decided for;
-//   - nothing that reaches the Meta Pixel or the Google tag carries the experiment.
-// The ingest, the gateway, the demo API and the pixel are stubbed in the page; nothing reaches
-// production, and Chrome resolves no host but 127.0.0.1.
+//   - nothing that reaches the Meta Pixel, the Reddit pixel or the Google tag carries the
+//     experiment. Reddit's pixel reads the page address itself, so no address it reads carries the
+//     experiment either (a real visitor's ?bolt_xp is stripped first), and QA visitors, whose address
+//     carries the forced arm, don't load the Reddit pixel at all (AFMBP-2652).
+// The ingest, the gateway, the demo API and the Meta Pixel are stubbed in the page. The Reddit
+// pixel's base code runs as served and each of its calls is recorded; its pixel.js never loads
+// (Reddit's host doesn't resolve). Nothing reaches production; Chrome resolves no host but 127.0.0.1.
 // Run: node tools/xp-landing-check.mjs [siteRoot]
 //      NC=<name> node tools/xp-landing-check.mjs   — one negative control (see MUTATE); each must FAIL.
 import { createServer } from 'node:http';
@@ -61,6 +65,9 @@ const MUTATE = {
   geometry: ['start', (s) => s.replace('.qlt-call{top:354.53px;', '.qlt-call{top:358.53px;')],
   copy: ['start', (s) => s.replace('Two options to talk to <b>Sierra</b> now', 'Two ways to talk to <b>Sierra</b> now')],
   pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
+  reddit: ['reddit-pixel.js', (s) => s.replace("    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {", "    if (d.event === 'xp_exposed') window.rdt('track', 'Custom', { customEventName: 'Xp', props: d.data });\n    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {")],
+  reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
+  reddit_optout: ['reddit-pixel.js', (s) => s.replace("    if (get('bolt_optout') === '1') return 'opted_out';\n", '')],
 };
 if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
 
@@ -98,10 +105,19 @@ await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
 // In-page stubs, before any script: the ingest, the gateway and the demo API are answered here and
-// recorded; the pixel's calls are recorded (meta-pixel.js finds window.fbq and loads nothing).
+// recorded; the Meta Pixel's calls are recorded (meta-pixel.js finds window.fbq and loads nothing),
+// and so are the Reddit pixel's, each with the page address it was made on.
 const STUB = `(() => {
   window.__events = []; window.__gw = []; window.__fbq = []; window.__api = [];
   window.fbq = function () { window.__fbq.push([].slice.call(arguments)); };
+  // reddit-pixel.js's base code defines window.rdt: the setter wraps it so each call is recorded with
+  // the page address at that moment (Reddit's pixel.js sends the address itself). pixel.js never
+  // loads here (Reddit's host doesn't resolve), so the calls also stay in the base code's queue.
+  window.__rdt = [];
+  let rdtFn;
+  Object.defineProperty(window, 'rdt', { configurable: true, get: () => rdtFn, set: (v) => {
+    rdtFn = typeof v !== 'function' ? v : function () { window.__rdt.push({ args: [].slice.call(arguments), href: location.href }); return v.apply(this, arguments); };
+  } });
   const real = window.fetch.bind(window);
   const json = (o, status) => Promise.resolve(new Response(JSON.stringify(o), { status: status || 200, headers: { 'content-type': 'application/json' } }));
   window.fetch = (url, opts) => {
@@ -131,7 +147,7 @@ const results = [];
 const check = (name, ok, info) => { results.push({ name, ok: !!ok }); console.log(`  ${ok ? 'PASS' : 'FAIL'} ${name}${ok || info === undefined ? '' : ' ' + JSON.stringify(info)}`); };
 const near = (a, b, tol = 1) => typeof a === 'number' && Math.abs(a - b) <= tol;
 const UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-// Words that would mean the experiment reached Meta or Google.
+// Words that would mean the experiment reached Meta, Reddit or Google.
 const LEAK = /landing_demo_buttons|xp_exposed|config_?version|bolt_xp|experiment/i;
 
 const prof = mkdtempSync(join(tmpdir(), 'xp-check-'));
@@ -163,7 +179,7 @@ try {
     if (vid) await ev(`localStorage.setItem('bolt_vid', ${JSON.stringify(vid)})`);
     await load(`${BASE}${path}`);
   };
-  const state = () => ev(`({ events: window.__events, gw: window.__gw.map((g) => g.body ? Object.assign({ _keepalive: g.keepalive, _ct: g.ct }, g.body) : g), fbq: window.__fbq, api: window.__api, dl: JSON.stringify(window.dataLayer || []), gtagScript: !!document.querySelector('script[src*="googletagmanager"]'), href: location.href, xp: window.boltXp, cls: document.documentElement.className })`);
+  const state = () => ev(`({ events: window.__events, gw: window.__gw.map((g) => g.body ? Object.assign({ _keepalive: g.keepalive, _ct: g.ct }, g.body) : g), fbq: window.__fbq, rdt: window.__rdt, reddit: window.boltReddit || null, api: window.__api, dl: JSON.stringify(window.dataLayer || []), gtagScript: !!document.querySelector('script[src*="googletagmanager"]'), href: location.href, xp: window.boltXp, cls: document.documentElement.className })`);
   const typesOf = (s, t) => s.events.filter((e) => e.type === t);
   const exposures = (s) => s.gw.filter((g) => g.eventType === 'exposure');
   const tracks = (s) => s.gw.filter((g) => g.eventType === 'track');
@@ -174,6 +190,10 @@ try {
     const s = await state();
     check(`${label}: nothing to the Meta Pixel names the experiment`, !LEAK.test(JSON.stringify(s.fbq)), s.fbq);
     check(`${label}: nothing to the Google tag names the experiment, and the address carries no bolt_xp`, !LEAK.test(s.dl) && !/[?&]bolt_xp=/.test(s.href), { dl: s.dl.slice(0, 200), href: s.href });
+    // Not vacuous: the Reddit pixel must have run here (init + PageVisit); then nothing it got, and no
+    // page address it was called on, may name the experiment.
+    const rdtRan = s.rdt.some((c) => c.args[0] === 'init') && s.rdt.some((c) => c.args[0] === 'track' && c.args[1] === 'PageVisit');
+    check(`${label}: the Reddit pixel ran; nothing it got names the experiment, nor any address it read`, rdtRan && !LEAK.test(JSON.stringify(s.rdt.map((c) => c.args))) && s.rdt.every((c) => !LEAK.test(c.href) && !/[?&]xp=/.test(c.href)), s.rdt);
   };
   // Tap a sign-up link without leaving the page: attribution.js decorates it in the capture phase,
   // then this listener reads the decorated address and stops the navigation.
@@ -316,6 +336,7 @@ try {
     d = await disp();
     check(`the ${arm === 'treatment' ? 'demo' : 'sign-up'} card shows; forced`, (arm === 'treatment' ? d.t !== 'none' && d.c === 'none' : d.c !== 'none' && d.t === 'none') && s.xp.forced === true && s.xp.variation === arm, { d, xp: s.xp });
     check('?bolt_xp is out of the address; the rest stays', !/bolt_xp/.test(s.href) && /bolt_qa=1/.test(s.href) && /utm_source=fb/.test(s.href), s.href);
+    check('QA: the Reddit pixel doesn\'t load (this address carried the forced arm)', !!s.reddit && s.reddit.blockedBy === 'qa' && s.rdt.length === 0, { reddit: s.reddit, rdt: s.rdt });
     check('QA: nothing to the gateway', s.gw.length === 0, s.gw);
     xe = typesOf(s, 'xp_exposed');
     check('QA: xp_exposed for the funnel, marked qa and forced', xe.length === 1 && xe[0].data.qa === true && xe[0].data.forced === true && xe[0].data.variation === arm && xe[0].data.config_version === QA_CV, xe);
@@ -350,6 +371,7 @@ try {
   const kept = await ev(`sessionStorage.getItem('bolt_xp_force')`);
   check('the hashed arm (control), not forced, nothing kept, out of the address', s.xp.variation === 'control' && s.xp.forced === false && kept === null && !/bolt_xp/.test(s.href), { xp: s.xp, kept, href: s.href });
   check('its exposure is the hashed arm', exposures(s).length === 1 && exposures(s)[0].experiments[0].variation === 'control', s.gw);
+  await noLeak('a real visitor with ?bolt_xp');
 
   // ---------- 7. opted out and Global Privacy Control, both arms ----------
   for (const how of ['optout', 'gpc']) {
@@ -363,6 +385,7 @@ try {
       check('the exposure still goes, with the arm', ex.length === 1 && ex[0].experiments[0].variation === arm && ex[0].anonymousId === VID[arm], s.gw);
       check('xp_exposed still goes', typesOf(s, 'xp_exposed').length === 1 && typesOf(s, 'xp_exposed')[0].data.variation === arm);
       check('the Meta Pixel is off (no calls) and the Google tag is off (no tag, no config)', s.fbq.length === 0 && !s.gtagScript && s.dl === '[]', { fbq: s.fbq, gtag: s.gtagScript, dl: s.dl });
+      check(`the Reddit pixel is off (no calls; blocked: ${how === 'gpc' ? 'gpc' : 'opted_out'})`, s.rdt.length === 0 && !!s.reddit && s.reddit.blockedBy === (how === 'gpc' ? 'gpc' : 'opted_out'), { rdt: s.rdt, reddit: s.reddit });
       if (arm === 'control') {
         href = await ev(`document.querySelector('.ql-cta').href`);
         check('the button carries xp and the opt-out', xpParam(href) === `${KEY}.control.${CV}` && (how === 'gpc' || new URL(href).searchParams.get('bolt_optout') === '1'), href);
