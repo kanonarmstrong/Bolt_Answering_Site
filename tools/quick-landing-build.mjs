@@ -22,7 +22,7 @@ const tag = (name) => {
   if (!m) throw new Error(`${name}.js tag not found in handyman.html`);
   return m[0];
 };
-const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
+const SCRIPTS = { attribution: tag('attribution'), pixel: tag('meta-pixel'), reddit: tag('reddit-pixel'), privacy: tag('privacy-choices'), sentry: tag('sentry-init') };
 // The demo's files at the versions the trade pages load (the treatment card loads them after it
 // has painted).
 const ver = (re, what) => { const m = src.match(re); if (!m) throw new Error(`${what} not found in handyman.html`); return m[1]; };
@@ -113,6 +113,7 @@ ${GTAG}
   <!-- Funnel attribution + events, Bolt's own analytics (AFMBP-1968) -->
   ${SCRIPTS.attribution}
   ${SCRIPTS.pixel}
+  ${SCRIPTS.reddit}
   ${SCRIPTS.privacy}
   <!-- JavaScript error reports (Sentry), behind one switch in sentry-init.js (AFMBP-2130) -->
   ${SCRIPTS.sentry}

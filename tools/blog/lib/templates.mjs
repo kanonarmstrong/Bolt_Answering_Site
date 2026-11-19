@@ -33,6 +33,7 @@ const ANALYTICS = `<script>
   </script>
   <script defer src="/attribution.js?v=6"></script>
   <script defer src="/meta-pixel.js?v=3"></script>
+  <script defer src="/reddit-pixel.js?v=1"></script>
   <script defer src="/privacy-choices.js?v=2"></script>
   <script defer src="/sentry-init.js?v=1"></script>`;
 

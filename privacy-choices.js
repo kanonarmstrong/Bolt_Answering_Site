@@ -3,13 +3,13 @@
    small panel, no banner). US opt-out model.
 
    One switch covers the advertising and analytics tags: the Meta Pixel
-   (meta-pixel.js, AFMBP-2021) and Google Analytics + Google Ads (the loader in
-   each page's <head>).
+   (meta-pixel.js, AFMBP-2021), the Reddit Pixel (reddit-pixel.js, AFMBP-2639)
+   and Google Analytics + Google Ads (the loader in each page's <head>).
      - On by default.
      - Off for a browser sending Global Privacy Control; it can't be switched
        on here.
      - Off once the visitor switches it off: localStorage `bolt_optout` = '1',
-       the same key meta-pixel.js and the Google loader read (also set by
+       the same key meta-pixel.js, reddit-pixel.js and the Google loader read (also set by
        ?bolt_optout=1, cleared by ?bolt_optout=0).
      - The choice reaches the web app too (AFMBP-2480): its sign-up pages carry
        the Meta Pixel, and localStorage is per origin, so an opted-out browser
