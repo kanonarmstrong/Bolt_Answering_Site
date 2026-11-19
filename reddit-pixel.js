@@ -28,7 +28,12 @@
 
   // Reddit Ads → Events Manager → the pixel ID. Not a secret: it is visible in
   // the page either way. Empty = the pixel is off.
-  var PIXEL_ID = 'a2_k1ltn5n0w25j';
+  // OFF since 2026-11-19 (AFMBP-2654): Reddit had automatic advanced matching on
+  // for this pixel, so Reddit's own script hashed phone numbers and emails typed
+  // on the page and sent them to Reddit. Put 'a2_k1ltn5n0w25j' back only with
+  // that ticket's re-enable change: matching off in Reddit, the _rdt_pn/_rdt_em
+  // cookie cleanup, and the real-script check.
+  var PIXEL_ID = '';
 
   function store(kind) {
     try { return kind === 'session' ? window.sessionStorage : window.localStorage; } catch (e) { return null; }
