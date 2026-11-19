@@ -1,0 +1,13 @@
+{
+  "algorithm": "fnv1a64-utf8-mod10000-v1",
+  "experimentKey": "homepage_cta",
+  "seed": "homepage-cta-v1",
+  "vectors": [
+    { "subjectId": "user-123", "variationBucket": 860, "trafficBucket": 9580, "variation": "control" },
+    { "subjectId": "user-456", "variationBucket": 1809, "trafficBucket": 1485, "variation": "control" },
+    { "subjectId": "anonymous-abc", "variationBucket": 9720, "trafficBucket": 3840, "variation": "treatment" },
+    { "subjectId": "installation-xyz", "variationBucket": 6708, "trafficBucket": 5188, "variation": "treatment" },
+    { "subjectId": "éclair", "variationBucket": 1567, "trafficBucket": 35, "variation": "control" }
+  ]
+}
+

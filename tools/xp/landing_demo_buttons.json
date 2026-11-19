@@ -1,0 +1,13 @@
+{
+  "baked": false,
+  "note": "PRE-START. These are the SPEC's expected values, not a bake. While baked is false, every real visitor sees the control card and nothing is sent to the platform; only a bolt_qa browser with ?bolt_xp=<variation> sees an arm (configVersion 1 is a placeholder for those QA links). After the owner Starts the experiment, run: node tools/xp/bake.mjs (it fetches the public config, saves tools/xp/public-config-snapshot.json, and rewrites this file with baked true), then node tools/quick-landing-build.mjs.",
+  "key": "landing_demo_buttons",
+  "seed": "landing-demo-v1",
+  "trafficPercentage": 100,
+  "assignmentUnit": "anonymous",
+  "variants": [
+    { "key": "control", "allocation": 5000 },
+    { "key": "treatment", "allocation": 5000 }
+  ],
+  "configVersion": 1
+}

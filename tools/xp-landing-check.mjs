@@ -1,0 +1,412 @@
+// AFMBP-2612 — the landing A/B on the /start/ pages, in headless Chrome (Android Facebook in-app UA,
+// the node's 402px phone width, touch on). Run tools/xp-assign-check.mjs first (no browser).
+// While tools/xp/landing_demo_buttons.json is not baked, the pages are also served under /__baked/
+// with a test bake (configVersion 7), so the live split can be checked before the owner Starts the
+// test; once baked, /__baked/ serves the real bake unchanged.
+//   - a control visitor and a treatment visitor (two of the platform's own vectors) each see their
+//     card, and the treatment card sits where Figma 2169:14533 puts it, with the owner's words;
+//   - the exposure goes to EZ's gateway once per tab session, as the platform's web SDK sends it
+//     (eventName experiment_exposed, the visitor's bolt_vid, the arm, the configVersion), and to the
+//     funnel as xp_exposed, from the same callback with the same arm; the card's own event follows;
+//   - every sign-up link carries xp=<key>.<arm>.<configVersion> next to bvid, a trial tap sends
+//     start_trial_clicked to the gateway, on the card and on the home page;
+//   - the demo card's buttons run today's demo: "She calls you" opens the form, "You call her" is a
+//     tel: link with the demo line's code before the tap and opens the call card; coming back after
+//     the dial is logged (demo_inbound_returned); a tap before demo.js has loaded is carried out;
+//   - unbaked, a real visitor sees the sign-up card and nothing goes to the gateway;
+//   - QA (?bolt_qa=1&bolt_xp=<arm>): the forced card, nothing to the gateway, and every sign-up
+//     link on the four surfaces (the card, the home floating Start, the demo recap and the demo
+//     limit page) carries the forced arm; a real visitor's ?bolt_xp is ignored; ?bolt_xp leaves the
+//     address before any tag reads it;
+//   - opted-out (?bolt_optout=1) and Global Privacy Control browsers, neither QA, send the exposure
+//     and xp_exposed in both arms, with the Meta Pixel and the Google tag off;
+//   - with storage blocked, the exposure's visitor is the visitor the arm was decided for;
+//   - nothing that reaches the Meta Pixel or the Google tag carries the experiment.
+// The ingest, the gateway, the demo API and the pixel are stubbed in the page; nothing reaches
+// production, and Chrome resolves no host but 127.0.0.1.
+// Run: node tools/xp-landing-check.mjs [siteRoot]
+//      NC=<name> node tools/xp-landing-check.mjs   — one negative control (see MUTATE); each must FAIL.
+import { createServer } from 'node:http';
+import { spawn } from 'node:child_process';
+import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { join, extname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+
+const ROOT = resolve(process.argv[2] || '.');
+const NC = process.env.NC || '';
+const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const UA = 'Mozilla/5.0 (Linux; Android 14; SM-A146U; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/490.0.0.49.79;]';
+const KEY = 'landing_demo_buttons';
+const DEF = JSON.parse(readFileSync(join(ROOT, 'tools/xp/landing_demo_buttons.json'), 'utf8'));
+const CV = DEF.baked ? DEF.configVersion : 7;   // the test bake's configVersion
+const QA_CV = DEF.configVersion;                // what the real pages carry (1 = the unbaked placeholder)
+// Two of the platform's own vectors for this key and seed (tools/xp/landing_demo_buttons.vectors.json).
+const VID = { control: '0b7f6c2e-5d1a-4c3b-9e8f-1a2b3c4d5e6f', treatment: 'deadbeef-0000-4111-8222-333344445555' };
+const PAGE = 'start/handyman.html';
+
+// Negative controls: break the served copy one way each; the run must then fail.
+const MUTATE = {
+  qa_gateway: ['attribution.js', (s) => s.replace('  function xpSend(name, type, ctx, props) {\n    if (isQa()) return;\n', '  function xpSend(name, type, ctx, props) {\n')],
+  optout: ['attribution.js', (s) => s.replace('  function xpExpose() {\n    var c = xpPage();\n', "  function xpExpose() {\n    if (get('bolt_optout') === '1') return null;\n    var c = xpPage();\n")],
+  decorate: ['attribution.js', (s) => s.replace("      if (xc) u.searchParams.set('xp', xpString(xc));\n", '      if (xc) void 0;\n')],
+  vid: ['attribution.js', (s) => s.replace("memoryVid = x && typeof x.vid === 'string' && ID_RE.test(x.vid) ? x.vid : newId();", 'memoryVid = newId();')],
+  once: ['attribution.js', (s) => s.replace("    if (get('bolt_xp_sent', 'session') === mark) return c;\n", '')],
+  once_vid: ['attribution.js', (s) => s.replace("mark = visitorId() + ' ' + s;", 'mark = s;')],
+  trial: ['attribution.js', (s) => s.replace("        if (xc) xpSend('start_trial_clicked', 'track', xc, { from: String(data.from || data.placement || 'site') });\n", '')],
+  same_arm: ['attribution.js', (s) => s.replace("    var p = { experiment_key: c.experimentKey, variation: c.variation,", "    var p = { experiment_key: c.experimentKey, variation: c.variation === 'control' ? 'treatment' : 'control',")],
+  returned: ['demo.js', (s) => s.replace("      track('demo_inbound_returned', ", "      void ('demo_inbound_returned', ")],
+  arm_call: ['demo.js', (s) => s.replace("        a.setAttribute('href', s.telUri);\n        // A code is offered", '        // A code is offered')],
+  pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
+  strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
+  geometry: ['start', (s) => s.replace('.qlt-call{top:354.53px;', '.qlt-call{top:358.53px;')],
+  copy: ['start', (s) => s.replace('Two options to talk to <b>Sierra</b> now', 'Two ways to talk to <b>Sierra</b> now')],
+  pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
+};
+if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const hold = { demoMs: 0 };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2', '.xml': 'application/xml', '.txt': 'text/plain' };
+const server = createServer(async (req, res) => {
+  let path = decodeURIComponent(req.url.split('?')[0]);
+  if (path === '/__control/hold') { hold.demoMs = Number(new URL(req.url, 'http://x').searchParams.get('ms')) || 0; res.writeHead(204); return res.end(); }
+  let baked = false;
+  if (path.startsWith('/__baked/')) { baked = true; path = path.slice('/__baked'.length); }
+  const file = join(ROOT, path.endsWith('/') ? `${path}index.html` : path);
+  if (!file.startsWith(ROOT) || !existsSync(file)) { res.writeHead(404); return res.end(); }
+  const raw = readFileSync(file);
+  const rel = file.slice(ROOT.length + 1);
+  let text = null;
+  if (baked && rel.startsWith('start/') && !DEF.baked) {
+    const s = raw.toString('utf8'); const t = s.replace('"configVersion":1,"baked":false}', `"configVersion":${CV},"baked":true}`);
+    if (t === s) { console.error(`the test bake did not land in ${rel}`); process.exit(2); }
+    text = t;
+  }
+  if (NC) {
+    const [target, fn] = MUTATE[NC];
+    if (target === rel || (target === 'start' && rel.startsWith('start/'))) {
+      const s = text ?? raw.toString('utf8'); const t = fn(s);
+      if (t === s) { console.error(`NC=${NC}: the mutation did not land in ${rel}`); process.exit(2); }
+      text = t;
+    }
+  }
+  if (rel === 'demo.js' && hold.demoMs) await sleep(hold.demoMs);
+  res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
+  res.end(text ?? raw);
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${server.address().port}`;
+
+// In-page stubs, before any script: the ingest, the gateway and the demo API are answered here and
+// recorded; the pixel's calls are recorded (meta-pixel.js finds window.fbq and loads nothing).
+const STUB = `(() => {
+  window.__events = []; window.__gw = []; window.__fbq = []; window.__api = [];
+  window.fbq = function () { window.__fbq.push([].slice.call(arguments)); };
+  const real = window.fetch.bind(window);
+  const json = (o, status) => Promise.resolve(new Response(JSON.stringify(o), { status: status || 200, headers: { 'content-type': 'application/json' } }));
+  window.fetch = (url, opts) => {
+    const u = String(url && url.url || url), method = (opts && opts.method) || 'GET';
+    if (u.includes('/api/public/analytics/events')) {
+      try { const b = JSON.parse(opts && opts.body || '{}'); for (const e of (b.events || [b])) window.__events.push({ type: e.event_type, sid: e.session_id, data: e.event_data || {} }); } catch (e) {}
+      return json({});
+    }
+    if (u === 'https://bolt-staging.fly.dev/api/public/experiments/v1/events') {
+      try { window.__gw.push({ body: JSON.parse(opts.body), keepalive: !!opts.keepalive, ct: (opts.headers || {})['Content-Type'] }); } catch (e) { window.__gw.push({ bad: true }); }
+      return json({ accepted: true }, 202);
+    }
+    if (u === 'https://bolt-staging.fly.dev/api/demo/inbound/session' && method === 'POST') {
+      window.__api.push({ u, body: JSON.parse(opts.body || '{}') });
+      return json({ sessionId: 's-test', code: '1234', telUri: 'tel:+18554973151,,1234', number: '+18554973151', numberDisplay: '(855) 497-3151', expiresAt: new Date(Date.now() + 600000).toISOString() });
+    }
+    if (u.startsWith('https://bolt-staging.fly.dev/api/demo/inbound/session/')) return json({ state: 'waiting' });
+    if (u.startsWith('https://bolt-staging.fly.dev/') || u.startsWith('https://app.boltanswering.com/')) { window.__api.push({ u }); return json({}, 404); }
+    return real(url, opts);
+  };
+  // A tel: link the page lets through is a dial; it must not leave the page here (the dialer's half
+  // of a tap is the phone's). Last listener of all, so it sees what the page's own handlers did.
+  window.addEventListener('click', (e) => { const a = e.target && e.target.closest && e.target.closest('a[href^="tel:"]'); if (a && !e.defaultPrevented) { window.__dialed = a.getAttribute('href'); e.preventDefault(); } });
+})()`;
+
+const results = [];
+const check = (name, ok, info) => { results.push({ name, ok: !!ok }); console.log(`  ${ok ? 'PASS' : 'FAIL'} ${name}${ok || info === undefined ? '' : ' ' + JSON.stringify(info)}`); };
+const near = (a, b, tol = 1) => typeof a === 'number' && Math.abs(a - b) <= tol;
+const UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+// Words that would mean the experiment reached Meta or Google.
+const LEAK = /landing_demo_buttons|xp_exposed|config_?version|bolt_xp|experiment/i;
+
+const prof = mkdtempSync(join(tmpdir(), 'xp-check-'));
+const port = 9600 + Math.floor(Math.random() * 300);
+const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, '--no-first-run', '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1', 'about:blank'], { stdio: 'ignore' });
+let ws;
+try {
+  let wsUrl;
+  // Up to 45 s: a busy machine can take 10+ s to start Chrome.
+  for (let i = 0; i < 450 && !wsUrl; i++) { try { wsUrl = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find((t) => t.type === 'page')?.webSocketDebuggerUrl; } catch {} if (!wsUrl) await sleep(100); }
+  if (!wsUrl) { console.error('Chrome did not start (no DevTools page in 45 s)'); process.exit(3); }
+  ws = new WebSocket(wsUrl); await new Promise((r) => (ws.onopen = r));
+  let id = 0; const pending = new Map();
+  ws.onmessage = (m) => { const msg = JSON.parse(m.data); if (msg.id && pending.has(msg.id)) { const p = pending.get(msg.id); pending.delete(msg.id); msg.error ? p.rej(new Error(JSON.stringify(msg.error))) : p.res(msg.result); } };
+  const send = (method, params = {}) => new Promise((res, rej) => { const i = ++id; pending.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params })); });
+  const ev = async (e) => { const r = await send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw new Error(`page threw: ${JSON.stringify(r.exceptionDetails.exception?.description || r.exceptionDetails.text)}`); return r.result.value; };
+  const until = async (e, ms = 5000) => { for (let t = 0; t < ms; t += 100) { if (await ev(e).catch(() => false)) return true; await sleep(100); } return false; };
+  await send('Page.enable'); await send('Runtime.enable');
+  await send('Network.setUserAgentOverride', { userAgent: UA });
+  const phone = async () => { await send('Emulation.setDeviceMetricsOverride', { width: 402, height: 749, deviceScaleFactor: 1, mobile: true }); await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }); };
+  const computer = async () => { await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false }); await send('Emulation.setTouchEmulationEnabled', { enabled: false }); };
+  await phone();
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: STUB });
+  const load = async (url) => { await send('Page.navigate', { url }); for (let i = 0; i < 100; i++) { if (await ev(`document.readyState === 'complete'`).catch(() => false)) break; await sleep(100); } await sleep(600); };
+  // A new visitor (both storages emptied), with the given bolt_vid stored first.
+  const visit = async (path, { vid = null } = {}) => {
+    await load(`${BASE}/robots.txt`);
+    await ev(`(() => { try { localStorage.clear(); } catch (e) {} try { sessionStorage.clear(); } catch (e) {} return true; })()`);
+    if (vid) await ev(`localStorage.setItem('bolt_vid', ${JSON.stringify(vid)})`);
+    await load(`${BASE}${path}`);
+  };
+  const state = () => ev(`({ events: window.__events, gw: window.__gw.map((g) => g.body ? Object.assign({ _keepalive: g.keepalive, _ct: g.ct }, g.body) : g), fbq: window.__fbq, api: window.__api, dl: JSON.stringify(window.dataLayer || []), gtagScript: !!document.querySelector('script[src*="googletagmanager"]'), href: location.href, xp: window.boltXp, cls: document.documentElement.className })`);
+  const typesOf = (s, t) => s.events.filter((e) => e.type === t);
+  const exposures = (s) => s.gw.filter((g) => g.eventType === 'exposure');
+  const tracks = (s) => s.gw.filter((g) => g.eventType === 'track');
+  const ctx = (arm, cv = CV) => [{ experimentKey: KEY, variation: arm, configVersion: cv }];
+  const xpParam = (href) => { try { return new URL(href).searchParams.get('xp'); } catch { return null; } };
+  const bvidParam = (href) => { try { return new URL(href).searchParams.get('bvid'); } catch { return null; } };
+  const noLeak = async (label) => {
+    const s = await state();
+    check(`${label}: nothing to the Meta Pixel names the experiment`, !LEAK.test(JSON.stringify(s.fbq)), s.fbq);
+    check(`${label}: nothing to the Google tag names the experiment, and the address carries no bolt_xp`, !LEAK.test(s.dl) && !/[?&]bolt_xp=/.test(s.href), { dl: s.dl.slice(0, 200), href: s.href });
+  };
+  // Tap a sign-up link without leaving the page: attribution.js decorates it in the capture phase,
+  // then this listener reads the decorated address and stops the navigation.
+  const tapSignup = (sel) => ev(`(() => { const a = document.querySelector(${JSON.stringify(sel)}); if (!a) return null; let href = null;
+    const f = (e) => { href = e.target.closest('a').href; e.preventDefault(); }; document.addEventListener('click', f); a.click(); document.removeEventListener('click', f); return href; })()`);
+
+  // ---------- 1. a control visitor (baked) ----------
+  console.log(`[control visitor, baked (configVersion ${CV})]`);
+  await visit(`/__baked/${PAGE}?utm_source=fb&fbclid=XPCHECK1`, { vid: VID.control });
+  let s = await state();
+  const disp = () => ev(`({ c: getComputedStyle(document.querySelector('.ql-card--c')).display, t: getComputedStyle(document.querySelector('.ql-card--t')).display })`);
+  let d = await disp();
+  check('the sign-up card shows, the demo card is hidden', d.c !== 'none' && d.t === 'none' && !s.cls.includes('xp-t'), d);
+  check('window.boltXp: control, not forced, this visitor', s.xp && s.xp.variation === 'control' && s.xp.forced === false && s.xp.vid === VID.control && s.xp.configVersion === CV, s.xp);
+  let ex = exposures(s);
+  check('one exposure to the gateway', ex.length === 1, s.gw);
+  const e0 = ex[0] || {};
+  check('exposure: experiment_exposed / exposure / web, sdkVersion bolt-site-1', e0.eventName === 'experiment_exposed' && e0.eventType === 'exposure' && e0.platform === 'web' && e0.sdkVersion === 'bolt-site-1', e0);
+  check('exposure: anonymousId is the visitor\'s bolt_vid', e0.anonymousId === VID.control, e0.anonymousId);
+  check('exposure: experiments = [{landing_demo_buttons, control, configVersion}]', JSON.stringify(e0.experiments) === JSON.stringify(ctx('control')), e0.experiments);
+  check('exposure: eventId a v4 UUID, a session id, properties {}', UUID4.test(e0.eventId || '') && typeof e0.sessionId === 'string' && e0.sessionId.length > 0 && e0.sessionId.length <= 200 && JSON.stringify(e0.properties) === '{}', e0);
+  check('exposure: url is the page\'s origin and path only (no query)', e0.url === `${BASE}/__baked/${PAGE}`, e0.url);
+  check('exposure: timestamp is now (ISO)', Math.abs(Date.parse(e0.timestamp) - Date.now()) < 60000, e0.timestamp);
+  check('exposure: JSON with keepalive, no key from the browser', e0._keepalive === true && e0._ct === 'application/json' && !('userId' in e0) && !JSON.stringify(e0).includes('apiKey'), e0);
+  let xe = typesOf(s, 'xp_exposed');
+  check('funnel: one xp_exposed {landing_demo_buttons, control, configVersion}, with the browser class', xe.length === 1 && xe[0].data.experiment_key === KEY && xe[0].data.variation === 'control' && xe[0].data.config_version === CV && xe[0].data.browser === 'android_facebook' && !('forced' in xe[0].data), xe);
+  check('funnel: the card\'s own event, signup_offer_opened, once', typesOf(s, 'signup_offer_opened').length === 1 && typesOf(s, 'demo_card_opened').length === 0, s.events.map((e) => e.type));
+  let href = await ev(`document.querySelector('.ql-cta').href`);
+  check(`the card's button carries xp=${KEY}.control.${CV} next to bvid`, xpParam(href) === `${KEY}.control.${CV}` && bvidParam(href) === VID.control, href);
+  const tapped = await tapSignup('.ql-cta');
+  await sleep(300);
+  s = await state();
+  let tr = tracks(s);
+  check('a trial tap: start_trial_clicked to the gateway with the arm', tr.length === 1 && tr[0].eventName === 'start_trial_clicked' && JSON.stringify(tr[0].experiments) === JSON.stringify(ctx('control')) && tr[0].anonymousId === VID.control && tr[0].properties.from === 'signup_offer', tr);
+  check('the tapped link carried the arm', xpParam(tapped) === `${KEY}.control.${CV}`, tapped);
+  await noLeak('control visitor');
+  await load(`${BASE}/__baked/${PAGE}`);
+  s = await state();
+  check('a reload in the same tab: no second exposure, no second xp_exposed', exposures(s).length === 0 && typesOf(s, 'xp_exposed').length === 0, { gw: s.gw.length, xe: typesOf(s, 'xp_exposed').length });
+
+  // ---------- 2. a treatment visitor (baked) ----------
+  console.log('[treatment visitor, baked]');
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  s = await state();
+  d = await disp();
+  check('the demo card shows (html.xp-t), the sign-up card is hidden', d.t !== 'none' && d.c === 'none' && s.cls.includes('xp-t'), d);
+  const g = await ev(`(() => { const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, w: b.width, h: b.height }; };
+    const tx = (q) => { const e = document.querySelector(q); return e ? e.textContent.replace(/\\s+/g, ' ').trim() : null; };
+    const ff = (q) => getComputedStyle(document.querySelector(q)).fontFamily;
+    return { card: r('.ql-card--t'), sub: r('.qlt-sub'), frame: r('.qlt-frame'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'),
+      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), liveT: tx('.qlt-live'), boxT: tx('.qlt-box'), boxB: tx('.qlt-box b'), callT: tx('.qlt-call'), getT: tx('.qlt-get'), waitT: tx('.qlt-wait'), waitB: tx('.qlt-wait b'),
+      whoT: tx('.qlt-who'), scoreT: tx('.qlt-score'), quoteT: tx('.qlt-quote'), stars: document.querySelectorAll('.qlt-star').length + document.querySelectorAll('.qlt-star5').length,
+      serif: ff('.qlt-sub'), sans: ff('.qlt-call'), closeHref: document.querySelector('.qlt-close').getAttribute('href'), h1: tx('#qlt-h') }; })()`);
+  check('card at 32,67, 337x631 (Figma 2169:14533)', g.card && near(g.card.l, 32) && near(g.card.t, 67) && near(g.card.w, 337) && near(g.card.h, 631), g.card);
+  check('receptionist line at 49,267, 273 wide (2169:14553)', g.sub && near(g.sub.l, 49) && near(g.sub.t, 267) && near(g.sub.w, 273), g.sub);
+  check('box 274x33 at 60,361 (2169:14557)', g.frame && near(g.frame.l, 60) && near(g.frame.t, 361) && near(g.frame.w, 274) && near(g.frame.h, 33), g.frame);
+  check('"You call her" 188x43 at 107,421.5 (2171:14604)', g.call && near(g.call.l, 107) && near(g.call.t, 421.53) && near(g.call.w, 188) && near(g.call.h, 43), g.call);
+  check('"She calls you" 188x43 at 107,507.4 (2171:14606)', g.get && near(g.get.l, 107) && near(g.get.t, 507.4) && near(g.get.w, 188) && near(g.get.h, 43), g.get);
+  check('close: a 44px target centred on the node\'s cross (347, 99)', g.close && near(g.close.l + 22, 347.008) && near(g.close.t + 22, 98.957) && g.close.w === 44, g.close);
+  check('"Available now" dot at 244,346, 9.1px (2171:14616)', g.dot && near(g.dot.l, 244) && near(g.dot.t, 346) && near(g.dot.w, 9.146, 0.2), g.dot);
+  check('the owner\'s words, verbatim', g.subT === 'Sierra is a receptionist from Bolt that answers calls, books customers, takes messages and more.' && g.subB === 'Sierra'
+    && g.liveT === 'Available now' && g.boxT === 'Two options to talk to Sierra now' && g.boxB === 'Sierra' && g.callT === 'You call her' && g.getT === 'She calls you'
+    && g.waitT === 'Avg. wait time: 3 seconds' && g.waitB === '3 seconds' && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
+    && g.quoteT === '“I was losing jobs to voicemail and even paid $250 a week for a receptionist. Bolt booked a job and paid for itself.”', g);
+  check('five stars; Times New Roman (Tinos) lines, Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /Times New Roman/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
+  ex = exposures(s);
+  check('one exposure: treatment, this visitor', ex.length === 1 && JSON.stringify(ex[0].experiments) === JSON.stringify(ctx('treatment')) && ex[0].anonymousId === VID.treatment, s.gw);
+  xe = typesOf(s, 'xp_exposed');
+  check('funnel: one xp_exposed, treatment (the same arm as the exposure)', xe.length === 1 && xe[0].data.variation === 'treatment' && xe[0].data.config_version === CV, xe);
+  const dco = typesOf(s, 'demo_card_opened');
+  check('funnel: demo_card_opened {trigger quick_landing, trade handyman} once, no signup_offer_opened', dco.length === 1 && dco[0].data.trigger === 'quick_landing' && dco[0].data.trade === 'handyman' && typesOf(s, 'signup_offer_opened').length === 0, s.events.map((e) => e.type));
+  check('demo.js and demo.css load after the card has painted', await until(`!!(window.boltDemo && window.boltDemo.ready) && !!document.querySelector('link[rel=stylesheet][href^="/demo.css"]')`));
+  check('"You call her" is the demo line\'s tel: link (with the code) before any tap', await until(`document.querySelector('.qlt-call').getAttribute('href') === 'tel:+18554973151,,1234'`), await ev(`document.querySelector('.qlt-call').getAttribute('href')`));
+  s = await state();
+  const sess = s.api.filter((a) => a.u === 'https://bolt-staging.fly.dev/api/demo/inbound/session');
+  check('one demo-line code, for this trade and this visitor', sess.length === 1 && sess[0].body.trade === 'handyman' && sess[0].body.sessionId === VID.treatment && sess[0].body.voice === 'Sofía', sess);
+  // "She calls you": the form.
+  await ev(`document.querySelector('.qlt-get').click()`);
+  await sleep(400);
+  let m = await ev(`(() => { const b = document.querySelector('.demo-backdrop'); return { open: !!(b && b.classList.contains('open')), screen: b && b.getAttribute('data-screen'), h: (document.querySelector('.demo-h--form') || {}).textContent }; })()`);
+  check('"She calls you" opens today\'s "We call you" form', m.open && m.screen === 'phone' && /What number would you like the assistant to call\?/.test(m.h || ''), m);
+  s = await state();
+  check('funnel: demo_opened {trigger button, entry landing}, then demo_mode_selected {outbound, from landing}', typesOf(s, 'demo_opened').some((e) => e.data.trigger === 'button' && e.data.entry === 'landing') && typesOf(s, 'demo_mode_selected').some((e) => e.data.mode === 'outbound' && e.data.from === 'landing'), s.events.map((e) => [e.type, e.data.entry || e.data.mode || '']));
+  await ev(`document.querySelector('.demo-close').click()`);
+  await sleep(300);
+  // "You call her": the dial, then the call card.
+  await ev(`document.querySelector('.qlt-call').click()`);
+  await sleep(400);
+  m = await ev(`(() => { const b = document.querySelector('.demo-backdrop'); return { open: !!(b && b.classList.contains('open')), screen: b && b.getAttribute('data-screen'), code: (document.querySelector('.demo-ihow__code') || {}).textContent, tel: (document.querySelector('a.demo-ihow__tel') || {}).textContent, dialed: window.__dialed }; })()`);
+  check('"You call her" dials the line with the code (the tap\'s own tel: link)', m.dialed === 'tel:+18554973151,,1234', m);
+  check('then the call card shows the number and the code', m.open && m.screen === 'inbound-call' && m.code === '1234' && m.tel === '(855) 497-3151', m);
+  s = await state();
+  check('funnel: demo_mode_selected {inbound, dial auto, from landing} and demo_inbound_call_tapped {from landing}', typesOf(s, 'demo_mode_selected').some((e) => e.data.mode === 'inbound' && e.data.dial === 'auto' && e.data.from === 'landing') && typesOf(s, 'demo_inbound_call_tapped').some((e) => e.data.from === 'landing'), s.events.map((e) => [e.type, e.data.mode || e.data.from || '']));
+  await ev(`(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }); document.dispatchEvent(new Event('visibilitychange')); })()`);
+  await sleep(250);
+  await ev(`(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' }); document.dispatchEvent(new Event('visibilitychange')); })()`);
+  await sleep(300);
+  s = await state();
+  const back = typesOf(s, 'demo_inbound_returned');
+  check('back on the page after the dial: demo_inbound_returned once {inbound, not connected, away_ms}', back.length === 1 && back[0].data.mode === 'inbound' && back[0].data.connected === false && back[0].data.away_ms >= 200, back);
+  check('the visitor\'s visits so far carried no QA flag', s.events.every((e) => !e.data.qa));
+  await noLeak('treatment visitor');
+  // The home page's floating Start (the card's x), for a real visitor: the kept arm, and a trial tap.
+  await load(`${BASE}/`);
+  href = await ev(`(document.querySelector('a.floating-cta') || {}).href`);
+  check(`home page, floating Start: xp=${KEY}.treatment.${CV} (kept from the exposure)`, xpParam(href) === `${KEY}.treatment.${CV}` && bvidParam(href) === VID.treatment, href);
+  await tapSignup('a.floating-cta');
+  await sleep(300);
+  s = await state();
+  check('home page: no exposure; a trial tap sends start_trial_clicked with the kept arm', exposures(s).length === 0 && tracks(s).length === 1 && JSON.stringify(tracks(s)[0].experiments) === JSON.stringify(ctx('treatment')) && tracks(s)[0].properties.from === 'floating', s.gw);
+
+  // ---------- 3. a tap before demo.js has loaded ----------
+  console.log('[a tap before demo.js]');
+  await fetch(`${BASE}/__control/hold?ms=2500`);
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  const early = await ev(`!(window.boltDemo)`);
+  await ev(`document.querySelector('.qlt-get').click()`);
+  const opened = await until(`!!document.querySelector('.demo-backdrop.open') && document.querySelector('.demo-backdrop').getAttribute('data-screen') === 'phone'`, 6000);
+  await fetch(`${BASE}/__control/hold?ms=0`);
+  check('a "She calls you" tap before demo.js arrives opens the form once it has', early && opened, { early, opened });
+
+  // ---------- 4. unbaked: the real pages before Start ----------
+  if (!DEF.baked) {
+    console.log('[unbaked: the pages as committed, a real visitor]');
+    await visit(`/${PAGE}`, { vid: VID.treatment });
+    s = await state();
+    d = await disp();
+    check('a treatment-vector visitor sees the sign-up card; no arm', d.c !== 'none' && d.t === 'none' && s.xp && s.xp.variation === null, { d, xp: s.xp });
+    check('nothing to the gateway, no xp_exposed', s.gw.length === 0 && typesOf(s, 'xp_exposed').length === 0, s.gw);
+    href = await ev(`document.querySelector('.ql-cta').href`);
+    check('the button carries no xp', xpParam(href) === null && bvidParam(href) === VID.treatment, href);
+    check('the card\'s own event still goes: signup_offer_opened', typesOf(s, 'signup_offer_opened').length === 1);
+  }
+
+  // ---------- 5. QA, forced arms: the four surfaces ----------
+  for (const arm of ['treatment', 'control']) {
+    console.log(`[QA ?bolt_xp=${arm} (the pages as committed): the four surfaces]`);
+    await visit(`/${PAGE}?bolt_qa=1&bolt_xp=${arm}&demoqa=1&utm_source=fb`);
+    s = await state();
+    d = await disp();
+    check(`the ${arm === 'treatment' ? 'demo' : 'sign-up'} card shows; forced`, (arm === 'treatment' ? d.t !== 'none' && d.c === 'none' : d.c !== 'none' && d.t === 'none') && s.xp.forced === true && s.xp.variation === arm, { d, xp: s.xp });
+    check('?bolt_xp is out of the address; the rest stays', !/bolt_xp/.test(s.href) && /bolt_qa=1/.test(s.href) && /utm_source=fb/.test(s.href), s.href);
+    check('QA: nothing to the gateway', s.gw.length === 0, s.gw);
+    xe = typesOf(s, 'xp_exposed');
+    check('QA: xp_exposed for the funnel, marked qa and forced', xe.length === 1 && xe[0].data.qa === true && xe[0].data.forced === true && xe[0].data.variation === arm && xe[0].data.config_version === QA_CV, xe);
+    const want = `${KEY}.${arm}.${QA_CV}`;
+    if (arm === 'control') {
+      href = await ev(`document.querySelector('.ql-cta').href`);
+      check(`surface 1, the card: xp=${want}`, xpParam(href) === want, href);
+    } else {
+      await until(`!!window.__demoQA && !!(window.boltDemo && window.boltDemo.ready)`);
+      await ev(`(() => { window.__demoQA.open(); window.__demoQA.recap({ transcript: [{ speaker: 'assistant', text: 'Thanks for calling.' }] }); })()`);
+      await sleep(200);
+      href = await tapSignup('.demo-success-cta');
+      check(`surface 3, the demo recap: xp=${want}`, xpParam(href) === want, href);
+      await ev(`window.__demoQA.limit()`);
+      await sleep(200);
+      href = await tapSignup('.demo-limitmsg__link');
+      check(`surface 4, the demo limit page: xp=${want}`, xpParam(href) === want, href);
+      s = await state();
+      check('QA: the recap and limit taps send nothing to the gateway', s.gw.length === 0, s.gw);
+    }
+    await load(`${BASE}/`);
+    href = await ev(`(document.querySelector('a.floating-cta') || {}).href`);
+    check(`surface 2, the home floating Start (after x): xp=${want}`, xpParam(href) === want, href);
+    s = await state();
+    check('home page: nothing to the gateway', s.gw.length === 0);
+  }
+
+  // ---------- 6. a real visitor's ?bolt_xp is ignored ----------
+  console.log('[a real visitor with ?bolt_xp=treatment, baked]');
+  await visit(`/__baked/${PAGE}?bolt_xp=treatment`, { vid: VID.control });
+  s = await state();
+  const kept = await ev(`sessionStorage.getItem('bolt_xp_force')`);
+  check('the hashed arm (control), not forced, nothing kept, out of the address', s.xp.variation === 'control' && s.xp.forced === false && kept === null && !/bolt_xp/.test(s.href), { xp: s.xp, kept, href: s.href });
+  check('its exposure is the hashed arm', exposures(s).length === 1 && exposures(s)[0].experiments[0].variation === 'control', s.gw);
+
+  // ---------- 7. opted out and Global Privacy Control, both arms ----------
+  for (const how of ['optout', 'gpc']) {
+    let scriptId = null;
+    if (how === 'gpc') scriptId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(Navigator.prototype, 'globalPrivacyControl', { configurable: true, get: () => true })` })).identifier;
+    for (const arm of ['control', 'treatment']) {
+      console.log(`[${how === 'gpc' ? 'Global Privacy Control' : '?bolt_optout=1'}, ${arm}, baked]`);
+      await visit(`/__baked/${PAGE}${how === 'optout' ? '?bolt_optout=1' : ''}`, { vid: VID[arm] });
+      s = await state();
+      ex = exposures(s);
+      check('the exposure still goes, with the arm', ex.length === 1 && ex[0].experiments[0].variation === arm && ex[0].anonymousId === VID[arm], s.gw);
+      check('xp_exposed still goes', typesOf(s, 'xp_exposed').length === 1 && typesOf(s, 'xp_exposed')[0].data.variation === arm);
+      check('the Meta Pixel is off (no calls) and the Google tag is off (no tag, no config)', s.fbq.length === 0 && !s.gtagScript && s.dl === '[]', { fbq: s.fbq, gtag: s.gtagScript, dl: s.dl });
+      if (arm === 'control') {
+        href = await ev(`document.querySelector('.ql-cta').href`);
+        check('the button carries xp and the opt-out', xpParam(href) === `${KEY}.control.${CV}` && (how === 'gpc' || new URL(href).searchParams.get('bolt_optout') === '1'), href);
+      }
+    }
+    if (scriptId) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: scriptId });
+  }
+
+  // ---------- 8. storage blocked ----------
+  console.log('[localStorage blocked, baked]');
+  const blockId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('blocked', 'SecurityError'); } })` })).identifier;
+  // The decide step's new id on each load, made known: two treatment vectors in turn (the same arm
+  // twice, so only the visitor tells the two exposures apart). Later UUIDs are Chrome's own.
+  const uuidId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { try { const ids = ['${VID.treatment}', '12345678-90ab-4cde-8f01-234567890abc']; const n = Number(sessionStorage.getItem('__uuidn') || 0); const orig = crypto.randomUUID.bind(crypto); let used = false; crypto.randomUUID = () => { if (used) return orig(); used = true; sessionStorage.setItem('__uuidn', String(n + 1)); return ids[n % 2]; }; } catch (e) {} })()` })).identifier;
+  await visit(`/__baked/${PAGE}`);
+  s = await state();
+  ex = exposures(s);
+  check('the exposure\'s visitor is the visitor the arm was decided for', s.xp && ex.length === 1 && ex[0].anonymousId === s.xp.vid && ex[0].experiments[0].variation === s.xp.variation, { xp: s.xp, gw: s.gw });
+  const fe = typesOf(s, 'xp_exposed')[0];
+  check('the funnel hears the same visitor', fe && fe.sid === s.xp.vid, fe);
+  // Storage blocked, every page load is a new visitor id: the next load is a new subject, and is reported.
+  await load(`${BASE}/__baked/${PAGE}`);
+  const s2 = await state();
+  check('the next load (a new id, same tab, same arm) is a new subject, and is reported', s.xp && s.xp.vid === VID.treatment && s2.xp && s2.xp.vid === '12345678-90ab-4cde-8f01-234567890abc' && s2.xp.variation === 'treatment' && exposures(s2).length === 1 && exposures(s2)[0].anonymousId === s2.xp.vid, { a: s.xp, b: s2.xp, gw: s2.gw });
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: uuidId });
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: blockId });
+
+  // ---------- 9. a computer: no dialer, so the call card shows the number ----------
+  console.log('[a computer, treatment, baked]');
+  await computer();
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  await until(`!!(window.boltDemo && window.boltDemo.ready) && document.querySelector('.qlt-call').getAttribute('href') !== '#'`);
+  await ev(`window.__dialed = null; document.querySelector('.qlt-call').click()`);
+  await sleep(400);
+  m = await ev(`(() => { const b = document.querySelector('.demo-backdrop'); return { open: !!(b && b.classList.contains('open')), screen: b && b.getAttribute('data-screen'), plain: !!document.querySelector('b.demo-ihow__tel'), dialed: window.__dialed }; })()`);
+  s = await state();
+  check('"You call her" on a computer: no dial, the call card with the number to call', m.open && m.screen === 'inbound-call' && m.plain && !m.dialed && typesOf(s, 'demo_mode_selected').some((e) => e.data.dial === 'manual'), m);
+  await phone();
+} finally {
+  try { ws && ws.close(); } catch {}
+  chrome.kill('SIGKILL'); server.close();
+  await sleep(300); try { rmSync(prof, { recursive: true, force: true }); } catch {}
+}
+
+const failed = results.filter((r) => !r.ok).length;
+console.log(`\n${results.length} checks, ${failed} failed${NC ? ` (NC=${NC}: expected to FAIL)` : ''}`);
+process.exit(failed ? 1 : 0);

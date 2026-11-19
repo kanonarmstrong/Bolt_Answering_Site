@@ -1,0 +1,9 @@
+{"algorithm":"fnv1a64-utf8-mod10000-v1","experimentKey":"landing_demo_buttons","seed":"landing-demo-v1","trafficPercentage":100,"variants":[{"key":"control","allocation":5000},{"key":"treatment","allocation":5000}],"vectors":[
+{"subjectId":"0b7f6c2e-5d1a-4c3b-9e8f-1a2b3c4d5e6f","variationBucket":2762,"trafficBucket":6794,"variation":"control"},
+{"subjectId":"f3e2d1c0-b9a8-4765-8432-10fedcba9876","variationBucket":3909,"trafficBucket":2969,"variation":"control"},
+{"subjectId":"a1b2c3d4-e5f6-4789-8abc-def012345678","variationBucket":863,"trafficBucket":4755,"variation":"control"},
+{"subjectId":"5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9","variationBucket":3892,"trafficBucket":2820,"variation":"control"},
+{"subjectId":"c0ffee00-1234-4abc-8def-0123456789ab","variationBucket":1232,"trafficBucket":472,"variation":"control"},
+{"subjectId":"deadbeef-0000-4111-8222-333344445555","variationBucket":5189,"trafficBucket":7001,"variation":"treatment"},
+{"subjectId":"12345678-90ab-4cde-8f01-234567890abc","variationBucket":6713,"trafficBucket":9365,"variation":"treatment"},
+{"subjectId":"98765432-10fe-4dcb-8a98-76543210fedc","variationBucket":9469,"trafficBucket":4273,"variation":"treatment"}]}

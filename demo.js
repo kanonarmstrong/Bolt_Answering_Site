@@ -279,6 +279,8 @@
     backdrop.classList.remove('open');
     document.body.classList.remove('demo-lock');
     returnFocus(!!e && (e.type === 'keydown' || e.detail === 0));
+    // A landing card's call button gets a fresh code for its next tap (AFMBP-2612).
+    if (landingArm) landingArm();
   }
   function isOpen() { return !!backdrop && backdrop.classList.contains('open'); }
 
@@ -735,7 +737,14 @@
   document.addEventListener('visibilitychange', function () {
     var f = inboundFlow;
     if (!f || !isOpen()) return;
-    if (document.visibilityState === 'hidden') { f.hidden = true; return; }
+    if (document.visibilityState === 'hidden') { if (!f.hidden) f.hiddenAt = Date.now(); f.hidden = true; return; }
+    // AFMBP-2612 (the SPEC's "came back after the dial"): the visitor is back on the page after
+    // leaving it, mostly for the dialer (in an in-app browser the dial leaves the app). Once per
+    // call followed, whether or not the call reached the line.
+    if (f.hidden && !f.returned) {
+      f.returned = true;
+      track('demo_inbound_returned', { mode: 'inbound', away_ms: f.hiddenAt ? Math.max(0, Date.now() - f.hiddenAt) : null, connected: !!f.callId });
+    }
     if (step !== 'inbound_call') return;
     f.back = true;
     // Timers may have slept through the call: check now, and restart the
@@ -1419,6 +1428,94 @@
     ]);
   }
 
+  // ---------- a landing card's two ways in (AFMBP-2612) ----------
+  // The /start/ pages' demo card (the landing A/B's treatment, Figma 2169:14513) carries the
+  // choice card's two ways in on the page itself: [data-demo-landing="call"] is "You call us"
+  // (the visitor calls the demo line) and [data-demo-landing="form"] is "We call you". From the
+  // tap on it is today's demo. The funnel hears what the choice card's taps say (demo_opened with
+  // trigger "button", then demo_mode_selected), with entry/from "landing" added; meta-pixel.js
+  // forwards neither of those keys.
+  // As on the choice card, the call button is a real tel: link before anyone taps: iOS hands a
+  // tel: link to the dialer only from the tap itself, so the code is fetched once the page is
+  // seen, and again before it runs out. The page loads this script after its card has painted;
+  // a tap that came first is kept in window.__boltDemoPending and carried out here, without the
+  // dial (the tap's moment has passed).
+  var landingArm = null;
+  function openOn(render, from) {
+    warmMobileArt();
+    if (!backdrop) build();
+    if (!isOpen()) opener = from || document.activeElement;
+    stopConfetti();
+    recapConfettiDone = false;
+    render();
+    backdrop.classList.add('open');
+    document.body.classList.add('demo-lock');
+    focusDialog();
+  }
+  function landingOpened(mode, dial) {
+    track('demo_opened', { trigger: 'button', entry: 'landing' });
+    var p = { mode: mode, from: 'landing' };
+    if (dial) p.dial = dial;
+    track('demo_mode_selected', p);
+  }
+  function landingForm(b) {
+    landingOpened('outbound');
+    openOn(renderPhone, b);
+  }
+  function wireLandingCall(a) {
+    var label = [].slice.call(a.childNodes), waiting = false, timer = null;
+    function arm() {
+      clearTimeout(timer);
+      if (!isVisibleNow()) return;
+      ensureInbound().then(function (s) {
+        if (!s) return;
+        a.setAttribute('href', s.telUri);
+        // A code is offered for a new call while it has 2 minutes left (inboundUsable): fetch
+        // the next one then, while the page is up.
+        timer = setTimeout(arm, Math.max(5000, s.expiresAt - Date.now() - 120000 + 1000));
+      });
+    }
+    landingArm = arm;
+    function manual() {
+      if (waiting) return;
+      waiting = true;
+      a.innerHTML = '';
+      a.appendChild(h('span', { class: 'demo-spinner' }));
+      label.forEach(function (n) { a.appendChild(n); });
+      ensureInbound().then(function (s) {
+        waiting = false;
+        a.innerHTML = '';
+        label.forEach(function (n) { a.appendChild(n); });
+        if (s) a.setAttribute('href', s.telUri);
+        openOn(function () { if (s) startInbound(s, true); else renderInboundFailed('session'); }, a);
+      });
+    }
+    a.addEventListener('click', function (e) {
+      var s = inboundUsable(inbound) ? inbound : null;
+      var auto = !!s && canDial();
+      if (!auto) e.preventDefault();
+      if (waiting) return;
+      landingOpened('inbound', auto ? 'auto' : 'manual');
+      if (!s) return manual();
+      if (auto) track('demo_inbound_call_tapped', { mode: 'inbound', from: 'landing' });
+      // Swap screens after the browser has acted on the tap, with the link still in the page.
+      setTimeout(function () { openOn(function () { startInbound(s, !auto); }, a); }, 0);
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') clearTimeout(timer);
+      else if (!isOpen()) arm();
+    });
+    // Not for automated browsers (ad review, link scanners): they would only hold codes.
+    var A = window.boltAttr;
+    if (A && A.isAutomated && A.isAutomated()) return { manual: manual };
+    if (A && A.whenVisible) A.whenVisible(arm); else arm();
+    return { manual: manual };
+  }
+  function isVisibleNow() {
+    var vs = document.visibilityState;
+    return (!vs || vs === 'visible') && !document.prerendering;
+  }
+
   // ---------- wire triggers ----------
   function wire() {
     var btns = document.querySelectorAll('a.btn--blue, button.btn--blue, [data-demo-open]');
@@ -1427,6 +1524,16 @@
         b.addEventListener('click', function (e) { e.preventDefault(); openModal('button', null, b); });
       }
     });
+    // AFMBP-2612: a landing card's two ways in, and a tap that came before this script.
+    var call = document.querySelector('[data-demo-landing="call"]');
+    var form = document.querySelector('[data-demo-landing="form"]');
+    var callFlow = call ? wireLandingCall(call) : null;
+    if (form) form.addEventListener('click', function (e) { e.preventDefault(); landingForm(form); });
+    window.boltDemo = { ready: true };
+    var pending = window.__boltDemoPending;
+    window.__boltDemoPending = null;
+    if (pending === 'form' && form) landingForm(form);
+    else if (pending === 'call' && callFlow) { landingOpened('inbound', 'manual'); callFlow.manual(); }
   }
   // QA-only hook (needs ?demoqa=1) to render each modal state deterministically for
   // screenshot verification, without walking the live OTP/call API. No effect otherwise.
