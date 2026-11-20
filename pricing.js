@@ -37,7 +37,7 @@
   var FALLBACK = {
     promoPriceUsd: 59,
     retailPriceUsd: 79,
-    promoMonths: 1,
+    promoMonths: 3,
     trialDays: 30,
     perMinuteUsd: 0.12,
     perMessageUsd: 0.01,

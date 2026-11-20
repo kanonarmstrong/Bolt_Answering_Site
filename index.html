@@ -109,7 +109,7 @@
             "price": 59,
             "priceCurrency": "USD",
             "url": "https://app.boltanswering.com/signup",
-            "description": "30-day free trial. Then $59/month for the first month, and $79/month after that. Includes 750 messages and 400 minutes per cycle, then $0.12/minute and $0.01/message.",
+            "description": "30-day free trial. Then $59/month for the first 3 months, and $79/month after that. Includes 750 messages and 400 minutes per cycle, then $0.12/minute and $0.01/message.",
             "priceSpecification": [
               {
                 "@type": "UnitPriceSpecification",
@@ -125,7 +125,7 @@
                 "price": 59,
                 "priceCurrency": "USD",
                 "unitCode": "MON",
-                "billingDuration": 1
+                "billingDuration": 3
               },
               {
                 "@type": "UnitPriceSpecification",
@@ -402,7 +402,7 @@
      pricing.js overrides them from GET /api/public/pricing.
      pricing.test.mjs pins every page to pricing.js's FALLBACK. -->
     <div class="pricing__chevron-wrap rv">
-      <div class="chev-mobile mchev" role="img" aria-label="First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, Keeps customer info organized, Manages your schedule, Captures leads, Sends confirmations, Drafts quick text replies. New Bolt Pro Pricing: $59 per month for first 1 month, then $79/month; 750 messages and 400 minutes per cycle; $0.12/minute and $0.01/message beyond budget.">
+      <div class="chev-mobile mchev" role="img" aria-label="First 30-Day Trial FREE — Blocks spam calls, Flags urgent calls, Keeps customer info organized, Manages your schedule, Captures leads, Sends confirmations, Drafts quick text replies. New Bolt Pro Pricing: $59 per month for first 3 months, then $79/month; 750 messages and 400 minutes per cycle; $0.12/minute and $0.01/message beyond budget.">
          <svg class="mchev-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="mchevTop" clipPathUnits="objectBoundingBox"><path d="M0.065,0 H0.935 Q1,0 1,0.049 V0.93 L0.5,1 L0,0.93 V0.049 Q0,0 0.065,0 Z"/></clipPath><clipPath id="mchevBot" clipPathUnits="objectBoundingBox"><path d="M0,0 H1 V0.86 Q1,0.94 0.9,0.965 L0.5,1 L0.1,0.965 Q0,0.94 0,0.86 Z"/></clipPath></defs></svg>
 </clipPath></defs></svg>
         <div class="mchev__top">
@@ -420,7 +420,7 @@
         </div>
         <div class="mchev__bot">
           <p class="mchev__partner">New Bolt Pro Pricing</p>
-          <p class="mchev__price"><span class="mchev__amt">$59</span> / mo. for first <span class="js-pm">1</span> <span class="js-pm-unit">month</span></p>
+          <p class="mchev__price"><span class="mchev__amt">$59</span> / mo. for first <span class="js-pm">3</span> <span class="js-pm-unit">months</span></p>
           <ul class="mchev__fine">
             <li>After promo period, price increases to $79 / month</li>
             <li>Includes 750 messages and 400 minutes per cycle, and only $0.12 / minute and $0.01/message beyond budget</li>
