@@ -20,6 +20,26 @@ refuses this origin — it does not.)
 `plans.ts` and this site follows on the next page load — every surface, with no
 hand-editing.
 
+## The fallback is generated — never edit it by hand (AFMBP-2664)
+
+`pricing.js` `FALLBACK`, the chevron values baked into the six pricing pages, the
+homepage's structured data (JSON-LD) and the support FAQ's trial length are
+rewritten from the published price by `tools/pricing-sync.mjs`, using
+`pricing.js`'s own renderer, so they always equal what the page shows once the
+script runs. The **Pricing sync** workflow (`.github/workflows/pricing-sync.yml`)
+runs it right after a publish (the backend dispatches it) and every 15 minutes,
+runs `pricing.test.mjs`, commits to `main` and asks Pages to publish.
+
+- `node tools/pricing-sync.mjs` checks only: exit 0 in sync, 3 = would change.
+- `node tools/pricing-sync.mjs --write` rewrites the files.
+- It stops without writing (exit 1) if a page no longer carries what `pricing.js`
+  renders for the current `FALLBACK`. Fix the page, then re-run.
+- An unreachable or malformed feed changes nothing (exit 2).
+
+It touches only the hooks below and the structured data, never other copy. Copy
+that states a price or a promo length in plain text is not data-driven and is
+the owner's to change.
+
 ## Where the numbers come from now
 
 The feed serves the version published in the **Pricing Control Center**
