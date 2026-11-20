@@ -47,16 +47,19 @@ test('the feed reaches every hook: price, promo LENGTH, trial, allowances, aria'
   assert.match(aria, /New Bolt Pro Pricing: \$39\.99 per month for first 6 months, then \$59\.99\/month; 900 messages and 500 minutes per cycle;/);
 });
 
-test('the fallback is the baked HTML (idempotent): 1 month, 30 days, 750 / 400', () => {
+/* AFMBP-2664: FALLBACK is GENERATED from the published price (tools/pricing-sync.mjs), so these
+   pin how it renders — never which numbers it holds. The pages are pinned to that render below. */
+test('the fallback reaches every hook with agreeing words', () => {
   const doc = fakeDoc();
-  P.apply(doc, P.FALLBACK);
-  assert.equal(String(text(doc, '.js-pm')), '1');
-  assert.equal(text(doc, '.js-pm-unit'), 'month');
-  assert.equal(text(doc, '.js-pm-verb'), 'is');
-  assert.equal(String(text(doc, '.js-td')), '30');
+  const F = P.FALLBACK;
+  P.apply(doc, F);
+  assert.equal(String(text(doc, '.js-pm')), String(F.promoMonths));
+  assert.equal(text(doc, '.js-pm-unit'), P.monthsWord(F.promoMonths));
+  assert.equal(text(doc, '.js-pm-verb'), F.promoMonths === 1 ? 'is' : 'are');
+  assert.equal(String(text(doc, '.js-td')), String(F.trialDays));
   assert.equal(
     doc.li[1].textContent,
-    'Includes 750 messages and 400 minutes per cycle, and only $0.12 / minute and $0.01/message beyond budget',
+    `Includes ${F.messagesIncluded} messages and ${F.minutesIncluded} minutes per cycle, and only ${P.money(F.perMinuteUsd)} / minute and ${P.money(F.perMessageUsd)}/message beyond budget`,
   );
 });
 
@@ -124,12 +127,14 @@ test('an older feed without allowances keeps the fallback allowances', () => {
 
 test('feed down: the fallback stays and nothing throws', async () => {
   const doc = fakeDoc();
+  const F = P.FALLBACK;
   await P.run(doc, () => Promise.reject(new Error('offline')));
-  assert.equal(String(text(doc, '.js-pm')), '1');
-  assert.equal(text(doc, '.js-pm-unit'), 'month');
+  assert.equal(String(text(doc, '.js-pm')), String(F.promoMonths));
+  assert.equal(text(doc, '.js-pm-unit'), P.monthsWord(F.promoMonths));
   // AFMBP-1935: feed down shows the published Solo price, never $0.
-  assert.equal(text(doc, '.mchev__amt'), '$59');
-  assert.equal(doc.li[0].textContent, 'After promo period, price increases to $79 / month');
+  assert.equal(text(doc, '.mchev__amt'), P.money(F.promoPriceUsd));
+  assert.ok(F.promoPriceUsd > 0 && F.retailPriceUsd > 0, 'the fallback is a real price, never the $0 placeholder');
+  assert.equal(doc.li[0].textContent, `After promo period, price increases to ${P.money(F.retailPriceUsd)} / month`);
 });
 
 test('feed up: run() applies plans.solo from GET /api/public/pricing', async () => {
@@ -204,11 +209,17 @@ const LD_RE = /<script type="application\/ld\+json" class="js-ld-offer">([\s\S]*
 const appNode = (ld) => ld['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
 const ldDoc = (script) => ({ readyState: 'complete', querySelectorAll: (sel) => (sel === 'script.js-ld-offer' ? [script] : []) });
 
+/* The offer as of 2026-09-29 — a fixed input, so the wording is pinned whatever FALLBACK holds. */
+const ONE_MONTH = {
+  promoPriceUsd: 59, retailPriceUsd: 79, promoMonths: 1, trialDays: 30,
+  perMinuteUsd: 0.12, perMessageUsd: 0.01, minutesIncluded: 400, messagesIncluded: 750,
+};
+
 test('AFMBP-2525: the JSON-LD baked into index.html carries offerLd(FALLBACK)', () => {
   const m = readFileSync('index.html', 'utf8').match(LD_RE);
   assert.ok(m, 'index.html has the js-ld-offer JSON-LD');
   assert.deepEqual(appNode(JSON.parse(m[1])).offers, P.offerLd(P.FALLBACK));
-  const o = P.offerLd(P.FALLBACK);
+  const o = P.offerLd(ONE_MONTH);
   assert.equal(o.price, 59);
   assert.equal(o.priceCurrency, 'USD');
   assert.equal(o.description, '30-day free trial. Then $59/month for the first month, and $79/month after that. ' +
@@ -233,7 +244,7 @@ test('AFMBP-2525: the feed rewrites the JSON-LD offer, and only the offer', () =
 });
 
 test('AFMBP-2525: no trial and no promo are stated as such (0 is real); bad JSON-LD is left alone', () => {
-  const o = P.offerLd({ ...P.FALLBACK, trialDays: 0, promoMonths: 0 });
+  const o = P.offerLd({ ...ONE_MONTH, trialDays: 0, promoMonths: 0 });
   assert.equal(o.price, 79);
   assert.equal(o.description, '$79/month. Includes 750 messages and 400 minutes per cycle, then $0.12/minute and $0.01/message.');
   assert.deepEqual(o.priceSpecification.map((s) => s.name), ['Regular price']);

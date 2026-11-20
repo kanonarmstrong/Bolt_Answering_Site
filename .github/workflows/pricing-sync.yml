@@ -1,0 +1,94 @@
+name: Pricing sync
+
+# AFMBP-2664 — keeps the site's pricing fallback equal to the published price, so
+# nobody edits a price by hand after a publish in /admin/pricing.
+#   - The backend dispatches this right after a publish (PRICING_FALLBACK_SYNC_ENABLED
+#     plus its token). Until that is armed, the schedule below catches up.
+#   - Every 15 minutes it reads GET /api/public/pricing and commits only when a number
+#     changed (GitHub can run schedules a few minutes late).
+#   - "Run workflow" on the Actions tab syncs right away.
+# tools/pricing-sync.mjs rewrites only what pricing.js itself rewrites at runtime:
+# pricing.js FALLBACK, the chevron values baked into the six pricing pages, the
+# homepage's structured data, and the support FAQ's trial length. It never touches
+# other copy. If a page no longer matches what pricing.js renders, it stops without
+# committing anything (fix the page). An unreachable feed changes nothing.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Offset from the blog's */15 so the two bots rarely push in the same minute.
+    - cron: '7,22,37,52 * * * *'
+  pull_request:
+    paths: ['pricing.js', 'pricing.test.mjs', 'tools/pricing-sync.mjs', 'tools/pricing-sync.test.mjs', '.github/workflows/pricing-sync.yml']
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: pricing-sync
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test pricing.test.mjs tools/pricing-sync.test.mjs
+
+  sync:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Rebuild the fallback from the published price
+        id: sync
+        run: |
+          set +e
+          node tools/pricing-sync.mjs --write
+          code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning::The pricing feed could not be read; nothing changed. The next run tries again."
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          exit $code
+      - name: Verify the pages carry what pricing.js renders
+        if: steps.sync.outputs.skip != '1'
+        run: node --test pricing.test.mjs
+      - name: Commit if anything changed
+        id: commit
+        if: steps.sync.outputs.skip != '1'
+        run: |
+          git add -u
+          if git diff --cached --quiet; then
+            echo "Already in sync with the published price."
+            exit 0
+          fi
+          git config user.name "bolt-pricing-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "pricing: sync the fallback to the published price (${{ github.event_name }})"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "pushed=1" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            # Another bot (the blog) pushed first; its files never overlap these.
+            git pull --rebase origin main
+          done
+          echo "::error::Could not push the pricing sync after 3 attempts."
+          exit 1
+      - name: Ask GitHub Pages to publish
+        if: steps.commit.outputs.pushed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "::warning::Pages build request failed; the push may still trigger it."

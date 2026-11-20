@@ -29,10 +29,11 @@
   'use strict';
 
   var FEED = 'https://bolt-staging.fly.dev/api/public/pricing';
-  // AFMBP-1938 — the published Solo price: $59 for 1 month, then $79
-  // (owner, 2026-09-29). Equal to the backend constants and the prices baked
-  // into the six pricing pages (pinned by pricing.test.mjs), so no-JS, feed-down
-  // and feed-up all show the same numbers.
+  // AFMBP-2664 — GENERATED from the published Solo price by tools/pricing-sync.mjs
+  // (the pricing-sync workflow runs it after every publish and every 15 minutes).
+  // Do not edit by hand: the same run rewrites the prices baked into the six
+  // pricing pages and the homepage's structured data to match, and
+  // pricing.test.mjs pins them equal, so no-JS, feed-down and feed-up agree.
   var FALLBACK = {
     promoPriceUsd: 59,
     retailPriceUsd: 79,
