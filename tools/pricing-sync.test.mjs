@@ -87,6 +87,24 @@ test('a page that drifted from what pricing.js renders STOPS the sync before any
   assert.ok(read(root, 'index.html').includes('<span class="js-pm">1</span>'), 'no page half-rewritten');
 });
 
+test('structured data that drifted from offerLd(FALLBACK) STOPS the sync too', () => {
+  const root = copySite();
+  const index = read(root, 'index.html');
+  writeFileSync(join(root, 'index.html'), index.replace(/("offers": \{\s*"@type": "Offer",\s*"price": )\d+/, '$149'));
+  assert.notEqual(read(root, 'index.html'), index, 'the fixture edit applied');
+  const js = read(root, 'pricing.js');
+  assert.throws(() => syncSite(root, offerFromFeed(feedWith({ promoMonths: 3 })), { write: true }), (e) => e instanceof SyncError && e.code === 1 && /JSON-LD offer/.test(e.message));
+  assert.equal(read(root, 'pricing.js'), js, 'pricing.js untouched');
+});
+
+test('a checkout missing chevron pages is refused — a sync must never report "in sync" on a site it cannot see', async () => {
+  const root = copySite();
+  const { rmSync } = await import('node:fs');
+  rmSync(join(root, 'hvac.html'));
+  assert.throws(() => syncSite(root, offerFromFeed(feedWith({ promoMonths: 3 })), { write: true }), (e) => e instanceof SyncError && e.code === 1 && /six chevron pages, found 5/.test(e.message));
+  assert.ok(read(root, 'index.html').includes('<span class="js-pm">1</span>'), 'nothing written');
+});
+
 test('a feed that is malformed changes nothing (exit 2): no solo, a non-number, a negative, a fractional month', () => {
   for (const body of [{}, { plans: {} }, feedWith({ promoMonths: 'three' }), feedWith({ retailPriceUsd: -1 }), feedWith({ promoMonths: 1.5 }), feedWith({ minutesIncluded: undefined })]) {
     assert.throws(() => offerFromFeed(body), (e) => e instanceof SyncError && e.code === 2);
