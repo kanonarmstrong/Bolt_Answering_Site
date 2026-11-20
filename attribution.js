@@ -558,6 +558,90 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
+  // ---------- what a visitor actually sees and taps (AFMBP-2667) ----------
+  // section_viewed: once per top-level <section> per page load, after it has been on screen for at
+  //   least 1 s (half of the section, or half of the screen for a section taller than that) while
+  //   the page is visible and the demo isn't covering it. Sent when that look ends (scrolled away,
+  //   page hidden or left), with the time it lasted: { placement: the section's first class (the
+  //   same rule as a trial tap's placement), visible_ms }.
+  // cta_clicked: a tap on a link or button outside the demo that isn't a sign-up link (those send
+  //   trial_link_clicked): { placement: nav / footer / floating / the section, from: where it goes:
+  //   'page:<path>', 'anchor:<id>', 'out:<host>', 'demo', 'email', 'phone' or 'button:<id or class>' }.
+  //   Never a link's text, a query string, an address, a number or anything typed.
+  var SEEN_MS = 1000;
+  var looks = [];   // one per top-level section: { el, name, on, since, ms, sent }
+  function covered() { return !!(document.body && document.body.classList.contains('demo-lock')); }
+  function lookStart(l) { if (l.on && !l.sent && l.since === null && isVisible() && !covered()) l.since = sinceStart(); }
+  function lookStop(l) { if (l.since !== null) { l.ms += Math.max(0, sinceStart() - l.since); l.since = null; } }
+  function lookSend(l) {
+    lookStop(l);
+    if (l.sent || l.ms < SEEN_MS) return;
+    l.sent = true;
+    track('section_viewed', { placement: l.name, visible_ms: Math.round(l.ms) });
+  }
+  function onSection(entries) {
+    var vh = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
+    for (var i = 0; i < entries.length; i++) {
+      var en = entries[i], l = null;
+      for (var j = 0; j < looks.length; j++) if (looks[j].el === en.target) { l = looks[j]; break; }
+      if (!l || l.sent) continue;
+      var h = en.boundingClientRect.height, seen = en.intersectionRect.height;
+      var on = !!(en.isIntersecting && h > 0 && vh > 0 && (seen / h >= 0.5 || seen / vh >= 0.5));
+      if (on === l.on) continue;
+      l.on = on;
+      if (on) lookStart(l); else lookSend(l);
+    }
+  }
+  function watchSections() {
+    if (looks.length || !window.IntersectionObserver) return;
+    var all = document.querySelectorAll('section[class]');
+    for (var i = 0; i < all.length; i++) {
+      var up = all[i].parentElement;
+      if ((up && up.closest && up.closest('section')) || all[i].closest('.demo-backdrop')) continue;   // top level only
+      looks.push({ el: all[i], name: String(all[i].className).split(/\s+/)[0], on: false, since: null, ms: 0, sent: false });
+    }
+    if (!looks.length) return;
+    var steps = [];
+    for (var s = 0; s <= 20; s++) steps.push(s / 20);
+    var io = new window.IntersectionObserver(onSection, { threshold: steps });
+    for (var k = 0; k < looks.length; k++) io.observe(looks[k].el);
+    // While the demo covers the page, the time is the demo's, not the sections'.
+    if (window.MutationObserver && document.body) {
+      new window.MutationObserver(function () {
+        for (var m = 0; m < looks.length; m++) { if (covered()) lookStop(looks[m]); else lookStart(looks[m]); }
+      }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+  document.addEventListener('visibilitychange', function () {
+    for (var i = 0; i < looks.length; i++) { if (document.visibilityState === 'hidden') lookSend(looks[i]); else lookStart(looks[i]); }
+  });
+  window.addEventListener('pagehide', function () { for (var i = 0; i < looks.length; i++) lookSend(looks[i]); });
+  function ctaTarget(el, href) {
+    if (el.hasAttribute('data-demo-open')) return 'demo';
+    if (!href) return 'button:' + (el.id || String(el.className || '').split(/\s+/)[0] || 'button');
+    if (href.charAt(0) === '#') return 'anchor:' + (href.slice(1) || 'top');
+    try {
+      var u = new URL(href, window.location.href);
+      if (u.protocol === 'mailto:') return 'email';
+      if (u.protocol === 'tel:') return 'phone';
+      if (u.origin !== window.location.origin) return 'out:' + u.hostname;
+      if (u.pathname === window.location.pathname && u.hash) return 'anchor:' + u.hash.slice(1);
+      return 'page:' + u.pathname;
+    } catch (e) { return 'link'; }
+  }
+  document.addEventListener('click', function (e) {
+    if (!e || e.isTrusted === false || !isVisible()) return;
+    var t = e.target && e.target.closest ? e.target.closest('a[href], button, [data-demo-open]') : null;
+    if (!t || t.closest('.demo-backdrop')) return;   // inside the demo, demo.js logs its own steps
+    var href = t.getAttribute('href');
+    if (href && isSignup(href)) return;             // sign-up links send trial_link_clicked
+    // The footer's menu is a <nav> too: name it the footer before placement()'s nav rule does.
+    track('cta_clicked', { placement: t.closest('footer') ? 'footer' : placement(t), from: ctaTarget(t, href) });
+  }, true);
+  function sectionsInit() { whenVisible(watchSections); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sectionsInit);
+  else sectionsInit();
+
   window.boltAttr = {
     track: track, visitorId: visitorId, touch: getTouch, decorate: decorate, whenVisible: whenVisible, isQa: isQa, isAutomated: isAutomated,
     // AFMBP-2612: the landing A/B's exposure (called by the /start/ pages) and the arm links carry.

@@ -379,7 +379,7 @@ try {
     const fetched = tab.app.filter((r) => r.path !== '/signup-preload.json').map((r) => r.url).sort();
     ok(show(fetched) === show([...PREFETCH_OK].sort()) && tab.other.every((h) => !/evil/.test(h)), `contract: the browser prefetches exactly those files (${show(fetched)}; elsewhere: ${show(tab.other)})`);
     ok(tab.app.filter((r) => r.path === '/signup-preload.json').length === 1, 'contract: asked once');
-    ok(!tab.events.some((e) => !/^(site_landed|signup_offer_opened|site_engaged|site_exit)$/.test(e.type)), `contract: the warm-up sends nothing to analytics (${show(tab.events.map((e) => e.type))})`);
+    ok(!tab.events.some((e) => !/^(site_landed|signup_offer_opened|site_engaged|site_exit|section_viewed)$/.test(e.type)), `contract: the warm-up sends nothing to analytics (${show(tab.events.map((e) => e.type))})`);
     ok(tab.errors.length === 0, `contract: no exception or console error (${show(tab.errors)})`);
     sample.logs_json = tab.logs.slice();
     await close(ctx);
