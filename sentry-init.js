@@ -121,7 +121,11 @@
   // Instagram) put into pages. Sentry already leaves out "Script error.", ResizeObserver
   // notices and several known in-app browser errors on its own.
   var DENY_URLS = [/^(?:chrome|moz|safari|safari-web|ms-browser)-extension:\/\//i, /^chrome:\/\//i, /^resource:\/\//i, /^webkit-masked-url:/i];
-  var IGNORE_ERRORS = ['ResizeObserver loop limit exceeded', 'instantSearchSDKJSBridgeClearHighlight', 'webkit.messageHandlers'];
+  // AFMBP-2683: Microsoft's Outlook/Defender Safe Links scanner opens emailed links in an embedded
+  // browser whose script bridge rejects promises with "Object Not Found Matching Id:N, MethodName:...,
+  // ParamCount:N" (Sentry BOLT-SITE-8, 2026-11-21). Not our code and not a visitor; each scan could
+  // otherwise open a new Sentry issue and post to #bolt-alerts. Matched as a substring, like the rest.
+  var IGNORE_ERRORS = ['ResizeObserver loop limit exceeded', 'instantSearchSDKJSBridgeClearHighlight', 'webkit.messageHandlers', 'Object Not Found Matching Id:'];
 
   // The deploy this page came from, e.g. bolt-site@20261012T185205Z. There is no build
   // step to stamp a commit on the page; GitHub Pages gives every file of a deploy the
