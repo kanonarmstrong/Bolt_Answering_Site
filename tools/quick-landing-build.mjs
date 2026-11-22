@@ -264,71 +264,91 @@ ${GTAG}
     }
     /* AFMBP-2612 — the treatment card: Figma 2169:14533 (in frame 2169:14513, "Quick landing page,
        demo"), shown in place of the sign-up card when the decide step picks "treatment" (html.xp-t).
-       Same art and frame as the sign-up card; the node puts it 0.5px left of centre and 67px below
-       the top (the frame's 54px phone header taken off), 337x631, the art 354.42x628.98 at -8.728,0.
-       Every number below is the node's, on the card's own top left. */
-    .ql-card--t{display:none;left:-.5px;height:631px;background-position:-8.728px 0;background-size:354.42px 628.98px}
-    html.xp-t .ql{padding-top:67px}
+       AFMBP-2685 (owner, 11-21): the node's redesign for phones. The card is 375x702.151 now (was
+       337x631) with a .667px border, its line "Two ways to talk to Sierra now" is a vector (on Android
+       the words ran over the card's right edge), the words above it are new, and the rating is larger.
+       Same art as the sign-up card: 392.98x698.57 at -9.678,0 inside the border. The node puts the
+       card 0.5px right of centre and 32px below the top (the frame's 54px phone header taken off).
+       Every number below is the node's, on the card's top left inside the border (.qlt-body), except
+       the close, which sits on the card itself. */
+    .ql-card--t{display:none;left:.5px;width:375px;height:702.151px;border-radius:12.013px;box-shadow:inset 0 0 0 .667px rgba(0,0,0,.18);background-position:-9.011px .667px;background-size:392.98px 698.57px}
+    html.xp-t .ql{padding-top:32px}
     html.xp-t .ql-card--c{display:none}
     html.xp-t .ql-card--t{display:block}
-    .qlt-body{position:relative;z-index:1;width:337px;height:631px}
-    /* The cross (2169:14554) at 308.484,25.447, 13x13, in a 44px target: same cross file as the
-       sign-up card's. */
-    .qlt-close{left:293.008px;top:9.957px}
-    .qlt-sub,.qlt-box{position:absolute;margin:0;font-family:'Times New Roman',Tinos,serif;font-weight:400;line-height:normal;color:#000}
-    .qlt-sub b,.qlt-box b{font-weight:700}
-    /* 2169:14553: 18px, three lines, left 17, top 200, 273 wide. */
-    .qlt-sub{left:17px;top:200px;width:273px;font-size:18px;text-align:left}
-    /* "Available now" (2171:14614): the green dot at 212,279 and the words centred on 264.07,284. */
-    .qlt-dot{position:absolute;left:212px;top:279px;width:9.146px;height:9.146px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
-    .qlt-live{
-      position:absolute;left:264.07px;top:284px;margin:0;transform:translate(-50%,-50%);white-space:nowrap;
-      font-size:11.763px;font-weight:400;line-height:9.609px;color:#707070;
+    /* Narrower than the node's 402px frame, the card scales down whole (zoom), so every word and the
+       vector stay inside it and it keeps about 13px or more on each side. */
+    @media (max-width:399px){ .ql-card--t{zoom:.96} }
+    @media (max-width:389px){ .ql-card--t{zoom:.92} }
+    @media (max-width:374px){ .ql-card--t{zoom:.88} }
+    @media (max-width:359px){ .ql-card--t{zoom:.82} }
+    @media (max-width:335px){ .ql-card--t{zoom:.76} }
+    @media (max-width:315px){ .ql-card--t{zoom:.7} }
+    /* iPad Safari's text autosizing ignores that zoom (AFMBP-2602): off on the zoomed card, iOS WebKit only. */
+    @supports (-webkit-touch-callout:none){ @media (max-width:399px){ .ql-card--t{-webkit-text-size-adjust:none;text-size-adjust:none} } }
+    .qlt-body{position:relative;z-index:1;left:.667px;top:.667px;width:373.666px;height:700.817px}
+    /* The cross (2169:14554): 14.457x14.458 at 342.044,28.264 inside the border, in a 44px target;
+       the sign-up card's cross file, drawn at the node's size. */
+    .qlt-close{left:327.939px;top:14.16px}
+    .qlt-close::before{width:14.457px;height:14.458px}
+    /* 2169:14553: Times New Roman 21.83px, three lines, 331.083 wide, at 18.253,222.55. */
+    .qlt-sub{
+      position:absolute;left:18.253px;top:222.55px;width:331.083px;margin:0;
+      font-family:'Times New Roman',Tinos,serif;font-size:21.83px;font-weight:400;line-height:normal;color:#000;text-align:left;
     }
-    /* The box (2169:14557, 2px black, 274x33 at 28,294) and its line (2169:14556, centred on 165, top 299). */
-    .qlt-frame{position:absolute;left:28px;top:294px;width:274px;height:33px;box-sizing:border-box;border:2px solid #000;pointer-events:none}
-    .qlt-box{left:165px;top:299px;width:266px;transform:translateX(-50%);font-size:19.032px;text-align:center;white-space:nowrap}
-    /* The two ways in (2171:14604 / 2171:14606): 188x43 at 75, tops 354.53 and 440.4, radius 10,
-       the node's labels 0.5px left of and 0.36px below centre. */
+    .qlt-sub b{font-weight:700}
+    /* "Available" (2171:14614): the green dot, 10.178px at 266,313, and the word centred on 307.16,318.5
+       (the node's text keeps a trailing space, which its centring counts). */
+    .qlt-dot{position:absolute;left:266px;top:313px;width:10.178px;height:10.178px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
+    .qlt-live{
+      position:absolute;left:307.16px;top:318.5px;margin:0;transform:translate(-50%,-50%);white-space:pre;
+      font-size:13.09px;font-weight:400;line-height:10.692px;color:#707070;
+    }
+    /* "Two ways to talk to Sierra now" (2269:21112): the node's vector, box and words in one, 295x36.721
+       at 40,333. It scales with the card, so no font can push it past the edge; its words are there
+       for screen readers. */
+    .qlt-ways{position:absolute;left:40px;top:333px;width:295px;height:36.721px;margin:0;background:url('/assets/xp-ld-two-ways.svg') 0 0/100% 100% no-repeat}
+    /* The two ways in (2171:14604 / 2171:14606): 209.199x47.849, radius 11.128, at 82.334,389.33 and
+       82.794,479.06; the labels 0.27 and 0.65px left of centre, 0.33px below it. */
     .qlt-btn{
-      position:absolute;left:75px;width:188px;height:43px;margin:0;border:0;border-radius:10px;box-sizing:border-box;
+      position:absolute;width:209.199px;height:47.849px;margin:0;border:0;border-radius:11.128px;box-sizing:border-box;
       display:flex;align-items:center;justify-content:center;cursor:pointer;
-      font-family:inherit;font-size:19.427px;font-weight:700;line-height:18.544px;color:#fff;text-decoration:none;white-space:nowrap;
+      font-family:inherit;font-size:21.617px;font-weight:700;line-height:20.635px;color:#fff;text-decoration:none;white-space:nowrap;
       -webkit-tap-highlight-color:transparent;
     }
-    .qlt-call{top:354.53px;background:var(--blue);padding:.72px 1.02px 0 0}
-    .qlt-get{top:440.4px;background:#83b5ff;padding:.72px 1.08px 0 0}
+    .qlt-call{left:82.334px;top:389.33px;background:var(--blue);padding:.66px .54px 0 0}
+    .qlt-get{left:82.794px;top:479.06px;background:#83b5ff;padding:.66px 1.3px 0 0}
     .qlt-btn:focus-visible,.qlt-close:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-    /* The wait (2172:14618): centred on 166.5,412.4, 14px, "3 seconds" semibold. */
+    /* The wait (2172:14618): centred on 184.463,452.23, 14.58px italic, "3 seconds" semibold. */
     .qlt-wait{
-      position:absolute;left:166.5px;top:412.4px;margin:0;transform:translate(-50%,-50%);white-space:nowrap;
-      font-size:14px;font-weight:400;line-height:11.836px;color:#707070;
+      position:absolute;left:184.463px;top:452.23px;margin:0;transform:translate(-50%,-50%);white-space:nowrap;
+      font-size:14.58px;font-style:italic;font-weight:400;line-height:13.171px;color:#707070;
     }
     .qlt-wait b{font-weight:600}
     /* The rating (2169:14534): the bubble, name and quote turned 3.17deg, the stars and score 3.02deg,
-       each about its own centre, as the node turns them. */
+       each about its own centre, as the node turns them. The stars are the same files as before, drawn
+       at the node's size (the node's are the same shapes, scaled). */
     .qlt-bubble,.qlt-who,.qlt-star,.qlt-star5,.qlt-score,.qlt-quote{position:absolute;margin:0;transform-origin:50% 50%}
-    .qlt-bubble{left:35.2675px;top:513.3045px;width:266.918px;height:91.6175px;transform:rotate(3.17deg);pointer-events:none;background:url('/assets/xp-ld-bubble.svg') 0 0/100% 100% no-repeat}
+    .qlt-bubble{left:22.828px;top:558.02px;width:330.515px;height:120.186px;transform:rotate(3.17deg);pointer-events:none;background:url('/assets/xp-ld-bubble-v2.svg') 0 0/100% 100% no-repeat}
     .qlt-who{
-      left:60.9475px;top:524.016px;width:94.453px;height:11.568px;transform:rotate(3.17deg);
-      display:flex;align-items:center;white-space:nowrap;font-size:9.843px;font-weight:400;line-height:10.621px;color:var(--navy);
+      left:54.8945px;top:571.5325px;width:123.906px;height:15.175px;transform:rotate(3.17deg);
+      display:flex;align-items:center;white-space:nowrap;font-size:12.912px;font-weight:400;line-height:13.932px;color:var(--navy);
     }
-    .qlt-who b{font-size:11.665px;font-weight:700;white-space:pre}
-    .qlt-star{width:14.775px;height:15.582px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star.svg') .362px 0/14.052px 14.094px no-repeat}
-    .qlt-s1{left:182.481px;top:525.169px}
-    .qlt-s2{left:197.231px;top:525.959px}
-    .qlt-s3{left:211.981px;top:526.729px}
-    .qlt-s4{left:226.741px;top:527.509px}
-    .qlt-star5{left:241.415px;top:531.541px;width:14.775px;height:12.333px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star5.svg') 0 0/100% 100% no-repeat}
+    .qlt-who b{font-size:15.302px;font-weight:700;white-space:pre}
+    .qlt-star{width:19.383px;height:20.441px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star.svg') .475px 0/18.433px 18.489px no-repeat}
+    .qlt-s1{left:183.3255px;top:573.047px}
+    .qlt-s2{left:202.6855px;top:574.067px}
+    .qlt-s3{left:222.0355px;top:575.087px}
+    .qlt-s4{left:241.3955px;top:576.107px}
+    .qlt-star5{left:260.633px;top:581.39px;width:19.383px;height:16.178px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star5.svg') 0 0/100% 100% no-repeat}
     .qlt-score{
-      left:257.3445px;top:532.016px;width:30.851px;height:11.568px;transform:rotate(3.02deg);
+      left:281.5445px;top:582.0225px;width:40.471px;height:15.175px;transform:rotate(3.02deg);
       display:flex;align-items:center;justify-content:center;white-space:nowrap;
-      font-size:11.665px;font-weight:700;line-height:10.621px;color:var(--navy);
+      font-size:15.302px;font-weight:700;line-height:13.932px;color:var(--navy);
     }
     .qlt-quote{
-      left:47.3715px;top:543.1px;width:242.597px;height:41.52px;transform:rotate(3.17deg);
+      left:53.646px;top:597.056px;width:257.014px;height:54.468px;transform:rotate(3.17deg);
       display:flex;align-items:center;justify-content:center;text-align:center;
-      font-size:10.663px;font-style:italic;font-weight:400;line-height:13.006px;color:var(--navy);
+      font-size:19.99px;font-style:italic;font-weight:400;line-height:normal;color:var(--navy);
     }
   </style>
 </head>
@@ -363,11 +383,10 @@ ${GTAG}
       <a class="ql-close qlt-close" href="/" aria-label="Close"></a>
       <div class="qlt-body">
         <h1 class="ql-vh" id="qlt-h">New jobs are calling</h1>
-        <p class="qlt-sub"><b>Sierra</b> is a receptionist from Bolt that answers calls, books customers, takes messages and more.</p>
+        <p class="qlt-sub"><b>Sierra</b> is your receptionist answers calls, takes messages, and books customers for less than $4/day.</p>
         <span class="qlt-dot" aria-hidden="true"></span>
-        <p class="qlt-live">Available now</p>
-        <span class="qlt-frame" aria-hidden="true"></span>
-        <p class="qlt-box">Two options to talk to <b>Sierra</b> now</p>
+        <p class="qlt-live">Available </p>
+        <p class="qlt-ways"><span class="ql-vh">Two ways to talk to Sierra now</span></p>
         <a class="qlt-btn qlt-call" href="#" data-demo-landing="call">You call her</a>
         <p class="qlt-wait">Avg. wait time: <b>3 seconds</b></p>
         <button class="qlt-btn qlt-get" type="button" data-demo-landing="form">She calls you</button>
@@ -375,7 +394,7 @@ ${GTAG}
         <p class="qlt-who"><b>Brent B. </b>Indiana</p>
         <span class="qlt-star qlt-s1" aria-hidden="true"></span><span class="qlt-star qlt-s2" aria-hidden="true"></span><span class="qlt-star qlt-s3" aria-hidden="true"></span><span class="qlt-star qlt-s4" aria-hidden="true"></span><span class="qlt-star5" aria-hidden="true"></span>
         <p class="qlt-score">4.9/5</p>
-        <p class="qlt-quote">“I was losing jobs to voicemail and even paid $250 a week for a receptionist. Bolt booked a job and paid for itself.”</p>
+        <p class="qlt-quote">“Bolt booked a job and paid for itself in a day.”</p>
       </div>
     </section>
   </main>
