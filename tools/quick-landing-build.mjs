@@ -159,7 +159,10 @@ ${GTAG}
       src:url('/assets/fonts/inter.woff2') format('woff2');
       unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
     }
-    /* Times New Roman as the node sets it; phones without it (Android) get Tinos, the same widths. */
+    /* Times New Roman as the node sets it, and Tinos (the same widths) where a phone has no Times.
+       AFMBP-2686 (11-22): Android has no Times New Roman, but it answers to the name with its own
+       serif (Noto Serif: wider letters, taller lines), so the stack never reaches Tinos there. The
+       sign-up card below still draws in that serif on Android; the demo card's words are drawings. */
     @font-face{
       font-family:'Tinos';font-style:normal;font-weight:400;font-display:swap;
       src:url('/assets/fonts/tinos-400.woff2') format('woff2');
@@ -273,6 +276,12 @@ ${GTAG}
        "Available" dot and word sit under the vector; the buttons, the vector and the smaller rating
        moved; the wait line between the buttons is gone. Plus two animations (see the end): the dot
        blinks, and the card's content is uncovered top to bottom while its art stays still.
+       Then (owner, 11-22, after the Pixel 10a, where Android's own serif grew the words into the
+       "Two ways" box): every word on the card is a drawing. The receptionist line, "Available", both
+       buttons and the rating (bubble, name, stars, score and quote) are the node's vectors, so no
+       phone's fonts or text size can move or rewrap them; their words are there for screen readers.
+       The buttons are smaller (41px tall, lighter labels) and lower, "Available" is 10px lower, and
+       the cross is black.
        Every number below is the node's, on the card's top left inside the border (.qlt-body), except
        the close, which sits on the card itself. */
     .ql-card--t{display:none;left:.5px;width:375px;height:702.151px;border-radius:12.013px;box-shadow:inset 0 0 0 .667px rgba(0,0,0,.18);background-position:-9.011px .667px;background-size:392.98px 698.57px}
@@ -290,82 +299,46 @@ ${GTAG}
     /* iPad Safari's text autosizing ignores that zoom (AFMBP-2602): off on the zoomed card, iOS WebKit only. */
     @supports (-webkit-touch-callout:none){ @media (max-width:399px){ .ql-card--t{-webkit-text-size-adjust:none;text-size-adjust:none} } }
     .qlt-body{position:relative;z-index:1;left:.667px;top:.667px;width:373.666px;height:700.817px}
-    /* The cross (2169:14554): 14.457x14.458 at 342.044,28.264 inside the border, in a 44px target;
-       the sign-up card's cross file, drawn at the node's size. */
-    .qlt-close{left:327.939px;top:14.16px}
-    .qlt-close::before{width:14.457px;height:14.458px}
-    /* 2169:14553: Times New Roman 19.83px, centred, four lines, 335 wide, at 21.333,225 (the node
-       centres it 2px right of the card's middle). The node's text ends in blank lines set at
-       23.081px, and the first of them shares the last line, so that line sits about 3px lower than
-       the others; the empty .qlt-end at that size does the same here. */
-    .qlt-sub{
-      position:absolute;left:21.333px;top:225px;width:335px;margin:0;
-      font-family:'Times New Roman',Tinos,serif;font-size:19.83px;font-weight:400;line-height:normal;color:#000;text-align:center;
-    }
-    .qlt-sub b{font-weight:700}
-    .qlt-end{font-size:23.081px}
+    /* The cross (2169:14554): 14.457x14.458 at 342.73,28.932 on the card's outer edge, in a 44px
+       target. The node's own file: black since its 11-22 edit (the sign-up card's cross is navy). */
+    .qlt-close{left:327.958px;top:14.16px}
+    .qlt-close::before{width:14.457px;height:14.458px;background-image:url('/assets/xp-ld-close.svg')}
+    /* The receptionist line (2281:21114): the node's vector, its four centred lines in one drawing,
+       333.721x91.048 at 22.707,230.231 on the card's outer edge. */
+    .qlt-sub{position:absolute;left:22.04px;top:229.564px;width:333.721px;height:91.048px;margin:0;background:url('/assets/xp-ld-meet-sierra.svg') 0 0/100% 100% no-repeat}
     /* "Two ways to talk to Sierra now" (2269:21112): the node's vector, box and words in one, 295x36.721
        at 39,346.25 (the node's 40,347 is on the card's outer edge, so drawn 1px up and left here, where
        it matches the node's render). It scales with the card, so no font can push it past the edge;
        its words are there for screen readers. */
     .qlt-ways{position:absolute;left:39px;top:346.25px;width:295px;height:36.721px;margin:0;background:url('/assets/xp-ld-two-ways.svg') 0 0/100% 100% no-repeat}
-    /* "Available" (2171:14614), under the vector on its right: the green dot, 8.327px at 278,389 (the
-       node's 279,390, on the card's outer edge), and the word, 10.71px, centred on 313.42,394.5, which
-       puts the node's 2.8px between dot and word (the node's text keeps a trailing space, which its
-       centring counts). */
-    .qlt-dot{position:absolute;left:278px;top:389px;width:8.327px;height:8.327px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
-    .qlt-live{
-      position:absolute;left:313.42px;top:394.5px;margin:0;transform:translate(-50%,-50%);white-space:pre;
-      font-size:10.71px;font-weight:400;line-height:8.748px;color:#707070;
-    }
-    /* The two ways in (2171:14604 / 2171:14606): 209.199x47.849, radius 11.128, at 82.334,417.33 and
-       82.794,477.06; the labels 0.27 and 0.65px left of centre, 0.33px below it. Nothing between
-       them since AFMBP-2686 (the node dropped the wait line). */
+    /* "Available" (2171:14614), under the vector: the green dot, 8.327px at the node's 232,408 (on the
+       card's outer edge; its own element, as it blinks), and the word, the node's vector (2281:21124),
+       44.051x8.169 at 245.34,407.968. */
+    .qlt-dot{position:absolute;left:231.333px;top:407.333px;width:8.327px;height:8.327px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
+    .qlt-live{position:absolute;left:244.673px;top:407.301px;width:44.051px;height:8.169px;margin:0;background:url('/assets/xp-ld-available.svg') 0 0/100% 100% no-repeat}
+    /* The two ways in (2171:14604 / 2171:14606): the node's buttons, each one drawing (fill, 11.128
+       radius and label), 209x41 at 83,425 and 210x41 at 83,488 on the card's outer edge. Nothing
+       between them since AFMBP-2686 (the node dropped the wait line). While "You call her" waits for
+       its code (a tap before one is ready), demo.js puts its spinner in the button: here it sits
+       left of the drawn label, not on it. */
     .qlt-btn{
-      position:absolute;width:209.199px;height:47.849px;margin:0;border:0;border-radius:11.128px;box-sizing:border-box;
-      display:flex;align-items:center;justify-content:center;cursor:pointer;
-      font-family:inherit;font-size:21.617px;font-weight:700;line-height:20.635px;color:#fff;text-decoration:none;white-space:nowrap;
-      -webkit-tap-highlight-color:transparent;
+      position:absolute;height:41px;margin:0;padding:0;border:0;border-radius:11.128px;box-sizing:border-box;
+      display:block;cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
     }
-    .qlt-call{left:82.334px;top:417.33px;background:var(--blue);padding:.66px .54px 0 0}
-    .qlt-get{left:82.794px;top:477.06px;background:#83b5ff;padding:.66px 1.3px 0 0}
+    .qlt-call{left:82.333px;top:424.333px;width:209px;background:url('/assets/xp-ld-you-call-her.svg') 0 0/100% 100% no-repeat}
+    .qlt-get{left:82.333px;top:487.333px;width:210px;background:url('/assets/xp-ld-she-calls-you.svg') 0 0/100% 100% no-repeat}
+    .qlt-call .demo-spinner{position:absolute;left:27px;top:0;bottom:0;margin:auto 0}
     .qlt-btn:focus-visible,.qlt-close:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-    /* The rating (2169:14534): the bubble, name and quote turned 3.17deg, the stars and score 3.02deg,
-       each about its own centre, as the node turns them. The bubble and the stars are the same files as
-       before, drawn at the node's size (the node's are the same shapes, scaled; since AFMBP-2686 a
-       little smaller and higher up). */
-    .qlt-bubble,.qlt-who,.qlt-star,.qlt-star5,.qlt-score,.qlt-quote{position:absolute;margin:0;transform-origin:50% 50%}
-    .qlt-bubble{left:32.875px;top:552.8715px;width:309.729px;height:112.627px;transform:rotate(3.17deg);pointer-events:none;background:url('/assets/xp-ld-bubble-v2.svg') 0 0/100% 100% no-repeat}
-    /* The name and the state share a baseline, as in the node: one line (the inner span), centred.
-       The name, score and quote sit 1px left and 0.75 to 2px above the node's numbers, where the
-       browser's text matches the node's render (Figma sets Inter's text a little higher). */
-    .qlt-who{
-      left:62.9245px;top:565.3795px;width:116.113px;height:14.221px;transform:rotate(3.17deg);
-      display:flex;align-items:center;white-space:nowrap;font-size:12.1px;font-weight:400;line-height:13.056px;color:var(--navy);
-    }
-    .qlt-who b{font-size:14.34px;font-weight:700;white-space:pre}
-    .qlt-star{width:18.164px;height:19.155px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star.svg') .445px 0/17.274px 17.326px no-repeat}
-    .qlt-s1{left:184.2825px;top:567.556px}
-    .qlt-s2{left:202.4125px;top:568.516px}
-    .qlt-s3{left:220.5525px;top:569.466px}
-    .qlt-s4{left:238.6925px;top:570.426px}
-    .qlt-star5{left:256.727px;top:575.3785px;width:18.164px;height:15.161px;transform:rotate(3.02deg);background:url('/assets/xp-ld-star5.svg') 0 0/100% 100% no-repeat}
-    .qlt-score{
-      left:275.5675px;top:573.9595px;width:37.925px;height:14.221px;transform:rotate(3.02deg);
-      display:flex;align-items:center;justify-content:center;white-space:nowrap;
-      font-size:14.34px;font-weight:700;line-height:13.056px;color:var(--navy);
-    }
-    .qlt-quote{
-      left:61.708px;top:589.059px;width:240.85px;height:51.042px;transform:rotate(3.17deg);
-      display:flex;align-items:center;justify-content:center;text-align:center;
-      font-size:18.733px;font-style:italic;font-weight:400;line-height:normal;color:var(--navy);
-    }
+    /* The rating (2169:14534, "Group 355"): the node's vector, its bubble, name, stars, score and quote
+       in one drawing, 309.729x112.627, turned 3.17deg about its centre as the node turns it. */
+    .qlt-bubble{position:absolute;left:32.875px;top:552.8715px;width:309.729px;height:112.627px;margin:0;transform:rotate(3.17deg);transform-origin:50% 50%;pointer-events:none;background:url('/assets/xp-ld-rating.svg') 0 0/100% 100% no-repeat}
     /* AFMBP-2686 (owner, 11-22): "the green dot next to 'Available' needs to blink", and "all of the
        content needs to appear via a vertically swipe from top to bottom ... the background image does
        not need to swipe". The node has no motion, so the timings are ours.
-       - The wipe-in, once, as the card first shows: everything on it but the art (the words, the
-         vector, the buttons, the rating, the cross) is uncovered from the top edge down in 0.7s,
-         fast at first so the words come at once, slowing to the bottom. A cover in the card's own
+       - The wipe-in, once, as the card first shows: everything on it but the art (the drawn words,
+         "Available", the buttons, the rating, the cross) is uncovered from the top edge down in 1.4s
+         (owner, 11-22: "2x slower" than the first 0.7s), fast at first so the words come early,
+         slowing to the bottom. A cover in the card's own
          art (the same file at the same place and size, so the art never moves) sits over the lot
          and is cut away from the top down. It takes no taps and is gone after the wipe; without
          clip-path there is no cover at all.
@@ -377,7 +350,7 @@ ${GTAG}
           content:"";position:absolute;top:0;right:0;bottom:0;left:0;z-index:3;pointer-events:none;
           background:inherit;border-radius:inherit;box-shadow:inherit;
           -webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0);
-          animation:qlt-wipe .7s cubic-bezier(.25,.46,.45,.94) both;
+          animation:qlt-wipe 1.4s cubic-bezier(.25,.46,.45,.94) both;
         }
       }
       .qlt-dot{animation:qlt-blink 1.2s ease-in-out infinite}
@@ -412,25 +385,22 @@ ${GTAG}
         </div>
       </div>
     </section>
-    <!-- AFMBP-2612: the landing A/B's treatment card (Figma 2169:14513), the owner's words verbatim
-         (the quote closes with ” as on the sign-up card). Its two buttons open today's demo
+    <!-- AFMBP-2612: the landing A/B's treatment card (Figma 2169:14513), the owner's words verbatim:
+         drawn as the node's vectors, and the same words in hidden text for screen readers (the quote
+         closes with ” as on the sign-up card). Its two buttons open today's demo
          (demo.js, loaded once the card has painted): "You call her" calls the demo line, "She calls
          you" opens the "We call you" form. -->
     <section class="demo_landing ql-card ql-card--t" aria-labelledby="qlt-h">
       <a class="ql-close qlt-close" href="/" aria-label="Close"></a>
       <div class="qlt-body">
         <h1 class="ql-vh" id="qlt-h">New jobs are calling</h1>
-        <p class="qlt-sub">Meet <b>Sierra,</b> your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.<span class="qlt-end"></span></p>
+        <p class="qlt-sub"><span class="ql-vh">Meet Sierra, your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.</span></p>
         <p class="qlt-ways"><span class="ql-vh">Two ways to talk to Sierra now</span></p>
         <span class="qlt-dot" aria-hidden="true"></span>
-        <p class="qlt-live">Available </p>
-        <a class="qlt-btn qlt-call" href="#" data-demo-landing="call">You call her</a>
-        <button class="qlt-btn qlt-get" type="button" data-demo-landing="form">She calls you</button>
-        <span class="qlt-bubble" aria-hidden="true"></span>
-        <p class="qlt-who"><span><b>Brent B. </b>Indiana</span></p>
-        <span class="qlt-star qlt-s1" aria-hidden="true"></span><span class="qlt-star qlt-s2" aria-hidden="true"></span><span class="qlt-star qlt-s3" aria-hidden="true"></span><span class="qlt-star qlt-s4" aria-hidden="true"></span><span class="qlt-star5" aria-hidden="true"></span>
-        <p class="qlt-score">4.9/5</p>
-        <p class="qlt-quote">“Bolt booked a job and paid for itself in a day.”</p>
+        <p class="qlt-live"><span class="ql-vh">Available</span></p>
+        <a class="qlt-btn qlt-call" href="#" data-demo-landing="call"><span class="ql-vh">You call her</span></a>
+        <button class="qlt-btn qlt-get" type="button" data-demo-landing="form"><span class="ql-vh">She calls you</span></button>
+        <div class="qlt-bubble"><p class="ql-vh">Brent B. Indiana</p><p class="ql-vh">4.9/5</p><p class="ql-vh">“Bolt booked a job and paid for itself in a day.”</p></div>
       </div>
     </section>
   </main>
