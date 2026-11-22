@@ -10,6 +10,9 @@
 //     funnel as xp_exposed, from the same callback with the same arm; the card's own event follows;
 //   - every sign-up link carries xp=<key>.<arm>.<configVersion> next to bvid, a trial tap sends
 //     start_trial_clicked to the gateway, on the card and on the home page;
+//   - the demo card's two animations (AFMBP-2686), with motion allowed: a cover in the card's own art
+//     over the whole card at the start, cut away top to bottom in 0.7s, taking no taps, then gone; the
+//     "Available" dot blinking every 1.2s. Set to reduce motion: neither. The sign-up card: neither;
 //   - the demo card's buttons run today's demo: "She calls you" opens the form, "You call her" is a
 //     tel: link with the demo line's code before the tap and opens the call card; coming back after
 //     the dial is logged (demo_inbound_returned); a tap before demo.js has loaded is carried out;
@@ -66,9 +69,14 @@ const MUTATE = {
   pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
   full_demo: ['start', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
   strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
-  geometry: ['start', (s) => s.replace('.qlt-call{left:82.334px;top:389.33px;', '.qlt-call{left:82.334px;top:393.33px;')],
+  geometry: ['start', (s) => s.replace('.qlt-call{left:82.334px;top:417.33px;', '.qlt-call{left:82.334px;top:421.33px;')],
   copy: ['start', (s) => s.replace('takes messages, and books customers', 'books customers, takes messages')],
   ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways.svg')", "url('/assets/xp-ld-bubble-v2.svg')")],
+  // AFMBP-2686: the demo card's two animations.
+  wipe_art: ['start', (s) => s.replace('background:inherit;border-radius:inherit;box-shadow:inherit;', 'background:#f0e0d5;border-radius:inherit;box-shadow:inherit;')],
+  wipe_stays: ['start', (s) => s.replace('to{-webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0)}', 'to{-webkit-clip-path:inset(0 0 0 0);clip-path:inset(0 0 0 0)}')],
+  blink: ['start', (s) => s.replace('.qlt-dot{animation:qlt-blink 1.2s ease-in-out infinite}', '')],
+  motion: ['start', (s) => s.replace('@media (prefers-reduced-motion:no-preference){', '@media all{')],
   pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
   reddit: ['reddit-pixel.js', (s) => s.replace("    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {", "    if (d.event === 'xp_exposed') window.rdt('track', 'Custom', { customEventName: 'Xp', props: d.data });\n    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {")],
   reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
@@ -259,21 +267,22 @@ try {
     const tx = (q) => { const e = document.querySelector(q); return e ? e.textContent.replace(/\\s+/g, ' ').trim() : null; };
     const ff = (q) => getComputedStyle(document.querySelector(q)).fontFamily;
     return { card: r('.ql-card--t'), sub: r('.qlt-sub'), ways: r('.qlt-ways'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'),
-      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), liveT: tx('.qlt-live'), waysT: tx('.qlt-ways'), waysBg: getComputedStyle(document.querySelector('.qlt-ways')).backgroundImage, callT: tx('.qlt-call'), getT: tx('.qlt-get'), waitT: tx('.qlt-wait'), waitB: tx('.qlt-wait b'),
+      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), subAlign: getComputedStyle(document.querySelector('.qlt-sub')).textAlign, liveT: tx('.qlt-live'), waysT: tx('.qlt-ways'), waysBg: getComputedStyle(document.querySelector('.qlt-ways')).backgroundImage, callT: tx('.qlt-call'), getT: tx('.qlt-get'), wait: !!document.querySelector('.qlt-wait'),
       whoT: tx('.qlt-who'), scoreT: tx('.qlt-score'), quoteT: tx('.qlt-quote'), stars: document.querySelectorAll('.qlt-star').length + document.querySelectorAll('.qlt-star5').length,
       serif: ff('.qlt-sub'), sans: ff('.qlt-call'), closeHref: document.querySelector('.qlt-close').getAttribute('href'), h1: tx('#qlt-h') }; })()`);
   // AFMBP-2685 (owner, 11-21): the node's redesign, 375x702.151 with a .667px border; the numbers are the
   // node's inside the border, on the page at the node's 402px width (card at 14,32).
+  // AFMBP-2686 (owner, 11-22): the node's latest edits, measured against its render.
   check('card at 14,32, 375x702.2 (Figma 2169:14533)', g.card && near(g.card.l, 14) && near(g.card.t, 32) && near(g.card.w, 375) && near(g.card.h, 702.151), g.card);
-  check('receptionist line at 32.9,255.2, 331.1 wide (2169:14553)', g.sub && near(g.sub.l, 32.92) && near(g.sub.t, 255.217) && near(g.sub.w, 331.083), g.sub);
-  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 54.7,365.7 (2269:21112)', g.ways && near(g.ways.l, 54.667) && near(g.ways.t, 365.667) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.waysBg), { ways: g.ways, bg: g.waysBg });
-  check('"You call her" 209.2x47.8 at 97,422 (2171:14604)', g.call && near(g.call.l, 97.001) && near(g.call.t, 421.997) && near(g.call.w, 209.199) && near(g.call.h, 47.849), g.call);
-  check('"She calls you" 209.2x47.8 at 97.5,511.7 (2171:14606)', g.get && near(g.get.l, 97.461) && near(g.get.t, 511.727) && near(g.get.w, 209.199) && near(g.get.h, 47.849), g.get);
+  check('receptionist line at 36,257.7, 335 wide, centred (2169:14553)', g.sub && near(g.sub.l, 36) && near(g.sub.t, 257.667) && near(g.sub.w, 335) && g.subAlign === 'center', { sub: g.sub, align: g.subAlign });
+  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 53.7,378.9 (2269:21112)', g.ways && near(g.ways.l, 53.667) && near(g.ways.t, 378.917) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.waysBg), { ways: g.ways, bg: g.waysBg });
+  check('"You call her" 209.2x47.8 at 97,450 (2171:14604)', g.call && near(g.call.l, 97.001) && near(g.call.t, 449.997) && near(g.call.w, 209.199) && near(g.call.h, 47.849), g.call);
+  check('"She calls you" 209.2x47.8 at 97.5,509.7 (2171:14606)', g.get && near(g.get.l, 97.461) && near(g.get.t, 509.727) && near(g.get.w, 209.199) && near(g.get.h, 47.849), g.get);
   check('close: a 44px target centred on the node\'s cross (363.9, 68.2)', g.close && near(g.close.l + 22, 363.939) && near(g.close.t + 22, 68.16) && g.close.w === 44, g.close);
-  check('"Available" dot at 280.7,345.7, 10.2px (2171:14616)', g.dot && near(g.dot.l, 280.667) && near(g.dot.t, 345.667) && near(g.dot.w, 10.178, 0.2), g.dot);
-  check('the owner\'s words, verbatim', g.subT === 'Sierra is your receptionist answers calls, takes messages, and books customers for less than $4/day.' && g.subB === 'Sierra'
+  check('"Available" dot under the vector, at 292.7,421.7, 8.3px (2171:14616)', g.dot && near(g.dot.l, 292.667) && near(g.dot.t, 421.667) && near(g.dot.w, 8.327, 0.2), g.dot);
+  check('the owner\'s words, verbatim, and no wait line (the node dropped it)', g.subT === 'Meet Sierra, your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.' && g.subB === 'Sierra,'
     && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you'
-    && g.waitT === 'Avg. wait time: 3 seconds' && g.waitB === '3 seconds' && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
+    && !g.wait && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
     && g.quoteT === '“Bolt booked a job and paid for itself in a day.”', g);
   check('five stars; Times New Roman (Tinos) lines, Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /Times New Roman/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
   ex = exposures(s);
@@ -443,6 +452,48 @@ try {
   s = await state();
   check('"You call her" on a computer: no dial, the call card with the number to call', m.open && m.screen === 'inbound-call' && m.plain && !m.dialed && typesOf(s, 'demo_mode_selected').some((e) => e.data.dial === 'manual'), m);
   await phone();
+
+  // ---------- 10. the demo card's two animations (AFMBP-2686) ----------
+  // This Mac, and so headless Chrome here, prefers reduced motion: each setting is set explicitly.
+  const motion = (v) => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: v }] });
+  const anim = () => ev(`(() => { const c = document.querySelector('.ql-card--t'), k = getComputedStyle(c), a = getComputedStyle(c, '::after'), d = getComputedStyle(document.querySelector('.qlt-dot'));
+    const find = (n) => document.getAnimations().find((x) => x.animationName === n) || null, w = find('qlt-wipe'), b = find('qlt-blink');
+    return { content: a.content, name: a.animationName, dur: a.animationDuration, iter: a.animationIterationCount, fill: a.animationFillMode, pe: a.pointerEvents, z: a.zIndex,
+      box: [a.top, a.right, a.bottom, a.left].join(' '), clip: a.clipPath, wipe: w && w.playState,
+      art: /demo-so-card\\.webp/.test(a.backgroundImage) && a.backgroundImage === k.backgroundImage && a.backgroundPosition === k.backgroundPosition && a.backgroundSize === k.backgroundSize,
+      dot: d.animationName, dotDur: d.animationDuration, dotIter: d.animationIterationCount, blink: b && b.playState, all: document.getAnimations().length }; })()`);
+  console.log('[the demo card\'s animations, a phone that allows motion]');
+  await motion('no-preference');
+  await send('Animation.enable');
+  // Every animation frozen at its start before the page paints: the card shows its art alone (the cover
+  // whole), so nothing it covers flashes up first.
+  await send('Animation.setPlaybackRate', { playbackRate: 0 });
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  let a = await anim();
+  check('the wipe-in at its start: a cover in the card\'s own art (same file, place and size) over the whole card, the cross included, taking no taps', a.content === '""' && a.name === 'qlt-wipe' && a.art && a.box === '0px 0px 0px 0px' && a.z === '3' && a.pe === 'none' && /^inset\(0(%|px)( 0px){0,3}\)$/.test(a.clip), a);
+  const mid = await ev(`(() => { const w = document.getAnimations().find((x) => x.animationName === 'qlt-wipe'); w.pause(); w.currentTime = 350;
+    const b = document.querySelector('.qlt-call').getBoundingClientRect(), h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return { clip: getComputedStyle(document.querySelector('.ql-card--t'), '::after').clipPath, hit: !!(h && h.closest('.qlt-call')) }; })()`);
+  check('halfway (0.35s): the cover is cut away from the top partway down, and a tap goes through it to "You call her"', /^inset\(\d+(\.\d+)?% 0px 0px\)$/.test(mid.clip) && mid.hit, mid);
+  await send('Animation.setPlaybackRate', { playbackRate: 1 });
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  a = await anim();
+  check('the wipe runs once, 0.7s; the dot blinks every 1.2s for as long as the card shows', a.name === 'qlt-wipe' && a.dur === '0.7s' && a.iter === '1' && a.fill === 'both' && a.dot === 'qlt-blink' && a.dotDur === '1.2s' && a.dotIter === 'infinite', a);
+  const gone = await until(`getComputedStyle(document.querySelector('.ql-card--t'), '::after').clipPath === 'inset(100% 0px 0px)' && document.getAnimations().some((x) => x.animationName === 'qlt-wipe' && x.playState === 'finished')`, 3000);
+  a = await anim();
+  check('after the wipe the cover is gone (cut away to the bottom) and the dot still blinks', gone && a.clip === 'inset(100% 0px 0px)' && a.blink === 'running', a);
+  const op = await ev(`(() => { const k = document.getAnimations().find((x) => x.animationName === 'qlt-blink'), d = document.querySelector('.qlt-dot');
+    k.pause(); k.currentTime = 0; const on = getComputedStyle(d).opacity; k.currentTime = 600; const off = getComputedStyle(d).opacity; k.play(); return { on, off }; })()`);
+  check('the dot fades out and back: opacity 1, and 0.15 half a blink in', op.on === '1' && op.off === '0.15', op);
+  await visit(`/__baked/${PAGE}`, { vid: VID.control });
+  a = await ev(`({ content: getComputedStyle(document.querySelector('.ql-card--c'), '::after').content, all: document.getAnimations().length })`);
+  check('the sign-up card (control): no cover, nothing animates', a.content === 'none' && a.all === 0, a);
+  console.log('[the demo card\'s animations, a phone set to reduce motion]');
+  await motion('reduce');
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  a = await anim();
+  check('reduce motion: no cover, no wipe, a steady dot; the card is all there at once', a.content === 'none' && a.name === 'none' && a.dot === 'none' && a.all === 0, a);
+  await send('Emulation.setEmulatedMedia', { features: [] });
 } finally {
   try { ws && ws.close(); } catch {}
   chrome.kill('SIGKILL'); server.close();
