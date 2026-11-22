@@ -66,8 +66,9 @@ const MUTATE = {
   pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
   full_demo: ['start', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
   strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
-  geometry: ['start', (s) => s.replace('.qlt-call{top:354.53px;', '.qlt-call{top:358.53px;')],
-  copy: ['start', (s) => s.replace('Two options to talk to <b>Sierra</b> now', 'Two ways to talk to <b>Sierra</b> now')],
+  geometry: ['start', (s) => s.replace('.qlt-call{left:82.334px;top:389.33px;', '.qlt-call{left:82.334px;top:393.33px;')],
+  copy: ['start', (s) => s.replace('takes messages, and books customers', 'books customers, takes messages')],
+  ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways.svg')", "url('/assets/xp-ld-bubble-v2.svg')")],
   pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
   reddit: ['reddit-pixel.js', (s) => s.replace("    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {", "    if (d.event === 'xp_exposed') window.rdt('track', 'Custom', { customEventName: 'Xp', props: d.data });\n    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {")],
   reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
@@ -257,21 +258,23 @@ try {
   const g = await ev(`(() => { const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, w: b.width, h: b.height }; };
     const tx = (q) => { const e = document.querySelector(q); return e ? e.textContent.replace(/\\s+/g, ' ').trim() : null; };
     const ff = (q) => getComputedStyle(document.querySelector(q)).fontFamily;
-    return { card: r('.ql-card--t'), sub: r('.qlt-sub'), frame: r('.qlt-frame'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'),
-      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), liveT: tx('.qlt-live'), boxT: tx('.qlt-box'), boxB: tx('.qlt-box b'), callT: tx('.qlt-call'), getT: tx('.qlt-get'), waitT: tx('.qlt-wait'), waitB: tx('.qlt-wait b'),
+    return { card: r('.ql-card--t'), sub: r('.qlt-sub'), ways: r('.qlt-ways'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'),
+      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), liveT: tx('.qlt-live'), waysT: tx('.qlt-ways'), waysBg: getComputedStyle(document.querySelector('.qlt-ways')).backgroundImage, callT: tx('.qlt-call'), getT: tx('.qlt-get'), waitT: tx('.qlt-wait'), waitB: tx('.qlt-wait b'),
       whoT: tx('.qlt-who'), scoreT: tx('.qlt-score'), quoteT: tx('.qlt-quote'), stars: document.querySelectorAll('.qlt-star').length + document.querySelectorAll('.qlt-star5').length,
       serif: ff('.qlt-sub'), sans: ff('.qlt-call'), closeHref: document.querySelector('.qlt-close').getAttribute('href'), h1: tx('#qlt-h') }; })()`);
-  check('card at 32,67, 337x631 (Figma 2169:14533)', g.card && near(g.card.l, 32) && near(g.card.t, 67) && near(g.card.w, 337) && near(g.card.h, 631), g.card);
-  check('receptionist line at 49,267, 273 wide (2169:14553)', g.sub && near(g.sub.l, 49) && near(g.sub.t, 267) && near(g.sub.w, 273), g.sub);
-  check('box 274x33 at 60,361 (2169:14557)', g.frame && near(g.frame.l, 60) && near(g.frame.t, 361) && near(g.frame.w, 274) && near(g.frame.h, 33), g.frame);
-  check('"You call her" 188x43 at 107,421.5 (2171:14604)', g.call && near(g.call.l, 107) && near(g.call.t, 421.53) && near(g.call.w, 188) && near(g.call.h, 43), g.call);
-  check('"She calls you" 188x43 at 107,507.4 (2171:14606)', g.get && near(g.get.l, 107) && near(g.get.t, 507.4) && near(g.get.w, 188) && near(g.get.h, 43), g.get);
-  check('close: a 44px target centred on the node\'s cross (347, 99)', g.close && near(g.close.l + 22, 347.008) && near(g.close.t + 22, 98.957) && g.close.w === 44, g.close);
-  check('"Available now" dot at 244,346, 9.1px (2171:14616)', g.dot && near(g.dot.l, 244) && near(g.dot.t, 346) && near(g.dot.w, 9.146, 0.2), g.dot);
-  check('the owner\'s words, verbatim', g.subT === 'Sierra is a receptionist from Bolt that answers calls, books customers, takes messages and more.' && g.subB === 'Sierra'
-    && g.liveT === 'Available now' && g.boxT === 'Two options to talk to Sierra now' && g.boxB === 'Sierra' && g.callT === 'You call her' && g.getT === 'She calls you'
+  // AFMBP-2685 (owner, 11-21): the node's redesign, 375x702.151 with a .667px border; the numbers are the
+  // node's inside the border, on the page at the node's 402px width (card at 14,32).
+  check('card at 14,32, 375x702.2 (Figma 2169:14533)', g.card && near(g.card.l, 14) && near(g.card.t, 32) && near(g.card.w, 375) && near(g.card.h, 702.151), g.card);
+  check('receptionist line at 32.9,255.2, 331.1 wide (2169:14553)', g.sub && near(g.sub.l, 32.92) && near(g.sub.t, 255.217) && near(g.sub.w, 331.083), g.sub);
+  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 54.7,365.7 (2269:21112)', g.ways && near(g.ways.l, 54.667) && near(g.ways.t, 365.667) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.waysBg), { ways: g.ways, bg: g.waysBg });
+  check('"You call her" 209.2x47.8 at 97,422 (2171:14604)', g.call && near(g.call.l, 97.001) && near(g.call.t, 421.997) && near(g.call.w, 209.199) && near(g.call.h, 47.849), g.call);
+  check('"She calls you" 209.2x47.8 at 97.5,511.7 (2171:14606)', g.get && near(g.get.l, 97.461) && near(g.get.t, 511.727) && near(g.get.w, 209.199) && near(g.get.h, 47.849), g.get);
+  check('close: a 44px target centred on the node\'s cross (363.9, 68.2)', g.close && near(g.close.l + 22, 363.939) && near(g.close.t + 22, 68.16) && g.close.w === 44, g.close);
+  check('"Available" dot at 280.7,345.7, 10.2px (2171:14616)', g.dot && near(g.dot.l, 280.667) && near(g.dot.t, 345.667) && near(g.dot.w, 10.178, 0.2), g.dot);
+  check('the owner\'s words, verbatim', g.subT === 'Sierra is your receptionist answers calls, takes messages, and books customers for less than $4/day.' && g.subB === 'Sierra'
+    && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you'
     && g.waitT === 'Avg. wait time: 3 seconds' && g.waitB === '3 seconds' && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
-    && g.quoteT === '“I was losing jobs to voicemail and even paid $250 a week for a receptionist. Bolt booked a job and paid for itself.”', g);
+    && g.quoteT === '“Bolt booked a job and paid for itself in a day.”', g);
   check('five stars; Times New Roman (Tinos) lines, Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /Times New Roman/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
   ex = exposures(s);
   check('one exposure: treatment, this visitor', ex.length === 1 && JSON.stringify(ex[0].experiments) === JSON.stringify(ctx('treatment')) && ex[0].anonymousId === VID.treatment, s.gw);

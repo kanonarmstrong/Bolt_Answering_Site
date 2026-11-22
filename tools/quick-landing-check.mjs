@@ -175,19 +175,34 @@ try {
     check(`close tap: demo_closed {step: signup_offer, trade: ${TRADE[page]}}`, closed.length === 1 && closed[0].step === 'signup_offer' && closed[0].trade === TRADE[page], closed);
   }
 
-  // AFMBP-2602: under 337px the cards zoom (.94, then .83 under 317px), and iPad Safari's text autosizing
-  // must be off on them, or every word draws at its unzoomed size. At 337px nothing zooms and no iOS text
-  // rule reaches a card. Every card on the page is measured: the sign-up card and the landing A/B's demo
-  // card (AFMBP-2612), whichever one shows (neither the zoom nor the rule depends on that).
+  // AFMBP-2602: under 337px the sign-up card zooms (.94, then .83 under 317px), and iPad Safari's text
+  // autosizing must be off on it, or every word draws at its unzoomed size. At 337px it doesn't zoom and no
+  // iOS text rule reaches it. AFMBP-2685: the landing A/B's demo card is 375px wide (its node's 402px frame),
+  // so it zooms in its own steps under 400px, with the same iOS rule, and at every step each of its parts
+  // (the vector line included) stays inside it and the card stays on the screen. It is measured shown
+  // (?bolt_qa=1&bolt_xp=treatment).
+  const T_STEPS = [[402, 1], [400, 1], [399, 0.96], [390, 0.96], [389, 0.92], [375, 0.92], [374, 0.88], [360, 0.88], [359, 0.82], [336, 0.82], [335, 0.76], [316, 0.76], [315, 0.7], [300, 0.7]];
   for (const page of PAGES) {
     console.log(`[${page}, narrow phones]`);
     for (const [w, zWant] of [[337, 1], [320, 0.94], [300, 0.83]]) {
       await send('Emulation.setDeviceMetricsOverride', { width: w, height: 640, deviceScaleFactor: 1, mobile: true });
       await load(`${BASE}/${page}`);
-      const t = await ev(`(() => { ${IOS_TSA} return [].map.call(document.querySelectorAll('.ql-card'), (k) => ({ card: k.className, zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k) })); })()`);
-      const good = (c) => Math.abs(c.zoom - zWant) < 1e-6 && (zWant < 1 ? c.ios.join() === 'none' : c.ios.length === 0);
-      check(`${w}px: all ${Array.isArray(t) ? t.length : 0} cards ${zWant < 1 ? `zoom to ${zWant} and iOS turns text autosizing off on them` : 'do not zoom and no iOS text rule reaches them'}`, Array.isArray(t) && t.length > 0 && t.every(good), t);
+      const t = await ev(`(() => { ${IOS_TSA} const k = document.querySelector('.ql-card--c'); return k ? { zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k) } : null; })()`);
+      const good = !!t && Math.abs(t.zoom - zWant) < 1e-6 && (zWant < 1 ? t.ios.join() === 'none' : t.ios.length === 0);
+      check(`${w}px: the sign-up card ${zWant < 1 ? `zooms to ${zWant} and iOS turns text autosizing off on it` : 'does not zoom and no iOS text rule reaches it'}`, good, t);
     }
+    for (const [w, zWant] of T_STEPS) {
+      await send('Emulation.setDeviceMetricsOverride', { width: w, height: 640, deviceScaleFactor: 1, mobile: true });
+      await load(`${BASE}/${page}?bolt_qa=1&bolt_xp=treatment`);
+      const t = await ev(`(() => { ${IOS_TSA} const k = document.querySelector('.ql-card--t'); if (!k) return null; const c = k.getBoundingClientRect(), out = [];
+        [].forEach.call(k.querySelectorAll('.qlt-body > *:not(.ql-vh), .qlt-close'), (e) => { const r = e.getBoundingClientRect();
+          if (r.left < c.left - 0.5 || r.right > c.right + 0.5 || r.top < c.top - 0.5 || r.bottom > c.bottom + 0.5) out.push(e.className); });
+        return { shown: getComputedStyle(k).display !== 'none', zoom: parseFloat(getComputedStyle(k).zoom), ios: iosTsa(k), left: c.left, right: c.right, vw: innerWidth, out }; })()`);
+      // Under 337px the sign-up card's iOS rule (.ql-card) reaches this card too: every rule must say none.
+      const good = !!t && t.shown && Math.abs(t.zoom - zWant) < 1e-6 && (zWant < 1 ? t.ios.length > 0 && t.ios.every((v) => v === 'none') : t.ios.length === 0) && t.left >= 0 && t.right <= t.vw && t.out.length === 0;
+      check(`${w}px: the demo card ${zWant < 1 ? `zooms to ${zWant} and iOS turns text autosizing off on it` : 'does not zoom and no iOS text rule reaches it'}; on the screen, every part inside it`, good, t);
+    }
+    await ev(`(() => { localStorage.clear(); sessionStorage.clear(); return true; })()`);
   }
 
   // AFMBP-2657: the demo's minified copies.
