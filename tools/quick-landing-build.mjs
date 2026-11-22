@@ -159,7 +159,10 @@ ${GTAG}
       src:url('/assets/fonts/inter.woff2') format('woff2');
       unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
     }
-    /* Times New Roman as the node sets it; phones without it (Android) get Tinos, the same widths. */
+    /* Times New Roman as the node sets it, and Tinos (the same widths) where a phone has no Times.
+       AFMBP-2686 (11-22): Android has no Times New Roman, but it answers to the name with its own
+       serif (Noto Serif: wider letters, taller lines), so the stack never reaches Tinos there. The
+       sign-up card below still draws in that serif on Android; the demo card uses 'QL Tinos'. */
     @font-face{
       font-family:'Tinos';font-style:normal;font-weight:400;font-display:swap;
       src:url('/assets/fonts/tinos-400.woff2') format('woff2');
@@ -167,6 +170,20 @@ ${GTAG}
     }
     @font-face{
       font-family:'Tinos';font-style:normal;font-weight:700;font-display:swap;
+      src:url('/assets/fonts/tinos-700.woff2') format('woff2');
+      unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+    /* AFMBP-2686: the demo card's serif. Tinos on every phone, never a system font: its widths and
+       line heights are Times New Roman's, so the node's line breaks and spacing hold on Android too.
+       Its text waits for the file (11KB; block, at most 3s) instead of drawing first in Android's
+       wider serif and jumping. Same files as 'Tinos' above, fetched once. */
+    @font-face{
+      font-family:'QL Tinos';font-style:normal;font-weight:400;font-display:block;
+      src:url('/assets/fonts/tinos-400.woff2') format('woff2');
+      unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+    @font-face{
+      font-family:'QL Tinos';font-style:normal;font-weight:700;font-display:block;
       src:url('/assets/fonts/tinos-700.woff2') format('woff2');
       unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
     }
@@ -294,13 +311,15 @@ ${GTAG}
        the sign-up card's cross file, drawn at the node's size. */
     .qlt-close{left:327.939px;top:14.16px}
     .qlt-close::before{width:14.457px;height:14.458px}
-    /* 2169:14553: Times New Roman 19.83px, centred, four lines, 335 wide, at 21.333,225 (the node
+    /* 2169:14553: Times New Roman 19.83px in the node, drawn in Tinos ('QL Tinos', the same widths and
+       line heights, so on Android too; AFMBP-2686, owner's Pixel 10a: in Android's own serif the words
+       grew into the "Two ways" box). Centred, four lines, 335 wide, at 21.333,225 (the node
        centres it 2px right of the card's middle). The node's text ends in blank lines set at
        23.081px, and the first of them shares the last line, so that line sits about 3px lower than
        the others; the empty .qlt-end at that size does the same here. */
     .qlt-sub{
       position:absolute;left:21.333px;top:225px;width:335px;margin:0;
-      font-family:'Times New Roman',Tinos,serif;font-size:19.83px;font-weight:400;line-height:normal;color:#000;text-align:center;
+      font-family:'QL Tinos','Times New Roman',serif;font-size:19.83px;font-weight:400;line-height:normal;color:#000;text-align:center;
     }
     .qlt-sub b{font-weight:700}
     .qlt-end{font-size:23.081px}
@@ -364,8 +383,9 @@ ${GTAG}
        content needs to appear via a vertically swipe from top to bottom ... the background image does
        not need to swipe". The node has no motion, so the timings are ours.
        - The wipe-in, once, as the card first shows: everything on it but the art (the words, the
-         vector, the buttons, the rating, the cross) is uncovered from the top edge down in 0.7s,
-         fast at first so the words come at once, slowing to the bottom. A cover in the card's own
+         vector, the buttons, the rating, the cross) is uncovered from the top edge down in 1.4s
+         (owner, 11-22: "2x slower" than the first 0.7s), fast at first so the words come early,
+         slowing to the bottom. A cover in the card's own
          art (the same file at the same place and size, so the art never moves) sits over the lot
          and is cut away from the top down. It takes no taps and is gone after the wipe; without
          clip-path there is no cover at all.
@@ -377,7 +397,7 @@ ${GTAG}
           content:"";position:absolute;top:0;right:0;bottom:0;left:0;z-index:3;pointer-events:none;
           background:inherit;border-radius:inherit;box-shadow:inherit;
           -webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0);
-          animation:qlt-wipe .7s cubic-bezier(.25,.46,.45,.94) both;
+          animation:qlt-wipe 1.4s cubic-bezier(.25,.46,.45,.94) both;
         }
       }
       .qlt-dot{animation:qlt-blink 1.2s ease-in-out infinite}

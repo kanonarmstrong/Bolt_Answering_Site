@@ -11,8 +11,10 @@
 //   - every sign-up link carries xp=<key>.<arm>.<configVersion> next to bvid, a trial tap sends
 //     start_trial_clicked to the gateway, on the card and on the home page;
 //   - the demo card's two animations (AFMBP-2686), with motion allowed: a cover in the card's own art
-//     over the whole card at the start, cut away top to bottom in 0.7s, taking no taps, then gone; the
+//     over the whole card at the start, cut away top to bottom in 1.4s, taking no taps, then gone; the
 //     "Available" dot blinking every 1.2s. Set to reduce motion: neither. The sign-up card: neither;
+//   - the demo card's serif words draw in Tinos, the site's own file, also where 'Times New Roman' answers
+//     with another serif (Android's Noto Serif, simulated): same lines, same place (AFMBP-2686, Pixel 10a);
 //   - the demo card's buttons run today's demo: "She calls you" opens the form, "You call her" is a
 //     tel: link with the demo line's code before the tap and opens the call card; coming back after
 //     the dial is logged (demo_inbound_returned); a tap before demo.js has loaded is carried out;
@@ -77,6 +79,7 @@ const MUTATE = {
   wipe_stays: ['start', (s) => s.replace('to{-webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0)}', 'to{-webkit-clip-path:inset(0 0 0 0);clip-path:inset(0 0 0 0)}')],
   blink: ['start', (s) => s.replace('.qlt-dot{animation:qlt-blink 1.2s ease-in-out infinite}', '')],
   motion: ['start', (s) => s.replace('@media (prefers-reduced-motion:no-preference){', '@media all{')],
+  tnr_first: ['start', (s) => s.replace("font-family:'QL Tinos','Times New Roman',serif;", "font-family:'Times New Roman','QL Tinos',serif;")],
   pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
   reddit: ['reddit-pixel.js', (s) => s.replace("    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {", "    if (d.event === 'xp_exposed') window.rdt('track', 'Custom', { customEventName: 'Xp', props: d.data });\n    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {")],
   reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
@@ -86,6 +89,9 @@ const MUTATE = {
 const MIN_OF = { 'demo.min.js': 'demo.js', 'demo-format.min.js': 'demo-format.js', 'demo.min.css': 'demo.css' };
 if (NC && !MUTATE[NC]) { console.error(`unknown NC=${NC}; one of ${Object.keys(MUTATE).join(', ')}`); process.exit(2); }
 
+// AFMBP-2686: Android has no Times New Roman but answers to the name with its own serif (Noto Serif: wider
+// letters, taller lines). Simulated: 'Times New Roman' becomes a wide serif (Georgia) with Noto Serif's line box.
+const ANDROID_SERIF = `(() => { const st = document.createElement('style'); st.textContent = "@font-face{font-family:'Times New Roman';font-weight:400;src:local('Georgia');ascent-override:106.9%;descent-override:29.3%;line-gap-override:0%}@font-face{font-family:'Times New Roman';font-weight:700;src:local('Georgia Bold');ascent-override:106.9%;descent-override:29.3%;line-gap-override:0%}"; const add = () => document.head.appendChild(st); if (document.head) add(); else document.addEventListener('DOMContentLoaded', add); })()`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const hold = { demoMs: 0 };
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2', '.xml': 'application/xml', '.txt': 'text/plain' };
@@ -284,7 +290,7 @@ try {
     && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you'
     && !g.wait && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
     && g.quoteT === '“Bolt booked a job and paid for itself in a day.”', g);
-  check('five stars; Times New Roman (Tinos) lines, Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /Times New Roman/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
+  check('five stars; the serif lines set as Tinos (\'QL Tinos\'), Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /^"?QL Tinos"?,/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
   ex = exposures(s);
   check('one exposure: treatment, this visitor', ex.length === 1 && JSON.stringify(ex[0].experiments) === JSON.stringify(ctx('treatment')) && ex[0].anonymousId === VID.treatment, s.gw);
   xe = typesOf(s, 'xp_exposed');
@@ -471,14 +477,14 @@ try {
   await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
   let a = await anim();
   check('the wipe-in at its start: a cover in the card\'s own art (same file, place and size) over the whole card, the cross included, taking no taps', a.content === '""' && a.name === 'qlt-wipe' && a.art && a.box === '0px 0px 0px 0px' && a.z === '3' && a.pe === 'none' && /^inset\(0(%|px)( 0px){0,3}\)$/.test(a.clip), a);
-  const mid = await ev(`(() => { const w = document.getAnimations().find((x) => x.animationName === 'qlt-wipe'); w.pause(); w.currentTime = 350;
+  const mid = await ev(`(() => { const w = document.getAnimations().find((x) => x.animationName === 'qlt-wipe'); w.pause(); w.currentTime = 700;
     const b = document.querySelector('.qlt-call').getBoundingClientRect(), h = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
     return { clip: getComputedStyle(document.querySelector('.ql-card--t'), '::after').clipPath, hit: !!(h && h.closest('.qlt-call')) }; })()`);
-  check('halfway (0.35s): the cover is cut away from the top partway down, and a tap goes through it to "You call her"', /^inset\(\d+(\.\d+)?% 0px 0px\)$/.test(mid.clip) && mid.hit, mid);
+  check('halfway (0.7s): the cover is cut away from the top partway down, and a tap goes through it to "You call her"', /^inset\(\d+(\.\d+)?% 0px 0px\)$/.test(mid.clip) && mid.hit, mid);
   await send('Animation.setPlaybackRate', { playbackRate: 1 });
   await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
   a = await anim();
-  check('the wipe runs once, 0.7s; the dot blinks every 1.2s for as long as the card shows', a.name === 'qlt-wipe' && a.dur === '0.7s' && a.iter === '1' && a.fill === 'both' && a.dot === 'qlt-blink' && a.dotDur === '1.2s' && a.dotIter === 'infinite', a);
+  check('the wipe runs once, 1.4s (owner: 2x the first 0.7s); the dot blinks every 1.2s for as long as the card shows', a.name === 'qlt-wipe' && a.dur === '1.4s' && a.iter === '1' && a.fill === 'both' && a.dot === 'qlt-blink' && a.dotDur === '1.2s' && a.dotIter === 'infinite', a);
   const gone = await until(`getComputedStyle(document.querySelector('.ql-card--t'), '::after').clipPath === 'inset(100% 0px 0px)' && document.getAnimations().some((x) => x.animationName === 'qlt-wipe' && x.playState === 'finished')`, 3000);
   a = await anim();
   check('after the wipe the cover is gone (cut away to the bottom) and the dot still blinks', gone && a.clip === 'inset(100% 0px 0px)' && a.blink === 'running', a);
@@ -493,6 +499,27 @@ try {
   await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
   a = await anim();
   check('reduce motion: no cover, no wipe, a steady dot; the card is all there at once', a.content === 'none' && a.name === 'none' && a.dot === 'none' && a.all === 0, a);
+  await send('Emulation.setEmulatedMedia', { features: [] });
+
+  // ---------- 11. an Android phone's fonts (AFMBP-2686, the owner's Pixel 10a) ----------
+  // On Android the demo card's words grew into the "Two ways" box: the phone drew 'Times New Roman' in its
+  // own serif. They must draw in Tinos, the site's file, there too: the same lines in the same place.
+  console.log('[an Android phone\'s fonts: \'Times New Roman\' answered by another serif (simulated)]');
+  await motion('reduce');
+  await send('DOM.enable'); await send('CSS.enable');
+  const fontsOf = async (sel) => { const doc = await send('DOM.getDocument', { depth: -1 }); const q = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: sel }); if (!q.nodeId) return null; return (await send('CSS.getPlatformFontsForNode', { nodeId: q.nodeId })).fonts.map((f) => f.familyName); };
+  const geo = () => ev(`(() => { const s = document.querySelector('.qlt-sub').getBoundingClientRect(), w = document.querySelector('.qlt-ways').getBoundingClientRect(); return { l: s.left, t: s.top, w: s.width, h: s.height, gap: +(w.top - s.bottom).toFixed(2) }; })()`);
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  await ev('document.fonts.ready.then(() => true)');
+  const g0 = await geo(), f0 = await fontsOf('.qlt-sub');
+  check('the receptionist line draws in Tinos, the site\'s own file, not a system font', !!f0 && f0.length > 0 && f0.every((f) => f === 'Tinos'), f0);
+  const aliasId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: ANDROID_SERIF })).identifier;
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  await ev(`(() => { const p = document.createElement('span'); p.id = '__tnr'; p.style.fontFamily = "'Times New Roman'"; p.textContent = 'Times'; document.body.appendChild(p); return document.fonts.ready.then(() => true); })()`);
+  const fp = await fontsOf('#__tnr'), f1 = await fontsOf('.qlt-sub'), g1 = await geo();
+  check('simulated Android: "Times New Roman" answers with another serif (the simulation is on)', !!fp && fp.length > 0 && fp.every((f) => f !== 'Times New Roman' && f !== 'Tinos'), fp);
+  check('simulated Android: the receptionist line still draws in Tinos, the same lines in the same place, the node\'s gap above "Two ways" kept', !!f1 && f1.length > 0 && f1.every((f) => f === 'Tinos') && near(g1.l, g0.l, 0.5) && near(g1.t, g0.t, 0.5) && near(g1.w, g0.w, 0.5) && near(g1.h, g0.h, 0.5) && g1.gap >= 20, { f1, g0, g1 });
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: aliasId });
   await send('Emulation.setEmulatedMedia', { features: [] });
 } finally {
   try { ws && ws.close(); } catch {}
