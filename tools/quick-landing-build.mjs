@@ -282,6 +282,9 @@ ${GTAG}
        phone's fonts or text size can move or rewrap them; their words are there for screen readers.
        The buttons are smaller (41px tall, lighter labels) and lower, "Available" is 10px lower, and
        the cross is black.
+       Then (owner, 11-22, the node again): the "Two ways" box grew into a frame, 295x191, that holds
+       "Available" (top right), the "Two ways" line and both buttons; the buttons moved up into it and
+       the rating 5px down.
        Every number below is the node's, on the card's top left inside the border (.qlt-body), except
        the close, which sits on the card itself. */
     .ql-card--t{display:none;left:.5px;width:375px;height:702.151px;border-radius:12.013px;box-shadow:inset 0 0 0 .667px rgba(0,0,0,.18);background-position:-9.011px .667px;background-size:392.98px 698.57px}
@@ -306,18 +309,18 @@ ${GTAG}
     /* The receptionist line (2281:21114): the node's vector, its four centred lines in one drawing,
        333.721x91.048 at 22.707,230.231 on the card's outer edge. */
     .qlt-sub{position:absolute;left:22.04px;top:229.564px;width:333.721px;height:91.048px;margin:0;background:url('/assets/xp-ld-meet-sierra.svg') 0 0/100% 100% no-repeat}
-    /* "Two ways to talk to Sierra now" (2269:21112): the node's vector, box and words in one, 295x36.721
-       at 39,346.25 (the node's 40,347 is on the card's outer edge, so drawn 1px up and left here, where
-       it matches the node's render). It scales with the card, so no font can push it past the edge;
-       its words are there for screen readers. */
-    .qlt-ways{position:absolute;left:39px;top:346.25px;width:295px;height:36.721px;margin:0;background:url('/assets/xp-ld-two-ways.svg') 0 0/100% 100% no-repeat}
-    /* "Available" (2171:14614), under the vector: the green dot, 8.327px at the node's 232,408 (on the
-       card's outer edge; its own element, as it blinks), and the word, the node's vector (2281:21124),
-       44.051x8.169 at 245.34,407.968. */
-    .qlt-dot{position:absolute;left:231.333px;top:407.333px;width:8.327px;height:8.327px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
-    .qlt-live{position:absolute;left:244.673px;top:407.301px;width:44.051px;height:8.169px;margin:0;background:url('/assets/xp-ld-available.svg') 0 0/100% 100% no-repeat}
+    /* "Two ways to talk to Sierra now" (2269:21112): the node's vector, the frame and the line in one,
+       295x191 at 39,339.25 (the node's 40,340 is on the card's outer edge, so drawn 1px up and left
+       here, as the old box was, where it matches the node's render). "Available" and both buttons sit
+       on top of it. Its words are there for screen readers. */
+    .qlt-ways{position:absolute;left:39px;top:339.25px;width:295px;height:191px;margin:0;background:url('/assets/xp-ld-two-ways-box.svg') 0 0/100% 100% no-repeat}
+    /* "Available" (2171:14614), inside the frame's top right: the green dot, 8.327px at the node's
+       255,354 (on the card's outer edge; its own element, as it blinks), and the word, the node's vector
+       (2281:21124), 44.051x8.169 at 268.339,353.968. */
+    .qlt-dot{position:absolute;left:254.333px;top:353.333px;width:8.327px;height:8.327px;background:url('/assets/xp-ld-dot.svg') 0 0/100% 100% no-repeat}
+    .qlt-live{position:absolute;left:267.673px;top:353.301px;width:44.051px;height:8.169px;margin:0;background:url('/assets/xp-ld-available.svg') 0 0/100% 100% no-repeat}
     /* The two ways in (2171:14604 / 2171:14606): the node's buttons, each one drawing (fill, 11.128
-       radius and label), 209x41 at 83,425 and 210x41 at 83,488 on the card's outer edge. Nothing
+       radius and label), 209x41 at 83,410 and 210x41 at 83,466 on the card's outer edge. Nothing
        between them since AFMBP-2686 (the node dropped the wait line). While "You call her" waits for
        its code (a tap before one is ready), demo.js puts its spinner in the button: here it sits
        left of the drawn label, not on it. */
@@ -325,13 +328,14 @@ ${GTAG}
       position:absolute;height:41px;margin:0;padding:0;border:0;border-radius:11.128px;box-sizing:border-box;
       display:block;cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
     }
-    .qlt-call{left:82.333px;top:424.333px;width:209px;background:url('/assets/xp-ld-you-call-her.svg') 0 0/100% 100% no-repeat}
-    .qlt-get{left:82.333px;top:487.333px;width:210px;background:url('/assets/xp-ld-she-calls-you.svg') 0 0/100% 100% no-repeat}
+    .qlt-call{left:82.333px;top:409.333px;width:209px;background:url('/assets/xp-ld-you-call-her.svg') 0 0/100% 100% no-repeat}
+    .qlt-get{left:82.333px;top:465.333px;width:210px;background:url('/assets/xp-ld-she-calls-you.svg') 0 0/100% 100% no-repeat}
     .qlt-call .demo-spinner{position:absolute;left:27px;top:0;bottom:0;margin:auto 0}
     .qlt-btn:focus-visible,.qlt-close:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
     /* The rating (2169:14534, "Group 355"): the node's vector, its bubble, name, stars, score and quote
-       in one drawing, 309.729x112.627, turned 3.17deg about its centre as the node turns it. */
-    .qlt-bubble{position:absolute;left:32.875px;top:552.8715px;width:309.729px;height:112.627px;margin:0;transform:rotate(3.17deg);transform-origin:50% 50%;pointer-events:none;background:url('/assets/xp-ld-rating.svg') 0 0/100% 100% no-repeat}
+       in one drawing, 309.729x112.627, turned 3.17deg about its centre as the node turns it (5px lower
+       since the node's frame edit). */
+    .qlt-bubble{position:absolute;left:32.875px;top:557.8715px;width:309.729px;height:112.627px;margin:0;transform:rotate(3.17deg);transform-origin:50% 50%;pointer-events:none;background:url('/assets/xp-ld-rating.svg') 0 0/100% 100% no-repeat}
     /* AFMBP-2686 (owner, 11-22): "the green dot next to 'Available' needs to blink", and "all of the
        content needs to appear via a vertically swipe from top to bottom ... the background image does
        not need to swipe". The node has no motion, so the timings are ours.

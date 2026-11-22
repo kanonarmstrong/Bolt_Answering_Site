@@ -73,9 +73,9 @@ const MUTATE = {
   pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
   full_demo: ['start', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
   strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
-  geometry: ['start', (s) => s.replace('.qlt-call{left:82.333px;top:424.333px;', '.qlt-call{left:82.333px;top:428.333px;')],
+  geometry: ['start', (s) => s.replace('.qlt-call{left:82.333px;top:409.333px;', '.qlt-call{left:82.333px;top:413.333px;')],
   copy: ['start', (s) => s.replace('takes messages, and books customers', 'books customers, takes messages')],
-  ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways.svg')", "url('/assets/xp-ld-rating.svg')")],
+  ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways-box.svg')", "url('/assets/xp-ld-rating.svg')")],
   // AFMBP-2686: the demo card's two animations.
   wipe_art: ['start', (s) => s.replace('background:inherit;border-radius:inherit;box-shadow:inherit;', 'background:#f0e0d5;border-radius:inherit;box-shadow:inherit;')],
   wipe_stays: ['start', (s) => s.replace('to{-webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0)}', 'to{-webkit-clip-path:inset(0 0 0 0);clip-path:inset(0 0 0 0)}')],
@@ -289,17 +289,19 @@ try {
   // AFMBP-2686 (owner, 11-22): the node's latest edits, measured against its render.
   check('card at 14,32, 375x702.2 (Figma 2169:14533)', g.card && near(g.card.l, 14) && near(g.card.t, 32) && near(g.card.w, 375) && near(g.card.h, 702.151), g.card);
   check('the receptionist line is the node\'s vector, 333.7x91 at 36.7,262.2 (2281:21114)', g.sub && near(g.sub.l, 36.707, 0.5) && near(g.sub.t, 262.231, 0.5) && near(g.sub.w, 333.721, 0.5) && near(g.sub.h, 91.048, 0.5), g.sub);
-  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 53.7,378.9 (2269:21112)', g.ways && near(g.ways.l, 53.667) && near(g.ways.t, 378.917) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.draw.ways), { ways: g.ways, bg: g.draw.ways });
-  check('"You call her" 209x41 at 97,457 (2171:14604)', g.call && near(g.call.l, 97) && near(g.call.t, 457) && near(g.call.w, 209) && near(g.call.h, 41), g.call);
-  check('"She calls you" 210x41 at 97,520 (2171:14606)', g.get && near(g.get.l, 97) && near(g.get.t, 520) && near(g.get.w, 210) && near(g.get.h, 41), g.get);
+  const inside = (a, b) => !!a && !!b && a.l >= b.l && a.t >= b.t && a.l + a.w <= b.l + b.w && a.t + a.h <= b.t + b.h;
+  check('"Two ways to talk to Sierra now" is the node\'s frame, 295x191 at 53.7,371.9, with "Available" and both buttons inside it (2269:21112)', g.ways && near(g.ways.l, 53.667) && near(g.ways.t, 371.917) && near(g.ways.w, 295) && near(g.ways.h, 191) && /\/assets\/xp-ld-two-ways-box\.svg/.test(g.draw.ways)
+    && inside(g.dot, g.ways) && inside(g.avail, g.ways) && inside(g.call, g.ways) && inside(g.get, g.ways), { ways: g.ways, bg: g.draw.ways });
+  check('"You call her" 209x41 at 97,442 (2171:14604)', g.call && near(g.call.l, 97) && near(g.call.t, 442) && near(g.call.w, 209) && near(g.call.h, 41), g.call);
+  check('"She calls you" 210x41 at 97,498 (2171:14606)', g.get && near(g.get.l, 97) && near(g.get.t, 498) && near(g.get.w, 210) && near(g.get.h, 41), g.get);
   check('close: a 44px target centred on the node\'s cross (364, 68.2)', g.close && near(g.close.l + 22, 363.958) && near(g.close.t + 22, 68.16) && g.close.w === 44, g.close);
-  check('"Available" under the vector: the dot, 8.3px at 246,440 (2171:14616), and the word\'s vector, 44.1x8.2 at 259.3,440 (2281:21124)', g.dot && near(g.dot.l, 246) && near(g.dot.t, 440) && near(g.dot.w, 8.327, 0.2)
-    && g.avail && near(g.avail.l, 259.34) && near(g.avail.t, 439.968) && near(g.avail.w, 44.051, 0.2) && near(g.avail.h, 8.169, 0.2), { dot: g.dot, avail: g.avail });
-  check('the rating is the node\'s vector turned 3.17deg, within 0.5px of the node\'s bounds: 315.5x129.6 at 45,577 (2169:14534)', g.rating && near(g.rating.l, 45, 0.5) && near(g.rating.t, 577, 0.5) && near(g.rating.w, 315.479, 0.5) && near(g.rating.h, 129.57, 0.5), g.rating);
+  check('"Available" in the frame\'s top right: the dot, 8.3px at 269,386 (2171:14616), and the word\'s vector, 44.1x8.2 at 282.3,386 (2281:21124)', g.dot && near(g.dot.l, 269) && near(g.dot.t, 386) && near(g.dot.w, 8.327, 0.2)
+    && g.avail && near(g.avail.l, 282.34) && near(g.avail.t, 385.968) && near(g.avail.w, 44.051, 0.2) && near(g.avail.h, 8.169, 0.2), { dot: g.dot, avail: g.avail });
+  check('the rating is the node\'s vector turned 3.17deg, within 0.5px of the node\'s bounds: 315.5x129.6 at 45,582 (2169:14534)', g.rating && near(g.rating.l, 45, 0.5) && near(g.rating.t, 582, 0.5) && near(g.rating.w, 315.479, 0.5) && near(g.rating.h, 129.57, 0.5), g.rating);
   check('every word on the card is a drawing, from the node\'s own files: no live text on it (owner\'s Pixel 10a)', g.live.length === 0
     && /\/assets\/xp-ld-meet-sierra\.svg/.test(g.draw.sub) && /\/assets\/xp-ld-available\.svg/.test(g.draw.avail) && /\/assets\/xp-ld-you-call-her\.svg/.test(g.draw.call)
     && /\/assets\/xp-ld-she-calls-you\.svg/.test(g.draw.get) && /\/assets\/xp-ld-rating\.svg/.test(g.draw.rating) && /\/assets\/xp-ld-close\.svg/.test(g.draw.close), { live: g.live, draw: g.draw });
-  const files = await ev(`Promise.all(['meet-sierra', 'two-ways', 'available', 'dot', 'you-call-her', 'she-calls-you', 'rating', 'close'].map((n) => fetch('/assets/xp-ld-' + n + '.svg').then((x) => x.status + ' ' + x.headers.get('content-type'))))`);
+  const files = await ev(`Promise.all(['meet-sierra', 'two-ways-box', 'available', 'dot', 'you-call-her', 'she-calls-you', 'rating', 'close'].map((n) => fetch('/assets/xp-ld-' + n + '.svg').then((x) => x.status + ' ' + x.headers.get('content-type'))))`);
   check('the drawings are all there: each file 200, image/svg+xml', files.length === 8 && files.every((x) => x === '200 image/svg+xml'), files);
   check('the owner\'s words, verbatim, for screen readers, and no wait line (the node dropped it)', g.subT === 'Meet Sierra, your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.'
     && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you' && !g.wait
