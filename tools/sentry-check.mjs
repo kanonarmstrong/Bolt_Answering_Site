@@ -12,6 +12,8 @@
 //       visit) and any host but the live site send nothing;
 //   [4] the integrity check is enforced: a tampered bundle never runs, and the demo still works;
 //   [5] an error thrown while the bundle is still loading is sent once it has loaded.
+//   [6] the promise rejection Microsoft's Outlook link scanner raises (BOLT-SITE-8) is not sent, and a
+//       real rejection on the same page still is.
 // Run: node tools/sentry-check.mjs [siteRoot]
 //      NC=<name> node tools/sentry-check.mjs   — one negative control on the SERVED copy only (see
 //      MUTATE); each must FAIL. Nothing on disk changes.
@@ -83,6 +85,7 @@ const MUTATE = {
   client_reports_on: ['sentry-init.js', swap('sendClientReports: false,', 'sendClientReports: true,')],
   no_early_buffer: ['sentry-init.js', swap('early.splice(0).forEach(function (err) { try { S.captureException(err); } catch (e) {} });', '')],
   no_demo_sentry: ['sentry-init.js', swap("window.addEventListener('bolt:track', onTrack);", '')],
+  no_scanner_filter: ['sentry-init.js', swap(", 'Object Not Found Matching Id:'];", '];')],
   tracing_bundle: ['sentry-init.js', otherBundle('bundle.tracing.min.js')],
   replay_bundle: ['sentry-init.js', otherBundle('bundle.replay.min.js')],
   no_recap_report: ['demo.js', swap("track('demo_recap_poll_failed', ", "void ('demo_recap_poll_failed', ")],
@@ -486,6 +489,25 @@ try {
     await sleep(800);
     const evs = sentEvents(p.st), top = evs[0]?.exception?.values?.at(-1)?.stacktrace?.frames?.at(-1) ?? {};
     ok(before === 0 && evs.length === 1 && /^forced: /.test(excValue(evs[0]) || '') && top.filename === `${SITE}${THROW_PATH}`, `kept, then sent once the bundle loaded (${evs.length} event, ${top.filename}:${top.lineno})`);
+    await p.close();
+  }
+
+  // ---------- [6] ----------
+  console.log("[6] Microsoft's Outlook link scanner: its rejection is not sent, a real one still is");
+  {
+    const p = await open();
+    await p.nav('/index.html');
+    ok(!!(await p.ready()), 'Sentry loads and starts');
+    // The exact reason the Safe Links browser rejects with (Sentry BOLT-SITE-8, 2026-11-21).
+    await p.ev("Promise.reject('Object Not Found Matching Id:3, MethodName:update, ParamCount:4'), 1");
+    await sleep(1500);
+    const scanner = sentEvents(p.st).length;
+    await p.ev("Promise.reject(new Error('forced: a real rejection')), 1");
+    await until(async () => sentEvents(p.st).length > scanner, 8000);
+    await sleep(800);
+    const vals = sentEvents(p.st).map((e) => excValue(e) || msgOf(e) || '');
+    ok(scanner === 0 && vals.length === 1 && /forced: a real rejection/.test(vals[0]), `the scanner's rejection is dropped and the real one is sent (${JSON.stringify(vals)})`);
+    ok(!vals.some((v) => /Object Not Found Matching Id/.test(v)), 'nothing from the scanner reached Sentry');
     await p.close();
   }
 
