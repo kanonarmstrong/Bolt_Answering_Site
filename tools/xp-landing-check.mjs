@@ -13,8 +13,10 @@
 //   - the demo card's two animations (AFMBP-2686), with motion allowed: a cover in the card's own art
 //     over the whole card at the start, cut away top to bottom in 1.4s, taking no taps, then gone; the
 //     "Available" dot blinking every 1.2s. Set to reduce motion: neither. The sign-up card: neither;
-//   - the demo card's serif words draw in Tinos, the site's own file, also where 'Times New Roman' answers
-//     with another serif (Android's Noto Serif, simulated): same lines, same place (AFMBP-2686, Pixel 10a);
+//   - every word on the demo card is the node's drawing (AFMBP-2686, after the owner's Pixel 10a), with its
+//     words in hidden text for screen readers: no live text on the card, and where 'Times New Roman'
+//     answers with another serif (Android's Noto Serif, simulated) nothing on it moves; while "You call
+//     her" waits for its code, demo.js's spinner sits beside the drawn label, not on it;
 //   - the demo card's buttons run today's demo: "She calls you" opens the form, "You call her" is a
 //     tel: link with the demo line's code before the tap and opens the call card; coming back after
 //     the dial is logged (demo_inbound_returned); a tap before demo.js has loaded is carried out;
@@ -71,15 +73,18 @@ const MUTATE = {
   pending: ['start', (s) => s.replace("window.__boltDemoPending = b.getAttribute('data-demo-landing');\n", '')],
   full_demo: ['start', (s) => s.replace("'/demo.min.js?v=", "'/demo.js?v=")],
   strip: ['start', (s) => s.replace('          w.history.replaceState(', '          void (')],
-  geometry: ['start', (s) => s.replace('.qlt-call{left:82.334px;top:417.33px;', '.qlt-call{left:82.334px;top:421.33px;')],
+  geometry: ['start', (s) => s.replace('.qlt-call{left:82.333px;top:424.333px;', '.qlt-call{left:82.333px;top:428.333px;')],
   copy: ['start', (s) => s.replace('takes messages, and books customers', 'books customers, takes messages')],
-  ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways.svg')", "url('/assets/xp-ld-bubble-v2.svg')")],
+  ways: ['start', (s) => s.replace("url('/assets/xp-ld-two-ways.svg')", "url('/assets/xp-ld-rating.svg')")],
   // AFMBP-2686: the demo card's two animations.
   wipe_art: ['start', (s) => s.replace('background:inherit;border-radius:inherit;box-shadow:inherit;', 'background:#f0e0d5;border-radius:inherit;box-shadow:inherit;')],
   wipe_stays: ['start', (s) => s.replace('to{-webkit-clip-path:inset(100% 0 0 0);clip-path:inset(100% 0 0 0)}', 'to{-webkit-clip-path:inset(0 0 0 0);clip-path:inset(0 0 0 0)}')],
   blink: ['start', (s) => s.replace('.qlt-dot{animation:qlt-blink 1.2s ease-in-out infinite}', '')],
   motion: ['start', (s) => s.replace('@media (prefers-reduced-motion:no-preference){', '@media all{')],
-  tnr_first: ['start', (s) => s.replace("font-family:'QL Tinos','Times New Roman',serif;", "font-family:'Times New Roman','QL Tinos',serif;")],
+  // AFMBP-2686 (owner, 11-22): every word on the demo card a drawing; the spinner beside the drawn label.
+  live_words: ['start', (s) => s.replace('<p class="qlt-live"><span class="ql-vh">Available</span></p>', '<p class="qlt-live"><span>Available</span></p>')],
+  drawings: ['start', (s) => s.replace("url('/assets/xp-ld-meet-sierra.svg')", "url('/assets/xp-ld-rating.svg')")],
+  spinner: ['start', (s) => s.replace('.qlt-call .demo-spinner{position:absolute;left:27px;top:0;bottom:0;margin:auto 0}', '')],
   pixel: ['meta-pixel.js', (s) => s.replace("    if (d.event === 'demo_opened') {", "    if (d.event === 'xp_exposed') window.fbq('trackCustom', 'Xp', data);\n    if (d.event === 'demo_opened') {")],
   reddit: ['reddit-pixel.js', (s) => s.replace("    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {", "    if (d.event === 'xp_exposed') window.rdt('track', 'Custom', { customEventName: 'Xp', props: d.data });\n    if (d.event === 'trial_link_clicked' || d.event === 'demo_trial_clicked') {")],
   reddit_qa: ['reddit-pixel.js', (s) => s.replace("    if (qa && get('bolt_pixel_debug', 'session') !== '1') return 'qa';\n", '')],
@@ -271,26 +276,35 @@ try {
   check('the demo card shows (html.xp-t), the sign-up card is hidden', d.t !== 'none' && d.c === 'none' && s.cls.includes('xp-t'), d);
   const g = await ev(`(() => { const r = (q) => { const e = document.querySelector(q); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, w: b.width, h: b.height }; };
     const tx = (q) => { const e = document.querySelector(q); return e ? e.textContent.replace(/\\s+/g, ' ').trim() : null; };
-    const ff = (q) => getComputedStyle(document.querySelector(q)).fontFamily;
-    return { card: r('.ql-card--t'), sub: r('.qlt-sub'), ways: r('.qlt-ways'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'),
-      subT: tx('.qlt-sub'), subB: tx('.qlt-sub b'), subAlign: getComputedStyle(document.querySelector('.qlt-sub')).textAlign, liveT: tx('.qlt-live'), waysT: tx('.qlt-ways'), waysBg: getComputedStyle(document.querySelector('.qlt-ways')).backgroundImage, callT: tx('.qlt-call'), getT: tx('.qlt-get'), wait: !!document.querySelector('.qlt-wait'),
-      whoT: tx('.qlt-who'), scoreT: tx('.qlt-score'), quoteT: tx('.qlt-quote'), stars: document.querySelectorAll('.qlt-star').length + document.querySelectorAll('.qlt-star5').length,
-      serif: ff('.qlt-sub'), sans: ff('.qlt-call'), closeHref: document.querySelector('.qlt-close').getAttribute('href'), h1: tx('#qlt-h') }; })()`);
+    const bg = (q, p) => { const e = document.querySelector(q); return e ? getComputedStyle(e, p || null).backgroundImage : null; };
+    const live = [], w = document.createTreeWalker(document.querySelector('.ql-card--t'), NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) if (n.nodeValue.trim() && !n.parentElement.closest('.ql-vh')) live.push(n.nodeValue.trim());
+    return { card: r('.ql-card--t'), sub: r('.qlt-sub'), ways: r('.qlt-ways'), call: r('.qlt-call'), get: r('.qlt-get'), close: r('.qlt-close'), dot: r('.qlt-dot'), avail: r('.qlt-live'), rating: r('.qlt-bubble'),
+      draw: { sub: bg('.qlt-sub'), ways: bg('.qlt-ways'), avail: bg('.qlt-live'), call: bg('.qlt-call'), get: bg('.qlt-get'), rating: bg('.qlt-bubble'), close: bg('.qlt-close', '::before') },
+      subT: tx('.qlt-sub'), liveT: tx('.qlt-live'), waysT: tx('.qlt-ways'), callT: tx('.qlt-call'), getT: tx('.qlt-get'), wait: !!document.querySelector('.qlt-wait'),
+      ratingT: [].map.call(document.querySelectorAll('.qlt-bubble .ql-vh'), (e) => e.textContent), live,
+      closeHref: document.querySelector('.qlt-close').getAttribute('href'), h1: tx('#qlt-h') }; })()`);
   // AFMBP-2685 (owner, 11-21): the node's redesign, 375x702.151 with a .667px border; the numbers are the
   // node's inside the border, on the page at the node's 402px width (card at 14,32).
   // AFMBP-2686 (owner, 11-22): the node's latest edits, measured against its render.
   check('card at 14,32, 375x702.2 (Figma 2169:14533)', g.card && near(g.card.l, 14) && near(g.card.t, 32) && near(g.card.w, 375) && near(g.card.h, 702.151), g.card);
-  check('receptionist line at 36,257.7, 335 wide, centred (2169:14553)', g.sub && near(g.sub.l, 36) && near(g.sub.t, 257.667) && near(g.sub.w, 335) && g.subAlign === 'center', { sub: g.sub, align: g.subAlign });
-  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 53.7,378.9 (2269:21112)', g.ways && near(g.ways.l, 53.667) && near(g.ways.t, 378.917) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.waysBg), { ways: g.ways, bg: g.waysBg });
-  check('"You call her" 209.2x47.8 at 97,450 (2171:14604)', g.call && near(g.call.l, 97.001) && near(g.call.t, 449.997) && near(g.call.w, 209.199) && near(g.call.h, 47.849), g.call);
-  check('"She calls you" 209.2x47.8 at 97.5,509.7 (2171:14606)', g.get && near(g.get.l, 97.461) && near(g.get.t, 509.727) && near(g.get.w, 209.199) && near(g.get.h, 47.849), g.get);
-  check('close: a 44px target centred on the node\'s cross (363.9, 68.2)', g.close && near(g.close.l + 22, 363.939) && near(g.close.t + 22, 68.16) && g.close.w === 44, g.close);
-  check('"Available" dot under the vector, at 292.7,421.7, 8.3px (2171:14616)', g.dot && near(g.dot.l, 292.667) && near(g.dot.t, 421.667) && near(g.dot.w, 8.327, 0.2), g.dot);
-  check('the owner\'s words, verbatim, and no wait line (the node dropped it)', g.subT === 'Meet Sierra, your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.' && g.subB === 'Sierra,'
-    && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you'
-    && !g.wait && g.whoT === 'Brent B. Indiana' && g.scoreT === '4.9/5'
-    && g.quoteT === '“Bolt booked a job and paid for itself in a day.”', g);
-  check('five stars; the serif lines set as Tinos (\'QL Tinos\'), Inter buttons; the close goes home; the headline for screen readers', g.stars === 5 && /^"?QL Tinos"?,/.test(g.serif) && /Inter/.test(g.sans) && g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
+  check('the receptionist line is the node\'s vector, 333.7x91 at 36.7,262.2 (2281:21114)', g.sub && near(g.sub.l, 36.707, 0.5) && near(g.sub.t, 262.231, 0.5) && near(g.sub.w, 333.721, 0.5) && near(g.sub.h, 91.048, 0.5), g.sub);
+  check('"Two ways to talk to Sierra now" is the node\'s vector, 295x36.7 at 53.7,378.9 (2269:21112)', g.ways && near(g.ways.l, 53.667) && near(g.ways.t, 378.917) && near(g.ways.w, 295) && near(g.ways.h, 36.721) && /\/assets\/xp-ld-two-ways\.svg/.test(g.draw.ways), { ways: g.ways, bg: g.draw.ways });
+  check('"You call her" 209x41 at 97,457 (2171:14604)', g.call && near(g.call.l, 97) && near(g.call.t, 457) && near(g.call.w, 209) && near(g.call.h, 41), g.call);
+  check('"She calls you" 210x41 at 97,520 (2171:14606)', g.get && near(g.get.l, 97) && near(g.get.t, 520) && near(g.get.w, 210) && near(g.get.h, 41), g.get);
+  check('close: a 44px target centred on the node\'s cross (364, 68.2)', g.close && near(g.close.l + 22, 363.958) && near(g.close.t + 22, 68.16) && g.close.w === 44, g.close);
+  check('"Available" under the vector: the dot, 8.3px at 246,440 (2171:14616), and the word\'s vector, 44.1x8.2 at 259.3,440 (2281:21124)', g.dot && near(g.dot.l, 246) && near(g.dot.t, 440) && near(g.dot.w, 8.327, 0.2)
+    && g.avail && near(g.avail.l, 259.34) && near(g.avail.t, 439.968) && near(g.avail.w, 44.051, 0.2) && near(g.avail.h, 8.169, 0.2), { dot: g.dot, avail: g.avail });
+  check('the rating is the node\'s vector turned 3.17deg, within 0.5px of the node\'s bounds: 315.5x129.6 at 45,577 (2169:14534)', g.rating && near(g.rating.l, 45, 0.5) && near(g.rating.t, 577, 0.5) && near(g.rating.w, 315.479, 0.5) && near(g.rating.h, 129.57, 0.5), g.rating);
+  check('every word on the card is a drawing, from the node\'s own files: no live text on it (owner\'s Pixel 10a)', g.live.length === 0
+    && /\/assets\/xp-ld-meet-sierra\.svg/.test(g.draw.sub) && /\/assets\/xp-ld-available\.svg/.test(g.draw.avail) && /\/assets\/xp-ld-you-call-her\.svg/.test(g.draw.call)
+    && /\/assets\/xp-ld-she-calls-you\.svg/.test(g.draw.get) && /\/assets\/xp-ld-rating\.svg/.test(g.draw.rating) && /\/assets\/xp-ld-close\.svg/.test(g.draw.close), { live: g.live, draw: g.draw });
+  const files = await ev(`Promise.all(['meet-sierra', 'two-ways', 'available', 'dot', 'you-call-her', 'she-calls-you', 'rating', 'close'].map((n) => fetch('/assets/xp-ld-' + n + '.svg').then((x) => x.status + ' ' + x.headers.get('content-type'))))`);
+  check('the drawings are all there: each file 200, image/svg+xml', files.length === 8 && files.every((x) => x === '200 image/svg+xml'), files);
+  check('the owner\'s words, verbatim, for screen readers, and no wait line (the node dropped it)', g.subT === 'Meet Sierra, your new personal receptionist. She answers calls, takes messages, and books customers when you can’t for less than $4/day.'
+    && g.liveT === 'Available' && g.waysT === 'Two ways to talk to Sierra now' && g.callT === 'You call her' && g.getT === 'She calls you' && !g.wait
+    && JSON.stringify(g.ratingT) === JSON.stringify(['Brent B. Indiana', '4.9/5', '“Bolt booked a job and paid for itself in a day.”']), g);
+  check('the close goes home; the headline for screen readers', g.closeHref === '/' && g.h1 === 'New jobs are calling', g);
   ex = exposures(s);
   check('one exposure: treatment, this visitor', ex.length === 1 && JSON.stringify(ex[0].experiments) === JSON.stringify(ctx('treatment')) && ex[0].anonymousId === VID.treatment, s.gw);
   xe = typesOf(s, 'xp_exposed');
@@ -348,6 +362,17 @@ try {
   const opened = await until(`!!document.querySelector('.demo-backdrop.open') && document.querySelector('.demo-backdrop').getAttribute('data-screen') === 'phone'`, 6000);
   await fetch(`${BASE}/__control/hold?ms=0`);
   check('a "She calls you" tap before demo.js arrives opens the form once it has', early && opened, { early, opened });
+  // "You call her" too: the tap waits for demo.js, then for its code, and meanwhile demo.js puts its spinner in
+  // the button. The label is part of the button's drawing, so nothing moves aside: the spinner must sit left of it.
+  await fetch(`${BASE}/__control/hold?ms=2500`);
+  await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
+  await ev(`(() => { const a = document.querySelector('.qlt-call'); window.__sp = null;
+    new MutationObserver(() => { const sp = a.querySelector('.demo-spinner'); if (sp && !window.__sp) { const b = a.getBoundingClientRect(), r = sp.getBoundingClientRect(); window.__sp = { l: r.left - b.left, r: r.right - b.left, t: r.top - b.top, b: r.bottom - b.top, w: r.width }; } }).observe(a, { childList: true });
+    a.click(); return true; })()`);
+  const called = await until(`!!document.querySelector('.demo-backdrop.open')`, 6000);
+  await fetch(`${BASE}/__control/hold?ms=0`);
+  const sp = await ev('window.__sp');
+  check('a "You call her" tap before demo.js arrives: while its code comes, the spinner sits left of the drawn label, not on it', called && !!sp && sp.w >= 12 && sp.l >= 4 && sp.r <= 51 && Math.abs((sp.t + sp.b) / 2 - 20.5) <= 1.5, { called, sp });
 
   // ---------- 4. unbaked: the real pages before Start ----------
   if (!DEF.baked) {
@@ -502,23 +527,22 @@ try {
   await send('Emulation.setEmulatedMedia', { features: [] });
 
   // ---------- 11. an Android phone's fonts (AFMBP-2686, the owner's Pixel 10a) ----------
-  // On Android the demo card's words grew into the "Two ways" box: the phone drew 'Times New Roman' in its
-  // own serif. They must draw in Tinos, the site's file, there too: the same lines in the same place.
+  // On Android the demo card's words grew into the "Two ways" box: the phone drew 'Times New Roman' in its own
+  // serif. Every word on the card is a drawing now, so with that serif (simulated) nothing on the card moves.
   console.log('[an Android phone\'s fonts: \'Times New Roman\' answered by another serif (simulated)]');
   await motion('reduce');
   await send('DOM.enable'); await send('CSS.enable');
   const fontsOf = async (sel) => { const doc = await send('DOM.getDocument', { depth: -1 }); const q = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: sel }); if (!q.nodeId) return null; return (await send('CSS.getPlatformFontsForNode', { nodeId: q.nodeId })).fonts.map((f) => f.familyName); };
-  const geo = () => ev(`(() => { const s = document.querySelector('.qlt-sub').getBoundingClientRect(), w = document.querySelector('.qlt-ways').getBoundingClientRect(); return { l: s.left, t: s.top, w: s.width, h: s.height, gap: +(w.top - s.bottom).toFixed(2) }; })()`);
+  const geo = () => ev(`['.qlt-sub', '.qlt-ways', '.qlt-dot', '.qlt-live', '.qlt-call', '.qlt-get', '.qlt-bubble', '.qlt-close'].map((q) => { const b = document.querySelector(q).getBoundingClientRect(); return [q, +b.left.toFixed(3), +b.top.toFixed(3), +b.width.toFixed(3), +b.height.toFixed(3)]; })`);
   await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
   await ev('document.fonts.ready.then(() => true)');
-  const g0 = await geo(), f0 = await fontsOf('.qlt-sub');
-  check('the receptionist line draws in Tinos, the site\'s own file, not a system font', !!f0 && f0.length > 0 && f0.every((f) => f === 'Tinos'), f0);
+  const g0 = await geo();
   const aliasId = (await send('Page.addScriptToEvaluateOnNewDocument', { source: ANDROID_SERIF })).identifier;
   await visit(`/__baked/${PAGE}`, { vid: VID.treatment });
   await ev(`(() => { const p = document.createElement('span'); p.id = '__tnr'; p.style.fontFamily = "'Times New Roman'"; p.textContent = 'Times'; document.body.appendChild(p); return document.fonts.ready.then(() => true); })()`);
-  const fp = await fontsOf('#__tnr'), f1 = await fontsOf('.qlt-sub'), g1 = await geo();
+  const fp = await fontsOf('#__tnr'), g1 = await geo();
   check('simulated Android: "Times New Roman" answers with another serif (the simulation is on)', !!fp && fp.length > 0 && fp.every((f) => f !== 'Times New Roman' && f !== 'Tinos'), fp);
-  check('simulated Android: the receptionist line still draws in Tinos, the same lines in the same place, the node\'s gap above "Two ways" kept', !!f1 && f1.length > 0 && f1.every((f) => f === 'Tinos') && near(g1.l, g0.l, 0.5) && near(g1.t, g0.t, 0.5) && near(g1.w, g0.w, 0.5) && near(g1.h, g0.h, 0.5) && g1.gap >= 20, { f1, g0, g1 });
+  check('simulated Android: nothing on the demo card moves, its words being drawings', g0.length === 8 && JSON.stringify(g1) === JSON.stringify(g0), { g0, g1 });
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: aliasId });
   await send('Emulation.setEmulatedMedia', { features: [] });
 } finally {
