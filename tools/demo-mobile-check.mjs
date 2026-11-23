@@ -33,7 +33,7 @@
 // on it closes the demo; every button is Inter Bold with the nodes' shadow; the help line is
 // Inter 14; the success card opens on black "NEVER" in the marker with the node's yellow brush
 // and "miss a job again", then "For less than $4 per day, …" in grey 16px; the "You call us"
-// card is 2891:1090: "Here’s how to call your assistant:" and two numbered steps (the number a
+// card is 2891:1090: "Here’s how to call Sierra:" (AFMBP-2690; "your assistant" before) and two numbered steps (the number a
 // tap-to-dial link with this session's code, then the code), the help line, no rows or brush.
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
 //      NC=loose_gate | NC=enter_submits | NC=no_keepvisible | NC=double_send | NC=phone_business |
@@ -82,7 +82,9 @@ const MUTATE = {
   // AFMBP-2596 / 2600: the number field under another label.
   old_form_fields: ['demo.js', (s) => cut(s, "var phone = field('Phone number',", "var phone = field('What’s your phone number?',")],
   // AFMBP-2596: the Calling card's old line.
-  old_calling: ['demo.js', (s) => cut(s, "['Your assistant is calling from: ', numberEl]", "['Calling you now from ', numberEl]")],
+  old_calling: ['demo.js', (s) => cut(s, "['Sierra is calling from: ', numberEl]", "['Calling you now from ', numberEl]")],
+  // AFMBP-2690: the three titles as before the owner's 11-22 update ("the assistant" / "your assistant").
+  old_titles: ['demo.js', (s) => cut(cut(cut(s, "text: 'What number would you like Sierra to call?'", "text: 'What number would you like the assistant to call?'"), "text: 'Here’s how to call Sierra:'", "text: 'Here’s how to call your assistant:'"), "['Sierra is calling from: ', numberEl]", "['Your assistant is calling from: ', numberEl]")],
   // AFMBP-2596: a field to fix back to the old pink, with no red outline.
   old_err_look: ['demo.css', (s) => cut(s, 'background:#ffefef;color:var(--navy);box-shadow:0 0 0 1.6px #f00', 'background:#fadddd;color:var(--navy)')],
   // AFMBP-2600: the You call us card without its steps.
@@ -281,7 +283,7 @@ try {
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'form: ?talk=form opens the form');
-  ok((await text('.demo-h--form')) === 'What number would you like the assistant to call?', `form: heading (${await text('.demo-h--form')})`);
+  ok((await text('.demo-h--form')) === 'What number would you like Sierra to call?', `form: heading (${await text('.demo-h--form')})`);
   ok((await text('.demo-sub')) === 'We’ll send a one-time passcode before we make the call.', `form: sub (${await text('.demo-sub')})`);
   ok((await text('.demo-field--phone .demo-label')) === 'Phone number' && (await css('.demo-field--phone .demo-label', 'fontWeight')) === '700', `form: the node's label "Phone number", bold (${await text('.demo-field--phone .demo-label')})`);
   ok((await visible('#demo-phone')) && !(await visible('#demo-business')) && !(await visible('#demo-email')) && !(await visible('.demo-field--business .demo-label')) && !(await visible('.demo-field--email .demo-label')), 'form: the phone number is the one field (no business name or email field, no label for them)');
@@ -414,7 +416,7 @@ try {
   await sleep(800);
   ok(sent('/api/demo/otp/verify').length === 1 && sent('/api/demo/token').length === 1 && sent('/api/demo/call').length === 1, `call: one verify, one token, one call (${['/api/demo/otp/verify', '/api/demo/token', '/api/demo/call'].map((p) => sent(p).length)})`);
   ok(((sent('/api/demo/token')[0] || {}).body || {}).businessName === 'Bolt Home Services', 'call: the call is set up as Bolt Home Services');
-  ok((await text('.demo-callcard__m')) === 'Your assistant is calling from: (415) 555-0123', `calling: the node's line with the caller id the API returned (${await text('.demo-callcard__m')})`);
+  ok((await text('.demo-callcard__m')) === 'Sierra is calling from: (415) 555-0123', `calling: the node's line with the caller id the API returned (${await text('.demo-callcard__m')})`);
   ok((await css('.demo-callcard__m', 'fontSize')) === '21px' && (await css('.demo-callcard__m', 'fontWeight')) === '600', 'calling: Inter Semi Bold 21px');
   ok(!(await visible('.demo-callcard__head')) && !(await visible('.demo-callcard__expect')) && !(await visible('.demo-xm')) && !(await visible('.demo-callcard__list')), 'calling: no title, "What to expect" or rows (the 11-12 node dropped them)');
   ok((await visible('.demo-backdrop.open .demo-help')) && (await text('.demo-backdrop.open .demo-help')) === 'Need help? Contact support.' && (await css('.demo-backdrop.open .demo-help', 'fontSize')) === '14px', 'calling: the help line, Inter 14');
@@ -493,7 +495,7 @@ try {
   ok(api.sessions === 1, `inbound: one code fetched (${api.sessions})`);
   await tap('.demo-choice__call');
   ok(await waitScreen('inbound-call'), 'inbound: the call card');
-  ok((await text('.demo-ihow__h')) === 'Here’s how to call your assistant:', `inbound: the node's title (${await text('.demo-ihow__h')})`);
+  ok((await text('.demo-ihow__h')) === 'Here’s how to call Sierra:', `inbound: the node's title (${await text('.demo-ihow__h')})`);
   ok((await visible('.demo-backdrop.open .demo-ihow__h')) && (await visible('.demo-backdrop.open .demo-ihow__list')) && (await visible('.demo-backdrop.open .demo-ihow__tel')), 'inbound: the title and the two steps show (not just in the page)');
   const steps = await ev("[].slice.call(document.querySelectorAll('.demo-backdrop.open .demo-ihow__list li')).map(function(l){return l.innerText.replace(/\\s+/g,' ').trim()})");
   ok(JSON.stringify(steps) === JSON.stringify(['Dial (855) 497-3151', 'Tap in this code: 4321']), `inbound: the two steps, with this session's number and code (${JSON.stringify(steps)})`);
@@ -540,7 +542,7 @@ try {
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'desktop: the form');
-  ok((await text('.demo-h--form')) === 'What number would you like the assistant to call?' && (await text('.demo-sub')) === 'We’ll send a one-time passcode before we make the call.', `desktop: the phone form's heading and sub (${await text('.demo-h--form')} / ${await text('.demo-sub')})`);
+  ok((await text('.demo-h--form')) === 'What number would you like Sierra to call?' && (await text('.demo-sub')) === 'We’ll send a one-time passcode before we make the call.', `desktop: the phone form's heading and sub (${await text('.demo-h--form')} / ${await text('.demo-sub')})`);
   ok((await ev("!document.getElementById('demo-business') && !document.getElementById('demo-email')")) === true && (await text('.demo-field--phone .demo-label')) === 'Phone number', 'desktop: the number only, labelled "Phone number" (no business name, no email)');
   ok((await text('.demo-disclosure')) === CONSENT_M, 'desktop: the phone consent, the one sent');
   ok((await attr('#demo-phone', 'enterkeyhint')) === null, 'desktop: no "done" key hint');
@@ -562,7 +564,7 @@ try {
   await ev("document.querySelectorAll('.demo-code input')[0].focus(); 1");
   await send('Input.insertText', { text: '123456' });
   ok(await waitScreen('calling', 6000), 'desktop: Calling');
-  ok((await text('.demo-callcard__m')) === 'Your assistant is calling from: (415) 555-0123', `desktop: the phone Calling card's line (${await text('.demo-callcard__m')})`);
+  ok((await text('.demo-callcard__m')) === 'Sierra is calling from: (415) 555-0123', `desktop: the phone Calling card's line (${await text('.demo-callcard__m')})`);
   api.recap = { status: 'failed' };
   ok(await waitScreen('fail', 8000), 'desktop: failure card');
   ok((await text('.demo-failcard__title2')) === 'OOPs!' && (await text('.demo-failcard__btn')) === 'Continue', 'desktop: the phone failure card ("OOPs!", Continue)');

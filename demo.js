@@ -182,18 +182,33 @@
     document.addEventListener('keydown', keepTab, true);
     document.addEventListener('focusin', keepFocus, true);
   }
-  // Warm the cards' art (the close, the dot, the review's bubble and stars, the
-  // success brush, the OS lockups, the chat icons) when the modal opens, so every
-  // later screen paints complete instead of popping the art in on a slow
-  // connection (AFMBP-2150). Every width since AFMBP-2600: one responsive demo.
-  var MOBILE_ART = ['demo-m-close.svg', 'demo-m-dot.svg', 'demo-m-bubble-flat.svg', 'demo-m-stars4.svg',
-    'demo-m-star5.svg', 'demo-m-ul-success.svg', 'demo-m-star-lg.svg', 'demo-m-chat-assistant.svg',
+  // Warm the cards' art (the close, the success brush, the OS lockups, the chat icons)
+  // when the modal opens, so every later screen paints complete instead of popping the
+  // art in on a slow connection (AFMBP-2150). Every width since AFMBP-2600: one
+  // responsive demo.
+  var MOBILE_ART = ['demo-m-close.svg', 'demo-m-ul-success.svg', 'demo-m-star-lg.svg', 'demo-m-chat-assistant.svg',
     'demo-m-chat-caller.svg', 'demo-m-lockup-iphone.svg', 'demo-m-lockup-android.svg'];
+  // AFMBP-2690: the first card is the owner's drawings (Figma 2946:1666): Sierra, every word,
+  // both ways in and the review, about 100 KB. A page with a way into the demo fetches them
+  // once it has loaded and settled (warmChoiceLater, from wire()), so a tap shows the card
+  // complete; a tap before that warms them as the demo opens (openModal). The ad landing's
+  // card (AFMBP-2612) never shows this card, so it never fetches them.
+  var CHOICE_ART = ['demo-c-sierra.png', 'demo-c-words.svg', 'demo-c-live.svg', 'demo-c-call.svg', 'demo-c-get.svg', 'demo-c-review.svg'];
+  var choiceWarmed = false;
+  function warmChoice() {
+    if (choiceWarmed) return;
+    choiceWarmed = true;
+    CHOICE_ART.forEach(function (n) { var i = new Image(); i.src = '/assets/' + n; });
+  }
   var artWarmed = false;
   function warmMobileArt() {
     if (artWarmed) return;
     artWarmed = true;
     MOBILE_ART.forEach(function (n) { var i = new Image(); i.src = '/assets/' + n; });
+  }
+  function warmChoiceLater() {
+    var go = function () { setTimeout(warmChoice, 1500); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go);
   }
   // AFMBP-2564 — warm the app's sign-up page while the sign-up offer is up, so its one button
   // opens a page whose code is already in the browser. The app publishes the files that page
@@ -249,6 +264,7 @@
   // from the keyboard.
   function openModal(trigger, entry, from) {
     warmMobileArt();
+    warmChoice();
     if (!backdrop) build();
     if (!isOpen()) opener = from || document.activeElement;
     stopConfetti();
@@ -407,11 +423,15 @@
   // closes it; the field is kept in view), a computer's Enter (submits), and the
   // You call us number (a tap-to-dial link where a dialer exists).
 
-  // ---------- screen: two ways to try it — Figma 2670:952 ----------
-  // "You call us" = the visitor calls Bolt's demo line (AFMBP-2083); "We call
+  // ---------- screen: two ways to try it — Figma 2946:1666 (AFMBP-2690) ----------
+  // "You call her" = the visitor calls Bolt's demo line (AFMBP-2083); "She calls
   // you" = the outbound demo. No consent line here (owner): calling us sends
   // nothing to the visitor's phone, and the form keeps its own disclosure.
-  function callLabel() { return [h('span', { text: 'You call us' })]; }
+  // The owner's 2026-11-22 card draws every word (owner: "I had to vectorize all of
+  // the text in order for it to format correctly across devices"): the buttons'
+  // labels are the node's drawings too, so their words are hidden text here, read
+  // by screen readers and never drawn twice.
+  function callLabel() { return [h('span', { class: 'demo-c__vh', text: 'You call her' })]; }
   function renderChoice() {
     clearResend();
     stopRecap();
@@ -421,7 +441,7 @@
     // A real link from the first paint: iOS hands a tel: link to the dialer only
     // from the tap itself, so the code is fetched now, before anyone taps.
     var call = h('a', { class: 'demo-btn demo-choice__btn demo-choice__call', href: '#' }, callLabel());
-    var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button' }, [h('span', { text: 'We call you' })]);
+    var get = h('button', { class: 'demo-btn demo-choice__btn demo-choice__get', type: 'button' }, [h('span', { class: 'demo-c__vh', text: 'She calls you' })]);
     var waiting = false;
     call.addEventListener('click', function (e) {
       var s = inboundUsable(inbound) ? inbound : null;
@@ -454,28 +474,25 @@
       renderPhone();
     });
     setBody([
-      // "Available now" (its dot is drawn and hidden from screen readers; the words
-      // say it), then the question.
-      h('div', { class: 'demo-cm' }, [
-        h('p', { class: 'demo-cm__live', text: 'Available now' }),
-        h('h2', { class: 'demo-cm__h', text: 'How would you like to start the call?' })
+      // Sierra, drawn faintly behind the words (2946:1708).
+      h('span', { class: 'demo-c__art', 'aria-hidden': 'true' }),
+      // "Meet Sierra." and the pitch: one drawing (2946:1773); the heading and the words
+      // under it reach screen readers as hidden text, the dialog's one heading first.
+      h('div', { class: 'demo-c__words' }, [
+        h('h2', { class: 'demo-c__vh', text: 'Meet Sierra.' }),
+        h('p', { class: 'demo-c__vh', text: 'She takes your phone calls and more for less than $4 a day. (...without complaining) Cancel anytime.' })
       ]),
-      h('div', { class: 'demo-choice__btns' }, [
-        call,
-        // The wait under "You call us".
-        h('p', { class: 'demo-choice__when' }, ['Avg. wait time: ', h('b', { text: '3 seconds' })]),
-        get
-      ]),
-      // The review in its bubble (2670:952 as updated 2026-11-13, AFMBP-2597), under
-      // the two ways in. The stars are drawn and hidden from screen readers; "4.9/5"
-      // says it.
-      h('div', { class: 'demo-cr' }, [
-        h('p', { class: 'demo-cr__who' }, [h('b', { text: 'Gus C.' }), ' ', h('span', { text: 'Massachusetts' })]),
-        h('span', { class: 'demo-cr__stars', 'aria-hidden': 'true' }),
-        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“Sounds like a real receptionist!”' })
-      ]),
-      helpLine()
+      // "Available now" with its dot (2946:1684).
+      h('p', { class: 'demo-c__live' }, [h('span', { class: 'demo-c__vh', text: 'Available now' })]),
+      h('div', { class: 'demo-choice__btns' }, [call, get]),
+      // The review (2946:1687): bubble, reviewer, stars, "4.9/5" and the quote, one drawing
+      // turned 1 degree as the node turns it. Its words are hidden text.
+      h('div', { class: 'demo-c__review' }, [
+        h('span', { class: 'demo-c__bubble', 'aria-hidden': 'true' }),
+        h('p', { class: 'demo-c__vh', text: 'Brent B., Indiana' }),
+        h('p', { class: 'demo-c__vh', text: '4.9/5' }),
+        h('p', { class: 'demo-c__vh', text: '“Bolt booked a job and paid for itself in a day.”' })
+      ])
     ], 'choice');
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
   }
@@ -650,7 +667,7 @@
     setBody([
       h('div', { class: 'demo-incall' }, [
         h('div', { class: 'demo-ihow' }, [
-          h('p', { class: 'demo-ihow__h', text: 'Here’s how to call your assistant:' }),
+          h('p', { class: 'demo-ihow__h', text: 'Here’s how to call Sierra:' }),
           h('ol', { class: 'demo-ihow__list' }, [
             h('li', {}, ['Dial ', number]),
             h('li', {}, ['Tap in this code: ', h('b', { class: 'demo-ihow__code', text: s.code })])
@@ -940,7 +957,7 @@
 
     setBody([
       // The question and the sub (2657:1639, as updated 2026-11-12, AFMBP-2596).
-      h('h2', { class: 'demo-h demo-h--form', text: 'What number would you like the assistant to call?' }),
+      h('h2', { class: 'demo-h demo-h--form', text: 'What number would you like Sierra to call?' }),
       h('p', { class: 'demo-sub', text: 'We’ll send a one-time passcode before we make the call.' }),
       phone.wrap,
       limitMsg,
@@ -1170,7 +1187,7 @@
     var numberEl = h('span', { text: fmtDemoNumber(fromNumber) });
     setBody([
       h('div', { class: 'demo-callcard' }, [
-        h('p', { class: 'demo-callcard__m' }, ['Your assistant is calling from: ', numberEl]),
+        h('p', { class: 'demo-callcard__m' }, ['Sierra is calling from: ', numberEl]),
         helpLine()
       ])
     ], 'calling');
@@ -1519,11 +1536,15 @@
   // ---------- wire triggers ----------
   function wire() {
     var btns = document.querySelectorAll('a.btn--blue, button.btn--blue, [data-demo-open]');
+    var openers = 0;
     Array.prototype.forEach.call(btns, function (b) {
       if (b.hasAttribute('data-demo-open') || /talk to your new assistant/i.test(b.textContent)) {
+        openers++;
         b.addEventListener('click', function (e) { e.preventDefault(); openModal('button', null, b); });
       }
     });
+    // AFMBP-2690: the first card's drawings, once the page has loaded and settled.
+    if (openers) warmChoiceLater();
     // AFMBP-2612: a landing card's two ways in, and a tap that came before this script.
     var call = document.querySelector('[data-demo-landing="call"]');
     var form = document.querySelector('[data-demo-landing="form"]');

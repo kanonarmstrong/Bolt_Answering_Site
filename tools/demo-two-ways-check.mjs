@@ -1,6 +1,6 @@
 // AFMBP-2083 — the demo's two ways in: "Call now" (the visitor calls Bolt's demo line with a
 // one-time code) and "Get a call" (the outbound demo, unchanged); on phones the buttons read
-// "You call us" / "We call you" since AFMBP-2150. Drives the real modal in
+// "You call us" / "We call you" since AFMBP-2150, "You call her" / "She calls you" since AFMBP-2690. Drives the real modal in
 // headless Chrome with real touch taps and mouse clicks against a fake Bolt API, and checks:
 //   - the choice opens first; "Call now" is a real tel: link carrying this browser's code
 //     before anyone taps, and the tap is left to the dialer on a phone (not on a computer);
@@ -221,8 +221,8 @@ try {
   ok(/^[A-Za-z0-9-]{8,64}$/.test(vid || '') && api.visitors[0] === vid, `phone: the code request carries this visit's visitor id, so the call can be tied to the ad (AFMBP-2109) (${api.visitors[0] ? 'sent' : 'missing'})`);
   ok((await ev("document.querySelector('.demo-choice__call').getAttribute('href')")) === 'tel:+18554973151,,4321', 'phone: "Call now" is a tel: link with the line, a pause and the code, before any tap');
   // AFMBP-2090 / AFMBP-2189: the phone node has its own pitch (desktop keeps its title).
-  ok((await text('.demo-cm__h')) === 'How would you like to start the call?' && !(await visible('.demo-choice__h')), `phone: the phone node's question (2670:952, 11-12 update), not the desktop title (${await text('.demo-cm__h')})`);
-  ok((await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `phone: "You call us" / "We call you" (${await text('.demo-choice__call')} / ${await text('.demo-choice__get')})`);
+  ok((await text('.demo-c__words h2')) === 'Meet Sierra.' && !(await visible('.demo-choice__h')), `phone: the card's heading (2946:1666, AFMBP-2690), not the desktop title (${await text('.demo-c__words h2')})`);
+  ok((await text('.demo-choice__call')) === 'You call her' && (await text('.demo-choice__get')) === 'She calls you', `phone: "You call her" / "She calls you" (${await text('.demo-choice__call')} / ${await text('.demo-choice__get')})`);
   // AFMBP-2189: the redrawn node has no "OR" between the two ways in, and a close button.
   ok(!(await visible('.demo-choice__or')) && !(await visible('.demo-choice__two')) && (await visible('.demo-close')), 'phone: no "OR", no "Two", the close button showing');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-disclosure')")), 'phone: no consent line on the choice');
@@ -401,7 +401,7 @@ try {
   ok((await ev("matchMedia('(hover:hover) and (pointer:fine)').matches")) === true, 'desktop: emulated as a mouse device');
   ok(await waitScreen('choice'), 'desktop: ?talk=1 opens on the choice');
   await sleep(300);
-  ok((await text('.demo-cm__h')) === 'How would you like to start the call?' && (await text('.demo-choice__call')) === 'You call us' && (await text('.demo-choice__get')) === 'We call you', `desktop: the phone card's question, "You call us" / "We call you" (${await text('.demo-cm__h')})`);
+  ok((await text('.demo-c__words h2')) === 'Meet Sierra.' && (await text('.demo-choice__call')) === 'You call her' && (await text('.demo-choice__get')) === 'She calls you', `desktop: the phone card's heading, "You call her" / "She calls you" (${await text('.demo-c__words h2')})`);
   ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub')")) === false && !(await visible('.demo-choice__or')), 'desktop: no computer-only title, no "OR"');
   const sc1 = await scaled();
   ok(sc1.ok && sc1.z === 1.25, `desktop: the choice card at 125%, centred (${JSON.stringify(sc1)})`);
@@ -410,7 +410,7 @@ try {
   const c2 = await lastClick();
   ok(!!c2 && c2.followed === false, `desktop: "You call us" does not hand the link to the OS (${JSON.stringify(c2)})`);
   ok(await waitScreen('inbound-call'), 'desktop: call card');
-  ok((await text('.demo-ihow__h')) === 'Here’s how to call your assistant:' && (await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151' && (await text('.demo-backdrop.open .demo-ihow__code')) === '4321', `desktop: the phone card's two steps, the number and this session's code (${await text('.demo-backdrop.open .demo-ihow__list')})`);
+  ok((await text('.demo-ihow__h')) === 'Here’s how to call Sierra:' && (await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151' && (await text('.demo-backdrop.open .demo-ihow__code')) === '4321', `desktop: the phone card's two steps, the number and this session's code (${await text('.demo-backdrop.open .demo-ihow__list')})`);
   ok((await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-ihow__tel'); return e ? e.tagName + '|' + (e.getAttribute('href') || '') : null})()")) === 'B|', 'desktop: the number to dial as plain text, no tel: link');
   ok(!(await visible('.demo-incall__dial')) && !(await visible('.demo-incall__list')), 'desktop: none of the old computer card\'s pieces');
   const sc2 = await scaled();
@@ -428,7 +428,7 @@ try {
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'desktop: ?talk=form opens straight on the outbound form');
-  ok((await text('.demo-h--form')) === 'What number would you like the assistant to call?', `desktop: the phone form's heading (${await text('.demo-h--form')})`);
+  ok((await text('.demo-h--form')) === 'What number would you like Sierra to call?', `desktop: the phone form's heading (${await text('.demo-h--form')})`);
   await ev(`(function(){
     function set(id,v){var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true}));}
     set('demo-phone','(555) 555-1212'); return 1; })()`);
