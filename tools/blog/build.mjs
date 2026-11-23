@@ -19,7 +19,7 @@ import { fetchFromWordPress, loadFixtures, normalize } from './lib/wp.mjs';
 import { processContent, processImage, processAvatar } from './lib/content.mjs';
 import { layout as renderLayout, listPage, articlePage, searchPage } from './lib/templates.mjs';
 import { readSiteChrome } from './lib/chrome.mjs';
-import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt } from './lib/seo.mjs';
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt, readSoloPricing } from './lib/seo.mjs';
 import { abs, postPath, categoryPath, pagePath, stripTags, readingMinutes, BLOG_PATH, POSTS_PER_PAGE } from './lib/util.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -160,7 +160,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
   if (hasPosts) write('blog/feed.xml', rssXml(posts));
   write('sitemap.xml', sitemapXml({ pages: sitePages, posts, categories, listPages: hasPosts ? listPaths : [] }));
   write('robots.txt', robotsTxt());
-  write('llms.txt', llmsTxt({ posts, pages: sitePages }));
+  write('llms.txt', llmsTxt({ posts, pages: sitePages, pricing: readSoloPricing(repoRoot) }));
 
   // Remove what we generated last time but not this time; prune stale image sizes.
   const manifestRel = 'blog/.manifest.json';
