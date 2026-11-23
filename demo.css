@@ -232,7 +232,7 @@ body.demo-lock{overflow:hidden}
      AFMBP-2596 (the owner's 2026-11-12 update): each card's size and its offset
      from the screen centre as its node draws it, the code screen (2670:1394) now
      one of them. AFMBP-2597 (2026-11-13): the You call us card is 2891:1090. */
-  .demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:393px;--demo-dx:-1.5px;--demo-dy:0px;--demo-bw:.6px}
+  .demo-backdrop[data-screen="choice"]{--demo-w:306px;--demo-h:428px;--demo-dx:0px;--demo-dy:.5px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-call"]{--demo-w:337px;--demo-h:215px;--demo-dx:-1.5px;--demo-dy:32px;--demo-bw:.6px}
   .demo-backdrop[data-screen="inbound-fail"]{--demo-w:332px;--demo-h:234px;--demo-dx:0px;--demo-dy:.5px;--demo-bw:0px}
   .demo-backdrop[data-screen="phone"]{--demo-w:337px;--demo-h:535px;--demo-dx:-1.5px;--demo-dy:-13px;--demo-bw:.6px}
@@ -304,83 +304,57 @@ body.demo-lock{overflow:hidden}
      button's own rule below sets them, as --demo-btn-shadow. */
   .demo-backdrop{--demo-btn-shadow:0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15)}
 
-  /* ---- choice (2670:952, as updated 2026-11-14, AFMBP-2606): card 337x393 ----
-     Numbers are body-relative (the body sits inside the node's .6px stroke), each
-     piece where it sits once matched to the node's 3x export. */
-  .demo-backdrop[data-screen="choice"] .demo-card{height:393px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18)}
-  .demo-backdrop[data-screen="choice"] .demo-body{height:393px}
-  /* Here the node's cross (2683:1599) sits at 294/27; the shared block draws it. */
-  .demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 278.496px);top:11.497px}
-  /* "Available now" (its text box at 61.94/28), the node's green dot 15.94px to its left. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__live{
-    position:absolute;left:61.34px;top:27.4px;width:86px;margin:0;font-size:13.324px;line-height:11px;color:#707070;text-align:center;white-space:nowrap;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__live::before{
-    content:"";position:absolute;left:-15.938px;top:0;width:10.359px;height:10.359px;pointer-events:none;
-    background:url('assets/demo-m-dot.svg') center/100% 100% no-repeat;
-  }
-  /* The question left the card in the 2026-11-14 update (AFMBP-2606). It stays for
-     screen readers as the dialog's one heading, and is drawn nowhere. */
-  .demo-backdrop[data-screen="choice"] .demo-cm__h{
+  /* ---- choice (Figma 2946:1666, the owner's 2026-11-22 card, AFMBP-2690): card 306x428 ----
+     Every word on it is the node's own drawing (the owner outlined the text so it draws the
+     same on every phone): Sierra at 8%, "Meet Sierra." and the pitch, "Available now", both
+     ways in (label and all) and the review. Each sits where the node puts it, body-relative
+     (the body sits inside the node's .6px stroke); the words reach screen readers as hidden
+     text (.demo-c__vh). */
+  .demo-backdrop[data-screen="choice"] .demo-card{height:428px;border-radius:10.796px;box-shadow:inset 0 0 0 .6px rgba(0,0,0,.18);background:#f8fbfe}
+  .demo-backdrop[data-screen="choice"] .demo-body{height:428px}
+  /* Here the node's cross (the same drawing as every card's) sits at 273/22; the shared block draws it. */
+  .demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 257.496px);top:6.497px}
+  .demo-backdrop[data-screen="choice"] .demo-c__vh{
     position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
   }
-  /* The two ways in: 188x43 since the 2026-11-14 update, corners 10, Inter Bold 19.43 on an
-     18.54px line; the wait under "You call us" and a wider gap before "We call you". Each
-     label sits where the node's does: "You call us" .5px and "We call you" 1px left of the
-     button's centre. */
+  /* Sierra (2946:1708): the node's 2x export, which already carries the node's 8% (its ink
+     is black at alpha 20 of 255), so it draws at full opacity here. */
+  .demo-backdrop[data-screen="choice"] .demo-c__art{
+    position:absolute;left:56.4px;top:13.4px;width:219px;height:229px;pointer-events:none;
+    background:url('assets/demo-c-sierra.png') 0 0/100% 100% no-repeat;
+  }
+  /* "Meet Sierra." and the pitch (2946:1773): one drawing. */
+  .demo-backdrop[data-screen="choice"] .demo-c__words{
+    position:absolute;left:46.2px;top:92.68px;width:218.509px;height:103.792px;margin:0;
+    background:url('assets/demo-c-words.svg') 0 0/100% 100% no-repeat;
+  }
+  /* "Available now" and its dot (2946:1684). */
+  .demo-backdrop[data-screen="choice"] .demo-c__live{
+    position:absolute;left:183.4px;top:202.4px;width:66.975px;height:7.114px;margin:0;
+    background:url('assets/demo-c-live.svg') 0 0/100% 100% no-repeat;
+  }
+  /* The two ways in (2946:1680 / 2946:1682): the node's buttons, label and all, 209x41 and
+     210x41, centred 2px left of the card's middle. The corners follow the drawings' (11.13)
+     for the focus ring. */
   .demo-backdrop[data-screen="choice"] .demo-choice__btns{display:block;margin:0;padding:0}
   .demo-backdrop[data-screen="choice"] .demo-choice__btn{
-    position:absolute;left:74.4px;width:188px;height:43px;margin:0;padding:0;border-radius:10px;
-    display:flex;align-items:center;justify-content:center;font-size:19.427px;font-weight:700;line-height:18.544px;color:#fff;
-    box-shadow:var(--demo-btn-shadow);
+    position:absolute;height:41px;margin:0;padding:0;border-radius:11.128px;display:block;
+    background:transparent 0 0/100% 100% no-repeat;box-shadow:none;color:transparent;
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__call{top:70.535px;padding-right:1px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__get{top:164.535px;padding-right:2px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__btn{padding-top:1.33px}
-  .demo-backdrop[data-screen="choice"] .demo-choice__when{
-    position:absolute;left:80.4px;top:125.4px;width:171px;margin:0;font-size:14px;line-height:12px;color:#707070;text-align:center;white-space:nowrap;
+  .demo-backdrop[data-screen="choice"] .demo-choice__call{left:45.9px;top:219.53px;width:209px;background-image:url('assets/demo-c-call.svg')}
+  .demo-backdrop[data-screen="choice"] .demo-choice__get{left:45.4px;top:270.53px;width:210px;background-image:url('assets/demo-c-get.svg')}
+  @media (hover:hover){
+    .demo-backdrop[data-screen="choice"] .demo-choice__btn:hover{filter:brightness(.94)}
   }
-  .demo-backdrop[data-screen="choice"] .demo-choice__when b{font-weight:600}
-  /* The review (group 2900:1475, 270x78 at 33/247): the node's bubble (2903:1491; since
-     the 2026-11-14 update a #d9d9d9 line inside its edge and no shadow, the node's own
-     SVG export at its 271x78 size), the reviewer on two lines, four stars and the fifth
-     cut flat at its top (the node's clip), "4.9/5" and the quote (centred on the node's
-     ink: the site's slanted Inter runs wider than Figma's italic). Offsets are from the
-     bubble's top left. */
-  .demo-backdrop[data-screen="choice"] .demo-cr{position:absolute;left:32.4px;top:246.4px;width:270.153px;height:77.652px}
-  .demo-backdrop[data-screen="choice"] .demo-cr::before{
-    content:"";position:absolute;left:0;top:0;width:271px;height:78px;pointer-events:none;
-    background:url('assets/demo-m-bubble-flat.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cr__who{
-    position:absolute;left:13px;top:11.48px;width:120px;height:26px;margin:0;display:flex;flex-direction:column;justify-content:center;
-    font-size:11.306px;line-height:12.2px;color:var(--navy);white-space:nowrap;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cr__who b{font-size:13.399px;font-weight:700}
-  /* Figma sets the smaller second line 1.67px lower on its 12.2px line than a browser does. */
-  .demo-backdrop[data-screen="choice"] .demo-cr__who span{position:relative;top:1.67px}
-  .demo-backdrop[data-screen="choice"] .demo-cr__stars{
-    position:absolute;left:136.564px;top:11.396px;width:67.055px;height:16.331px;
-    background:url('assets/demo-m-stars4.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cr__stars::after{
-    content:"";position:absolute;left:67.469px;top:3.669px;width:16.972px;height:14.166px;
-    background:url('assets/demo-m-star5.svg') center/100% 100% no-repeat;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__score{
-    position:absolute;left:222.307px;top:15.068px;width:35.47px;height:13.376px;margin:0;display:flex;align-items:center;justify-content:center;
-    font-size:13.399px;font-weight:700;line-height:12.2px;color:var(--navy);white-space:nowrap;
-  }
-  .demo-backdrop[data-screen="choice"] .demo-cm__quote{
-    position:absolute;left:20.83px;top:42.25px;width:225.16px;height:18.023px;margin:0;display:flex;align-items:center;justify-content:center;
-    font-size:12.248px;font-style:italic;font-weight:400;line-height:14.94px;color:var(--navy);white-space:nowrap;
-  }
-  /* The help line: Inter 14 since the 2026-11-13 update. Here and on the form, Calling and
-     You call us cards it sits half a pixel under the node: Chrome draws it on the node's
-     line and iPhone Safari 1px above it. The same split sets "4.9/5", the quote, "NEVER"
-     and "miss a job again" between the two engines. */
-  .demo-backdrop[data-screen="choice"] .demo-help{
-    position:absolute;left:43.4px;top:347.9px;width:249.5px;margin:0;font-size:14px;line-height:17px;text-align:center;
+  /* A tap before this browser's code is ready: the spinner left of the drawn label. */
+  .demo-backdrop[data-screen="choice"] .demo-choice__call .demo-spinner{position:absolute;left:27px;top:0;bottom:0;margin:auto 0}
+  /* The review (2946:1687): the node's drawing in its 194x73.5 box, turned 1 degree about
+     the box's centre as the node turns it, its shadow running past the box. */
+  .demo-backdrop[data-screen="choice"] .demo-c__review{position:absolute;left:55.401px;top:332.81px;width:194.038px;height:73.479px;margin:0}
+  .demo-backdrop[data-screen="choice"] .demo-c__bubble{position:absolute;left:.597px;top:1.678px;width:192.844px;height:70.124px;transform:rotate(-1deg);pointer-events:none}
+  .demo-backdrop[data-screen="choice"] .demo-c__bubble::before{
+    content:"";position:absolute;left:-7.174px;top:-5.386px;width:207.201px;height:84.482px;
+    background:url('assets/demo-c-review.svg') 0 0/100% 100% no-repeat;
   }
 
   /* ---- You call us, call in progress (2891:1090, 2026-11-13, AFMBP-2597): card 337x215 ----
