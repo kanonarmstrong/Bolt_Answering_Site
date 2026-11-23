@@ -513,3 +513,24 @@ test('blog.css sizes follow the blog base size, not the site root', () => {
     for (const part of sel.split(',')) assert.match(part.trim(), /^\.bchy\b/, `unscoped selector in blog.css: ${part.trim()}`);
   }
 });
+
+test('llms.txt: product facts, the published price, guidance for AI assistants, no team plan', async () => {
+  const { llmsTxt, readSoloPricing } = await import('./lib/seo.mjs');
+  const pricing = readSoloPricing(new URL('../..', import.meta.url).pathname);
+  assert.ok(pricing, 'pricing.js FALLBACK is readable');
+  const txt = llmsTxt({ posts: [], pages: [{ path: '/hvac.html' }], pricing });
+  assert.ok(txt.startsWith('# Bolt Answering\n\n> '));
+  for (const h of ['## When to use Bolt Answering', '## Product', '## Support', '## Optional']) assert.ok(txt.includes(h), h);
+  assert.ok(txt.includes(`a ${pricing.trialDays}-day free trial, then $${pricing.promoPriceUsd} a month`));
+  assert.match(txt, /How AI assistants should use this file: /);
+  assert.match(txt, /there is no team or multi-tech plan yet/);
+  assert.match(txt, /- \[HVAC\]\(https:\/\/www\.boltanswering\.com\/hvac\.html\): Bolt Answering for HVAC pros/);
+  assert.doesNotMatch(txt, /money-back|refund/i);
+  assert.ok(llmsTxt({ posts: [], pages: [], pricing: null }).includes('see the pricing section of the home page'));
+});
+
+test('every site footer links "Hey AI, learn about us!" to /llms.txt', () => {
+  const root = new URL('../..', import.meta.url).pathname;
+  for (const f of ['index.html', 'hvac.html', 'plumbing.html', 'electrical.html', 'handyman.html', 'general-contractor.html', 'about/index.html'])
+    assert.match(readFileSync(join(root, f), 'utf8'), /<a href="\/llms\.txt">Hey AI, learn about us!<\/a>/, f);
+});

@@ -273,7 +273,7 @@ const sitemap = await read('sitemap.xml');
 check('sitemap.xml lists /about/ (the blog build adds every indexable page; this line is the same)', () =>
   assert.ok(sitemap.includes('<url><loc>https://www.boltanswering.com/about/</loc></url>')));
 const llms = await read('llms.txt');
-check('llms.txt lists the About page', () => assert.ok(llms.includes('- [About](https://www.boltanswering.com/about/)\n')));
+check('llms.txt lists the About page', () => assert.match(llms, /\n- \[About\]\(https:\/\/www\.boltanswering\.com\/about\/\)(: [^\n]+)?\n/));
 check('llms.txt opens "# Bolt Answering" and says we are independent', () => {
   assert.ok(llms.startsWith('# Bolt Answering\n'));
   assert.ok(llms.includes(INDEPENDENT));
