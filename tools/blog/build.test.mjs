@@ -12,6 +12,8 @@ import { normalize } from './lib/wp.mjs';
 import { changedUrls } from './indexnow.mjs';
 import { parseDraft, toWxr } from './make-wxr.mjs';
 import { transformCss } from './prepare-assets.mjs';
+import { statsUrl, viewsById, TOP_POSTS_FILE } from './lib/top-posts.mjs';
+import { authorizeUrl, parseCallback, exchangeCode, REDIRECT } from './wp-stats-token.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIX = join(HERE, 'fixtures', 'wp');
@@ -533,4 +535,206 @@ test('every site footer links "Hey AI, learn about us!" to /llms.txt', () => {
   const root = new URL('../..', import.meta.url).pathname;
   for (const f of ['index.html', 'hvac.html', 'plumbing.html', 'electrical.html', 'handyman.html', 'general-contractor.html', 'about/index.html'])
     assert.match(readFileSync(join(root, f), 'utf8'), /<a href="\/llms\.txt">Hey AI, learn about us!<\/a>/, f);
+});
+
+/* ---------- AFMBP-2691 (owner 11-23): the right column becomes "Top 5", the most-read posts by
+   all-time WordPress.com Stats views. Defaults the owner approved: WordPress counts, refreshed
+   once a day; ties go to the newer post; the same five on every page, the post being read
+   included; no saved order (no token yet) = "Recent posts". Counts never reach a file or a log. */
+
+const TOKEN = 'tok-SECRET-2691';
+/** Distinctive view counts, so a test can prove none of them leaks into a file or a log. */
+const V = { tieHigh: 4711, mid: 613, tieLow: 37, unknownPost: 8800, homePage: 9900 };
+
+/** The sample posts plus five image-free ones (ids 201-205, Sep 1-5, older than the samples). */
+function rankingFixture({ drop = [] } = {}) {
+  const fix = mkdtempSync(join(tmpdir(), 'bolt-fix-'));
+  cpSync(FIX, fix, { recursive: true });
+  const posts = JSON.parse(readFileSync(join(fix, 'posts.json'), 'utf8'));
+  const base = posts.find((p) => p.slug === 'no-image-post');
+  for (let i = 1; i <= 5; i++) {
+    const d = `2026-09-0${i}`;
+    posts.push({ ...base, id: 200 + i, slug: `extra-${i}`, link: `https://cms.example.test/extra-${i}/`, title: { rendered: `Extra post ${i}` },
+      date: `${d}T09:00:00`, date_gmt: `${d}T16:00:00`, modified: `${d}T09:00:00`, modified_gmt: `${d}T16:00:00` });
+  }
+  writeFileSync(join(fix, 'posts.json'), JSON.stringify(posts.filter((p) => !drop.includes(p.id))));
+  return fix;
+}
+
+/** A stand-in for WordPress.com Stats that records each request. */
+function fakeStats(views, { status = 200, body } = {}) {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url: String(url), init });
+    const payload = body ?? { date: '2026-11-23', period: 'year', summary: {
+      postviews: Object.entries(views).map(([id, n]) => ({ id: Number(id), href: `https://cms.example.test/?p=${id}`, title: `Post ${id}`, type: 'post', views: n })),
+      total_views: Object.values(views).reduce((a, b) => a + b, 0),
+    } };
+    return new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json' } });
+  };
+  return { fetchImpl, calls };
+}
+
+/** The right column: its heading and the posts it links, in order. */
+function column(html) {
+  const m = html.match(/<aside class="columns_sidebar sidebar">\s*<div class="sidebar_widget">\s*<h3>([^<]*)<\/h3>\s*<div class="stories">([\s\S]*?)<\/div>\s*<\/div>\s*<div class="sidebar_widget sidebar_msearch">/);
+  assert.ok(m, 'right column found');
+  return { heading: m[1], slugs: [...m[2].matchAll(/<div class="stories_item_title"><a href="\/blog\/([^/]+)\/">/g)].map((x) => x[1]) };
+}
+
+const logSink = () => { const lines = []; return { lines, log: (s) => lines.push(String(s)) }; };
+
+test('AFMBP-2691: with no saved order the column stays "Recent posts", and a post leaves itself out', async () => {
+  const root = tempRepo();
+  const { lines, log } = logSink();
+  await build({ repoRoot: root, fixturesDir: FIX, log });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Recent posts', slugs: ['answer-every-call', 'why-pe-buys-shops', 'no-image-post'] });
+  assert.deepEqual(column(read(root, 'blog/answer-every-call/index.html')), { heading: 'Recent posts', slugs: ['why-pe-buys-shops', 'no-image-post'] });
+  assert.ok(!existsSync(join(root, TOP_POSTS_FILE)), 'no order file without a refresh');
+  assert.ok(lines.some((l) => l.endsWith('Right column: Recent posts.')));
+});
+
+test('AFMBP-2691: the daily refresh ranks by all-time views, ties to the newer post, and every page shows the same Top 5', async () => {
+  const root = tempRepo();
+  const fix = rankingFixture();
+  const stats = fakeStats({ 203: V.tieHigh, 101: V.tieHigh, 102: V.mid, 205: V.tieLow, 201: V.tieLow, 103: 0, 999: V.unknownPost, 0: V.homePage });
+  const { lines, log } = logSink();
+  const res = await build({ repoRoot: root, fixturesDir: fix, log, topPosts: { refresh: true, token: TOKEN, fetchImpl: stats.fetchImpl } });
+  assert.equal(res.topPostsError, null);
+
+  // 101 and 203 tie: 101 is newer. 205 and 201 tie: 205 is newer. 103 (no views) and 999 (not a published post) are out.
+  const want = ['answer-every-call', 'extra-3', 'why-pe-buys-shops', 'extra-5', 'extra-1'];
+  for (const rel of ['blog/index.html', 'blog/category/missed-calls-booking/index.html', 'blog/search/index.html',
+    'blog/answer-every-call/index.html', 'blog/extra-1/index.html', 'blog/no-image-post/index.html']) {
+    assert.deepEqual(column(read(root, rel)), { heading: 'Top 5', slugs: want }, rel);
+  }
+  // Same look as Recent posts: picture (when the post has one), date stamp, title.
+  assert.match(read(root, 'blog/index.html'), /<h3>Top 5<\/h3>\s*<div class="stories">\s*<div class="stories_item">\s*<div class="stories_item_img"><a href="\/blog\/answer-every-call\/" tabindex="-1" aria-hidden="true"><span class="bimg">[\s\S]*?<div class="stories_item_infoline infoline">\s*<div class="infoline_date"><time/);
+
+  // One request: WordPress.com top posts summed over 10 years, the token only in the Authorization header.
+  assert.equal(stats.calls.length, 1);
+  const u = new URL(stats.calls[0].url);
+  assert.equal(`${u.origin}${u.pathname}`, 'https://public-api.wordpress.com/rest/v1.1/sites/cms.example.test/stats/top-posts');
+  assert.deepEqual(Object.fromEntries(u.searchParams), { period: 'year', num: '10', max: '100', summarize: 'true', skip_archives: 'true' });
+  assert.equal(stats.calls[0].init.headers.Authorization, `Bearer ${TOKEN}`);
+  assert.ok(!stats.calls[0].url.includes(TOKEN), 'token never in the address');
+
+  // Only the order is saved; no count and no token in the file or the log.
+  const saved = read(root, TOP_POSTS_FILE);
+  assert.deepEqual(Object.keys(JSON.parse(saved)), ['about', 'order']);
+  assert.deepEqual(JSON.parse(saved).order, [101, 203, 102, 205, 201]);
+  const counts = new RegExp(`\\b(${Object.values(V).join('|')})\\b`);
+  for (const text of [saved, lines.join('\n')]) {
+    assert.doesNotMatch(text, counts, 'no view counts');
+    assert.ok(!text.includes(TOKEN), 'no token');
+  }
+  assert.ok(lines.includes('Top 5: order refreshed from WordPress.com Stats.'));
+  assert.ok(lines.some((l) => l.endsWith('Right column: Top 5.')));
+});
+
+test('AFMBP-2691: builds that do not refresh keep the saved order; an unpublished post drops out and the newest unread post fills in', async () => {
+  const root = tempRepo();
+  const stats = fakeStats({ 203: V.tieHigh, 101: V.tieHigh, 102: V.mid, 205: V.tieLow, 201: V.tieLow });
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: true, token: TOKEN, fetchImpl: stats.fetchImpl } });
+  const saved = read(root, TOP_POSTS_FILE);
+
+  // The every-15-minutes build: no refresh, no request, same column, and the order file survives the manifest clean-up.
+  const again = fakeStats({});
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: false, token: TOKEN, fetchImpl: again.fetchImpl } });
+  assert.equal(again.calls.length, 0);
+  assert.equal(read(root, TOP_POSTS_FILE), saved);
+  assert.deepEqual(column(read(root, 'blog/index.html')).slugs, ['answer-every-call', 'extra-3', 'why-pe-buys-shops', 'extra-5', 'extra-1']);
+
+  await build({ repoRoot: root, fixturesDir: rankingFixture({ drop: [203] }), log: quiet });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Top 5', slugs: ['answer-every-call', 'why-pe-buys-shops', 'extra-5', 'extra-1', 'no-image-post'] });
+});
+
+test('AFMBP-2691: fewer than five posts read: the newest of the rest fill in; nobody has read anything: "Recent posts"', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: true, token: TOKEN, fetchImpl: fakeStats({ 102: V.mid }).fetchImpl } });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Top 5', slugs: ['why-pe-buys-shops', 'answer-every-call', 'no-image-post', 'extra-5', 'extra-4'] });
+
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: true, token: TOKEN, fetchImpl: fakeStats({ 101: 0, 0: V.homePage }).fetchImpl } });
+  assert.deepEqual(JSON.parse(read(root, TOP_POSTS_FILE)).order, []);
+  assert.equal(column(read(root, 'blog/index.html')).heading, 'Recent posts');
+  assert.equal(column(read(root, 'blog/answer-every-call/index.html')).slugs.includes('answer-every-call'), false, 'Recent posts still leaves the post itself out');
+});
+
+test('AFMBP-2691: a failed refresh still builds the blog, keeps the last order, and reports why without the token', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: true, token: TOKEN, fetchImpl: fakeStats({ 102: V.mid, 101: V.tieLow }).fetchImpl } });
+  const saved = read(root, TOP_POSTS_FILE);
+  const cases = [
+    [fakeStats({}, { status: 403, body: { error: 'unauthorized', message: `user cannot view stats ${TOKEN}` } }), /^WordPress Stats answered HTTP 403 unauthorized$/],
+    [fakeStats({}, { body: { foo: 1 } }), /^unexpected WordPress Stats response \(keys: foo\)$/],
+    [fakeStats({}, { body: { summary: { postviews: [{ title: 'x' }] } } }), /^unexpected WordPress Stats response \(no id\/views pairs\)$/],
+    [{ fetchImpl: async () => { throw new Error(`network down for ${TOKEN}`); } }, /^network down for \[token\]$/],
+  ];
+  for (const [stats, want] of cases) {
+    const { lines, log } = logSink();
+    const res = await build({ repoRoot: root, fixturesDir: rankingFixture(), log, topPosts: { refresh: true, token: TOKEN, fetchImpl: stats.fetchImpl } });
+    assert.match(res.topPostsError, want);
+    assert.equal(read(root, TOP_POSTS_FILE), saved, 'last order kept');
+    assert.ok(existsSync(join(root, 'blog/index.html')), 'blog still built');
+    assert.deepEqual(column(read(root, 'blog/index.html')).slugs.slice(0, 2), ['why-pe-buys-shops', 'answer-every-call']);
+    assert.ok(lines.some((l) => l.startsWith('WARNING Top 5: refresh failed')));
+    assert.ok(!lines.join('\n').includes(TOKEN) && !res.topPostsError.includes(TOKEN), 'no token in the log or the error');
+  }
+});
+
+test('AFMBP-2691: asked to refresh with no token, the build calls nobody and keeps "Recent posts"', async () => {
+  const root = tempRepo();
+  const stats = fakeStats({ 101: V.mid });
+  const { lines, log } = logSink();
+  const res = await build({ repoRoot: root, fixturesDir: FIX, log, topPosts: { refresh: true, token: '', fetchImpl: stats.fetchImpl } });
+  assert.equal(stats.calls.length, 0);
+  assert.equal(res.topPostsError, null, 'no token yet is not a failure');
+  assert.ok(lines.includes('Top 5: WP_STATS_TOKEN is not set, so the order was not refreshed.'));
+  assert.equal(column(read(root, 'blog/index.html')).heading, 'Recent posts');
+});
+
+test('AFMBP-2691: the Stats reader takes the summary or per-period days, sums per post, and skips the home page', () => {
+  assert.deepEqual([...viewsById({ summary: { postviews: [{ id: 5, views: 3 }, { id: 0, views: 99 }] } })], [[5, 3]]);
+  assert.deepEqual([...viewsById({ summary: [{ id: 5, views: 3 }, { id: 6, views: '2' }] })], [[5, 3], [6, 2]]);
+  assert.deepEqual([...viewsById({ days: { '2025-01-01': { postviews: [{ id: 5, views: 3 }] }, '2026-01-01': { postviews: [{ id: 5, views: 4 }, { id: 7, views: 1 }] } } })], [[5, 7], [7, 1]]);
+  assert.deepEqual([...viewsById({ summary: { postviews: [] } })], [], 'no views at all is a valid answer');
+  assert.throws(() => viewsById({ error: 'x' }), /unexpected WordPress Stats response \(keys: error\)/);
+  assert.equal(statsUrl('cms.boltanswering.com'), 'https://public-api.wordpress.com/rest/v1.1/sites/cms.boltanswering.com/stats/top-posts?period=year&num=10&max=100&summarize=true&skip_archives=true');
+});
+
+test('AFMBP-2691: the Blog workflow refreshes once a day and on Run workflow, gives the token only to those runs, and goes red after publishing if the refresh failed', () => {
+  const yml = readFileSync(join(HERE, '..', '..', '.github', 'workflows', 'blog.yml'), 'utf8');
+  const when = "(github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch')";
+  assert.match(yml, /schedule:\n    - cron: '\*\/15 \* \* \* \*'\n    - cron: '40 13 \* \* \*'\n/);
+  assert.ok(yml.includes(`TOP_POSTS_REFRESH: \${{ ${when} && '1' || '0' }}`));
+  assert.ok(yml.includes(`WP_STATS_TOKEN: \${{ ${when} && secrets.WP_STATS_TOKEN || '' }}`));
+  assert.equal((yml.match(/secrets\.WP_STATS_TOKEN/g) || []).length, 1, 'the token is used in one place only');
+  assert.match(yml, /- name: Build blog from WordPress\n        id: build\n/);
+  assert.match(yml, /git add -A blog sitemap\.xml robots\.txt llms\.txt/, 'blog/.top-posts.json is committed with the pages');
+  const steps = yml.split('\n      - ');
+  const last = steps[steps.length - 1];
+  assert.match(last, /^name: Fail the run if the Top 5 was not refreshed\n        if: steps\.build\.outputs\.top_posts_failed == '1'\n[\s\S]*exit 1\n?$/, 'the failure step runs last, after publishing');
+  // The build's command line writes the output that step reads.
+  assert.ok(readFileSync(join(HERE, 'build.mjs'), 'utf8').includes("appendFileSync(process.env.GITHUB_OUTPUT, 'top_posts_failed=1\\n')"));
+});
+
+test('AFMBP-2691: the token helper asks WordPress.com for stats access to this blog and keeps the secret out of the address', async () => {
+  const u = new URL(authorizeUrl({ clientId: '123', state: 'abc' }));
+  assert.equal(`${u.origin}${u.pathname}`, 'https://public-api.wordpress.com/oauth2/authorize');
+  assert.deepEqual(Object.fromEntries(u.searchParams), { client_id: '123', redirect_uri: 'http://localhost:8723/callback', response_type: 'code', blog: 'https://cms.boltanswering.com', state: 'abc', scope: 'stats' });
+  assert.equal(new URL(authorizeUrl({ clientId: '1', state: 's', scope: '' })).searchParams.has('scope'), false);
+  assert.equal(REDIRECT, 'http://localhost:8723/callback');
+
+  assert.deepEqual(parseCallback('/callback?code=c1&state=abc', 'abc'), { code: 'c1' });
+  assert.match(parseCallback('/callback?code=c1&state=zzz', 'abc').error, /state mismatch/);
+  assert.match(parseCallback('/callback?error=access_denied&error_description=No', 'abc').error, /"access_denied": No/);
+
+  const calls = [];
+  const ok = async (url, init) => { calls.push({ url, init }); return new Response(JSON.stringify({ access_token: 'T', blog_url: 'https://cms.boltanswering.com' }), { status: 200 }); };
+  assert.deepEqual(await exchangeCode({ clientId: '123', clientSecret: 'S3CRET', code: 'c1', fetchImpl: ok }), { token: 'T', blogUrl: 'https://cms.boltanswering.com' });
+  assert.equal(calls[0].url, 'https://public-api.wordpress.com/oauth2/token');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.deepEqual(Object.fromEntries(calls[0].init.body), { client_id: '123', client_secret: 'S3CRET', code: 'c1', grant_type: 'authorization_code', redirect_uri: 'http://localhost:8723/callback' });
+  const bad = async () => new Response(JSON.stringify({ error: 'invalid_client', error_description: 'Unknown client_id.' }), { status: 400 });
+  await assert.rejects(exchangeCode({ clientId: '123', clientSecret: 'S3CRET', code: 'c1', fetchImpl: bad }), (e) => /HTTP 400 invalid_client \(Unknown client_id\.\)/.test(e.message) && !e.message.includes('S3CRET'));
 });

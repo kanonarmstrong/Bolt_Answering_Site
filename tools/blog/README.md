@@ -63,6 +63,36 @@ paste a GitHub fine-grained token for this repo only with "Contents: Read and wr
   rebuilds right away.
 - **Drafts never appear** on the site. Only published posts are read.
 
+## "Top 5" (the right column)
+
+The right column on every blog page lists the five most-read posts, ranked by all-time views in
+WordPress.com Stats (AFMBP-2691). The same five show on every page, the post being read included.
+Ties go to the newer post. If fewer than five posts have views, the newest of the rest fill in.
+
+- **Refresh:** once a day (13:40 UTC), and whenever you click Actions → "Blog" → Run workflow.
+  Every other run reuses the saved order, `blog/.top-posts.json`. It holds post ids only: this
+  repo and its logs are public, so view counts are never written anywhere.
+- **Until it's connected** (no `WP_STATS_TOKEN` secret yet, or no post has a view), the column
+  says "Recent posts" and shows the newest posts, as before.
+- **If a refresh fails** (a revoked token, a change at WordPress.com), the blog still publishes
+  and the column keeps its last order. That run turns red, so GitHub emails you.
+- **What it counts:** WordPress.com Stats count reads of the WordPress copy (cms.boltanswering.com,
+  the WordPress.com Reader). Readers of boltanswering.com/blog show up in Google Analytics, not in
+  WordPress Stats.
+
+**One-time setup (about 5 minutes):**
+
+1. https://developer.wordpress.com/apps/new: any name and description, Website URL
+   `https://www.boltanswering.com`, Redirect URL `http://localhost:8723/callback`, Type **Web**.
+   Create it.
+2. Run `node tools/blog/wp-stats-token.mjs` and enter the app's Client ID, then its Client Secret
+   (typed hidden). Approve in the browser window it opens. The script checks that the token can
+   read Stats, then saves it as the GitHub secret `WP_STATS_TOKEN` with the GitHub CLI. The token
+   is never shown. It asks WordPress.com for the `stats` scope only.
+3. Actions → "Blog" → Run workflow. The column switches to "Top 5" a few minutes later.
+
+To turn it off, delete the `WP_STATS_TOKEN` secret and `blog/.top-posts.json`.
+
 ## Importing drafts
 
 `make-wxr.mjs` turns markdown drafts into a WordPress import file. They arrive as **drafts**:
@@ -96,3 +126,7 @@ WP_BASE_URL=https://cms.boltanswering.com node tools/blog/build.mjs
 - The Benchy demo photos are not used or committed: they are stock images we don't have rights to
   publish.
 - The IndexNow key is the `<32 hex>.txt` file at the repo root. It is public by design.
+- "Top 5": `lib/top-posts.mjs` (ranking, the saved order, the WordPress.com Stats call) and
+  `wp-stats-token.mjs` (the one-time token setup). `TOP_POSTS_REFRESH=1 WP_STATS_TOKEN=…` makes a
+  build refresh the order first; the Blog workflow sets both only on its daily run and on Run
+  workflow.

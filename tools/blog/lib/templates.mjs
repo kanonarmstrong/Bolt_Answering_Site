@@ -129,12 +129,14 @@ function pagination(current, total, base) {
   return `<nav class="pagenavi" aria-label="Pages">${parts.join(' ')}</nav>`;
 }
 
-function sidebar({ recent, categories }) {
+/** The right column. side = { heading: 'Top 5' | 'Recent posts', items } (build.mjs picks;
+ *  AFMBP-2691): the same list markup either way, so "Top 5" looks like Recent posts did. */
+function sidebar({ side, categories }) {
   return `            <aside class="columns_sidebar sidebar">
               <div class="sidebar_widget">
-                <h3>Recent posts</h3>
+                <h3>${esc(side.heading)}</h3>
                 <div class="stories">
-${recent.map((p) => `                  <div class="stories_item">
+${side.items.map((p) => `                  <div class="stories_item">
                     ${p.image ? `<div class="stories_item_img"><a href="${postPath(p.slug)}" tabindex="-1" aria-hidden="true">${picture(p.image, { sizes: '420px' })}</a></div>` : ''}
                     <div class="stories_item_infoline infoline">
                       ${stamp(p)}
@@ -156,7 +158,7 @@ ${categories.length ? `              <div class="sidebar_widget">
 }
 
 /** Blog home (page n) and category pages share this list layout. */
-export function listPage({ heading, crumbs, posts, current, total, base, recent, categories, intro }) {
+export function listPage({ heading, crumbs, posts, current, total, base, side, categories, intro }) {
   const inner = `            <div class="columns_center">
               ${intro ? `<p class="list_intro">${esc(intro)}</p>` : ''}
               <div class="article article_list">
@@ -164,7 +166,7 @@ ${posts.length ? posts.map(postCard).join('\n') : '                <p>No posts y
               </div>
               ${pagination(current, total, base)}
             </div>
-${sidebar({ recent, categories })}`;
+${sidebar({ side, categories })}`;
   return wrapMain({ heading, crumbs, inner });
 }
 
@@ -227,7 +229,7 @@ ${inner}
     </main>`;
 }
 
-export function articlePage({ post, html, recent, categories, related }) {
+export function articlePage({ post, html, side, categories, related }) {
   const cat = post.categories[0];
   const inner = `            <div class="columns_center">
               <article class="article">
@@ -241,13 +243,13 @@ ${html}
               </article>
               ${related.length ? `<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h3">Keep reading</h2><ul>${related.map((r) => `<li><a href="${postPath(r.slug)}">${esc(r.title)}</a></li>`).join('')}</ul></section>` : ''}
             </div>
-${sidebar({ recent, categories })}`;
+${sidebar({ side, categories })}`;
   // The masthead links back to the blog; the article's own <h1> is the post title. No visible
   // breadcrumb line on posts (the BreadcrumbList JSON-LD in the head stays for search engines).
   return wrapMain({ titleInContent: true, inner });
 }
 
-export function searchPage({ recent, categories }) {
+export function searchPage({ side, categories }) {
   const inner = `            <div class="columns_center">
               <div class="search_page">
                 <p class="js-search-empty">Type a search in the box to find posts.</p>
@@ -255,7 +257,7 @@ export function searchPage({ recent, categories }) {
                 <div class="search_page_results" role="status" aria-live="polite"></div>
               </div>
             </div>
-${sidebar({ recent, categories })}`;
+${sidebar({ side, categories })}`;
   return wrapMain({ heading: 'Search', inner });
 }
 

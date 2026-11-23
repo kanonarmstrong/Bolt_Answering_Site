@@ -11,12 +11,18 @@ name: Blog
 # The WordPress address is the repository variable WP_BASE_URL (Settings → Secrets and
 # variables → Actions → Variables). Until it is set, the build step is skipped.
 # GitHub pauses schedules in a repo with no commits for 60 days; re-enable on the Actions tab.
+# "Top 5" (AFMBP-2691): once a day (13:40 UTC) and on "Run workflow", the build re-ranks the
+# right column's posts by all-time WordPress.com Stats views, using the WP_STATS_TOKEN secret
+# (tools/blog/wp-stats-token.mjs sets it up). Only those runs get the token; every other build
+# reuses the saved order. Only the order is saved: the repo and its logs are public, so view
+# counts never appear here. If the refresh fails, the blog still publishes and the run goes red.
 
 on:
   repository_dispatch:
     types: [wp_publish]
   schedule:
     - cron: '*/15 * * * *'
+    - cron: '40 13 * * *'
   workflow_dispatch:
   pull_request:
     paths: ['tools/blog/**', 'blog/assets/**', '.github/workflows/blog.yml']
@@ -73,9 +79,12 @@ jobs:
         if: steps.gate.outputs.skip != '1'
         working-directory: tools/blog
       - name: Build blog from WordPress
+        id: build
         if: steps.gate.outputs.skip != '1'
         env:
           WP_BASE_URL: ${{ vars.WP_BASE_URL }}
+          TOP_POSTS_REFRESH: ${{ (github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
+          WP_STATS_TOKEN: ${{ (github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch') && secrets.WP_STATS_TOKEN || '' }}
         run: node tools/blog/build.mjs
       - name: Commit if anything changed
         id: commit
@@ -99,3 +108,8 @@ jobs:
       - name: Notify Bing and other engines (IndexNow)
         if: steps.commit.outputs.pushed == '1'
         run: node tools/blog/indexnow.mjs || true
+      - name: Fail the run if the Top 5 was not refreshed
+        if: steps.build.outputs.top_posts_failed == '1'
+        run: |
+          echo "::error::The blog built and published, but the Top 5 order was not refreshed from WordPress.com Stats (see the build step). Check the WP_STATS_TOKEN secret."
+          exit 1
