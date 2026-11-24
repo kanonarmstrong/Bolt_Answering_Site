@@ -7,7 +7,7 @@
 //     room the node leaves for it at the start of its first line; the boxed FREE line; in the
 //     tilted speech bubble, the reviewer, five stars, "4.9/5" and the testimonial; the close
 //     cross. No help line, trial line, logo, pill or watermark (v5 dropped them), none of the
-//     demo's ways in, and no "Available now";
+//     demo's ways in, and no "Available" or green dot;
 //   - type: the pitch and the FREE line in Times New Roman (Tinos where a phone has none: the same
 //     widths, so the same lines), black; "FREE" and "today." bold; the reviewer's name bold; the
 //     testimonial navy italic; the pitch as the node words it (no comma after "customers");
@@ -341,7 +341,7 @@ try {
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-help')")) && (await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Need help') < 0")), 'phone: no help line (the node has none)');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-so__trial, .demo-backdrop.open .demo-so__pill, .demo-backdrop.open .demo-so__tm, .demo-backdrop.open .demo-cm__logo')")), 'phone: no trial line, pill, "tm" or logo (v5 dropped them)');
   ok((await ev("getComputedStyle(document.querySelector('.demo-backdrop.open .demo-body'),'::before').content")) === 'none', 'phone: no paintbrush watermark (v5 dropped it)');
-  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__live')")) && !(await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Available now') >= 0")), 'phone: no "Available now" or green dot');
+  ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-cm__live, .demo-backdrop.open .demo-c__live')")) && !(await ev("document.querySelector('.demo-backdrop.open .demo-card').innerText.indexOf('Available') >= 0")), 'phone: no "Available" or green dot');
   ok(!(await ev("!!document.querySelector('.demo-backdrop.open .demo-choice__call, .demo-backdrop.open .demo-choice__get, .demo-backdrop.open .demo-choice__when')")), 'phone: none of the demo\'s ways in');
   ok((await visible('.demo-close')) && /demo-m-close\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-close'),'::before').backgroundImage")), 'phone: the close button shows, drawn with the node\'s own cross');
   for (const k of ['cta', 'close']) {
