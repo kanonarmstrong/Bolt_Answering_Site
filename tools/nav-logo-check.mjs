@@ -38,7 +38,7 @@ const SLACK = 2;      // px the drawn logo may differ from the picture's ink box
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2', '.mp4': 'video/mp4' };
 const LOGO = '.logo img{height:clamp(30px,3.375vw,42px);width:auto;display:block}';
 const HOW = (href) => [`<li style="display:none"><a href="${href}">How it works</a></li><!-- under construction -->`, `<li><a href="${href}">How it works</a></li>`];
-const FOOT = ['<a href="index.html#how" style="display:none">How it works</a><!-- under construction -->', '<a href="index.html#how">How it works</a>'];
+const FOOT = ['<a href="#top">Back to Top</a>', '<a href="#top">Back to Top</a>\n      <a href="index.html#how">How it works</a>'];
 // Negative controls: [served file, text, replacement] — each text must be in its file exactly once.
 const FOOTER = TRADES.map((f) => [f, ...FOOT]);
 const MAIN = [...TRADES.map((f) => [f, ...HOW('index.html#how')]), ...SUPPORT.map((f) => [f, ...HOW('/#how')]), ...FOOTER];

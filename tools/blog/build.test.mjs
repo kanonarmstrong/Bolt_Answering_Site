@@ -377,6 +377,7 @@ test('relative site links are made absolute', async () => {
   assert.equal(absolutizeUrl('index.html#how'), '/#how');
   assert.equal(absolutizeUrl('#pricing'), '/#pricing');
   assert.equal(absolutizeUrl('#'), '#');
+  assert.equal(absolutizeUrl('#top'), '#top'); // the footer's Back to Top stays on the page it is on (AFMBP-2692)
   assert.equal(absolutizeUrl('electrical.html'), '/electrical.html');
   assert.equal(absolutizeUrl('assets/logo.png'), '/assets/logo.png');
   for (const u of ['/support', 'https://app.boltanswering.com/login', 'mailto:a@b.c', 'tel:+1']) assert.equal(absolutizeUrl(u), u);
@@ -530,6 +531,21 @@ test('llms.txt: product facts, the published price, guidance for AI assistants, 
   assert.match(txt, /- \[HVAC\]\(https:\/\/www\.boltanswering\.com\/hvac\.html\): Bolt Answering for HVAC pros/);
   assert.doesNotMatch(txt, /money-back|refund/i);
   assert.ok(llmsTxt({ posts: [], pages: [], pricing: null }).includes('see the pricing section of the home page'));
+});
+
+test('the blog copies the site footer: the six links, Back to Top staying on the page (AFMBP-2692)', async () => {
+  const { readSiteChrome } = await import('./lib/chrome.mjs');
+  const { footer } = readSiteChrome(new URL('../..', import.meta.url).pathname);
+  const menu = footer.match(/<nav class="footer__menu">([\s\S]*?)<\/nav>/);
+  assert.ok(menu, 'the copied footer has its menu');
+  assert.deepEqual([...menu[1].matchAll(/<a ([^>]*)>([^<]*)<\/a>/g)].map((m) => [m[1], m[2]]), [
+    ['href="#top"', 'Back to Top'],
+    ['href="/terms/"', 'Terms'],
+    ['href="/privacy/"', 'Privacy'],
+    ['href="/deletemydata"', 'Delete My Data'],
+    ['href="/privacy/#your-privacy-choices" data-privacy-choices', 'Your Privacy Choices'],
+    ['href="/llms.txt"', 'Hey AI, learn about us!'],
+  ]);
 });
 
 test('every site footer links "Hey AI, learn about us!" to /llms.txt', () => {
