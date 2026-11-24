@@ -192,8 +192,9 @@
   // both ways in and the review, about 100 KB. A page with a way into the demo fetches them
   // once it has loaded and settled (warmChoiceLater, from wire()), so a tap shows the card
   // complete; a tap before that warms them as the demo opens (openModal). The ad landing's
-  // card (AFMBP-2612) never shows this card, so it never fetches them.
-  var CHOICE_ART = ['demo-c-sierra.png', 'demo-c-words.svg', 'demo-c-live.svg', 'demo-c-call.svg', 'demo-c-get.svg', 'demo-c-review.svg'];
+  // card (AFMBP-2612) never shows this card, so it never fetches them. AFMBP-2695: the 11-24
+  // redraw's four new drawings carry -v4 in their names.
+  var CHOICE_ART = ['demo-c-sierra-v4.png', 'demo-c-words-v4.svg', 'demo-c-live-v4.svg', 'demo-c-call.svg', 'demo-c-get.svg', 'demo-c-review-v4.svg'];
   var choiceWarmed = false;
   function warmChoice() {
     if (choiceWarmed) return;
@@ -482,8 +483,8 @@
         h('h2', { class: 'demo-c__vh', text: 'Meet Sierra.' }),
         h('p', { class: 'demo-c__vh', text: 'She takes your phone calls and more for less than $4 a day. (...without complaining) Cancel anytime.' })
       ]),
-      // "Available now" with its dot (2946:1684).
-      h('p', { class: 'demo-c__live' }, [h('span', { class: 'demo-c__vh', text: 'Available now' })]),
+      // "Available" with its dot (2946:1684), the dot blinking (AFMBP-2695, demo.css).
+      h('p', { class: 'demo-c__live' }, [h('span', { class: 'demo-c__vh', text: 'Available' })]),
       h('div', { class: 'demo-choice__btns' }, [call, get]),
       // The review (2946:1687): bubble, reviewer, stars, "4.9/5" and the quote, one drawing
       // turned 1 degree as the node turns it. Its words are hidden text.
@@ -651,7 +652,9 @@
 
   // ---------- screen: You call us, call in progress — Figma 2891:1090 ----------
   // How to call, as two numbered steps, then the help line (the owner's 2026-11-13
-  // update, AFMBP-2597). Where there is a dialer the number is a tap-to-dial link
+  // update, AFMBP-2597). The title names no one (the node as of 2026-11-24, AFMBP-2695;
+  // owner: "I don't want to bake "sierra" into every screen because users likely want
+  // flexibility here"). Where there is a dialer the number is a tap-to-dial link
   // (the link enters the code by itself; the second step covers a phone that
   // doesn't). A computer has none, so there it is plain text (AFMBP-2600).
   function renderInboundCall(s) {
@@ -667,7 +670,7 @@
     setBody([
       h('div', { class: 'demo-incall' }, [
         h('div', { class: 'demo-ihow' }, [
-          h('p', { class: 'demo-ihow__h', text: 'Here’s how to call Sierra:' }),
+          h('p', { class: 'demo-ihow__h', text: 'Here’s how to call:' }),
           h('ol', { class: 'demo-ihow__list' }, [
             h('li', {}, ['Dial ', number]),
             h('li', {}, ['Tap in this code: ', h('b', { class: 'demo-ihow__code', text: s.code })])
@@ -956,8 +959,8 @@
     ]) : null;
 
     setBody([
-      // The question and the sub (2657:1639, as updated 2026-11-12, AFMBP-2596).
-      h('h2', { class: 'demo-h demo-h--form', text: 'What number would you like Sierra to call?' }),
+      // The question and the sub (2657:1639, as updated 2026-11-24, AFMBP-2695: one line, no name).
+      h('h2', { class: 'demo-h demo-h--form', text: 'What number to call?' }),
       h('p', { class: 'demo-sub', text: 'We’ll send a one-time passcode before we make the call.' }),
       phone.wrap,
       limitMsg,
@@ -1178,16 +1181,16 @@
   }
 
   // ---------- screen: Calling You — Figma 2891:1072 ----------
-  // Shown from the moment the code is accepted until the call resolves: "Your
-  // assistant is calling from: <number>" over the help line (the owner's
-  // 2026-11-12 update, AFMBP-2596). Returns what placeCall() sets to swap in the
-  // backend's caller id.
+  // Shown from the moment the code is accepted until the call resolves: "Calling
+  // from:" and, centred on its own line, the number, over the help line (the
+  // owner's 2026-11-24 update, AFMBP-2695; no name in it). One sentence for screen
+  // readers. Returns what placeCall() sets to swap in the backend's caller id.
   function renderCalling(fromNumber) {
     clearResend();
-    var numberEl = h('span', { text: fmtDemoNumber(fromNumber) });
+    var numberEl = h('span', { class: 'demo-callcard__num', text: fmtDemoNumber(fromNumber) });
     setBody([
       h('div', { class: 'demo-callcard' }, [
-        h('p', { class: 'demo-callcard__m' }, ['Sierra is calling from: ', numberEl]),
+        h('p', { class: 'demo-callcard__m' }, ['Calling from: ', numberEl]),
         helpLine()
       ])
     ], 'calling');

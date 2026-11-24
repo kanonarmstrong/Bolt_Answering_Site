@@ -324,7 +324,7 @@ try {
   await ev(`document.querySelector('.qlt-get').click()`);
   await sleep(400);
   let m = await ev(`(() => { const b = document.querySelector('.demo-backdrop'); return { open: !!(b && b.classList.contains('open')), screen: b && b.getAttribute('data-screen'), h: (document.querySelector('.demo-h--form') || {}).textContent }; })()`);
-  check('"She calls you" opens today\'s "We call you" form', m.open && m.screen === 'phone' && /What number would you like Sierra to call\?/.test(m.h || ''), m);
+  check('"She calls you" opens today\'s "We call you" form', m.open && m.screen === 'phone' && /What number to call\?/.test(m.h || ''), m);
   s = await state();
   check('funnel: demo_opened {trigger button, entry landing}, then demo_mode_selected {outbound, from landing}', typesOf(s, 'demo_opened').some((e) => e.data.trigger === 'button' && e.data.entry === 'landing') && typesOf(s, 'demo_mode_selected').some((e) => e.data.mode === 'outbound' && e.data.from === 'landing'), s.events.map((e) => [e.type, e.data.entry || e.data.mode || '']));
   await ev(`document.querySelector('.demo-close').click()`);

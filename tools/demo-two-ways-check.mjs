@@ -410,7 +410,7 @@ try {
   const c2 = await lastClick();
   ok(!!c2 && c2.followed === false, `desktop: "You call us" does not hand the link to the OS (${JSON.stringify(c2)})`);
   ok(await waitScreen('inbound-call'), 'desktop: call card');
-  ok((await text('.demo-ihow__h')) === 'Here’s how to call Sierra:' && (await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151' && (await text('.demo-backdrop.open .demo-ihow__code')) === '4321', `desktop: the phone card's two steps, the number and this session's code (${await text('.demo-backdrop.open .demo-ihow__list')})`);
+  ok((await text('.demo-ihow__h')) === 'Here’s how to call:' && (await text('.demo-backdrop.open .demo-ihow__list li')) === 'Dial (855) 497-3151' && (await text('.demo-backdrop.open .demo-ihow__code')) === '4321', `desktop: the phone card's two steps, the number and this session's code (${await text('.demo-backdrop.open .demo-ihow__list')})`);
   ok((await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-ihow__tel'); return e ? e.tagName + '|' + (e.getAttribute('href') || '') : null})()")) === 'B|', 'desktop: the number to dial as plain text, no tel: link');
   ok(!(await visible('.demo-incall__dial')) && !(await visible('.demo-incall__list')), 'desktop: none of the old computer card\'s pieces');
   const sc2 = await scaled();
@@ -428,7 +428,7 @@ try {
   reset();
   await load('/hvac.html?talk=form');
   ok(await waitScreen('phone'), 'desktop: ?talk=form opens straight on the outbound form');
-  ok((await text('.demo-h--form')) === 'What number would you like Sierra to call?', `desktop: the phone form's heading (${await text('.demo-h--form')})`);
+  ok((await text('.demo-h--form')) === 'What number to call?', `desktop: the phone form's heading (${await text('.demo-h--form')})`);
   await ev(`(function(){
     function set(id,v){var e=document.getElementById(id); e.value=v; e.dispatchEvent(new Event('input',{bubbles:true}));}
     set('demo-phone','(555) 555-1212'); return 1; })()`);

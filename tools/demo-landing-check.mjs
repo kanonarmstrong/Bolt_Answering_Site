@@ -16,6 +16,10 @@
 // "She calls you" and Brent B.'s review. Every word on it is the node's own drawing (the owner
 // outlined the text so it draws the same on every phone); screen readers get the same words as
 // hidden text. No wait line and no help line.
+// The owner's 11-24 update (AFMBP-2695): the same card drawn about 15% bigger (351x491, centred on
+// the screen), the two ways in kept at their size; "Available now" is "Available", and its green
+// dot blinks: on for 900ms, off for 100ms, every second (still for anyone who asks for reduced
+// motion). Its four new drawings carry -v4 in their names.
 // AFMBP-2600 (owner, 2026-11-13: one responsive demo): a computer shows the same card, centred
 // and scaled up as far as its screen's height allows (up to 125%). Drives the real modal in
 // headless Chrome against a fake Bolt API and checks:
@@ -27,6 +31,9 @@
 //     card; "She calls you" opens the outbound form — never swapped;
 //   - attribution: the landing URL's utm_* and click id ride on both selection events;
 //   - analytics: demo_opened once per open, each selection once;
+//   - the dot (AFMBP-2695): "Available" drawn twice from the node's one drawing, the word cut
+//     clear of the dot and never blinking, the dot alone blinking (900ms on, 100ms off, a 1s
+//     loop, sampled by pausing the animation), and still under reduced motion;
 //   - warming (AFMBP-2690): a page with a way in fetches the card's six drawings once it has
 //     loaded and settled; the ad landing's card, which never shows this card, fetches none;
 //   - accessibility: the drawings hidden from the accessibility tree, their words read (hidden
@@ -78,25 +85,37 @@ const MUTATE = {
   // The landing touch is dropped from every event.
   no_attr: ['attribution.js', (s) => cut(s, 'if (touch) data.attr = touch;', '')],
   // "You call her" moves off the node.
-  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{left:45.9px;top:219.53px;', '.demo-choice__call{left:45.9px;top:224.53px;')],
+  off_node: ['demo.css', (s) => cut(s, '.demo-choice__call{left:70.812px;top:263.312px;', '.demo-choice__call{left:70.812px;top:268.312px;')],
   // AFMBP-2189: the phone choice hides its close button again (as before the redraw).
-  no_close: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 257.496px);top:6.497px}', '.demo-backdrop[data-screen="choice"] .demo-close{display:none}')],
+  no_close: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="choice"] .demo-close{left:calc((100% - var(--demo-w)) / 2 + 301.496px);top:5.497px}', '.demo-backdrop[data-screen="choice"] .demo-close{display:none}')],
   // The close button sits under the body, which takes the tap.
   close_under: ['demo.css', (s) => cut(s, '    z-index:2;left:calc((100% - var(--demo-w)) / 2 + 288.496px);top:1.497px;right:auto;', '    left:calc((100% - var(--demo-w)) / 2 + 288.496px);top:1.497px;right:auto;')],
   // The close button moves off the node.
-  close_off: ['demo.css', (s) => cut(s, '+ 257.496px);top:6.497px}', '+ 247.496px);top:6.497px}')],
-  // AFMBP-2690: the card at its size before the owner's 11-22 redesign (337x393).
-  old_card: ['demo.css', (s) => cut(cut(s, '.demo-backdrop[data-screen="choice"]{--demo-w:306px;--demo-h:428px;', '.demo-backdrop[data-screen="choice"]{--demo-w:337px;--demo-h:393px;'), '.demo-backdrop[data-screen="choice"] .demo-card{height:428px;', '.demo-backdrop[data-screen="choice"] .demo-card{height:393px;')],
+  close_off: ['demo.css', (s) => cut(s, '+ 301.496px);top:5.497px}', '+ 291.496px);top:5.497px}')],
+  // AFMBP-2695: the card at its size before the owner's 11-24 update (the 11-22 card, 306x428).
+  old_card: ['demo.css', (s) => cut(cut(s, '.demo-backdrop[data-screen="choice"]{--demo-w:351.042px;--demo-h:491px;', '.demo-backdrop[data-screen="choice"]{--demo-w:306px;--demo-h:428px;'), '.demo-backdrop[data-screen="choice"] .demo-card{height:491px;', '.demo-backdrop[data-screen="choice"] .demo-card{height:428px;')],
   // AFMBP-2690: the old card's heading back in place of "Meet Sierra.".
   old_heading: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-c__vh', text: 'Meet Sierra.' })", "h('h2', { class: 'demo-c__vh', text: 'How would you like to start the call?' })")],
   // AFMBP-2690: Sierra faded twice (her export already carries the node's 8%).
-  double_fade: ['demo.css', (s) => cut(s, 'width:219px;height:229px;pointer-events:none;', 'width:219px;height:229px;opacity:.08;pointer-events:none;')],
+  double_fade: ['demo.css', (s) => cut(s, 'width:251.236px;height:262.708px;pointer-events:none;', 'width:251.236px;height:262.708px;opacity:.08;pointer-events:none;')],
   // AFMBP-2690: Sierra left out.
-  no_art: ['demo.css', (s) => cut(s, "background:url('assets/demo-c-sierra.png') 0 0/100% 100% no-repeat;", '')],
+  no_art: ['demo.css', (s) => cut(s, "background:url('assets/demo-c-sierra-v4.png') 0 0/100% 100% no-repeat;", '')],
   // AFMBP-2690: the words drawn from the wrong file (the review's).
-  wrong_words: ['demo.css', (s) => cut(s, "background:url('assets/demo-c-words.svg') 0 0/100% 100% no-repeat;", "background:url('assets/demo-c-review.svg') 0 0/100% 100% no-repeat;")],
+  wrong_words: ['demo.css', (s) => cut(s, "background:url('assets/demo-c-words-v4.svg') 0 0/100% 100% no-repeat;", "background:url('assets/demo-c-review-v4.svg') 0 0/100% 100% no-repeat;")],
   // AFMBP-2690: the words off the node.
-  words_off: ['demo.css', (s) => cut(s, 'position:absolute;left:46.2px;top:92.68px;', 'position:absolute;left:46.2px;top:97.68px;')],
+  words_off: ['demo.css', (s) => cut(s, 'position:absolute;left:53px;top:101.318px;', 'position:absolute;left:53px;top:106.318px;')],
+  // AFMBP-2695: Sierra drawn from the 11-22 file (her old size, in the new box).
+  old_drawings: ['demo.css', (s) => cut(s, "background:url('assets/demo-c-sierra-v4.png')", "background:url('assets/demo-c-sierra.png')")],
+  // AFMBP-2695: "Available now" read out again (the 11-24 node says "Available").
+  old_live: ['demo.js', (s) => cut(s, "h('span', { class: 'demo-c__vh', text: 'Available' })", "h('span', { class: 'demo-c__vh', text: 'Available now' })")],
+  // AFMBP-2695: the dot does not blink.
+  no_blink: ['demo.css', (s) => cut(s, ';animation:demo-c-blink 1s step-end infinite}', '}')],
+  // AFMBP-2695: the dot blinks at half the speed (off for 200ms every 2s).
+  slow_blink: ['demo.css', (s) => cut(s, 'animation:demo-c-blink 1s step-end infinite', 'animation:demo-c-blink 2s step-end infinite')],
+  // AFMBP-2695: the word's copy keeps the dot (not cut clear of it): the dot never goes off.
+  blink_word: ['demo.css', (s) => cut(s, '.demo-c__live::before{clip-path:inset(0 0 0 9.8px)}', '.demo-c__live::before{}')],
+  // AFMBP-2695: the dot blinks for someone who asked for reduced motion.
+  blink_reduced: ['demo.css', (s) => cut(s, '  @media (prefers-reduced-motion:reduce){\n    .demo-backdrop[data-screen="choice"] .demo-c__live::after{animation:none}\n  }\n', '')],
   // AFMBP-2690: the review not turned as the node turns it.
   flat_review: ['demo.css', (s) => cut(s, 'transform:rotate(-1deg);pointer-events:none}', 'pointer-events:none}')],
   // AFMBP-2690: "You call her" drawn twice (its words shown, not hidden text).
@@ -111,6 +130,10 @@ const MUTATE = {
   warm_everywhere: ['demo.js', (s) => cut(s, '    if (openers) warmChoiceLater();\n', '    warmChoiceLater();\n')],
   // A narrow phone clips the pitch instead of scaling the card down.
   no_zoom: ['demo.css', (s) => cut(s, '.demo-card{zoom:.94;left:0}', '.demo-card{left:0}')],
+  // AFMBP-2695: the 351px card scales with the 337px cards (it clips on phones under 360px).
+  choice_clips: ['demo.css', (s) => cut(s, '  @media (max-width:359px){ .demo-backdrop[data-screen="choice"] .demo-card{zoom:.94;left:0} }\n  @media (max-width:336px){ .demo-backdrop[data-screen="choice"] .demo-card{zoom:.88} }\n', '')],
+  // AFMBP-2695: the close button's 44px tap target scaled to 34px on a 280px cover screen.
+  small_close: ['demo.css', (s) => cut(s, '.demo-close{left:calc((100% - var(--demo-w)) / 2 + 299.496px);top:3.497px;width:48px;height:48px}', '.demo-close{}')],
   // AFMBP-2602: iPad Safari's text autosizing left on in the zoomed cards, set to 100% (which does
   // not fix it), or let out to cards that do not zoom.
   ios_autosize: ['demo.css', (s) => cut(s, '[data-screen="fail"]) .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none}', '[data-screen="fail"]) .demo-card{}')],
@@ -200,23 +223,25 @@ const SCREEN_TSA = `(function(){${IOS_TSA} var b=document.querySelector('.demo-b
   ${JSON.stringify(SCREENS)}.forEach(function(n){b.setAttribute('data-screen',n); out.push({screen:n, zoom:parseFloat(getComputedStyle(k).zoom), ios:iosTsa(k)});});
   b.setAttribute('data-screen',was); return out;})()`;
 
-// The phone node (Figma 2946:1666, the owner's 11-22 card, AFMBP-2690), card-relative CSS px: the
-// node's children sit inside its .6px stroke. Every piece is one of the node's own drawings.
+// The phone node (Figma 2946:1666 as updated 2026-11-24, AFMBP-2695), card-relative CSS px, as the
+// node's metadata gives them (its children sit inside its .688px stroke). Every piece is one of the
+// node's own drawings.
 const NODE = {
-  card: { w: 306, h: 428, x: 48, y: 163 },
-  call: { x: 46.5, y: 220.13, w: 209, h: 41 },
-  get: { x: 46, y: 271.13, w: 210, h: 41 },
-  // The close button: a 44px tap target centred on the node's 13px cross (273-286, 22-35).
-  close: { x: 257.496, y: 6.497, w: 44, h: 44 },
-  art: { x: 57, y: 14, w: 219, h: 229 },
-  words: { x: 46.8, y: 93.28, w: 218.509, h: 103.792 },
-  live: { x: 184, y: 203, w: 66.975, h: 7.114 },
-  // The review's box (its drawing turns 1 degree inside it).
-  review: { x: 56.001, y: 333.41, w: 194.038, h: 73.479 },
+  card: { w: 351.042, h: 491, x: 25, y: 131 },
+  call: { x: 71.5, y: 264, w: 209, h: 41 },
+  get: { x: 71, y: 315, w: 210, h: 41 },
+  // The close button: a 44px tap target centred on the node's 13px cross (317-330, 21-34).
+  close: { x: 301.496, y: 5.497, w: 44, h: 44 },
+  art: { x: 65.391, y: 16.061, w: 251.236, h: 262.708 },
+  words: { x: 53.688, y: 102.006, w: 250.673, h: 129.07 },
+  live: { x: 223.043, y: 244, w: 53.651, h: 8.16 },
+  // The review's box (its drawing turns 1 degree inside it): the turned group's bounds.
+  review: { x: 64.244, y: 382.484, w: 222.6, h: 84.295 },
 };
-// Each piece's drawing (the node's export); the review's is its bubble's ::before.
-const ART = { '.demo-c__art': 'demo-c-sierra.png', '.demo-c__words': 'demo-c-words.svg', '.demo-c__live': 'demo-c-live.svg', '.demo-choice__call': 'demo-c-call.svg', '.demo-choice__get': 'demo-c-get.svg' };
-const CHOICE_ART = ['demo-c-sierra.png', 'demo-c-words.svg', 'demo-c-live.svg', 'demo-c-call.svg', 'demo-c-get.svg', 'demo-c-review.svg'];
+// Each piece's drawing (the node's export); the review's is its bubble's ::before, the dot's and
+// the word's are the "Available" box's ::after and ::before.
+const ART = { '.demo-c__art': 'demo-c-sierra-v4.png', '.demo-c__words': 'demo-c-words-v4.svg', '.demo-choice__call': 'demo-c-call.svg', '.demo-choice__get': 'demo-c-get.svg' };
+const CHOICE_ART = ['demo-c-sierra-v4.png', 'demo-c-words-v4.svg', 'demo-c-live-v4.svg', 'demo-c-call.svg', 'demo-c-get.svg', 'demo-c-review-v4.svg'];
 
 try {
   let t = null;
@@ -334,7 +359,9 @@ try {
     // AFMBP-2597: the quote before the 11-13 update.
     'real person',
     // AFMBP-2690: the card before the owner's 11-22 redesign, and the redesign's first two pitches.
-    'How would you like', 'You call us', 'We call you', 'Avg. wait', '3 seconds', 'Gus C.', 'Massachusetts', 'Sounds like a real receptionist', 'Need help', 'manages your phone calls', 'leads, and calendar'];
+    'How would you like', 'You call us', 'We call you', 'Avg. wait', '3 seconds', 'Gus C.', 'Massachusetts', 'Sounds like a real receptionist', 'Need help', 'manages your phone calls', 'leads, and calendar',
+    // AFMBP-2695: the 11-22 card's "Available now".
+    'Available now'];
   const HEADING = 'Meet Sierra.';
   const PITCH = 'She takes your phone calls and more for less than $4 a day. (...without complaining) Cancel anytime.';
 
@@ -351,7 +378,7 @@ try {
   // content: every word is the node's drawing; screen readers get the same words as hidden text
   ok((await text('.demo-c__words h2')) === HEADING, `phone: the heading "Meet Sierra." (${await text('.demo-c__words h2')})`);
   ok((await text('.demo-c__words p')) === PITCH, `phone: the pitch, word for word (${await text('.demo-c__words p')})`);
-  ok((await text('.demo-c__live')) === 'Available now', `phone: "Available now" (${await text('.demo-c__live')})`);
+  ok((await text('.demo-c__live')) === 'Available', `phone: "Available" (${await text('.demo-c__live')})`);
   ok((await text('.demo-choice__call')) === 'You call her', `phone: "You call her" (${await text('.demo-choice__call')})`);
   ok((await text('.demo-choice__get')) === 'She calls you', `phone: "She calls you" (${await text('.demo-choice__get')})`);
   const rv = await ev("[].slice.call(document.querySelectorAll('.demo-c__review p')).map(function(p){return p.textContent})");
@@ -369,7 +396,20 @@ try {
     const bg = await ev(`getComputedStyle(document.querySelector(${JSON.stringify(sel)})).backgroundImage`);
     ok((bg || '').includes(file), `phone: ${sel} drawn with the node's ${file} (${bg})`);
   }
-  ok(/demo-c-review\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-c__bubble'),'::before').backgroundImage")), "phone: the review drawn with the node's demo-c-review.svg");
+  ok(/demo-c-review-v4\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-c__bubble'),'::before').backgroundImage")), "phone: the review drawn with the node's demo-c-review-v4.svg");
+  // AFMBP-2695: "Available" and its dot, the node's one drawing twice: the word cut clear of the dot
+  // (the dot ends 7.93px in, the word starts 11.71px in), the dot alone, blinking.
+  const dot = (await ev("(function(){var e=document.querySelector('.demo-c__live'), b=getComputedStyle(e,'::before'), a=getComputedStyle(e,'::after'); return {bImg:b.backgroundImage, aImg:a.backgroundImage, bClip:b.clipPath, aClip:a.clipPath, bAnim:b.animationName, aAnim:a.animationName, aDur:a.animationDuration, aIter:a.animationIterationCount, aEase:a.animationTimingFunction, own:getComputedStyle(e).backgroundImage};})()")) || {};
+  ok(/demo-c-live-v4\.svg/.test(dot.bImg) && /demo-c-live-v4\.svg/.test(dot.aImg) && dot.own === 'none', `phone: "Available" and its dot drawn from the node's demo-c-live-v4.svg, twice (${JSON.stringify(dot)})`);
+  ok(dot.bClip === 'inset(0px 0px 0px 9.8px)' && dot.aClip === 'inset(0px calc(100% - 9.8px) 0px 0px)', `phone: the word cut clear of the dot, the dot alone in its own copy (${dot.bClip} / ${dot.aClip})`);
+  ok(dot.bAnim === 'none' && dot.aAnim === 'demo-c-blink' && dot.aDur === '1s' && dot.aIter === 'infinite' && /^(step-end|steps\(1(, end)?\))$/.test(dot.aEase), `phone: only the dot blinks, on a 1s loop, switching (no fade) (${JSON.stringify(dot)})`);
+  // Sample the loop: pause the dot's animation and read its opacity through one second.
+  const blink = await ev("(function(){var a=document.getAnimations().filter(function(x){return x.animationName==='demo-c-blink'}); if(a.length!==1) return 'animations: '+a.length; a=a[0]; a.pause(); var e=document.querySelector('.demo-c__live'), out=[0,450,890,899,900,950,999].map(function(t){a.currentTime=t; return getComputedStyle(e,'::after').opacity+'@'+t;}); a.play(); return out.join(' ');})()");
+  ok(blink === '1@0 1@450 1@890 1@899 0@900 0@950 0@999', `phone: the dot on for 900ms, off for 100ms, every second (owner: "blink w/ 100ms speed") (${blink})`);
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  const still = await ev("(function(){var e=document.querySelector('.demo-c__live'), a=getComputedStyle(e,'::after'); return a.animationName+' '+a.opacity+' '+document.getAnimations().filter(function(x){return x.animationName==='demo-c-blink'}).length;})()");
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+  ok(still === 'none 1 0', `phone: with reduced motion asked for, the dot stays on, still (${still})`);
   // Sierra's export already carries the node's 8% (her ink is black at alpha 20): no second fade.
   ok((await ev("getComputedStyle(document.querySelector('.demo-c__art')).opacity")) === '1', `phone: Sierra at the export's own 8%, not faded again (opacity ${await ev("getComputedStyle(document.querySelector('.demo-c__art')).opacity")})`);
   const turn = await ev("getComputedStyle(document.querySelector('.demo-c__bubble')).transform");
@@ -381,8 +421,9 @@ try {
   const card = await rect('.demo-backdrop.open .demo-card');
   const rel = (b) => b && { x: b.x - card.x, y: b.y - card.y, w: b.w, h: b.h, cx: b.cx - card.x, cy: b.cy - card.y };
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
-  ok(near(card.w, NODE.card.w, 0.01) && near(card.h, NODE.card.h, 0.01), `phone: card 306x428 (${card.w}x${card.h})`);
-  ok(near(card.x, NODE.card.x, 0.01) && near(card.y, NODE.card.y, 0.01), `phone: card where the node puts it, centred: 48px in, 163px down a 402x753 screen (${card.x}, ${card.y})`);
+  // Chrome lays out in 64ths of a pixel: the 351.042px card is 351.03 wide, its left edge 25.016.
+  ok(near(card.w, NODE.card.w, 0.016) && near(card.h, NODE.card.h, 0.016), `phone: card 351x491 (${card.w}x${card.h})`);
+  ok(near(card.x, NODE.card.x, 0.016) && near(card.y, NODE.card.y, 0.016), `phone: card where the node puts it, centred: 25px in, 131px down a 402x753 screen (${card.x}, ${card.y})`);
   const PIECES = { call: '.demo-choice__call', get: '.demo-choice__get', close: '.demo-close', art: '.demo-c__art', words: '.demo-c__words', live: '.demo-c__live', review: '.demo-c__review' };
   for (const [k, sel] of Object.entries(PIECES)) {
     const b = rel(await rect(sel)), n = NODE[k];
@@ -416,7 +457,7 @@ try {
   ok(await waitScreen('choice'), 'phone: choice again');
   await tap('.demo-choice__get');
   ok(await waitScreen('phone'), 'phone: "She calls you" -> the outbound form');
-  ok((await text('.demo-h--form')) === 'What number would you like Sierra to call?', `phone: the redrawn form's heading (2657:1639, the owner's 11-22 title) (${await text('.demo-h--form')})`);
+  ok((await text('.demo-h--form')) === 'What number to call?', `phone: the redrawn form's heading (2657:1639, the owner's 11-24 title) (${await text('.demo-h--form')})`);
   ok(evs('demo_mode_selected', (d) => d.mode === 'outbound').length === 1 && evs('demo_mode_selected').length === 1, `events: one selection, outbound (${evs('demo_mode_selected').length})`);
   ok(evs('demo_mode_selected', ATTR).length === 1, 'attribution: the touch rides on the "She calls you" selection');
 
@@ -591,7 +632,7 @@ try {
     const c = await rect('.demo-backdrop.open .demo-card');
     if (phoneLayout) {
       ok(c.x >= 0 && c.x + c.w <= w, `${w}x${h}: the card inside the viewport (${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
-      // Every drawing inside the card (under 337px the card scales down rather than clip).
+      // Every drawing inside the card (under 360px the card scales down rather than clip).
       for (const sel of ['.demo-c__art', '.demo-c__words', '.demo-c__live', '.demo-choice__call', '.demo-choice__get', '.demo-c__review']) {
         const g = await rect(sel);
         ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.y >= c.y && g.y + g.h <= c.y + c.h, `${w}x${h}: ${sel} inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.y.toFixed(1), (g.y + g.h).toFixed(1)]} in ${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
@@ -600,14 +641,15 @@ try {
       // above the top edge), inside the card, a usable tap target even where the card zooms.
       const x = await rect('.demo-close');
       ok(!!x && (await visible('.demo-close')) && x.x >= c.x && x.x + x.w <= c.x + c.w && x.y >= c.y && x.y >= 0 && x.y + x.h <= h && x.w >= 36 && x.h >= 36, `${w}x${h}: the close button inside the card and on screen, at least 36px (${x && [x.x.toFixed(1), x.y.toFixed(1), x.w.toFixed(1)]})`);
-      // From 337px the card is the node's own size; under it the card scales down (zoom keeps
-      // every piece in proportion instead of clipping the words at the card's edges).
-      ok(w >= 337 ? Math.abs(c.w - 306) < 0.01 : c.w < 306 && c.w <= w - 4, `${w}x${h}: the card is ${w >= 337 ? "the node's 306px" : 'scaled down with the other cards'} (${c.w.toFixed(2)})`);
+      // From 360px the card is the node's own size; under it the card scales down (zoom keeps
+      // every piece in proportion instead of clipping the words at the card's edges). AFMBP-2695:
+      // the 11-24 card is 351px, so it starts scaling at 359px, not with the others at 336px.
+      ok(w >= 360 ? Math.abs(c.w - NODE.card.w) < 0.016 : c.w < NODE.card.w && c.w <= w - 4, `${w}x${h}: the card is ${w >= 360 ? "the node's 351px" : 'scaled down, whole, with 2px of shade either side'} (${c.w.toFixed(2)})`);
     } else {
       // AFMBP-2600: a computer shows the phone card, centred, at up to 125% of its design size
       // as far as the screen's height allows (16px of shade above and below), never smaller.
-      const zWant = Math.max(1, Math.min(1.25, (h - 32) / 428));
-      ok(Math.abs(c.w - 306 * zWant) < 0.6 && Math.abs(c.h - 428 * zWant) < 0.6, `${w}x${h}: the phone card at ${(zWant * 100).toFixed(1)}% (${c.w.toFixed(2)}x${c.h.toFixed(2)})`);
+      const zWant = Math.max(1, Math.min(1.25, (h - 32) / NODE.card.h));
+      ok(Math.abs(c.w - NODE.card.w * zWant) < 0.6 && Math.abs(c.h - NODE.card.h * zWant) < 0.6, `${w}x${h}: the phone card at ${(zWant * 100).toFixed(1)}% (${c.w.toFixed(2)}x${c.h.toFixed(2)})`);
       ok(Math.abs((c.x + c.w / 2) - w / 2) < 1 && c.y >= 0 && c.y + c.h <= h, `${w}x${h}: the card centred and on screen (${c.x.toFixed(1)},${c.y.toFixed(1)})`);
       ok((await text('.demo-c__words h2')) === HEADING && (await text('.demo-choice__call')) === 'You call her' && (await text('.demo-choice__get')) === 'She calls you' && (await visible('.demo-c__review')) && (await visible('.demo-close')), `${w}x${h}: the phone card: "Meet Sierra.", "You call her" / "She calls you", the review and the close button`);
       ok((await ev("!!document.querySelector('.demo-backdrop .demo-choice__h, .demo-backdrop .demo-choice__sub, .demo-backdrop .demo-d, .demo-backdrop .demo-db, .demo-backdrop .demo-m, .demo-backdrop .demo-mb')")) === false, `${w}x${h}: no second, computer-only design in the page`);
