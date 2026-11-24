@@ -12,6 +12,9 @@ import { normalize } from './lib/wp.mjs';
 import { changedUrls } from './indexnow.mjs';
 import { parseDraft, toWxr } from './make-wxr.mjs';
 import { transformCss } from './prepare-assets.mjs';
+import { createVerify, generateKeyPairSync } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { TOP_POSTS_FILE, GA4_PROPERTY, GA4_SCOPE, parseKey, serviceAccountJwt, slugFromPath, readersBySlug, reportRequest } from './lib/top-posts.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIX = join(HERE, 'fixtures', 'wp');
@@ -533,4 +536,235 @@ test('every site footer links "Hey AI, learn about us!" to /llms.txt', () => {
   const root = new URL('../..', import.meta.url).pathname;
   for (const f of ['index.html', 'hvac.html', 'plumbing.html', 'electrical.html', 'handyman.html', 'general-contractor.html', 'about/index.html'])
     assert.match(readFileSync(join(root, f), 'utf8'), /<a href="\/llms\.txt">Hey AI, learn about us!<\/a>/, f);
+});
+
+/* ---------- AFMBP-2691 (owner 11-23): the right column becomes "Top 5", the most-read posts by
+   all-time Google Analytics readers (owner: Google over WordPress's view counts, fewer pipelines).
+   Defaults the owner approved: refreshed once a day; ties go to the newer post; the same five on
+   every page, the post being read included; no saved order (no key yet) = "Recent posts".
+   Counts, the key and the token never reach a file or a log. */
+
+const { privateKey: TEST_PRIVATE, publicKey: TEST_PUBLIC } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+const KEY = { type: 'service_account', client_email: 'blog-top5@example-project.iam.gserviceaccount.com', private_key_id: 'kid-2691-test',
+  client_id: '109876543210987654321', private_key: TEST_PRIVATE.export({ type: 'pkcs8', format: 'pem' }) };
+const KEY_JSON = JSON.stringify(KEY);
+const ACCESS = 'ya29.FAKE-ACCESS-2691';
+/** Distinctive reader counts, so a test can prove none of them leaks into a file or a log. */
+const R = { tieHigh: 4711, mid: 613, tieLow: 37, unknownPost: 8800, blogHome: 9900, search: 7300 };
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+/** The sample posts plus five image-free ones (Sep 1-5, older than the samples). */
+function rankingFixture({ drop = [] } = {}) {
+  const fix = mkdtempSync(join(tmpdir(), 'bolt-fix-'));
+  cpSync(FIX, fix, { recursive: true });
+  const posts = JSON.parse(readFileSync(join(fix, 'posts.json'), 'utf8'));
+  const base = posts.find((p) => p.slug === 'no-image-post');
+  for (let i = 1; i <= 5; i++) {
+    const d = `2026-09-0${i}`;
+    posts.push({ ...base, id: 200 + i, slug: `extra-${i}`, link: `https://cms.example.test/extra-${i}/`, title: { rendered: `Extra post ${i}` },
+      date: `${d}T09:00:00`, date_gmt: `${d}T16:00:00`, modified: `${d}T09:00:00`, modified_gmt: `${d}T16:00:00` });
+  }
+  writeFileSync(join(fix, 'posts.json'), JSON.stringify(posts.filter((p) => !drop.includes(p.slug))));
+  return fix;
+}
+
+/** A stand-in for Google: the token endpoint and the GA4 report, recording every request. */
+function fakeGoogle(readersByPath, { token = [200, { access_token: ACCESS, expires_in: 3599, token_type: 'Bearer' }], report } = {}) {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url: String(url), init });
+    if (String(url) === 'https://oauth2.googleapis.com/token') return json(token[1], token[0]);
+    if (report) return json(report[1], report[0]);
+    const rows = Object.entries(readersByPath).map(([path, n]) => ({ dimensionValues: [{ value: path }], metricValues: [{ value: String(n) }] }));
+    return json({ dimensionHeaders: [{ name: 'pagePath' }], metricHeaders: [{ name: 'activeUsers', type: 'TYPE_INTEGER' }], ...(rows.length ? { rows, rowCount: rows.length } : {}), kind: 'analyticsData#runReport' });
+  };
+  return { fetchImpl, calls };
+}
+
+/** The right column: its heading and the posts it links, in order. */
+function column(html) {
+  const m = html.match(/<aside class="columns_sidebar sidebar">\s*<div class="sidebar_widget">\s*<h3>([^<]*)<\/h3>\s*<div class="stories">([\s\S]*?)<\/div>\s*<\/div>\s*<div class="sidebar_widget sidebar_msearch">/);
+  assert.ok(m, 'right column found');
+  return { heading: m[1], slugs: [...m[2].matchAll(/<div class="stories_item_title"><a href="\/blog\/([^/]+)\/">/g)].map((x) => x[1]) };
+}
+
+const logSink = () => { const lines = []; return { lines, log: (s) => lines.push(String(s)) }; };
+const SECRETS = [KEY.private_key, KEY.client_email, KEY.private_key_id, KEY.client_id, ACCESS];
+const RANKING = { '/blog/extra-3/': R.tieHigh, '/blog/answer-every-call/': R.tieHigh, '/blog/why-pe-buys-shops': R.mid, '/blog/extra-5/index.html': R.tieLow,
+  '/blog/extra-1/': R.tieLow, '/blog/no-image-post/': 0, '/blog/': R.blogHome, '/blog/search/': R.search, '/blog/category/missed-calls-booking/': R.unknownPost,
+  '/blog/page/2/': R.unknownPost, '/blog/a-deleted-post/': R.unknownPost };
+const refresh = (fake, extra = {}) => ({ refresh: true, gaKey: KEY_JSON, fetchImpl: fake.fetchImpl, ...extra });
+
+test('AFMBP-2691: with no saved order the column stays "Recent posts", and a post leaves itself out', async () => {
+  const root = tempRepo();
+  const { lines, log } = logSink();
+  await build({ repoRoot: root, fixturesDir: FIX, log });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Recent posts', slugs: ['answer-every-call', 'why-pe-buys-shops', 'no-image-post'] });
+  assert.deepEqual(column(read(root, 'blog/answer-every-call/index.html')), { heading: 'Recent posts', slugs: ['why-pe-buys-shops', 'no-image-post'] });
+  assert.ok(!existsSync(join(root, TOP_POSTS_FILE)), 'no order file without a refresh');
+  assert.ok(lines.some((l) => l.endsWith('Right column: Recent posts.')));
+});
+
+test('AFMBP-2691: the daily refresh ranks posts by all-time Google Analytics readers, ties to the newer post, and every page shows the same Top 5', async () => {
+  const root = tempRepo();
+  const google = fakeGoogle(RANKING);
+  const { lines, log } = logSink();
+  const res = await build({ repoRoot: root, fixturesDir: rankingFixture(), log, topPosts: refresh(google) });
+  assert.equal(res.topPostsError, null);
+
+  // answer-every-call and extra-3 tie: answer-every-call is newer. extra-5 and extra-1 tie: extra-5 is newer.
+  // no-image-post (no readers), the blog home, search, categories, list pages and unpublished posts are out.
+  const want = ['answer-every-call', 'extra-3', 'why-pe-buys-shops', 'extra-5', 'extra-1'];
+  for (const rel of ['blog/index.html', 'blog/category/missed-calls-booking/index.html', 'blog/search/index.html',
+    'blog/answer-every-call/index.html', 'blog/extra-1/index.html', 'blog/no-image-post/index.html']) {
+    assert.deepEqual(column(read(root, rel)), { heading: 'Top 5', slugs: want }, rel);
+  }
+  // Same look as Recent posts: picture (when the post has one), date stamp, title.
+  assert.match(read(root, 'blog/index.html'), /<h3>Top 5<\/h3>\s*<div class="stories">\s*<div class="stories_item">\s*<div class="stories_item_img"><a href="\/blog\/answer-every-call\/" tabindex="-1" aria-hidden="true"><span class="bimg">[\s\S]*?<div class="stories_item_infoline infoline">\s*<div class="infoline_date"><time/);
+
+  // Two requests: a read-only Google sign-in, then the GA4 report with that token.
+  assert.equal(google.calls.length, 2);
+  const [tok, rep] = google.calls;
+  assert.equal(tok.url, 'https://oauth2.googleapis.com/token');
+  assert.equal(tok.init.method, 'POST');
+  const form = Object.fromEntries(tok.init.body);
+  assert.equal(form.grant_type, 'urn:ietf:params:oauth:grant-type:jwt-bearer');
+  const [h, c, sig] = form.assertion.split('.');
+  assert.ok(createVerify('RSA-SHA256').update(`${h}.${c}`).verify(TEST_PUBLIC, Buffer.from(sig, 'base64url')), 'signed with the key');
+  const claims = JSON.parse(Buffer.from(c, 'base64url').toString());
+  assert.equal(claims.iss, KEY.client_email);
+  assert.equal(claims.scope, 'https://www.googleapis.com/auth/analytics.readonly');
+  assert.equal(rep.url, `https://analyticsdata.googleapis.com/v1beta/properties/${GA4_PROPERTY}:runReport`);
+  assert.equal(GA4_PROPERTY, '555328343', "the site tag's property");
+  assert.equal(rep.init.method, 'POST');
+  assert.equal(rep.init.headers.Authorization, `Bearer ${ACCESS}`);
+  assert.deepEqual(JSON.parse(rep.init.body), reportRequest());
+
+  // Only the order is saved; no count, key part or token in the file or the log.
+  const saved = read(root, TOP_POSTS_FILE);
+  assert.deepEqual(Object.keys(JSON.parse(saved)), ['about', 'order']);
+  assert.deepEqual(JSON.parse(saved).order, want);
+  const counts = new RegExp(`\\b(${Object.values(R).join('|')})\\b`);
+  for (const text of [saved, lines.join('\n')]) {
+    assert.doesNotMatch(text, counts, 'no reader counts');
+    for (const s of SECRETS) assert.ok(!text.includes(s), 'no key part or token');
+  }
+  assert.ok(lines.includes('Top 5: order refreshed from Google Analytics.'));
+  assert.ok(lines.some((l) => l.endsWith('Right column: Top 5.')));
+});
+
+test('AFMBP-2691: builds that do not refresh keep the saved order; an unpublished post drops out and the newest unread post fills in', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: refresh(fakeGoogle(RANKING)) });
+  const saved = read(root, TOP_POSTS_FILE);
+
+  // The every-15-minutes build: no refresh, no request, same column, and the order file survives the manifest clean-up.
+  const again = fakeGoogle(RANKING);
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: { refresh: false, gaKey: KEY_JSON, fetchImpl: again.fetchImpl } });
+  assert.equal(again.calls.length, 0);
+  assert.equal(read(root, TOP_POSTS_FILE), saved);
+  assert.deepEqual(column(read(root, 'blog/index.html')).slugs, ['answer-every-call', 'extra-3', 'why-pe-buys-shops', 'extra-5', 'extra-1']);
+
+  await build({ repoRoot: root, fixturesDir: rankingFixture({ drop: ['extra-3'] }), log: quiet });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Top 5', slugs: ['answer-every-call', 'why-pe-buys-shops', 'extra-5', 'extra-1', 'no-image-post'] });
+});
+
+test('AFMBP-2691: fewer than five posts read: the newest of the rest fill in; nobody has read anything: "Recent posts"', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: refresh(fakeGoogle({ '/blog/why-pe-buys-shops/': R.mid })) });
+  assert.deepEqual(column(read(root, 'blog/index.html')), { heading: 'Top 5', slugs: ['why-pe-buys-shops', 'answer-every-call', 'no-image-post', 'extra-5', 'extra-4'] });
+
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: refresh(fakeGoogle({})) });
+  assert.deepEqual(JSON.parse(read(root, TOP_POSTS_FILE)).order, [], 'GA4 sends no rows when nobody has read anything');
+  assert.equal(column(read(root, 'blog/index.html')).heading, 'Recent posts');
+  assert.equal(column(read(root, 'blog/answer-every-call/index.html')).slugs.includes('answer-every-call'), false, 'Recent posts still leaves the post itself out');
+});
+
+test('AFMBP-2691: a failed refresh still builds the blog, keeps the last order, and reports why without any part of the key', async () => {
+  const root = tempRepo();
+  await build({ repoRoot: root, fixturesDir: rankingFixture(), log: quiet, topPosts: refresh(fakeGoogle({ '/blog/why-pe-buys-shops/': R.mid, '/blog/answer-every-call/': R.tieLow })) });
+  const saved = read(root, TOP_POSTS_FILE);
+  const cases = [
+    [refresh(fakeGoogle({}, { token: [400, { error: 'invalid_grant', error_description: `bad ${KEY.client_email}` }] })), /^Google sign-in failed: HTTP 400 invalid_grant$/],
+    [refresh(fakeGoogle({}, { report: [403, { error: { code: 403, message: `no access for ${KEY.client_email}`, status: 'PERMISSION_DENIED' } }] })), /^Google Analytics answered HTTP 403 PERMISSION_DENIED$/],
+    [refresh(fakeGoogle({}, { report: [200, { foo: 1 }] })), /^unexpected Google Analytics response \(keys: foo\)$/],
+    [refresh(fakeGoogle({}, { report: [200, { metricHeaders: [], rows: [{ x: 1 }] }] })), /^unexpected Google Analytics response \(no path\/readers pairs\)$/],
+    [{ refresh: true, gaKey: KEY_JSON, fetchImpl: async () => { throw new Error(`network down for ${KEY.client_email} ${KEY.private_key_id}`); } }, /^network down for \[redacted\] \[redacted\]$/],
+    [{ refresh: true, gaKey: '{"nope": "not a key"}', fetchImpl: fakeGoogle({}).fetchImpl }, /^GA4_SA_KEY is not a Google service-account key \(the JSON file from Google Cloud\)$/],
+  ];
+  for (const [topPosts, want] of cases) {
+    const { lines, log } = logSink();
+    const res = await build({ repoRoot: root, fixturesDir: rankingFixture(), log, topPosts });
+    assert.match(res.topPostsError, want);
+    assert.equal(read(root, TOP_POSTS_FILE), saved, 'last order kept');
+    assert.ok(existsSync(join(root, 'blog/index.html')), 'blog still built');
+    assert.deepEqual(column(read(root, 'blog/index.html')).slugs.slice(0, 2), ['why-pe-buys-shops', 'answer-every-call']);
+    assert.ok(lines.some((l) => l.startsWith('WARNING Top 5: refresh failed')));
+    for (const s of SECRETS) assert.ok(!lines.join('\n').includes(s) && !res.topPostsError.includes(s), 'no key part or token in the log or the error');
+  }
+});
+
+test('AFMBP-2691: asked to refresh with no key, the build calls nobody and keeps "Recent posts"', async () => {
+  const root = tempRepo();
+  const google = fakeGoogle(RANKING);
+  const { lines, log } = logSink();
+  const res = await build({ repoRoot: root, fixturesDir: FIX, log, topPosts: { refresh: true, gaKey: '', fetchImpl: google.fetchImpl } });
+  assert.equal(google.calls.length, 0);
+  assert.equal(res.topPostsError, null, 'no key yet is not a failure');
+  assert.ok(lines.includes('Top 5: GA4_SA_KEY is not set, so the order was not refreshed.'));
+  assert.equal(column(read(root, 'blog/index.html')).heading, 'Recent posts');
+});
+
+test('AFMBP-2691: post paths map to slugs, readers add up across a post\'s path forms, and the report asks for people (active users) since 2020', () => {
+  for (const [path, slug] of [['/blog/a-post/', 'a-post'], ['/blog/a-post', 'a-post'], ['/blog/a-post/index.html', 'a-post'], ['/blog/', null], ['/blog/search/', null],
+    ['/blog/page/2/', null], ['/blog/category/x/', null], ['/blog/assets/css/blog.css', null], ['/hvac.html', null], [undefined, null]]) {
+    assert.equal(slugFromPath(path), slug, String(path));
+  }
+  const rows = (pairs) => ({ metricHeaders: [{ name: 'activeUsers' }], rows: pairs.map(([p, n]) => ({ dimensionValues: [{ value: p }], metricValues: [{ value: String(n) }] })) });
+  assert.deepEqual([...readersBySlug(rows([['/blog/a/', 2], ['/blog/a', 3], ['/blog/', 50], ['/blog/b/index.html', 1]]))], [['a', 5], ['b', 1]]);
+  assert.deepEqual([...readersBySlug({ dimensionHeaders: [], metricHeaders: [], kind: 'analyticsData#runReport' })], [], 'no rows = nobody yet');
+  assert.throws(() => readersBySlug({ error: { status: 'X' } }), /unexpected Google Analytics response \(keys: error\)/);
+  const req = reportRequest();
+  assert.deepEqual(req.metrics, [{ name: 'activeUsers' }], 'readers are people, not page views');
+  assert.deepEqual(req.dateRanges, [{ startDate: '2020-01-01', endDate: 'today' }], 'all time');
+  assert.deepEqual(req.dimensionFilter, { filter: { fieldName: 'pagePath', stringFilter: { matchType: 'BEGINS_WITH', value: '/blog/' } } });
+});
+
+test('AFMBP-2691: the Google sign-in is a signed, read-only, one-hour request', () => {
+  const [h, c, sig] = serviceAccountJwt(KEY, 1795000000).split('.');
+  assert.deepEqual(JSON.parse(Buffer.from(h, 'base64url').toString()), { alg: 'RS256', typ: 'JWT', kid: 'kid-2691-test' });
+  assert.deepEqual(JSON.parse(Buffer.from(c, 'base64url').toString()), { iss: KEY.client_email, scope: GA4_SCOPE, aud: 'https://oauth2.googleapis.com/token', iat: 1795000000, exp: 1795003600 });
+  assert.equal(GA4_SCOPE, 'https://www.googleapis.com/auth/analytics.readonly');
+  assert.ok(createVerify('RSA-SHA256').update(`${h}.${c}`).verify(TEST_PUBLIC, Buffer.from(sig, 'base64url')));
+  assert.throws(() => parseKey('{"client_email":"x","private_key":"not a key"}'), (e) => /not a Google service-account key/.test(e.message) && !e.message.includes('x'));
+});
+
+test('AFMBP-2691: the Blog workflow refreshes once a day and on Run workflow, gives the key only to those runs, and goes red after publishing if the refresh failed', () => {
+  const yml = readFileSync(join(HERE, '..', '..', '.github', 'workflows', 'blog.yml'), 'utf8');
+  const when = "(github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch')";
+  assert.match(yml, /schedule:\n    - cron: '\*\/15 \* \* \* \*'\n    - cron: '40 13 \* \* \*'\n/);
+  assert.ok(yml.includes(`TOP_POSTS_REFRESH: \${{ ${when} && '1' || '0' }}`));
+  assert.ok(yml.includes(`GA4_SA_KEY: \${{ ${when} && secrets.GA4_SA_KEY || '' }}`));
+  assert.equal((yml.match(/secrets\.GA4_SA_KEY/g) || []).length, 1, 'the key is used in one place only');
+  assert.doesNotMatch(yml, /WP_STATS_TOKEN/);
+  assert.match(yml, /- name: Build blog from WordPress\n        id: build\n/);
+  assert.match(yml, /git add -A blog sitemap\.xml robots\.txt llms\.txt/, 'blog/.top-posts.json is committed with the pages');
+  const steps = yml.split('\n      - ');
+  assert.match(steps[steps.length - 1], /^name: Fail the run if the Top 5 was not refreshed\n        if: steps\.build\.outputs\.top_posts_failed == '1'\n[\s\S]*exit 1\n?$/, 'the failure step runs last, after publishing');
+  // The build's command line writes the output that step reads.
+  assert.ok(readFileSync(join(HERE, 'build.mjs'), 'utf8').includes("appendFileSync(process.env.GITHUB_OUTPUT, 'top_posts_failed=1\\n')"));
+});
+
+test('AFMBP-2691: the key setup helper refuses a file that is not a key, without repeating it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'bolt-key-'));
+  const run = (...args) => spawnSync(process.execPath, [join(HERE, 'ga4-key-setup.mjs'), ...args], { encoding: 'utf8', timeout: 20000 });
+  const usage = run();
+  assert.equal(usage.status, 1);
+  assert.match(usage.stderr, /^Stopped: usage: node tools\/blog\/ga4-key-setup\.mjs <key\.json>/);
+  const bad = join(dir, 'not-a-key.json');
+  writeFileSync(bad, '{"private_key":"SECRET-MATERIAL-2691","client_email":"someone@example.com"}');
+  const r = run(bad, '--no-save');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /Stopped: GA4_SA_KEY is not a Google service-account key/);
+  assert.ok(!`${r.stdout}${r.stderr}`.includes('SECRET-MATERIAL-2691'), 'the file is never echoed');
 });

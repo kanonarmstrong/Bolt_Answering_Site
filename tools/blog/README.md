@@ -63,6 +63,36 @@ paste a GitHub fine-grained token for this repo only with "Contents: Read and wr
   rebuilds right away.
 - **Drafts never appear** on the site. Only published posts are read.
 
+## "Top 5" (the right column)
+
+The right column on every blog page lists the five most-read posts, ranked by all-time readers in
+Google Analytics (AFMBP-2691): the people who opened each post at boltanswering.com/blog/<slug>/,
+counted once each, so reloads don't count. The same five show on every page, the post being read
+included. Ties go to the newer post. If fewer than five posts have readers, the newest of the rest
+fill in.
+
+- **Refresh:** once a day (13:40 UTC), and whenever you click Actions → "Blog" → Run workflow.
+  Every other run reuses the saved order, `blog/.top-posts.json`. It holds post slugs only: this
+  repo and its logs are public, so reader counts are never written anywhere.
+- **Until it's connected** (no `GA4_SA_KEY` secret yet, or no post has a reader), the column says
+  "Recent posts" and shows the newest posts, as before.
+- **If a refresh fails** (a revoked key, a change at Google), the blog still publishes and the
+  column keeps its last order. That run turns red, so GitHub emails you.
+
+**One-time setup (about 5 minutes):** the build reads Google Analytics with a Google
+service-account key that is read-only (scope `analytics.readonly`).
+
+1. Google Cloud console → IAM & Admin → Service accounts → an account that already has Viewer
+   access to the site's GA4 property (the one the Grafana "GA4" data source uses) → Keys → Add key
+   → Create new key → JSON. A `.json` file downloads.
+2. Run `node tools/blog/ga4-key-setup.mjs <that file>`. It checks the key can read the blog's
+   Google Analytics, then saves it as the GitHub secret `GA4_SA_KEY` with the GitHub CLI. The key
+   is never shown. Then delete the downloaded file.
+3. Actions → "Blog" → Run workflow. The column switches to "Top 5" a few minutes later.
+
+To turn it off, delete the `GA4_SA_KEY` secret and `blog/.top-posts.json`. To revoke the key,
+delete it from the service account's Keys tab.
+
 ## Importing drafts
 
 `make-wxr.mjs` turns markdown drafts into a WordPress import file. They arrive as **drafts**:
@@ -96,3 +126,7 @@ WP_BASE_URL=https://cms.boltanswering.com node tools/blog/build.mjs
 - The Benchy demo photos are not used or committed: they are stock images we don't have rights to
   publish.
 - The IndexNow key is the `<32 hex>.txt` file at the repo root. It is public by design.
+- "Top 5": `lib/top-posts.mjs` (the Google sign-in and report, the ranking, the saved order) and
+  `ga4-key-setup.mjs` (the one-time key check and save). `TOP_POSTS_REFRESH=1 GA4_SA_KEY="$(cat
+  key.json)"` makes a build refresh the order first (`GA4_PROPERTY_ID` overrides the property);
+  the Blog workflow sets both only on its daily run and on Run workflow.

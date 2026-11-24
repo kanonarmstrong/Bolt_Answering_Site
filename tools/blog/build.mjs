@@ -11,8 +11,11 @@
      sitemap.xml, robots.txt, llms.txt
 
    Anything it generated last time but not this time (an unpublished or deleted post)
-   is removed, using blog/.manifest.json. Hand-made files are never touched. */
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
+   is removed, using blog/.manifest.json. Hand-made files are never touched.
+
+   "Top 5" (lib/top-posts.mjs): with TOP_POSTS_REFRESH=1 and GA4_SA_KEY set, it first
+   refreshes blog/.top-posts.json from Google Analytics; otherwise it reuses that file. */
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchFromWordPress, loadFixtures, normalize } from './lib/wp.mjs';
@@ -21,10 +24,21 @@ import { layout as renderLayout, listPage, articlePage, searchPage } from './lib
 import { readSiteChrome } from './lib/chrome.mjs';
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt, readSoloPricing } from './lib/seo.mjs';
 import { abs, postPath, categoryPath, pagePath, stripTags, readingMinutes, BLOG_PATH, POSTS_PER_PAGE } from './lib/util.mjs';
+import { parseKey, readSavedOrder, refreshOrder, topFive } from './lib/top-posts.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, fixturesDir, log = console.log } = {}) {
+/** Hide every part of the Google key (and the key itself) in a message meant for a public log. */
+function redactKey(message, keyJson) {
+  const parts = [keyJson];
+  try { const k = JSON.parse(keyJson); parts.push(k.private_key, k.client_email, k.private_key_id, k.client_id); } catch {}
+  return parts.filter((p) => typeof p === 'string' && p.length >= 8).reduce((m, p) => m.split(p).join('[redacted]'), message);
+}
+
+/** topPosts: { refresh, gaKey, property, fetchImpl } — refresh the "Top 5" order from Google
+ *  Analytics before building (the Blog workflow asks once a day). gaKey = the service-account
+ *  key JSON; property defaults to the site's GA4 property. */
+export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, fixturesDir, log = console.log, topPosts = {} } = {}) {
   const raw = fixturesDir ? loadFixtures(resolve(fixturesDir)) : await fetchFromWordPress(wpBaseUrl);
   const { posts, categories } = normalize(raw);
   const ctx = { repoRoot, wpHost: raw.wpHost, fixtureDir: raw.fixtureDir, linkMap: new Map() };
@@ -82,6 +96,27 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
 
   for (const c of categories) c.count = posts.filter((p) => p.categories.some((pc) => pc.slug === c.slug)).length;
   const recent = posts.slice(0, 5);
+  // The right column: "Top 5" once Google Analytics has ranked the posts, else "Recent posts"
+  // (a post's own page then leaves itself out). The Top 5 is the same on every page, the post
+  // being read included (owner 11-23). Counts are never logged: the repo and its logs are public.
+  let topPostsError = null;
+  if (topPosts.refresh) {
+    if (!topPosts.gaKey) {
+      log('Top 5: GA4_SA_KEY is not set, so the order was not refreshed.');
+    } else {
+      try {
+        await refreshOrder({ repoRoot, posts, key: parseKey(topPosts.gaKey), property: topPosts.property, fetchImpl: topPosts.fetchImpl });
+        log('Top 5: order refreshed from Google Analytics.');
+      } catch (e) {
+        topPostsError = redactKey(String(e?.message || e), topPosts.gaKey);
+        log(`WARNING Top 5: refresh failed (${topPostsError}); kept the last saved order.`);
+      }
+    }
+  }
+  const top = topFive(posts, readSavedOrder(repoRoot));
+  const side = (p) => (top
+    ? { heading: 'Top 5', items: top }
+    : { heading: 'Recent posts', items: p ? recent.filter((r) => r.slug !== p.slug).slice(0, 4) : recent });
   // Every blog page wears the marketing site's own header and footer; Benchy only styles the content.
   const site = readSiteChrome(repoRoot);
   const layout = (opts) => renderLayout({ ...opts, chrome: site });
@@ -107,7 +142,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       prev: n > 1 ? abs(pagePath(n - 1)) : undefined,
       next: n < pages ? abs(pagePath(n + 1)) : undefined,
       jsonLd: [blogJsonLd(posts), breadcrumbJsonLd(crumbs)],
-      body: chrome(listPage({ crumbs: n === 1 ? undefined : crumbs, posts: slice, current: n, total: pages, recent, categories })),
+      body: chrome(listPage({ crumbs: n === 1 ? undefined : crumbs, posts: slice, current: n, total: pages, side: side(), categories })),
     }));
   }
 
@@ -120,7 +155,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       description: c.description || `Bolt Answering blog posts about ${c.name.toLowerCase()} for independent trades pros.`,
       canonical: abs(categoryPath(c.slug)),
       jsonLd: [breadcrumbJsonLd(crumbs)],
-      body: chrome(listPage({ heading: c.name, posts: inCat, current: 1, total: 1, recent, categories, intro: c.description })),
+      body: chrome(listPage({ heading: c.name, posts: inCat, current: 1, total: 1, side: side(), categories, intro: c.description })),
     }));
   }
 
@@ -139,7 +174,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
       published: p.datePublished,
       modified: p.dateModified,
       jsonLd: [articleJsonLd(p), breadcrumbJsonLd(crumbs), ...(p.faq.length ? [faqJsonLd(p.faq)] : [])],
-      body: chrome(articlePage({ post: p, html: p.html, recent: recent.filter((r) => r.slug !== p.slug).slice(0, 4), categories, related: [...related, ...fill] })),
+      body: chrome(articlePage({ post: p, html: p.html, side: side(p), categories, related: [...related, ...fill] })),
     }));
   }
 
@@ -149,7 +184,7 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
     description: 'Search Bolt Answering blog posts.',
     canonical: abs('/blog/search/'),
     robots: 'noindex, follow',
-    body: chrome(searchPage({ recent, categories })),
+    body: chrome(searchPage({ side: side(), categories })),
   }));
   if (hasPosts) write('blog/search-index.json', JSON.stringify(posts.map((p) => ({
     t: p.title, u: postPath(p.slug), d: p.description, c: p.categories.map((c) => c.name).join(', '), x: stripTags(p.html).slice(0, 4000),
@@ -187,9 +222,9 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
   mkdirSync(dirname(manifestPath), { recursive: true });
   writeFileSync(manifestPath, JSON.stringify({ files: [...written].sort(), imageDirs: imageDirs.sort() }, null, 2) + '\n');
 
-  log(`Built ${posts.length} post(s), ${categories.length} categor(y/ies), ${pages} list page(s). Removed ${removed.length} stale file(s).`);
+  log(`Built ${posts.length} post(s), ${categories.length} categor(y/ies), ${pages} list page(s). Removed ${removed.length} stale file(s). Right column: ${top ? 'Top 5' : 'Recent posts'}.`);
   for (const w of warnings) log(`WARNING ${w}`);
-  return { posts, categories, warnings, removed, written };
+  return { posts, categories, warnings, removed, written, topPostsError };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -200,5 +235,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error('Set WP_BASE_URL (e.g. https://cms.boltanswering.com) or pass --fixtures <dir>.');
     process.exit(2);
   }
-  build({ fixturesDir, wpBaseUrl }).catch((e) => { console.error(e); process.exit(1); });
+  const topPosts = { refresh: process.env.TOP_POSTS_REFRESH === '1', gaKey: process.env.GA4_SA_KEY || '', property: process.env.GA4_PROPERTY_ID || undefined };
+  build({ fixturesDir, wpBaseUrl, topPosts }).then(({ topPostsError }) => {
+    // The blog still builds and publishes; the workflow fails the run after publishing, so a
+    // revoked key or a changed Google API can't freeze the Top 5 unnoticed.
+    if (!topPostsError) return;
+    console.log(`::error title=Top 5 not refreshed::${topPostsError}. The blog still built; the column keeps its last order. Check the GA4_SA_KEY secret.`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'top_posts_failed=1\n');
+  }).catch((e) => { console.error(e); process.exit(1); });
 }
