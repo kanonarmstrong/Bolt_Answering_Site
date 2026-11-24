@@ -12,10 +12,11 @@ name: Blog
 # variables → Actions → Variables). Until it is set, the build step is skipped.
 # GitHub pauses schedules in a repo with no commits for 60 days; re-enable on the Actions tab.
 # "Top 5" (AFMBP-2691): once a day (13:40 UTC) and on "Run workflow", the build re-ranks the
-# right column's posts by all-time WordPress.com Stats views, using the WP_STATS_TOKEN secret
-# (tools/blog/wp-stats-token.mjs sets it up). Only those runs get the token; every other build
-# reuses the saved order. Only the order is saved: the repo and its logs are public, so view
-# counts never appear here. If the refresh fails, the blog still publishes and the run goes red.
+# right column's posts by all-time Google Analytics readers, using the GA4_SA_KEY secret (a
+# read-only Google service-account key; tools/blog/ga4-key-setup.mjs checks and saves it). Only
+# those runs get the key; every other build reuses the saved order. Only the order is saved:
+# the repo and its logs are public, so reader counts never appear here. If the refresh fails,
+# the blog still publishes and the run goes red.
 
 on:
   repository_dispatch:
@@ -84,7 +85,7 @@ jobs:
         env:
           WP_BASE_URL: ${{ vars.WP_BASE_URL }}
           TOP_POSTS_REFRESH: ${{ (github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
-          WP_STATS_TOKEN: ${{ (github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch') && secrets.WP_STATS_TOKEN || '' }}
+          GA4_SA_KEY: ${{ (github.event.schedule == '40 13 * * *' || github.event_name == 'workflow_dispatch') && secrets.GA4_SA_KEY || '' }}
         run: node tools/blog/build.mjs
       - name: Commit if anything changed
         id: commit
@@ -111,5 +112,5 @@ jobs:
       - name: Fail the run if the Top 5 was not refreshed
         if: steps.build.outputs.top_posts_failed == '1'
         run: |
-          echo "::error::The blog built and published, but the Top 5 order was not refreshed from WordPress.com Stats (see the build step). Check the WP_STATS_TOKEN secret."
+          echo "::error::The blog built and published, but the Top 5 order was not refreshed from Google Analytics (see the build step). Check the GA4_SA_KEY secret."
           exit 1

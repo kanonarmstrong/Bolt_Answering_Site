@@ -13,8 +13,8 @@
    Anything it generated last time but not this time (an unpublished or deleted post)
    is removed, using blog/.manifest.json. Hand-made files are never touched.
 
-   "Top 5" (lib/top-posts.mjs): with TOP_POSTS_REFRESH=1 and WP_STATS_TOKEN set, it first
-   refreshes blog/.top-posts.json from WordPress.com Stats; otherwise it reuses that file. */
+   "Top 5" (lib/top-posts.mjs): with TOP_POSTS_REFRESH=1 and GA4_SA_KEY set, it first
+   refreshes blog/.top-posts.json from Google Analytics; otherwise it reuses that file. */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,12 +24,20 @@ import { layout as renderLayout, listPage, articlePage, searchPage } from './lib
 import { readSiteChrome } from './lib/chrome.mjs';
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, blogJsonLd, staticPages, sitemapXml, rssXml, robotsTxt, llmsTxt, readSoloPricing } from './lib/seo.mjs';
 import { abs, postPath, categoryPath, pagePath, stripTags, readingMinutes, BLOG_PATH, POSTS_PER_PAGE } from './lib/util.mjs';
-import { readSavedOrder, refreshOrder, topFive } from './lib/top-posts.mjs';
+import { parseKey, readSavedOrder, refreshOrder, topFive } from './lib/top-posts.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-/** topPosts: { refresh, token, site, fetchImpl } — refresh the "Top 5" order from WordPress.com
- *  Stats before building (the Blog workflow asks once a day). site defaults to the WordPress host. */
+/** Hide every part of the Google key (and the key itself) in a message meant for a public log. */
+function redactKey(message, keyJson) {
+  const parts = [keyJson];
+  try { const k = JSON.parse(keyJson); parts.push(k.private_key, k.client_email, k.private_key_id, k.client_id); } catch {}
+  return parts.filter((p) => typeof p === 'string' && p.length >= 8).reduce((m, p) => m.split(p).join('[redacted]'), message);
+}
+
+/** topPosts: { refresh, gaKey, property, fetchImpl } — refresh the "Top 5" order from Google
+ *  Analytics before building (the Blog workflow asks once a day). gaKey = the service-account
+ *  key JSON; property defaults to the site's GA4 property. */
 export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, fixturesDir, log = console.log, topPosts = {} } = {}) {
   const raw = fixturesDir ? loadFixtures(resolve(fixturesDir)) : await fetchFromWordPress(wpBaseUrl);
   const { posts, categories } = normalize(raw);
@@ -88,19 +96,19 @@ export async function build({ repoRoot = resolve(HERE, '..', '..'), wpBaseUrl, f
 
   for (const c of categories) c.count = posts.filter((p) => p.categories.some((pc) => pc.slug === c.slug)).length;
   const recent = posts.slice(0, 5);
-  // The right column: "Top 5" once WordPress.com Stats have ranked the posts, else "Recent posts"
+  // The right column: "Top 5" once Google Analytics has ranked the posts, else "Recent posts"
   // (a post's own page then leaves itself out). The Top 5 is the same on every page, the post
   // being read included (owner 11-23). Counts are never logged: the repo and its logs are public.
   let topPostsError = null;
   if (topPosts.refresh) {
-    if (!topPosts.token) {
-      log('Top 5: WP_STATS_TOKEN is not set, so the order was not refreshed.');
+    if (!topPosts.gaKey) {
+      log('Top 5: GA4_SA_KEY is not set, so the order was not refreshed.');
     } else {
       try {
-        await refreshOrder({ repoRoot, posts, site: topPosts.site || raw.wpHost, token: topPosts.token, fetchImpl: topPosts.fetchImpl });
-        log('Top 5: order refreshed from WordPress.com Stats.');
+        await refreshOrder({ repoRoot, posts, key: parseKey(topPosts.gaKey), property: topPosts.property, fetchImpl: topPosts.fetchImpl });
+        log('Top 5: order refreshed from Google Analytics.');
       } catch (e) {
-        topPostsError = String(e?.message || e).split(topPosts.token).join('[token]');
+        topPostsError = redactKey(String(e?.message || e), topPosts.gaKey);
         log(`WARNING Top 5: refresh failed (${topPostsError}); kept the last saved order.`);
       }
     }
@@ -227,12 +235,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error('Set WP_BASE_URL (e.g. https://cms.boltanswering.com) or pass --fixtures <dir>.');
     process.exit(2);
   }
-  const topPosts = { refresh: process.env.TOP_POSTS_REFRESH === '1', token: process.env.WP_STATS_TOKEN || '' };
+  const topPosts = { refresh: process.env.TOP_POSTS_REFRESH === '1', gaKey: process.env.GA4_SA_KEY || '', property: process.env.GA4_PROPERTY_ID || undefined };
   build({ fixturesDir, wpBaseUrl, topPosts }).then(({ topPostsError }) => {
     // The blog still builds and publishes; the workflow fails the run after publishing, so a
-    // broken token or a changed Stats API can't freeze the Top 5 unnoticed.
+    // revoked key or a changed Google API can't freeze the Top 5 unnoticed.
     if (!topPostsError) return;
-    console.log(`::error title=Top 5 not refreshed::${topPostsError}. The blog still built; the column keeps its last order. Check the WP_STATS_TOKEN secret.`);
+    console.log(`::error title=Top 5 not refreshed::${topPostsError}. The blog still built; the column keeps its last order. Check the GA4_SA_KEY secret.`);
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'top_posts_failed=1\n');
   }).catch((e) => { console.error(e); process.exit(1); });
 }
