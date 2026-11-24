@@ -85,10 +85,10 @@ function mutate(file, s) {
   if (NC === 'mobilealt' && file === 'general-contractor.html') return swap('alt="Bolt Answering for General Contractors: ', 'alt="');
   if (NC === 'social' && file === 'electrical.html') return swap('<a href="https://www.instagram.com/boltanswering/" class="footer__icon"', '<a href="#" class="footer__icon"');
   if (NC === 'legal' && file === 'terms/index.html') return swap('refers to hlpr inc., 9180', 'refers to hlpr, 9180');
-  if (NC === 'aboutdup' && file === 'about/index.html') return swap('<a href="/about/" aria-current="page">About</a>\n', '<a href="/about/" aria-current="page">About</a>\n      <a href="/about/">About</a>\n');
+  if (NC === 'aboutdup' && file === 'about/index.html') return swap('<li><a href="/about/" aria-current="page">About</a></li>', '<li><a href="/about/" aria-current="page">About</a></li><li><a href="/about/">About</a></li>');
   if (NC === 'aboutart' && file === 'about/index.html') return swap('<div class="about__body">', '<div class="about__body">\n        <img class="about__art" src="/assets/about/bearded-man.webp" alt="" />');
   if (NC === 'aboutnav' && file === 'support/index.html') return swap('<li><a href="/about/">About</a></li>', '');
-  if (NC === 'aboutfooter' && file === 'hvac.html') return swap('<a href="/about/">About</a>', '');
+  if (NC === 'aboutfooter' && file === 'hvac.html') return swap('<a href="#top">Back to Top</a>', '<a href="#top">Back to Top</a>\n      <a href="/about/">About</a>');
   if (NC === 'abouth1' && file === 'about/index.html') return swap('<span class="sr-only">About Bolt Answering</span>', '');
   if (NC === 'aboutcopy' && file === 'about/index.html') return swap('Bolt makes sure that call reaches you.', 'Bolt Answering makes sure that call reaches you.');
   if (NC === 'aboutld' && file === 'about/index.html') return swap('"@id": "https://www.boltanswering.com/#organization"', '"@id": "https://www.boltanswering.com/#org"');
@@ -207,15 +207,11 @@ for (const page of pages) {
     }
   }
 
-  check(`${page}: at most one About link in the nav and one in the footer`, () =>
-    assert.equal((html.match(/href="\/about\/"/g) || []).length, (html.includes('class="nav__links"') ? 1 : 0) + (html.includes('class="footer__menu"') ? 1 : 0)));
+  check(`${page}: one About link, in the nav; the footer has none (AFMBP-2692, owner 11-24)`, () =>
+    assert.equal((html.match(/href="\/about\/"/g) || []).length, html.includes('class="nav__links"') ? 1 : 0));
   if (html.includes('class="nav__links"')) {
     check(`${page}: the nav links to /about/ right after Home`, () =>
       assert.match(html, /<li><a href="(?:#top|index\.html|\/)">Home<\/a><\/li>\s*<li><a href="\/about\/"( aria-current="page")?>About<\/a><\/li>/));
-  }
-  if (html.includes('class="footer__menu"')) {
-    check(`${page}: the footer links to /about/ right after Home`, () =>
-      assert.match(html, /<a href="(?:#top|index\.html|\/)">Home<\/a>\s*<a href="\/about\/"( aria-current="page")?>About<\/a>/));
   }
   if (page === 'about/index.html') {
     check('about: title "About Bolt Answering — Never miss a job again"', () => assert.equal(title, 'About Bolt Answering — Never miss a job again'));
@@ -232,7 +228,7 @@ for (const page of pages) {
     });
     check('about: no watermark drawings (owner removed them from the node, 11-13)', () =>
       assert.doesNotMatch(html, /assets\/about\/|about__art/));
-    check('about: the nav and footer mark About as the current page', () => assert.equal((html.match(/<a href="\/about\/" aria-current="page">About<\/a>/g) || []).length, 2));
+    check('about: the nav marks About as the current page (the footer has no About link since AFMBP-2692)', () => assert.equal((html.match(/<a href="\/about\/" aria-current="page">About<\/a>/g) || []).length, 1));
     check('about: the owner\'s node copy, verbatim (first paragraph; 6 + 5 list items; the trial length follows pricing.js)', () => {
       assert.ok(html.includes('<p class="about__p--5">When the heat goes out or a pipe bursts, a family calls you. Bolt makes sure that call reaches you.</p>'));
       assert.deepEqual([...html.matchAll(/<ol class="about__list[^"]*">([\s\S]*?)<\/ol>/g)].map((m) => (m[1].match(/<li>/g) || []).length), [6, 5]);

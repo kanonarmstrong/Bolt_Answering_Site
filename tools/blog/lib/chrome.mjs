@@ -12,9 +12,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** Make one href/src value work from any depth: "x.html" -> "/x.html", "#pricing" -> "/#pricing",
- *  "index.html#how" -> "/#how". Absolute URLs, mailto/tel, "/…" and a bare "#" are unchanged. */
+ *  "index.html#how" -> "/#how". Absolute URLs, mailto/tel, "/…", a bare "#" and "#top" are unchanged:
+ *  "#top" is the top of whichever page it is on (the footer's "Back to Top", AFMBP-2692), not the home page's. */
 export function absolutizeUrl(u) {
-  if (!u || u === '#' || /^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(u)) return u;
+  if (!u || u === '#' || u === '#top' || /^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(u)) return u;
   if (u.startsWith('#')) return `/${u}`;
   const [path, hash = ''] = u.split('#');
   const clean = path.replace(/^\.\//, '');
