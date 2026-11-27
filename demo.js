@@ -497,55 +497,100 @@
     ], 'choice');
     ensureInbound().then(function (s) { if (s) call.setAttribute('href', s.telUri); });
   }
-  // AFMBP-2273 — the sign-up offer (Figma 2718:3312; the "New jobs are calling"
-  // design of 2026-11-02, AFMBP-2495): the card's art (paper, with the headline
-  // drawn in it), the close, the pitch with the bolt wordmark set into its first
-  // line, the boxed "It's FREE" line, one blue "Start your free trial" into the sign-up flow,
-  // and the rating with a testimonial in a speech bubble, tilted (no help line).
-  // The same card at every width (no desktop node yet). attribution.js decorates
-  // the link as it is tapped (visitor id, ad tags, QA flag); a tap inside the
-  // dialog is logged here, as the demo's own trial links are.
+  // AFMBP-2273 — the sign-up offer. AFMBP-2714: the owner's email card of 2026-11-27, Figma
+  // 2955:2387 (field empty) / 2957:3273 (typed), handoff contract v1 in AFMBP-2712. On the card: its
+  // art (paper, with the headline drawn in it), the close, the pitch with the bolt wordmark set into
+  // its first line, the trial line, "Security" with its lock, the email field, Continue, the terms
+  // line and the rating (one drawing). Continue is grey and disabled while the field is empty and
+  // blue once anything is typed. The card does not check the address: the app's screen shows an
+  // invalid one. The same card at every width (no desktop node yet).
+  // Continue takes the address to the app's email sign-up screen, which sends the link on arrival.
+  // The address rides in the URL's fragment (#email=…), which a browser never sends to any server;
+  // the app reads it and takes it out of its address before its pixel starts. The address never
+  // goes in the query string, a cookie, storage or an event.
+  var SO_SIGNUP = 'https://app.boltanswering.com/signup?entry=card_email';
+  var soLeaving = false;
+  // Back from the app (this page restored from the back/forward cache): Continue works again.
+  window.addEventListener('pageshow', function (e) { if (e.persisted) soLeaving = false; });
   function renderSignupOffer() {
     clearResend();
     stopRecap();
     stopInbound();
     inboundFlow = null;
     step = 'signup_offer';
+    soLeaving = false;
+    var typed = false;
+    var field = h('input', { class: 'demo-so__email', id: 'demo-so-email', type: 'email', name: 'email', inputmode: 'email',
+      autocomplete: 'email', autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', enterkeyhint: 'go', maxlength: '254', placeholder: 'Email' });
+    var go = h('button', { class: 'demo-so__go', type: 'button', disabled: '' }, ['Continue']);
+    // Continue follows the field. signup_offer_email_typed goes once per card open, on the first
+    // character typed; it carries nothing typed.
+    function sync() {
+      var v = field.value.trim();
+      go.disabled = !v;
+      if (v && !typed) { typed = true; track('signup_offer_email_typed'); }
+    }
     // AFMBP-2344: the tap's event must leave before the page does. When the next page starts
     // loading at once, some browsers drop it (live: 3 of 6 sign-up arrivals since 10-17 had no
-    // logged tap). So the button holds the page until the event has gone out, at most 0.3 s,
-    // then follows its link, which attribution.js decorated in the capture phase. A new tab or
-    // window keeps the browser's own behaviour: this page stays.
-    var cta = h('a', { class: 'demo-btn demo-so__cta', href: 'https://app.boltanswering.com/signup', onClick: function (e) {
-      var sent = track('trial_link_clicked', { placement: 'signup_offer' });
-      if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    // logged tap). So Continue holds the page until the event has gone out, at most 0.3 s, then
+    // goes to the app. attribution.js decorates the address as before (visitor id, ad tags, QA
+    // flag); the email goes on after it, in the fragment. One departure: a second tap does
+    // nothing more (until the page comes back from the app, below).
+    function submit() {
+      var v = field.value.trim();
+      if (!v || soLeaving) return;
+      soLeaving = true;
+      var sent = track('trial_link_clicked', { placement: 'signup_offer', form: 'email' });
+      var href = SO_SIGNUP;
+      try { if (window.boltAttr && window.boltAttr.decorate) href = window.boltAttr.decorate(SO_SIGNUP); } catch (e) {}
+      href += '#email=' + encodeURIComponent(v);
+      var gone = false;
+      var leave = function () { if (!gone) { gone = true; window.location.href = href; } };
+      setTimeout(leave, 300);
+      if (sent && sent.then) sent.then(leave, leave);
+    }
+    field.addEventListener('input', sync);
+    field.addEventListener('change', sync);
+    // The keyboard's Go key (Enter) is Continue, while Continue is enabled.
+    field.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.isComposing) return;
       e.preventDefault();
-      var href = e.currentTarget.href, gone = false;
-      var go = function () { if (!gone) { gone = true; window.location.href = href; } };
-      setTimeout(go, 300);
-      if (sent && sent.then) sent.then(go, go);
-    } }, ['Start your free trial']);
+      submit();
+    });
+    go.addEventListener('click', submit);
     setBody([
       h('div', { class: 'demo-cm' }, [
         // The headline is drawn in the card's art; this is its text, for screen readers.
         h('h2', { class: 'demo-cm__h', text: 'New jobs are calling' }),
-        // The wordmark stands in for "Bolt": drawn in the room the node leaves for it at the
-        // start of the line, and read out as the word.
+        // The pitch: the node outlines it (2957:3271, its layer name carries the words); here it is
+        // live text, so screen readers read it and its per-day figure can follow the price. The wordmark
+        // stands in for "Bolt": drawn in the room the node leaves for it at the start of the line,
+        // and read out as the word.
         h('p', { class: 'demo-cm__sub' }, [
           h('span', { class: 'demo-so__bolt' }, [h('span', { class: 'demo-so__vh', text: 'Bolt ' })]),
-          'is your 24/7 receptionist that ',
-          h('span', { class: 'demo-so__big', text: 'answers calls and books customers so you never miss a job again.' })
+          'is your professional, 24/7 receptionist that ',
+          h('span', { class: 'demo-so__big', text: 'answers calls, books customers and more for less than $4 a day.' })
         ]),
-        h('p', { class: 'demo-so__free' }, ['It’s ', h('b', { text: 'FREE ' }), 'to set up an assistant. Get started ', h('b', { text: 'today.' })])
+        h('p', { class: 'demo-so__free' }, ['Create an account to start your ', h('b', { text: 'FREE' }), ' 30-day trial now.'])
       ]),
-      cta,
-      // The bubble and stars are drawn and hidden from screen readers; "4.9/5" says it.
-      h('div', { class: 'demo-cr' }, [
-        h('span', { class: 'demo-so__bubble', 'aria-hidden': 'true' }),
-        h('p', { class: 'demo-so__who' }, [h('b', { text: 'Brent B. ' }), 'Indiana']),
-        h('span', { class: 'demo-cm__stars', 'aria-hidden': 'true' }, [h('span'), h('span'), h('span'), h('span'), h('span')]),
-        h('p', { class: 'demo-cm__score', text: '4.9/5' }),
-        h('p', { class: 'demo-cm__quote', text: '“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”' })
+      // "Security" and its lock: the node's two drawings, above the field's right end.
+      h('span', { class: 'demo-so__secure', 'aria-hidden': 'true' }),
+      h('label', { class: 'demo-so__vh', for: 'demo-so-email', text: 'Email' }),
+      field,
+      go,
+      // The terms line (2957:3265), its break after "our" as drawn. The pages open in a new tab, so
+      // the card and what was typed stay.
+      h('p', { class: 'demo-so__terms' }, [
+        'By tapping “Continue”, you agree to our', h('br'),
+        h('a', { href: '/privacy/', target: '_blank', rel: 'noopener' }, ['Privacy Policy']), ' and ',
+        h('a', { href: '/terms/', target: '_blank', rel: 'noopener' }, ['Terms']), '.'
+      ]),
+      // The rating (2955:3236): bubble, reviewer, stars, "4.9/5" and the quote, one drawing. Its
+      // words are hidden text.
+      h('div', { class: 'demo-so__quote' }, [
+        h('p', { class: 'demo-so__vh', text: 'Brent B., Indiana' }),
+        h('p', { class: 'demo-so__vh', text: '4.9/5' }),
+        h('p', { class: 'demo-so__vh', text: '“Bolt booked a job and paid for itself in a day.”' })
       ])
     ], 'signup');
   }

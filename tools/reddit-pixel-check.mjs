@@ -100,6 +100,9 @@ async function scenario({ name, steps, pre = '', automated = false }) {
     if (m.sessionId !== sessionId) return;
     if (m.method === 'Fetch.requestPaused') {
       const u = m.params.request.url; const js = !u.startsWith('https://app.boltanswering.com/');
+      // AFMBP-2714: the card's Continue leaves by setting the address (no link to stop): the app's page
+      // is not loaded, so the tab stays on the card with its queue.
+      if (!js && m.params.resourceType === 'Document') { await send('Fetch.failRequest', { requestId: m.params.requestId, errorReason: 'Aborted' }, sessionId).catch(() => {}); return; }
       const rd = u.startsWith('https://www.redditstatic.com/');
       if (rd) { loads++; loadUrls.push(u); }
       // Reddit's pixel.js stub notes the cookies it would see, for [10].
@@ -137,7 +140,10 @@ let fails = 0; const ok = (c, m) => { console.log(`  ${c ? 'PASS' : 'FAIL'} ${m}
 const calls = (r) => r.q.map((c) => c.slice(0, 2).join(':') + (c.length > 2 ? '+' + JSON.stringify(c.slice(2)) : '')).join(', ') || 'none';
 const tracks = (r, ev) => r.q.filter((c) => c[0] === 'track' && c[1] === ev);
 const AD = '/start/handyman.html?utm_source=reddit&utm_medium=paid_social&utm_campaign=signup_offer&rdt_cid=TESTCLICK';
+// A start-trial tap: on the card page (AFMBP-2714) an address typed and Continue; elsewhere a sign-up link.
 const TAP = (times) => `(async () => { const w = (t) => new Promise((r) => setTimeout(r, t)); await w(1200);
+  const go = document.querySelector('.ql-go'), f = document.querySelector('.ql-email');
+  if (go && f) { f.value = 'qa-reddit@example.com'; f.dispatchEvent(new Event('input', { bubbles: true })); for (let i = 0; i < ${times}; i++) { go.click(); await w(300); } return true; }
   const a = [...document.querySelectorAll('a')].find(x => /app\\.boltanswering\\.com\\/signup/.test(x.href) && !x.closest('.demo-backdrop'));
   for (let i = 0; i < ${times} && a; i++) { a.click(); await w(300); }
   return !!a; })()`;
@@ -164,14 +170,15 @@ ok(tracks(r1, 'PageVisit').length === 1 && r1.q.length === 2, 'one PageVisit, no
 ok(r1.reddit?.enabled === true && r1.reddit?.blockedBy === null, 'window.boltReddit says it runs');
 ok(r1.sent.some((e) => e.type === 'site_landed'), 'first-party events still go to the ingest');
 
-console.log('[2] start-trial tapped twice on the card page: one Lead');
+console.log('[2] an address typed and Continue tapped twice on the card page: one Lead');
 const [r2] = await scenario({ name: 'lead', steps: [{ path: AD, act: TAP(2), until: LEAD, waitMs: 800 }] });
 console.log(`    ${calls(r2)}`);
 ok(tracks(r2, 'Lead').length === 1 && tracks(r2, 'Lead')[0].length === 2, `one Lead, no extra data (${JSON.stringify(tracks(r2, 'Lead'))})`);
-ok(r2.sent.filter((e) => e.type === 'trial_link_clicked').length >= 1, 'the first-party trial_link_clicked still goes');
+ok(r2.sent.filter((e) => e.type === 'trial_link_clicked').length === 1, 'the first-party trial_link_clicked still goes, once');
+ok(!/qa-reddit/.test(JSON.stringify(r2.q)), 'nothing queued for Reddit carries the typed address');
 
-console.log('[2b] start-trial on a trade page: Lead');
-const [r2b] = await scenario({ name: 'lead trade', steps: [{ path: '/hvac.html?utm_source=reddit', act: TAP(1), until: LEAD }] });
+console.log('[2b] start-trial tapped twice on a trade page: one Lead');
+const [r2b] = await scenario({ name: 'lead trade', steps: [{ path: '/hvac.html?utm_source=reddit', act: TAP(2), until: LEAD, waitMs: 800 }] });
 ok(tracks(r2b, 'Lead').length === 1, `one Lead (${calls(r2b)})`);
 
 console.log('[3] Global Privacy Control');
@@ -204,6 +211,8 @@ ok(r7b.loads === 1 && tracks(r7b, 'PageVisit').length === 1, 'loads and queues o
 console.log('[8] switched off mid-page (the Privacy Choices switch writes the same key): no Lead');
 const OFF_THEN_TAP = `(async () => { const w = (t) => new Promise((r) => setTimeout(r, t)); await w(1200);
   localStorage.setItem('bolt_optout', '1');
+  const go = document.querySelector('.ql-go'), f = document.querySelector('.ql-email');
+  if (go && f) { f.value = 'qa-reddit@example.com'; f.dispatchEvent(new Event('input', { bubbles: true })); go.click(); await w(600); return true; }
   const a = [...document.querySelectorAll('a')].find(x => /app\\.boltanswering\\.com\\/signup/.test(x.href) && !x.closest('.demo-backdrop'));
   a && a.click(); await w(600); return true; })()`;
 const [r8] = await scenario({ name: 'midpage', steps: [{ path: AD, act: OFF_THEN_TAP, waitMs: 1200 }] });
