@@ -215,7 +215,7 @@ ${GTAG}
     /* AFMBP-2714 — the sign-up card is the owner's email card of 2026-11-27 (Figma 2955:2387 empty,
        2957:3273 typed), every number as in demo.css: the pitch (live text, 19.032px then 20.03px
        from "answers", on the node's baselines 237.4–306.4) with the wordmark in its first line's
-       room; the trial line, "FREE" bold; "Security" and its lock; the field; Continue, grey and
+       room; the trial line, "FREE" bold; "Secured" (AFMBP-2724) and its lock; the field; Continue, grey and
        disabled while the field is empty, blue once anything is typed; the terms line; the rating,
        one drawing. */
     .ql-sub,.ql-free{
@@ -232,8 +232,8 @@ ${GTAG}
     .ql-free{top:321.41px}
     .ql-free b{font-weight:700}
     .ql-secure{
-      position:absolute;left:251.4px;top:373.4px;width:49.374px;height:11.072px;pointer-events:none;
-      background:url('/assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('/assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px no-repeat;
+      position:absolute;left:251.4px;top:373.4px;width:44.128px;height:10px;pointer-events:none;
+      background:url('/assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('/assets/demo-so-secured.svg') 11.6px 1.645px/32.528px 6.466px no-repeat;
     }
     .ql-email{
       position:absolute;left:30.4px;top:387.4px;width:275px;height:48px;margin:0;padding:0 11.67px 1.9px;box-sizing:border-box;

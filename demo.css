@@ -631,7 +631,7 @@ body.demo-lock{overflow:hidden}
    AFMBP-2273 — the sign-up offer. AFMBP-2714: the owner's email card of 2026-11-27,
    Figma 2955:2387 (field empty) / 2957:3273 (typed): the card's art (paper, with the
    headline drawn in it; the same image as before), the close, the pitch with the bolt
-   wordmark set into its first line, the trial line, "Security" with its lock, the email
+   wordmark set into its first line, the trial line, "Secured" with its lock, the email
    field, Continue, the terms line and the rating (one drawing).
    Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so these rules
    sit outside the breakpoints. Numbers are body-relative (the body sits inside the node's
@@ -715,11 +715,12 @@ body.demo-lock{overflow:hidden}
 /* The trial line: the same type on 22px lines (baselines 338.4, 360.4), "FREE" bold. */
 .demo-backdrop[data-screen="signup"] .demo-so__free{top:321.41px}
 .demo-backdrop[data-screen="signup"] .demo-so__free b{font-weight:700}
-/* "Security" (2957:3268) and its lock (2955:3252): the node's two grey drawings, the lock at
-   251.4/373.4 and the word at 262.25/374.79, in one box. */
+/* The eyebrow over the field, "Secured" (2962:977; AFMBP-2724, was "Security"), and its lock
+   (2955:3252): the node's two grey drawings, the lock at 251.4/373.4 and the word at 263/375.045,
+   in one box. */
 .demo-backdrop[data-screen="signup"] .demo-so__secure{
-  position:absolute;left:251.4px;top:373.4px;width:49.374px;height:11.072px;pointer-events:none;
-  background:url('assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px no-repeat;
+  position:absolute;left:251.4px;top:373.4px;width:44.128px;height:10px;pointer-events:none;
+  background:url('assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('assets/demo-so-secured.svg') 11.6px 1.645px/32.528px 6.466px no-repeat;
 }
 /* The field (2955:3249): 275x48, #fdfdff in a .333px #e6e6ed line (an inset shadow: Chrome draws
    a border thinner than 1px as a whole 1px), 12.667px corners, the node's 1px shadow, and the whole
