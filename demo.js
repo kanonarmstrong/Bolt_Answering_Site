@@ -563,13 +563,14 @@
         // The headline is drawn in the card's art; this is its text, for screen readers.
         h('h2', { class: 'demo-cm__h', text: 'New jobs are calling' }),
         // The pitch: the node outlines it (2957:3271, its layer name carries the words); here it is
-        // live text, so screen readers read it and its per-day figure can follow the price. The wordmark
+        // live text, so screen readers read it and its per-day figure follows the price: tools/pricing-sync.mjs
+        // writes it from the standard price (AFMBP-2720), so keep these words in step with its PER_DAY_TEXT. The wordmark
         // stands in for "Bolt": drawn in the room the node leaves for it at the start of the line,
         // and read out as the word.
         h('p', { class: 'demo-cm__sub' }, [
           h('span', { class: 'demo-so__bolt' }, [h('span', { class: 'demo-so__vh', text: 'Bolt ' })]),
           'is your professional, 24/7 receptionist that ',
-          h('span', { class: 'demo-so__big', text: 'answers calls, books customers and more for less than $4 a day.' })
+          h('span', { class: 'demo-so__big', text: 'answers calls, books customers and more for less than $3 a day.' })
         ]),
         h('p', { class: 'demo-so__free' }, ['Create an account to start your ', h('b', { text: 'FREE' }), ' 30-day trial now.'])
       ]),
@@ -1400,7 +1401,8 @@
           document.createTextNode(' '),
           h('span', { class: 'demo-success-rest', text: 'miss a job again' })
         ]),
-        h('p', { class: 'demo-success-sub', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' }),
+        // AFMBP-2720: tools/pricing-sync.mjs writes this figure from the standard price; keep the words in step with its PER_DAY_TEXT.
+        h('p', { class: 'demo-success-sub', text: 'For less than $3 per day, skip the cost of a receptionist without missing a single lead.' }),
         // The node's label is " Transcript" (its leading space is drawn by CSS).
         h('p', { class: 'demo-success-tlabel', text: 'Transcript' }),
         h('div', { class: 'demo-chatwrap' }, [box, bar]),

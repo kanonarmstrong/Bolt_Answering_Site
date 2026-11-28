@@ -12,6 +12,10 @@ name: Pricing sync
 # homepage's structured data, and the support FAQ's trial length. It never touches
 # other copy. If a page no longer matches what pricing.js renders, it stops without
 # committing anything (fix the page). An unreachable feed changes nothing.
+# AFMBP-2720: it also writes the per-day figure ("less than $N a day", from the
+# standard price) into the four lines tools/pricing-sync.mjs PER_DAY_LINES lists, then
+# this job rebuilds what is generated from them (demo.min.js, the /start/ pages). The
+# last step fails the run once the price makes the drawn "less than $4 a day" untrue.
 
 on:
   workflow_dispatch:
@@ -19,7 +23,9 @@ on:
     # Offset from the blog's */15 so the two bots rarely push in the same minute.
     - cron: '7,22,37,52 * * * *'
   pull_request:
-    paths: ['pricing.js', 'pricing.test.mjs', 'tools/pricing-sync.mjs', 'tools/pricing-sync.test.mjs', '.github/workflows/pricing-sync.yml']
+    # demo.js, about/index.html and the /start/ template hold the per-day lines (AFMBP-2720): a PR that
+    # rewords one without tools/pricing-sync.mjs would stop the next sync, so the tests run on it.
+    paths: ['pricing.js', 'pricing.test.mjs', 'tools/pricing-sync.mjs', 'tools/pricing-sync.test.mjs', '.github/workflows/pricing-sync.yml', 'demo.js', 'about/index.html', 'tools/quick-landing-build.mjs']
 
 permissions:
   contents: write
@@ -62,9 +68,18 @@ jobs:
             exit 0
           fi
           exit $code
+      - name: Rebuild what is generated from the per-day lines
+        if: steps.sync.outputs.skip != '1'
+        run: |
+          # demo.min.js only when demo.js moved (esbuild 0.28.2 through npx, as tools/demo-min.mjs pins it);
+          # the /start/ pages every time (the build is deterministic, so an unchanged price changes nothing).
+          node tools/demo-min.mjs --check || node tools/demo-min.mjs
+          node tools/quick-landing-build.mjs
       - name: Verify the pages carry what pricing.js renders
         if: steps.sync.outputs.skip != '1'
-        run: node --test pricing.test.mjs
+        run: |
+          node --test pricing.test.mjs
+          node tools/demo-min.mjs --check
       - name: Commit if anything changed
         id: commit
         if: steps.sync.outputs.skip != '1'
@@ -92,3 +107,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "::warning::Pages build request failed; the push may still trigger it."
+      # Last, so the price above is already live: two cards have "less than $4 a day" drawn into their
+      # art (owner, 2026-11-24: "leave those at $4/day"). Once the standard price reaches $121.67 a month
+      # that is untrue, and every run fails here until the art is redrawn (AFMBP-2720).
+      - name: The drawn "less than $4 a day" is still true
+        if: steps.sync.outputs.skip != '1'
+        run: node tools/pricing-sync.mjs --check-drawn

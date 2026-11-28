@@ -32,7 +32,7 @@
 // cross 304px in and 17px down, the code card's 319px, in a 44px tap target on top) and a tap
 // on it closes the demo; every button is Inter Bold with the nodes' shadow; the help line is
 // Inter 14; the success card opens on black "NEVER" in the marker with the node's yellow brush
-// and "miss a job again", then "For less than $4 per day, …" in grey 16px; the "You call us"
+// and "miss a job again", then "For less than $N per day, …" in grey 16px (N from the standard price, AFMBP-2720); the "You call us"
 // card is 2891:1090: "Here’s how to call:" (AFMBP-2695, 11-24; "Sierra" from 11-22, "your assistant" before) and two numbered steps (the number a
 // tap-to-dial link with this session's code, then the code), the help line, no rows or brush.
 // Run: node tools/demo-mobile-check.mjs [siteRoot]
@@ -41,7 +41,7 @@
 //      NC=swap_help | NC=no_help_event | NC=old_inbound | NC=old_sub_size | NC=old_sub_color |
 //      NC=old_dy | NC=old_recap_label | NC=recap_tall | NC=old_field_size |
 //      NC=no_zoom_floor | NC=no_x | NC=code_x_off | NC=x_dead | NC=regular_btns | NC=flat_cta |
-//      NC=old_success_pitch | NC=no_never | NC=big_help | NC=no_tel — negative controls on the
+//      NC=old_success_pitch | NC=old_figure | NC=no_never | NC=big_help | NC=no_tel — negative controls on the
 //      SERVED copy only; each must FAIL.
 // AFMBP-2576 (owner, 2026-11-12): the text in the form's three fields is 20% smaller: 16.8px on
 // a phone (the node's 21px), 17.6px on a computer (22px), placeholders with it; where the phone
@@ -56,10 +56,14 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize, resolve } from 'node:path';
+import { PER_DAY_TEXT, perDayAt } from './pricing-sync.mjs';
 
 // Absolute, so a served file's path ends in '/<file>' and a negative control applies even when
 // the root is given as '.' (a relative root left every NC unapplied: a false "did NOT bite").
 const ROOT = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
+// AFMBP-2720: the per-day figure follows the standard price; tools/pricing-sync.mjs writes it and
+// these checks expect what it would write for the served checkout's pricing.js.
+const DAY = perDayAt(ROOT);
 const NC = process.env.NC || '';
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -126,7 +130,9 @@ const MUTATE = {
   // AFMBP-2597: the success CTA without the nodes' shadow.
   flat_cta: ['demo.css', (s) => cut(s, 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:var(--demo-btn-shadow);', 'background:var(--blue);color:#fff;font-size:21px;font-weight:700;line-height:21px;box-shadow:none;')],
   // AFMBP-2597: the success pitch before the 11-13 update.
-  old_success_pitch: ['demo.js', (s) => cut(s, "h('p', { class: 'demo-success-sub', text: 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' })", "h('p', { class: 'demo-success-sub', text: 'Bolt qualifies leads and books jobs for less than $4/day.' })")],
+  old_success_pitch: ['demo.js', (s) => cut(s, `h('p', { class: 'demo-success-sub', text: '${PER_DAY_TEXT.success(DAY)}' })`, "h('p', { class: 'demo-success-sub', text: 'Bolt qualifies leads and books jobs for less than $4/day.' })")],
+  // AFMBP-2720: the success pitch keeps a per-day figure the standard price no longer gives.
+  old_figure: ['demo.js', (s) => cut(s, `text: '${PER_DAY_TEXT.success(DAY)}'`, `text: '${PER_DAY_TEXT.success(DAY + 1)}'`)],
   // AFMBP-2597: the success card without its title (as after the 11-12 update).
   no_never: ['demo.js', (s) => cut(s, "h('h2', { class: 'demo-success-title' }, [", "h('h2', { class: 'demo-success-title', style: 'display:none' }, [")],
   // AFMBP-2597: the form's help line at 15px, as before the 11-13 update.
@@ -447,7 +453,7 @@ try {
   ok((await visible('.demo-success-never')) && (await text('.demo-success-never')) === 'NEVER' && (await visible('.demo-success-rest')) && (await text('.demo-success-rest')) === 'miss a job again', 'success: the node\'s title, "NEVER" and "miss a job again"');
   ok((await css('.demo-success-never', 'fontFamily')).includes('Permanent Marker') && (await css('.demo-success-never', 'color')) === 'rgb(0, 0, 0)' && /^matrix\(0\.995/.test(await css('.demo-success-never', 'transform')) && (await css('.demo-success-rest', 'fontWeight')) === '600' && (await css('.demo-success-rest', 'fontSize')) === '17.374px', `success: "NEVER" black in the marker and turned as the node turns it; "miss a job again" Inter Semi Bold 17.37 (${await css('.demo-success-never', 'transform')})`);
   ok(/demo-m-ul-success\.svg/.test(await ev("getComputedStyle(document.querySelector('.demo-success-title'),'::after').backgroundImage")), 'success: the node\'s yellow brush under "NEVER"');
-  ok((await text('.demo-success-sub')) === 'For less than $4 per day, skip the cost of a receptionist without missing a single lead.' && (await css('.demo-success-sub', 'fontSize')) === '16px' && (await css('.demo-success-sub', 'fontWeight')) === '400' && (await css('.demo-success-sub', 'color')) === 'rgb(112, 112, 112)', `success: the node's pitch, Inter 16 in grey (${await text('.demo-success-sub')})`);
+  ok((await text('.demo-success-sub')) === PER_DAY_TEXT.success(DAY) && (await css('.demo-success-sub', 'fontSize')) === '16px' && (await css('.demo-success-sub', 'fontWeight')) === '400' && (await css('.demo-success-sub', 'color')) === 'rgb(112, 112, 112)', `success: the node's pitch, Inter 16 in grey (${await text('.demo-success-sub')})`);
   ok((await boldShadow('.demo-success-cta')) === '700|true', `success: the CTA in Inter Bold with the nodes' shadow (${await boldShadow('.demo-success-cta')})`);
   const sx = await closeAt();
   ok(closeFits(sx, 304), `success: the close button where 2441:811 draws its cross, on top (${JSON.stringify(sx)})`);
@@ -531,7 +537,7 @@ try {
   ok((await text('.demo-backdrop.open .demo-ihow__code')) === '4321' && api.sessions === 1, `inbound: the same code after the page comes back, no second code (${await text('.demo-backdrop.open .demo-ihow__code')}, ${api.sessions})`);
   api.inState = 'connected'; api.inCallId = 'in-1'; api.recap = { status: 'completed', transcript: TRANSCRIPT };
   ok(await waitScreen('recap', 8000), 'inbound: the linked call ends on the same success card');
-  ok(/^For less than \$4 per day/.test(await text('.demo-success-sub')) && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
+  ok((await text('.demo-success-sub')) === PER_DAY_TEXT.success(DAY) && (await text('.demo-success-cta')) === 'Start free 30-day trial', 'inbound: one shared success (same card, same copy)');
   await sleep(3500);
   ok(evs('demo_transcript_shown', (d) => d.call_id === 'in-1' && d.mode === 'inbound').length === 1, 'events: inbound success counted once, mode inbound');
 
