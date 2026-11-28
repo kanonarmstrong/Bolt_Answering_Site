@@ -7,6 +7,8 @@
 //     trial_link_clicked {placement: signup_offer, form: email} and goes to the app's sign-up page
 //     with entry=card_email, the visitor id and the ad tags attribution.js adds, and the address in
 //     the fragment, never the query; signup_offer_email_typed once; no event carries the address;
+//   - AFMBP-2724: the eyebrow over the field is the node's "Secured" drawing (2962:977) beside the
+//     lock (2955:3252), where and as big as the node draws them, hidden from screen readers;
 //   - the page logs what the trade pages' card logs, so the ad funnel reads it the same way:
 //     site_landed, signup_offer_opened (trigger quick_landing) once, trial_link_clicked as above, and
 //     Meta's StartTrialClick from that tap (the ad sets' optimization event, "Landing page: Start
@@ -49,6 +51,9 @@ const MUTATE = {
   empty_on: (p, s) => s.replace('go.disabled = !v;', 'go.disabled = false;'),
   typed_every: (p, s) => s.replace('if (byHand && v && !typed) {', 'if (byHand && v) {'),
   entry: (p, s) => s.replace("href = 'https://app.boltanswering.com/signup?entry=card_email';", "href = 'https://app.boltanswering.com/signup';"),
+  // AFMBP-2724: the eyebrow back to the old "Security" drawing; "Secured" where "Security" sat.
+  eyebrow_old: (p, s) => s.replace("url('/assets/demo-so-secured.svg') 11.6px 1.645px/32.528px 6.466px", "url('/assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px"),
+  eyebrow_off: (p, s) => s.replace("url('/assets/demo-so-secured.svg') 11.6px 1.645px/", "url('/assets/demo-so-secured.svg') 10.85px 1.39px/"),
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
   opened: (p, s) => s.replace("A.track(T ? 'demo_card_opened' : 'signup_offer_opened'", "A.track(T ? 'demo_card_opened' : 'signup_offer_seen'"),
   trade: (p, s) => s.replace("{ trigger: 'quick_landing', trade: TRADE }", "{ trigger: 'quick_landing' }"),
@@ -157,7 +162,9 @@ try {
     const g = await ev(`(() => { const r = (s) => { const e = document.querySelector(s); return e ? e.getBoundingClientRect().toJSON() : null; };
       const go = document.querySelector('.ql-go'), f = document.querySelector('.ql-email'), x = document.querySelector('.ql-close');
       const words = (s) => { const e = document.querySelector(s); return e ? e.innerText.replace(/\\s+/g, ' ').trim() : null; };
+      const sec = document.querySelector('.ql-secure'), ss = sec && getComputedStyle(sec);
       return { card: r('.ql-card'), logo: r('.ql-logo'), close: r('.ql-close'), goBox: r('.ql-go'), fieldBox: r('.ql-email'),
+        secure: r('.ql-secure'), sec: sec && { img: ss.backgroundImage, pos: ss.backgroundPosition, size: ss.backgroundSize, hidden: sec.getAttribute('aria-hidden') },
         goText: go && go.textContent.trim(), goOff: go && go.disabled, goBg: go && getComputedStyle(go).backgroundColor,
         field: f && [f.type, f.getAttribute('autocomplete'), f.getAttribute('enterkeyhint'), f.placeholder, f.labels.length && f.labels[0].textContent, f.value].join('|'),
         pitch: words('.ql-sub'), trial: words('.ql-free'), terms: words('.ql-terms'),
@@ -176,6 +183,11 @@ try {
     check('the old card is gone (no "Start your free trial" link)', g.oldCta === false);
     check('field at 62,458, 275x48 (node 2955:3249)', g.fieldBox && near(g.fieldBox.left, 62, 0.05) && near(g.fieldBox.top, 458, 0.05) && near(g.fieldBox.width, 275, 0.05) && near(g.fieldBox.height, 48, 0.05), g.fieldBox);
     check('the field: an email field labelled "Email", empty, the Go key', g.field === 'email|email|go|Email|Email|', g.field);
+    // AFMBP-2724: the eyebrow, "Secured" (2962:977) beside its lock (2955:3252).
+    const secArt = g.sec ? (g.sec.img.match(/demo-so-[a-z]+\.svg/g) || []).join(',') : null;
+    check('the eyebrow at 283,444, 44.128x10: the lock and "Secured", hidden from screen readers (nodes 2955:3252, 2962:977)', g.secure && near(g.secure.left, 283, 0.05) && near(g.secure.top, 444, 0.05) && near(g.secure.width, 44.128, 0.05) && near(g.secure.height, 10, 0.05) && secArt === 'demo-so-lock.svg,demo-so-secured.svg' && g.sec.hidden === 'true', [g.secure, g.sec]);
+    check('"Secured" 11.6/1.645 in from the lock, 32.528x6.466, as the node draws it', g.sec && g.sec.pos === '0px 0px, 11.6px 1.645px' && g.sec.size === '8.571px 10px, 32.528px 6.466px', g.sec);
+    check('the "Secured" drawing loads', (await ev(`new Promise((r) => { const i = new Image(); i.onload = () => r(i.naturalWidth > 0); i.onerror = () => r(false); i.src = '/assets/demo-so-secured.svg'; })`)) === true);
     check('Continue at 62,517, 275x48 (node 2956:3261)', g.goBox && near(g.goBox.left, 62, 0.05) && near(g.goBox.top, 517, 0.05) && near(g.goBox.width, 275, 0.05) && near(g.goBox.height, 48, 0.05), g.goBox);
     check('Continue reads "Continue", grey and disabled while the field is empty', g.goText === 'Continue' && g.goOff === true && g.goBg === 'rgb(203, 203, 203)', [g.goText, g.goOff, g.goBg]);
     check('close goes to the home page', g.closeHref === '/', g.closeHref);

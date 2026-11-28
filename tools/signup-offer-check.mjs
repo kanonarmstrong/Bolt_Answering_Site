@@ -4,7 +4,7 @@
 // page in headless Chrome against a fake Bolt API and checks:
 //   - content and art: the card's art (the paper with the headline drawn in it) covers the card; the
 //     headline's words are for screen readers only; the pitch, with the bolt wordmark drawn in the
-//     room the node leaves for it, and the trial line, both live text; "Security" and its lock (the
+//     room the node leaves for it, and the trial line, both live text; "Secured" and its lock (the
 //     node's drawings); the email field, labelled "Email"; Continue; the terms line with its two
 //     links, which open in a new tab; the rating (one drawing, its words hidden text); the node's
 //     black cross. Nothing of the old card: no "Start your free trial" link, no FREE box;
@@ -115,7 +115,12 @@ const MUTATE = {
   blue_empty: ['demo.css', (s) => cut(s, '.demo-so__go:disabled{background:#cbcbcb;', '.demo-so__go:disabled{background:#2b7ffd;')],
   // Continue moves off the node.
   off_node: ['demo.css', (s) => cut(s, 'position:absolute;left:30.4px;top:446.4px;width:275px;height:48px;', 'position:absolute;left:30.4px;top:450.4px;width:275px;height:48px;')],
-  // "Security" and its lock are not drawn.
+  // AFMBP-2724: the eyebrow back to the old "Security" drawing; the word where "Security" sat; the
+  // word at the old drawing's size.
+  old_eyebrow: ['demo.css', (s) => cut(s, "url('assets/demo-so-secured.svg') 11.6px 1.645px/32.528px 6.466px", "url('assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px")],
+  eyebrow_off: ['demo.css', (s) => cut(s, "url('assets/demo-so-secured.svg') 11.6px 1.645px/", "url('assets/demo-so-secured.svg') 10.85px 1.39px/")],
+  eyebrow_size: ['demo.css', (s) => cut(s, "url('assets/demo-so-secured.svg') 11.6px 1.645px/32.528px 6.466px", "url('assets/demo-so-secured.svg') 11.6px 1.645px/38.524px 7.658px")],
+  // "Secured" and its lock are not drawn.
   no_secure: ['demo.css', (s) => cut(s, '.demo-backdrop[data-screen="signup"] .demo-so__secure{\n  position:absolute;', '.demo-backdrop[data-screen="signup"] .demo-so__secure{\n  display:none;position:absolute;')],
   // The rating is not drawn.
   no_quote: ['demo.css', (s) => cut(s, "background:url('assets/demo-so-quote.svg') 0 0/100% 100% no-repeat;", 'background:none;')],
@@ -198,7 +203,10 @@ const NODE = {
   // its 4 lines and of the trial line's 2, on the node's outlined glyphs.
   pitch: { x: 28.7, y: 221, first: 109.586, lines: 4 },
   baselines: [238, 261, 284, 307, 339, 361],
-  secure: { x: 252, y: 374, w: 49.374, h: 11.072 },
+  // The eyebrow's box: the lock (2955:3252) at its corner, "Secured" (2962:977) 11.6/1.645 in from it,
+  // 32.528 x 6.466 (AFMBP-2724).
+  secure: { x: 252, y: 374, w: 44.128, h: 10 },
+  secured: { pos: '0px 0px, 11.6px 1.645px', size: '8.571px 10px, 32.528px 6.466px' },
   field: { x: 31, y: 388, w: 275, h: 48 },
   go: { x: 31, y: 447, w: 275, h: 48 },
   terms: { x: 46, y: 504, w: 245 },
@@ -360,12 +368,13 @@ try {
   ok(plat.length >= 1 && plat.every((n) => n === 'Times New Roman'), `type: the pitch is drawn in this machine's own Times New Roman (${JSON.stringify(plat)})`);
   const tinosLoaded = await ev("performance.getEntriesByType('resource').filter(function(e){return /tinos-/.test(e.name)}).length");
   ok(tinosLoaded === 0, `type: no Tinos downloaded where Times New Roman is installed (${tinosLoaded})`);
-  // "Security", its lock and the rating: the node's drawings, hidden from screen readers.
-  const sec = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__secure'); if(!e) return null; var s=getComputedStyle(e); return {img:s.backgroundImage, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
-  ok(!!sec && sec.shown && /demo-so-lock\.svg.*demo-so-security\.svg/.test(sec.img) && sec.hidden === 'true', `phone: "Security" and its lock, the node's drawings, hidden from screen readers (${JSON.stringify(sec)})`);
+  // "Secured", its lock and the rating: the node's drawings, hidden from screen readers.
+  const sec = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__secure'); if(!e) return null; var s=getComputedStyle(e); return {img:s.backgroundImage, pos:s.backgroundPosition, size:s.backgroundSize, hidden:e.getAttribute('aria-hidden'), shown:s.display!=='none'&&s.visibility!=='hidden'};})()");
+  ok(!!sec && sec.shown && /demo-so-lock\.svg.*demo-so-secured\.svg/.test(sec.img) && !/demo-so-security\.svg/.test(sec.img) && sec.hidden === 'true', `phone: "Secured" and its lock, the node's drawings, hidden from screen readers (${JSON.stringify(sec)})`);
+  ok(!!sec && sec.pos === NODE.secured.pos && sec.size === NODE.secured.size, `phone: "Secured" where the node draws it beside the lock, at the node's size (${sec && sec.pos} / ${sec && sec.size})`);
   const q = await ev("(function(){var e=document.querySelector('.demo-backdrop.open .demo-so__quote'); if(!e) return null; var s=getComputedStyle(e); return {img:s.backgroundImage, shown:s.display!=='none'&&s.visibility!=='hidden', words:[].slice.call(e.querySelectorAll('.demo-so__vh')).map(function(p){return p.textContent})};})()");
   ok(!!q && q.shown && /demo-so-quote\.svg/.test(q.img) && JSON.stringify(q.words) === JSON.stringify(['Brent B., Indiana', '4.9/5', '“Bolt booked a job and paid for itself in a day.”']), `phone: the rating, the node's one drawing, its words for screen readers (${JSON.stringify(q)})`);
-  for (const f of ['demo-so-lock.svg', 'demo-so-security.svg', 'demo-so-quote.svg', 'demo-so-close.svg']) {
+  for (const f of ['demo-so-lock.svg', 'demo-so-secured.svg', 'demo-so-quote.svg', 'demo-so-close.svg']) {
     const sz = await ev(`new Promise(function(r){var i=new Image();i.onload=function(){r(i.naturalWidth>0)};i.onerror=function(){r(false)};i.src='assets/${f}';})`);
     ok(sz === true, `phone: assets/${f} loads`);
   }
@@ -609,7 +618,7 @@ try {
     ok(c.x >= 0 && c.x + c.w <= w, `${w}x${h}: the card inside the viewport (${c.x.toFixed(1)}..${(c.x + c.w).toFixed(1)})`);
     ok(w >= 337 ? Math.abs(c.w - 337) < 0.01 : c.w < w && c.w > w - 40, `${w}x${h}: the card is ${w >= 337 ? "the node's 337px" : 'scaled to fit'} (${c.w.toFixed(2)})`);
     // The field and Continue: inside the card and on screen (the page scrolls the card if needed).
-    for (const [name, sel] of [['the field', '.demo-so__email'], ['Continue', '.demo-so__go'], ['"Security"', '.demo-so__secure'], ['the terms line', '.demo-so__terms'], ['the rating', '.demo-so__quote']]) {
+    for (const [name, sel] of [['the field', '.demo-so__email'], ['Continue', '.demo-so__go'], ['"Secured"', '.demo-so__secure'], ['the terms line', '.demo-so__terms'], ['the rating', '.demo-so__quote']]) {
       const pb = await rect(`.demo-backdrop.open ${sel}`);
       ok(!!pb && pb.x >= c.x && pb.x + pb.w <= c.x + c.w && pb.y >= c.y && pb.y + pb.h <= c.y + c.h + 0.5 && pb.w > 0, `${w}x${h}: ${name} inside the card (${pb && [pb.x.toFixed(1), (pb.x + pb.w).toFixed(1), pb.y.toFixed(1), (pb.y + pb.h).toFixed(1), (c.y + c.h).toFixed(1)]})`);
     }
@@ -619,9 +628,9 @@ try {
       const g = await run(`.demo-backdrop.open ${sel}`);
       ok(g && g.x >= c.x + 2 && g.x + g.w <= c.x + c.w - 2 && g.lines === want, `${w}x${h}: ${sel} on ${want} line(s), every word inside the card (${g && [g.x.toFixed(1), (g.x + g.w).toFixed(1), g.lines]})`);
     }
-    // The pitch's words stay clear of "Security" and the field.
+    // The pitch's words stay clear of "Secured" and the field.
     const gap = await ev("(function(){var r=document.querySelector('.demo-backdrop.open .demo-so__free').getBoundingClientRect(), s=document.querySelector('.demo-backdrop.open .demo-so__secure').getBoundingClientRect(); return s.top - r.bottom;})()");
-    ok(gap > 0, `${w}x${h}: the trial line ends above "Security" (${gap.toFixed(2)}px)`);
+    ok(gap > 0, `${w}x${h}: the trial line ends above "Secured" (${gap.toFixed(2)}px)`);
     // AFMBP-2602: where the card zooms, iPad Safari's text autosizing must be off on it, or every word
     // draws at its unzoomed size; where it does not, no iOS text rule reaches it.
     const t = await ev(`(function(){${IOS_TSA} var k=document.querySelector('.demo-backdrop.open .demo-card'); return k ? {zoom:parseFloat(getComputedStyle(k).zoom), ios:iosTsa(k)} : null;})()`);
