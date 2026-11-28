@@ -4,8 +4,10 @@
 // stubs. This check runs the REAL scripts instead — Meta's fbevents.js with this pixel's live settings
 // (its config file), Google's gtag.js for G-8C8SFMCRYH and AW-18483202475, and (AFMBP-2654) Reddit's
 // pixel.js with the settings Reddit serves for this pixel — walks the demo with real typing and real
-// clicks, types an email into the "Stay in touch" box, and searches everything they try to send for
-// what was typed: raw, formatted, or hashed the way Meta, Google and Reddit hash it. Re-run it after
+// clicks, types an email into the "Stay in touch" box and (AFMBP-2714) into the sign-up card's email
+// field on the Meta ads' landing (/?signup=1) and the Reddit ads' (/start/handyman.html), taps its
+// Continue, and searches everything they try to send for what was typed: raw, formatted, or hashed
+// the way Meta, Google and Reddit hash it. Re-run it after
 // any change in Meta Events Manager, Google tag settings or Reddit Events Manager (e.g. automatic
 // advanced matching, user-provided data).
 // Reddit (AFMBP-2654): with automatic advanced matching on, Reddit's own pixel.js reads phone numbers
@@ -269,6 +271,25 @@ try {
     await sleep(5000);
     rstate = { aam: JSON.parse(await ev("JSON.stringify(window.rdt && window.rdt.aam || null)")), cookies: await cookieNames() };
   }
+
+  // AFMBP-2714: the sign-up card's email field, on both ad landings, with the real tags running: typed,
+  // left for Reddit's scanner, then Continue (which leaves for the app with the address in the fragment,
+  // where no request carries it).
+  console.log('[3] an email typed into the sign-up card on /?signup=1 and /start/handyman.html, then Continue');
+  for (const path of ['/?signup=1', '/start/handyman.html']) {
+    await send('Page.navigate', { url: ORIGIN + path });
+    ok(await until(async () => (await ev("!!document.querySelector('.demo-so__email, .ql-email')")) === true, 15000), `${path}: the sign-up card's email field is there`);
+    await sleep(1500);
+    await ev("(function(){var i=document.querySelector('.demo-so__email, .ql-email'); i.scrollIntoView({block:'center'}); i.focus(); return 1})()");
+    await send('Input.insertText', { text: EMAIL });
+    await sleep(6000); // Reddit's scanner re-reads the page every 0.5–10 s
+    ok(await tap("document.querySelector('.demo-so__go, .ql-go')"), `${path}: Continue tapped`);
+    await sleep(2500);
+  }
+  await send('Page.navigate', { url: ORIGIN + '/electrical.html' }); // one more page: anything stored would ride on its events
+  await sleep(5000);
+  const cardCookies = RPIXEL ? await cookieNames() : [];
+  if (RPIXEL) ok(!cardCookies.includes('_rdt_pn') && !cardCookies.includes('_rdt_em'), `after the card: Reddit stored no matching cookie (${cardCookies.filter((n) => n.startsWith('_rdt')).join(', ') || 'none'})`);
 
   const isMeta = (s) => /facebook\.com$/.test(new URL(s.url).hostname);
   const isGoogle = (s) => /google|doubleclick/.test(new URL(s.url).hostname);

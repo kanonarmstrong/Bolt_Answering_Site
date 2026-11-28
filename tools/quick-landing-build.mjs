@@ -159,19 +159,19 @@ ${GTAG}
       src:url('/assets/fonts/inter.woff2') format('woff2');
       unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
     }
-    /* Times New Roman as the node sets it, and Tinos (the same widths) where a phone has no Times.
-       AFMBP-2686 (11-22): Android has no Times New Roman, but it answers to the name with its own
-       serif (Noto Serif: wider letters, taller lines), so the stack never reaches Tinos there. The
-       sign-up card below still draws in that serif on Android; the demo card's words are drawings. */
+    /* The sign-up card's pitch and trial line are Times New Roman, as the node sets them (AFMBP-2714).
+       A phone that has it (iPhone, Mac, Windows) draws it from its own copy and downloads nothing.
+       Android has none and answers the name with its own serif (Noto Serif: wider letters, taller
+       lines; AFMBP-2686), so the name comes first through local(), which only an installed Times New
+       Roman answers. Everywhere else it is Tinos, which has Times New Roman's widths, so every line
+       breaks where the node breaks it. Block: no line is drawn in another serif first. */
     @font-face{
-      font-family:'Tinos';font-style:normal;font-weight:400;font-display:swap;
-      src:url('/assets/fonts/tinos-400.woff2') format('woff2');
-      unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+      font-family:'Bolt Times';font-style:normal;font-weight:400;font-display:block;
+      src:local('Times New Roman'),local('TimesNewRomanPSMT'),url('/assets/fonts/tinos-400.woff2') format('woff2');
     }
     @font-face{
-      font-family:'Tinos';font-style:normal;font-weight:700;font-display:swap;
-      src:url('/assets/fonts/tinos-700.woff2') format('woff2');
-      unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+      font-family:'Bolt Times';font-style:normal;font-weight:700;font-display:block;
+      src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),url('/assets/fonts/tinos-700.woff2') format('woff2');
     }
     :root{--blue:#2b7ffd;--navy:#180a53}
     html,body{margin:0;padding:0}
@@ -195,75 +195,72 @@ ${GTAG}
        off on the card, iOS WebKit only, as in demo.css (AFMBP-2602). The body's 100% does not fix it. */
     @supports (-webkit-touch-callout:none){ @media (max-width:336px){ .ql-card{-webkit-text-size-adjust:none;text-size-adjust:none} } }
     .ql-body{position:relative;z-index:1;left:.6px;top:.6px;width:337px;height:629px}
-    /* The close: the node's 13px cross in a 44px tap target. It goes to the home page (owner, 11-12). */
+    /* The close: the node's 13px cross (black since AFMBP-2714) in a 44px tap target. It goes to the
+       home page (owner, 11-12). */
     .ql-close{
       position:absolute;z-index:2;left:283.496px;top:9.497px;width:44px;height:44px;
       display:flex;align-items:center;justify-content:center;
     }
     .ql-close::before{
       content:"";width:12.992px;height:12.993px;pointer-events:none;
-      background:url('/assets/demo-m-close.svg') center/100% 100% no-repeat;
+      background:url('/assets/demo-so-close.svg') center/100% 100% no-repeat;
     }
-    .ql-close:focus-visible,.ql-cta:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-    /* The headline is in the art, and the wordmark is drawn; their words are for screen readers. */
+    .ql-close:focus-visible,.ql-go:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+    /* The headline is in the art, the wordmark and the rating are drawn: their words (and the field's
+       label) are for screen readers. */
     .ql-vh{
       position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
       overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
     }
+    /* AFMBP-2714 — the sign-up card is the owner's email card of 2026-11-27 (Figma 2955:2387 empty,
+       2957:3273 typed), every number as in demo.css: the pitch (live text, 19.032px then 20.03px
+       from "answers", on the node's baselines 237.4–306.4) with the wordmark in its first line's
+       room; the trial line, "FREE" bold; "Security" and its lock; the field; Continue, grey and
+       disabled while the field is empty, blue once anything is typed; the terms line; the rating,
+       one drawing. */
     .ql-sub,.ql-free{
-      position:absolute;margin:0;font-family:'Times New Roman',Tinos,serif;font-size:19.032px;font-weight:400;
-      line-height:22px;color:#000;
+      position:absolute;left:28.1px;width:268px;margin:0;font-family:'Bolt Times',serif;font-size:19.032px;font-weight:400;
+      line-height:22px;color:#000;text-align:left;
     }
-    .ql-sub{left:28.4px;top:220.11px;width:273px;text-align:left}
+    .ql-sub{top:220.4px}
     .ql-big{font-size:20.03px;line-height:23px}
     .ql-bolt{display:inline-block;width:80.886px;height:0;vertical-align:baseline}
     .ql-sub::before{
-      content:"";position:absolute;left:2.4px;top:-9.81px;width:73.5px;height:30.7px;pointer-events:none;
+      content:"";position:absolute;left:2.7px;top:-10.1px;width:73.5px;height:30.7px;pointer-events:none;
       background:url('/assets/demo-so-bolt.svg') 0 0/100% 100% no-repeat;
     }
-    .ql-free{left:31.4px;top:340.465px;width:266px;text-align:center}
+    .ql-free{top:321.41px}
     .ql-free b{font-weight:700}
-    .ql-cm::after{
-      content:"";position:absolute;left:27.4px;top:334.4px;width:274px;height:59px;box-sizing:border-box;
-      border:2px solid #000;pointer-events:none;
+    .ql-secure{
+      position:absolute;left:251.4px;top:373.4px;width:49.374px;height:11.072px;pointer-events:none;
+      background:url('/assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('/assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px no-repeat;
     }
-    /* The button sits where 2142:11370 puts it (2142:11445): centred under the FREE box, 38.4/411.4 on
-       the body. The trade pages' card has it 5px right and 1px lower (the older node 2718:3350). */
-    .ql-cta{
-      position:absolute;left:38.4px;top:411.4px;width:252px;height:49px;margin:0;padding:1.33px 0 0;box-sizing:border-box;
-      border-radius:6px;background:var(--blue);color:#fff;
-      box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);
+    .ql-email{
+      position:absolute;left:30.4px;top:387.4px;width:275px;height:48px;margin:0;padding:0 11.67px 1.9px;box-sizing:border-box;
+      border:0;border-radius:12.667px;background:#fdfdff;opacity:.82;
+      box-shadow:inset 0 0 0 .333px #e6e6ed,0 1px 2px rgba(12,12,13,.05);
+      font-family:inherit;font-size:16px;font-weight:400;line-height:normal;color:#000;
+      -webkit-appearance:none;appearance:none;outline:none;
+    }
+    .ql-email::placeholder{color:#787888;opacity:1}
+    .ql-go{
+      position:absolute;left:30.4px;top:446.4px;width:275px;height:48px;margin:0;padding:1.794px 4.92px 0 0;box-sizing:border-box;
+      border:0;border-radius:12.667px;background:var(--blue);color:#fff;
+      box-shadow:0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);
       display:flex;align-items:center;justify-content:center;
-      font-family:inherit;font-size:22px;font-weight:700;line-height:21px;text-decoration:none;
-      transition:background .15s;
+      font-family:inherit;font-size:16.8px;font-weight:700;line-height:20px;
+      cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
     }
-    .ql-cta:hover{background:#1f6fe6}
-    /* The rating sits 1px left of the trade pages' card, where 2142:11419 puts it. */
-    .ql-cr{
-      position:absolute;left:30.4px;top:478.343px;width:278.886px;height:114.825px;
-      transform:rotate(3.168deg);transform-origin:0 0;
+    .ql-go:disabled{background:#cbcbcb;cursor:not-allowed}
+    .ql-terms{
+      position:absolute;left:45.4px;top:503.4px;width:245px;margin:0;
+      font-size:10.143px;font-weight:400;line-height:12.283px;color:#787888;text-align:center;
     }
-    .ql-bubble{
-      position:absolute;left:-7.538px;top:-5.649px;width:293.961px;height:129.9px;pointer-events:none;
-      background:url('/assets/demo-so-bubble-v5.svg') 0 0/100% 100% no-repeat;
-    }
-    .ql-who{
-      position:absolute;left:22.331px;top:13.72px;width:108.495px;height:13.288px;margin:0;
-      font-size:11.306px;font-weight:400;line-height:13.288px;color:var(--navy);text-align:left;white-space:nowrap;
-    }
-    .ql-who b{font-size:13.399px;font-weight:700}
-    .ql-stars,.ql-score{transform:rotate(-.148deg);transform-origin:0 0}
-    .ql-stars{position:absolute;left:139.03px;top:10.476px;display:flex}
-    .ql-stars span{
-      width:16.972px;height:17.898px;background:url('/assets/demo-m-star-lg.svg') .416px 0/16.141px 16.189px no-repeat;
-    }
-    .ql-score{
-      position:absolute;left:225.201px;top:14.084px;width:35.437px;height:13.288px;margin:0;
-      font-size:13.399px;font-weight:700;line-height:13.288px;color:var(--navy);text-align:center;white-space:nowrap;
-    }
+    .ql-terms a{color:var(--blue);text-decoration:none}
+    .ql-terms a:focus-visible{outline:2px solid var(--blue);outline-offset:1px;border-radius:2px}
     .ql-quote{
-      position:absolute;left:14.113px;top:34.3px;width:250.62px;margin:0;
-      font-size:12.248px;font-style:italic;font-weight:400;line-height:15px;color:var(--navy);text-align:center;
+      position:absolute;left:55.4px;top:539.4px;width:226px;height:74.146px;pointer-events:none;
+      background:url('/assets/demo-so-quote.svg') 0 0/100% 100% no-repeat;
     }
     /* AFMBP-2612 — the treatment card: Figma 2169:14533 (in frame 2169:14513, "Quick landing page,
        demo"), shown in place of the sign-up card when the decide step picks "treatment" (html.xp-t).
@@ -367,8 +364,8 @@ ${GTAG}
   </style>
 </head>
 <body>
-  <!-- The section's first class is the tap's placement (attribution.js placement()): "signup_offer",
-       as the card logs it on the trade pages, so Meta's StartTrialClick reads the same. -->
+  <!-- The section's first class names the card ("signup_offer", as the card on the trade pages is
+       logged). AFMBP-2714: Continue logs its own tap with that placement (the script below). -->
   <main class="ql">
     <img class="ql-logo" src="/assets/bolt-logo-small.svg" width="71" height="29" alt="Bolt Answering" />
     <section class="signup_offer ql-card ql-card--c" aria-labelledby="ql-h">
@@ -376,17 +373,15 @@ ${GTAG}
       <div class="ql-body">
         <div class="ql-cm">
           <h1 class="ql-vh" id="ql-h">New jobs are calling</h1>
-          <p class="ql-sub"><span class="ql-bolt"><span class="ql-vh">Bolt </span></span>is your 24/7 receptionist that <span class="ql-big">answers calls and books customers so you never miss a job again.</span></p>
-          <p class="ql-free">It’s <b>FREE </b>to set up an assistant. Get started <b>today.</b></p>
+          <p class="ql-sub"><span class="ql-bolt"><span class="ql-vh">Bolt </span></span>is your professional, 24/7 receptionist that <span class="ql-big">answers calls, books customers and more for less than $4 a day.</span></p>
+          <p class="ql-free">Create an account to start your <b>FREE</b> 30-day trial now.</p>
         </div>
-        <a class="ql-cta" href="https://app.boltanswering.com/signup">Start your free trial</a>
-        <div class="ql-cr">
-          <span class="ql-bubble" aria-hidden="true"></span>
-          <p class="ql-who"><b>Brent B. </b>Indiana</p>
-          <span class="ql-stars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
-          <p class="ql-score">4.9/5</p>
-          <p class="ql-quote">“I was losing jobs to voicemail and even paid $250 a week for someone to answer my phone. Bolt booked a job and paid for itself in a day.”</p>
-        </div>
+        <span class="ql-secure" aria-hidden="true"></span>
+        <label class="ql-vh" for="ql-email">Email</label>
+        <input class="ql-email" id="ql-email" type="email" name="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="254" placeholder="Email" />
+        <button class="ql-go" type="button" disabled>Continue</button>
+        <p class="ql-terms">By tapping “Continue”, you agree to our<br /><a href="/privacy/" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms/" target="_blank" rel="noopener">Terms</a>.</p>
+        <div class="ql-quote"><p class="ql-vh">Brent B., Indiana</p><p class="ql-vh">4.9/5</p><p class="ql-vh">“Bolt booked a job and paid for itself in a day.”</p></div>
       </div>
     </section>
     <!-- AFMBP-2612: the landing A/B's treatment card (Figma 2169:14513), the owner's words verbatim:
@@ -411,9 +406,9 @@ ${GTAG}
   <script>
     // AFMBP-2567: the card's own events, as the trade pages' card logs them (demo.js), so the
     // ad funnel reads this page like the card: seen once the page is looked at, closed by the x.
-    // The button needs nothing here: attribution.js decorates it and logs trial_link_clicked
-    // with placement "signup_offer" (the section's first class), and meta-pixel.js turns that
-    // into StartTrialClick. attribution.js is deferred, so it is ready at DOMContentLoaded.
+    // AFMBP-2714: Continue is wired below (the email card, as demo.js runs it on the trade pages).
+    // meta-pixel.js turns its trial_link_clicked into StartTrialClick. attribution.js is deferred,
+    // so it is ready at DOMContentLoaded.
     // AFMBP-2612: the landing A/B. Once the page is seen, attribution.js reports the exposure (to
     // the platform and as xp_exposed) with the card the decide step picked, from the same callback
     // as the card's own event: signup_offer_opened for the sign-up card, demo_card_opened for the
@@ -438,6 +433,54 @@ ${GTAG}
           if (window.boltAttr) window.boltAttr.track('demo_closed', { step: T ? 'demo_card' : 'signup_offer', trade: TRADE });
         });
       });
+      // AFMBP-2714: the email field and Continue (handoff contract v1, AFMBP-2712), as demo.js runs
+      // them on the trade pages' card. Continue follows the field: disabled while it is empty,
+      // enabled once anything is typed (no address check: the app's screen shows an invalid one).
+      // It logs trial_link_clicked {placement: signup_offer, form: email}, holds the page until that
+      // has gone out (at most 0.3 s, AFMBP-2344), then goes to the app's email sign-up screen with
+      // the address in the URL's fragment, after the visitor id, ad tags and QA flag
+      // attribution.js adds. The address never goes in the query string, a cookie, storage or an
+      // event. signup_offer_email_typed goes once, on the first character typed. The keyboard's Go
+      // key is Continue. Back from the app (the page restored as it was), Continue works again.
+      var field = document.getElementById('ql-email'), go = document.querySelector('.ql-go');
+      if (field && go) {
+        var typed = false, leaving = false;
+        var sync = function (byHand) {
+          var v = field.value.trim();
+          go.disabled = !v;
+          if (byHand && v && !typed) {
+            typed = true;
+            if (window.boltAttr) window.boltAttr.track('signup_offer_email_typed', { trade: TRADE });
+          }
+        };
+        var submit = function () {
+          var v = field.value.trim();
+          if (!v || leaving) return;
+          leaving = true;
+          var A = window.boltAttr, sent = null, href = 'https://app.boltanswering.com/signup?entry=card_email';
+          try {
+            if (A) {
+              sent = A.track('trial_link_clicked', { placement: 'signup_offer', form: 'email', trade: TRADE });
+              href = A.decorate(href);
+            }
+          } catch (e) {}
+          href += '#email=' + encodeURIComponent(v);
+          var gone = false;
+          var leave = function () { if (!gone) { gone = true; window.location.href = href; } };
+          setTimeout(leave, 300);
+          if (sent && sent.then) sent.then(leave, leave);
+        };
+        field.addEventListener('input', function () { sync(true); });
+        field.addEventListener('change', function () { sync(true); });
+        field.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter' || e.isComposing) return;
+          e.preventDefault();
+          submit();
+        });
+        go.addEventListener('click', submit);
+        window.addEventListener('pageshow', function (e) { if (e.persisted) leaving = false; sync(false); });
+        sync(false);
+      }
       // AFMBP-2612: the demo card's buttons run today's demo (demo.js with demo.css). They load
       // once the card has painted (the page's load event) or at the first touch, whichever comes
       // first, so the card paints as fast as the sign-up card. A tap that comes before demo.js is

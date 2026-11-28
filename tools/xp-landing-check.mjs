@@ -8,7 +8,8 @@
 //   - the exposure goes to EZ's gateway once per tab session, as the platform's web SDK sends it
 //     (eventName experiment_exposed, the visitor's bolt_vid, the arm, the configVersion), and to the
 //     funnel as xp_exposed, from the same callback with the same arm; the card's own event follows;
-//   - every sign-up link carries xp=<key>.<arm>.<configVersion> next to bvid, a trial tap sends
+//   - every sign-up link carries xp=<key>.<arm>.<configVersion> next to bvid, and so does the address
+//     the sign-up card's Continue leaves for (AFMBP-2714: the email card has no link); a trial tap sends
 //     start_trial_clicked to the gateway, on the card and on the home page;
 //   - the demo card's two animations (AFMBP-2686), with motion allowed: a cover in the card's own art
 //     over the whole card at the start, cut away top to bottom in 1.4s, taking no taps, then gone; the
@@ -229,6 +230,23 @@ try {
     const rdtRan = s.rdt.some((c) => c.args[0] === 'init') && s.rdt.some((c) => c.args[0] === 'track' && c.args[1] === 'PageVisit');
     check(`${label}: the Reddit pixel ran; nothing it got names the experiment, nor any address it read`, rdtRan && !LEAK.test(JSON.stringify(s.rdt.map((c) => c.args))) && s.rdt.every((c) => !LEAK.test(c.href) && !/[?&]xp=/.test(c.href)), s.rdt);
   };
+  // AFMBP-2714: the sign-up card has no link: its Continue builds the address as it leaves (attribution.js
+  // decorates it, the typed address goes in the fragment). Type an address and tap Continue: the app's
+  // page is not loaded (the tab stays) and the departure is returned, with its fragment.
+  const navs = [];
+  ws.addEventListener('message', (m) => { const msg = JSON.parse(m.data); if (msg.method !== 'Fetch.requestPaused') return;
+    const { requestId, request } = msg.params; navs.push(request.url + (request.urlFragment || ''));
+    send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }).catch(() => {}); });
+  await send('Fetch.enable', { patterns: [{ urlPattern: 'https://app.boltanswering.com/*', resourceType: 'Document' }] });
+  const continueSignup = async () => {
+    navs.length = 0;
+    await ev(`(() => { document.querySelector('.ql-email').focus(); return 1; })()`);
+    await send('Input.insertText', { text: 'qa-xp@example.com' });
+    await sleep(100);
+    await ev(`(() => { document.querySelector('.ql-go').click(); return 1; })()`);
+    for (let i = 0; i < 20 && !navs.length; i++) await sleep(100);
+    return navs[0] || null;
+  };
   // Tap a sign-up link without leaving the page: attribution.js decorates it in the capture phase,
   // then this listener reads the decorated address and stops the navigation.
   const tapSignup = (sel) => ev(`(() => { const a = document.querySelector(${JSON.stringify(sel)}); if (!a) return null; let href = null;
@@ -255,14 +273,14 @@ try {
   let xe = typesOf(s, 'xp_exposed');
   check('funnel: one xp_exposed {landing_demo_buttons, control, configVersion}, with the browser class', xe.length === 1 && xe[0].data.experiment_key === KEY && xe[0].data.variation === 'control' && xe[0].data.config_version === CV && xe[0].data.browser === 'android_facebook' && !('forced' in xe[0].data), xe);
   check('funnel: the card\'s own event, signup_offer_opened, once', typesOf(s, 'signup_offer_opened').length === 1 && typesOf(s, 'demo_card_opened').length === 0, s.events.map((e) => e.type));
-  let href = await ev(`document.querySelector('.ql-cta').href`);
-  check(`the card's button carries xp=${KEY}.control.${CV} next to bvid`, xpParam(href) === `${KEY}.control.${CV}` && bvidParam(href) === VID.control, href);
-  const tapped = await tapSignup('.ql-cta');
+  const tapped = await continueSignup();
+  let href = tapped;
+  check(`the card's Continue leaves with xp=${KEY}.control.${CV} next to bvid, the address in the fragment`, xpParam(href) === `${KEY}.control.${CV}` && bvidParam(href) === VID.control && /#email=qa-xp%40example\.com$/.test(href || ''), href);
   await sleep(300);
   s = await state();
   let tr = tracks(s);
   check('a trial tap: start_trial_clicked to the gateway with the arm', tr.length === 1 && tr[0].eventName === 'start_trial_clicked' && JSON.stringify(tr[0].experiments) === JSON.stringify(ctx('control')) && tr[0].anonymousId === VID.control && tr[0].properties.from === 'signup_offer', tr);
-  check('the tapped link carried the arm', xpParam(tapped) === `${KEY}.control.${CV}`, tapped);
+  check('nothing to the gateway carries the typed address', !/qa-xp/.test(JSON.stringify(s.gw)), s.gw);
   await noLeak('control visitor');
   await load(`${BASE}/__baked/${PAGE}`);
   s = await state();
@@ -384,8 +402,8 @@ try {
     d = await disp();
     check('a treatment-vector visitor sees the sign-up card; no arm', d.c !== 'none' && d.t === 'none' && s.xp && s.xp.variation === null, { d, xp: s.xp });
     check('nothing to the gateway, no xp_exposed', s.gw.length === 0 && typesOf(s, 'xp_exposed').length === 0, s.gw);
-    href = await ev(`document.querySelector('.ql-cta').href`);
-    check('the button carries no xp', xpParam(href) === null && bvidParam(href) === VID.treatment, href);
+    href = await continueSignup();
+    check('Continue carries no xp', !!href && xpParam(href) === null && bvidParam(href) === VID.treatment, href);
     check('the card\'s own event still goes: signup_offer_opened', typesOf(s, 'signup_offer_opened').length === 1);
   }
 
@@ -403,8 +421,8 @@ try {
     check('QA: xp_exposed for the funnel, marked qa and forced', xe.length === 1 && xe[0].data.qa === true && xe[0].data.forced === true && xe[0].data.variation === arm && xe[0].data.config_version === QA_CV, xe);
     const want = `${KEY}.${arm}.${QA_CV}`;
     if (arm === 'control') {
-      href = await ev(`document.querySelector('.ql-cta').href`);
-      check(`surface 1, the card: xp=${want}`, xpParam(href) === want, href);
+      href = await continueSignup();
+      check(`surface 1, the card's Continue: xp=${want}`, xpParam(href) === want, href);
     } else {
       await until(`!!window.__demoQA && !!(window.boltDemo && window.boltDemo.ready)`);
       await ev(`(() => { window.__demoQA.open(); window.__demoQA.recap({ transcript: [{ speaker: 'assistant', text: 'Thanks for calling.' }] }); })()`);
@@ -448,8 +466,8 @@ try {
       check('the Meta Pixel is off (no calls) and the Google tag is off (no tag, no config)', s.fbq.length === 0 && !s.gtagScript && s.dl === '[]', { fbq: s.fbq, gtag: s.gtagScript, dl: s.dl });
       check(`the Reddit pixel is off (no calls; blocked: ${how === 'gpc' ? 'gpc' : 'opted_out'})`, s.rdt.length === 0 && !!s.reddit && s.reddit.blockedBy === (how === 'gpc' ? 'gpc' : 'opted_out'), { rdt: s.rdt, reddit: s.reddit });
       if (arm === 'control') {
-        href = await ev(`document.querySelector('.ql-cta').href`);
-        check('the button carries xp and the opt-out', xpParam(href) === `${KEY}.control.${CV}` && (how === 'gpc' || new URL(href).searchParams.get('bolt_optout') === '1'), href);
+        href = await continueSignup();
+        check('Continue carries xp and the opt-out', !!href && xpParam(href) === `${KEY}.control.${CV}` && (how === 'gpc' || new URL(href).searchParams.get('bolt_optout') === '1'), href);
       }
     }
     if (scriptId) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: scriptId });

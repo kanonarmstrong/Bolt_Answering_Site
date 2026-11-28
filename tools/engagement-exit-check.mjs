@@ -25,7 +25,7 @@
 //     plain prefetches: the app's files carry no CORS header, as on the live app, and the browser
 //     refuses none of them; the app's answer today (its index.html, no CORS), a 404 or no network
 //     is silent: no exception, no console error from the page, the offer still opens and its
-//     button still goes to the sign-up;
+//     Continue still goes to the sign-up (AFMBP-2714: the email card);
 //   - regressions: site_landed, signup_offer_opened, trial_link_clicked and demo_closed as before.
 // Run: node tools/engagement-exit-check.mjs [siteRoot]
 //      NC=<name> mutates the SERVED copy only; each must FAIL (see MUTATE).
@@ -215,6 +215,8 @@ try {
       await sleep(350); return true;
     };
     tab.wheel = async (dy) => { await send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: 400, y: 400, deltaX: 0, deltaY: dy }, sessionId); await sleep(1000); };
+    // The keyboard's text, into whatever has focus (AFMBP-2714: the card's email field).
+    tab.type = async (text) => { await send('Input.insertText', { text }, sessionId); await sleep(200); };
     tab.key = async () => { for (const type of ['rawKeyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key: 'Shift', code: 'ShiftLeft', windowsVirtualKeyCode: 16 }, sessionId); await sleep(250); };
     tab.of = (type, page) => tab.events.filter((e) => e.type === type && (!page || e.data.page === page));
     tab.depth = () => tab.ev('(function(){var d=document.documentElement,b=document.body;return Math.max(0,Math.min(100,Math.round((window.pageYOffset+window.innerHeight)/Math.max(d.scrollHeight,b.scrollHeight)*100)));})()');
@@ -236,7 +238,8 @@ try {
     }
     if (u.origin === APP) {
       // The sign-up page itself: kept from loading (the tab stays where it is), and noted.
-      if (resourceType === 'Document') { tab.navs.push(request.url); return quiet(send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }, tab.sessionId)); }
+      // A browser sends no fragment: the request carries it apart (urlFragment), kept with the address.
+      if (resourceType === 'Document') { tab.navs.push(request.url + (request.urlFragment || '')); return quiet(send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }, tab.sessionId)); }
       tab.app.push({ path: u.pathname, url: u.href, type: resourceType, method: request.method });
       // The app's own files, as the live app serves them: long-cached, no CORS header.
       if (u.pathname !== '/signup-preload.json') return answer(200, [{ name: 'Content-Type', value: /\.css$/.test(u.pathname) ? 'text/css' : 'text/javascript' }, { name: 'Cache-Control', value: 'public, max-age=31536000, immutable' }], '/* qa */');
@@ -325,21 +328,26 @@ try {
     await close(ctx);
   }
 
-  // ================= the offer's button still goes to the sign-up; closing is still logged =================
-  console.log('[pixel 7] the offer\'s button and its close');
+  // ================= the offer's Continue still goes to the sign-up; closing is still logged =================
+  // AFMBP-2714: the email card. A tap on the field (the first touch), an address typed, then Continue.
+  console.log('[pixel 7] the offer\'s Continue and its close');
   {
     const ctx = await context(); const tab = await openTab(ctx);
     await tab.go(AD);
     await until(async () => (await opened(tab)) === 'signup');
     await sleep(500);
-    await tab.tap('.demo-backdrop.open .demo-so__cta');
+    await tab.tap('.demo-backdrop.open .demo-so__email');
+    ok(tab.of('site_engaged').length === 1, 'engaged: the tap on the field is the first touch');
+    await tab.type('qa-engaged@example.com');
+    await tab.tap('.demo-backdrop.open .demo-so__go');
     await until(async () => tab.navs.length > 0, 3000);
     const vid = await tab.ev('window.boltAttr.visitorId()');
     const nav = tab.navs[0] ? new URL(tab.navs[0]) : null;
-    ok(!!nav && nav.origin + nav.pathname === SIGNUP && nav.searchParams.get('bvid') === vid && nav.searchParams.get('utm_source') === 'qa_src' && nav.searchParams.get('fbclid') === 'qa_click' && nav.searchParams.get('bolt_qa') === '1', `link: "Start your free trial" goes to the sign-up with the visitor and the ad (${tab.navs[0]})`);
+    ok(!!nav && nav.origin + nav.pathname === SIGNUP && nav.searchParams.get('entry') === 'card_email' && nav.searchParams.get('bvid') === vid && nav.searchParams.get('utm_source') === 'qa_src' && nav.searchParams.get('fbclid') === 'qa_click' && nav.searchParams.get('bolt_qa') === '1' && nav.hash === '#email=qa-engaged%40example.com', `continue: goes to the sign-up with the visitor, the ad and the address in the fragment (${tab.navs[0]})`);
     const tl = tab.of('trial_link_clicked');
-    ok(tl.length === 1 && tl[0].data.placement === 'signup_offer' && tl[0].data.browser === 'android_browser' && tl[0].sid === vid, `regression: trial_link_clicked once, signup_offer, with browser (${show(tl.map((e) => e.data))})`);
-    ok(tab.of('site_engaged').length === 1, 'engaged: the tap on the button is the first touch');
+    ok(tl.length === 1 && tl[0].data.placement === 'signup_offer' && tl[0].data.form === 'email' && tl[0].data.browser === 'android_browser' && tl[0].sid === vid, `regression: trial_link_clicked once, signup_offer, form email, with browser (${show(tl.map((e) => e.data))})`);
+    ok(tab.of('site_engaged').length === 1, 'engaged: typing and Continue send no second site_engaged');
+    ok(!JSON.stringify(tab.events).includes('qa-engaged'), 'privacy: no event carries the address');
     await tab.tap('.demo-backdrop.open .demo-close');
     const dc = tab.of('demo_closed');
     ok(dc.length === 1 && dc[0].data.step === 'signup_offer' && dc[0].data.browser === 'android_browser', `regression: demo_closed once, step signup_offer, with browser (${show(dc.map((e) => e.data))})`);
@@ -356,7 +364,9 @@ try {
     await sleep(1200);
     ok(tab.app.filter((r) => r.path === '/signup-preload.json').length === 1 && (await tab.ev('document.querySelectorAll(\'link[rel="prefetch"]\').length')) === 0, `${answer}: asked once, nothing prefetched`);
     ok(tab.errors.length === 0, `${answer}: no exception or console error from the page (${show(tab.errors)})`);
-    ok((await tab.ev("document.querySelector('.demo-so__cta').getAttribute('href')")) === SIGNUP, `${answer}: the button still links to the sign-up`);
+    await tab.tap('.demo-backdrop.open .demo-so__email'); await tab.type('qa-offline@example.com'); await tab.tap('.demo-backdrop.open .demo-so__go');
+    await until(async () => tab.navs.length > 0, 3000);
+    ok(!!tab.navs[0] && tab.navs[0].indexOf(SIGNUP + '?entry=card_email') === 0 && /#email=qa-offline%40example\.com$/.test(tab.navs[0]), `${answer}: Continue still goes to the sign-up (${tab.navs[0]})`);
     sample[`logs_${answer}`] = tab.logs.slice();
     await close(ctx);
   }

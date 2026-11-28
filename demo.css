@@ -68,10 +68,6 @@ body.demo-lock{overflow:hidden}
 }
 .demo-btn:hover{background:#1f6fe6}
 .demo-btn:disabled{opacity:.55;cursor:not-allowed}
-/* No demo card uses it since AFMBP-2600; kept because the sign-up offer's check
-   (tools/signup-offer-check.mjs, yellow_cta) adds it to prove a yellow CTA fails. */
-.demo-btn--yellow{background:var(--yellow);color:var(--navy)}
-.demo-btn--yellow:hover{background:#eab00c}
 /* Continue before the form is complete (Figma 2664:800): grey, but still
    tappable — the tap shows what's missing. */
 .demo-btn.demo-btn--off,.demo-btn.demo-btn--off:hover{background:#c0c0c0;color:#fff;cursor:not-allowed}
@@ -632,30 +628,33 @@ body.demo-lock{overflow:hidden}
 }
 
 /* ============================================================
-   AFMBP-2273 — the sign-up offer (Figma 2718:3312, the "New jobs are calling"
-   design of 2026-11-02, AFMBP-2495): the card's art (paper, with the headline
-   drawn in it), the close, the pitch with the bolt wordmark set into its first
-   line, the boxed "It's FREE" line, one blue "Start your free trial", and the rating with a
-   testimonial in a speech bubble, tilted (the node has no help line).
-   Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so
-   these rules sit outside the breakpoints. Numbers are body-relative (the body
-   sits inside the node's .6px stroke), matched to the node's 3x export.
+   AFMBP-2273 — the sign-up offer. AFMBP-2714: the owner's email card of 2026-11-27,
+   Figma 2955:2387 (field empty) / 2957:3273 (typed): the card's art (paper, with the
+   headline drawn in it; the same image as before), the close, the pitch with the bolt
+   wordmark set into its first line, the trial line, "Security" with its lock, the email
+   field, Continue, the terms line and the rating (one drawing).
+   Opened by ?signup=1. The same card at EVERY width (no desktop node yet), so these rules
+   sit outside the breakpoints. Numbers are body-relative (the body sits inside the node's
+   .6px stroke), as the node's own export gives them; the pitch's lines are matched to the
+   node's outlined glyphs.
    ============================================================ */
-/* The pitch and the FREE line are Times New Roman, as the node sets them. Phones
-   without it (Android) get Tinos, which has the same widths, so every line breaks
-   where the node breaks it. Only a browser without Times New Roman downloads it. */
+/* The pitch and the trial line are Times New Roman, as the node sets them. A phone that has it
+   (iPhone, Mac, Windows) draws it from its own copy, and downloads nothing. Android has none, and
+   answers the name "Times New Roman" with its own serif (Noto Serif: wider letters, taller lines,
+   different line breaks), so the name comes first through local(), which only an installed Times
+   New Roman answers. Everywhere else it is Tinos, which has Times New Roman's widths, so every
+   line breaks where the node breaks it. Block: no line is drawn in another serif first. */
 @font-face{
-  font-family:'Tinos';font-style:normal;font-weight:400;font-display:swap;
-  src:url('/assets/fonts/tinos-400.woff2') format('woff2');
-  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  font-family:'Bolt Times';font-style:normal;font-weight:400;font-display:block;
+  src:local('Times New Roman'),local('TimesNewRomanPSMT'),url('/assets/fonts/tinos-400.woff2') format('woff2');
 }
 @font-face{
-  font-family:'Tinos';font-style:normal;font-weight:700;font-display:swap;
-  src:url('/assets/fonts/tinos-700.woff2') format('woff2');
-  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  font-family:'Bolt Times';font-style:normal;font-weight:700;font-display:block;
+  src:local('Times New Roman Bold'),local('TimesNewRomanPS-BoldMT'),url('/assets/fonts/tinos-700.woff2') format('woff2');
 }
+/* The card centred, then moved as the node moves it: 1.5px left and 3px down (2955:2387). */
 .demo-backdrop[data-screen="signup"]{
-  --demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:.5px;--demo-bw:.6px;
+  --demo-w:337px;--demo-h:629px;--demo-dx:-1.5px;--demo-dy:3px;--demo-bw:.6px;
   background:rgba(0,0,0,.3);padding:16px clamp(0px,calc((100vw - var(--demo-w)) / 2),16px);
 }
 /* The node's fill is one image, the paper with the headline in it (FILL, so it
@@ -677,7 +676,7 @@ body.demo-lock{overflow:hidden}
    as on the demo cards (AFMBP-2602). */
 @supports (-webkit-touch-callout:none){ @media (max-width:336px){ .demo-backdrop[data-screen="signup"] .demo-card{-webkit-text-size-adjust:none;text-size-adjust:none} } }
 .demo-backdrop[data-screen="signup"] .demo-logo{display:none}
-/* The close button: the node's 13px cross (2718:3345, at 299/25 on the card) in a
+/* The close button: the node's 13px cross (2955:2406, black, at 299/25 on the card) in a
    44px tap target, above the body. */
 .demo-backdrop[data-screen="signup"] .demo-close{
   display:flex;z-index:2;left:calc(var(--demo-bw) + (100% - var(--demo-w)) / 2 + 282.896px);top:9.497px;right:auto;
@@ -687,85 +686,79 @@ body.demo-lock{overflow:hidden}
 .demo-backdrop[data-screen="signup"] .demo-close svg{display:none}
 .demo-backdrop[data-screen="signup"] .demo-close::before{
   content:"";width:12.992px;height:12.993px;pointer-events:none;
-  background:url('assets/demo-m-close.svg') center/100% 100% no-repeat;
+  background:url('assets/demo-so-close.svg') center/100% 100% no-repeat;
 }
-/* The headline is in the art, so its text is here for screen readers only. */
+/* The headline is in the art, and the rating is a drawing: their words (and the field's
+   label) are for screen readers only. */
 .demo-backdrop[data-screen="signup"] :is(.demo-cm__h,.demo-so__vh){
   position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
   overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
 }
-/* The pitch (2718:3340): Times New Roman, black, left in a 273px column, the node's
-   "auto" lines (22px for its 19.032px text, 23px where a line holds the 20.03px
-   run). The node leaves 17 spaces at the start of the first line for the bolt
-   wordmark (2821:906–909, four vectors tilted .111°, exported as one SVG); the
-   spacer is those 17 spaces' width, and the wordmark is placed on the paragraph's
-   box exactly where the node puts it (Chrome and Safari set the text's baseline a
-   device pixel or two apart, so a baseline-anchored mark moved with them). */
+/* The pitch (2957:3271): Times New Roman, black, left in a 268px column. Its first words are
+   19.032px; from "answers" on 20.03px, as the node sets them. Its lines sit 23px apart, on the
+   node's baselines 237.4, 260.4, 283.4 and 306.4 (the first line 22px tall, every line holding the
+   20.03px run 23px). The node leaves 17 spaces at the start of the first line for the bolt
+   wordmark (the four vectors 2955:2401–2404: the same wordmark as before, at the same place); the
+   spacer is those 17 spaces' width, and the wordmark is placed on the paragraph's box where the
+   node puts it. */
 .demo-backdrop[data-screen="signup"] :is(.demo-cm__sub,.demo-so__free){
-  position:absolute;margin:0;font-family:'Times New Roman',Tinos,serif;font-size:19.032px;font-weight:400;
-  line-height:22px;color:#000;
+  position:absolute;left:28.1px;width:268px;margin:0;font-family:'Bolt Times',serif;font-size:19.032px;font-weight:400;
+  line-height:22px;color:#000;text-align:left;
 }
-.demo-backdrop[data-screen="signup"] .demo-cm__sub{left:28.4px;top:220.11px;width:273px;text-align:left}
+.demo-backdrop[data-screen="signup"] .demo-cm__sub{top:220.4px}
 .demo-backdrop[data-screen="signup"] .demo-so__big{font-size:20.03px;line-height:23px}
 .demo-backdrop[data-screen="signup"] .demo-so__bolt{display:inline-block;width:80.886px;height:0;vertical-align:baseline}
 .demo-backdrop[data-screen="signup"] .demo-cm__sub::before{
-  content:"";position:absolute;left:2.4px;top:-9.81px;width:73.5px;height:30.7px;pointer-events:none;
+  content:"";position:absolute;left:2.7px;top:-10.1px;width:73.5px;height:30.7px;pointer-events:none;
   background:url('assets/demo-so-bolt.svg') 0 0/100% 100% no-repeat;
 }
-/* The FREE line (2796:3104): the same type, centred in its 266px column, "FREE"
-   and "today." bold, inside the node's 2px black box (2824:917, 274x59, stroke inside). */
-.demo-backdrop[data-screen="signup"] .demo-so__free{left:31.4px;top:340.465px;width:266px;text-align:center}
+/* The trial line: the same type on 22px lines (baselines 338.4, 360.4), "FREE" bold. */
+.demo-backdrop[data-screen="signup"] .demo-so__free{top:321.41px}
 .demo-backdrop[data-screen="signup"] .demo-so__free b{font-weight:700}
-.demo-backdrop[data-screen="signup"] .demo-cm::after{
-  content:"";position:absolute;left:27.4px;top:334.4px;width:274px;height:59px;box-sizing:border-box;
-  border:2px solid #000;pointer-events:none;
+/* "Security" (2957:3268) and its lock (2955:3252): the node's two grey drawings, the lock at
+   251.4/373.4 and the word at 262.25/374.79, in one box. */
+.demo-backdrop[data-screen="signup"] .demo-so__secure{
+  position:absolute;left:251.4px;top:373.4px;width:49.374px;height:11.072px;pointer-events:none;
+  background:url('assets/demo-so-lock.svg') 0 0/8.571px 10px no-repeat,url('assets/demo-so-security.svg') 10.85px 1.39px/38.524px 9.682px no-repeat;
 }
-/* The trial button (2718:3350; the node says "Start now", the owner made it "Start your free trial" on 11-10,
-   AFMBP-2548): the demo's blue button, 252x49, with the node's
-   M3 Elevation 2 shadow. Figma draws it on this frame without the 2px spread
-   (its clip content is off), so the spread is left out to match the node.
-   The label is Inter Bold, as the owner set it on 11-09 (App file, 2091:6774). */
-.demo-backdrop[data-screen="signup"] .demo-so__cta{
-  position:absolute;left:43.4px;top:412.4px;width:252px;height:49px;margin:0;padding:0;border-radius:6px;
-  box-shadow:0 1px 2px 0 rgba(0,0,0,.3),0 2px 6px 0 rgba(0,0,0,.15);
-  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;line-height:21px;text-decoration:none;
-  /* The flex-centred label drew .67px above the node's; the padding sets it down. */
-  padding-top:1.33px;
+/* The field (2955:3249): 275x48, #fdfdff in a .333px #e6e6ed line (an inset shadow: Chrome draws
+   a border thinner than 1px as a whole 1px), 12.667px corners, the node's 1px shadow, and the whole
+   field at 82% (the node's group opacity: the paper shows through a little, and the typed words
+   are 82% black). Inter 16, 11.67px in from its left edge, the
+   placeholder #787888, its line 1px above the field's middle as the node sets it (the bottom
+   padding). No ring while typing: the node draws none (the caret shows where). */
+.demo-backdrop[data-screen="signup"] .demo-so__email{
+  position:absolute;left:30.4px;top:387.4px;width:275px;height:48px;margin:0;padding:0 11.67px 1.9px;box-sizing:border-box;
+  border:0;border-radius:12.667px;background:#fdfdff;opacity:.82;
+  box-shadow:inset 0 0 0 .333px #e6e6ed,0 1px 2px rgba(12,12,13,.05);
+  font-family:'Inter',sans-serif;font-size:16px;font-weight:400;line-height:normal;color:#000;
+  -webkit-appearance:none;appearance:none;outline:none;
 }
-/* Rating (2718:3332), under the button, in a white speech bubble tilted 3.168° as the
-   node tilts it. The wrapper is the bubble's own box (its union, 2806:3127,
-   278.886x114.825), turned about its top-left corner where the node puts it, and
-   everything inside sits where the node puts it in that box:
-   - the union with both shadows (exported with its shadow box);
-   - the reviewer, "Brent B." bold and "Indiana" regular (2828:920);
-   - five stars 16.972 apart at the node's 17.898 height, then "4.9/5". The node turns
-     these 3.02°, not 3.168°, so they turn back .148° inside the wrapper;
-   - the navy testimonial centred in a 250.62px column on 4 lines. Figma lays those
-     lines 15px apart (its 14.94 line height, rounded), so 15px lines land on them.
-     The column sits .23px left of the node's (browsers slant the synthesized italic a
-     little more than Figma's Inter Italic does). The reviewer and "4.9/5" sit .67px and
-     1px below their node boxes, where Chrome then draws their ink on the node's. */
-.demo-backdrop[data-screen="signup"] .demo-cr{
-  position:absolute;left:31.4px;top:478.343px;width:278.886px;height:114.825px;
-  transform:rotate(3.168deg);transform-origin:0 0;
+.demo-backdrop[data-screen="signup"] .demo-so__email::placeholder{color:#787888;opacity:1}
+/* Continue (2956:3261 / 2957:3311): 275x48, 12.667px corners, the node's two 1px shadows; grey
+   #cbcbcb and disabled while the field is empty, blue #2b7ffd once anything is typed. The label
+   is Inter Bold 16.8, white, where the node draws it: 2.46px left of the button's centre and its
+   baseline 31px down (the padding sets it there). */
+.demo-backdrop[data-screen="signup"] .demo-so__go{
+  position:absolute;left:30.4px;top:446.4px;width:275px;height:48px;margin:0;padding:1.794px 4.92px 0 0;box-sizing:border-box;
+  border:0;border-radius:12.667px;background:#2b7ffd;color:#fff;
+  box-shadow:0 1px 4px rgba(12,12,13,.1),0 1px 4px rgba(12,12,13,.05);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Inter',sans-serif;font-size:16.8px;font-weight:700;line-height:20px;
+  cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
 }
-.demo-backdrop[data-screen="signup"] .demo-so__bubble{
-  position:absolute;left:-7.538px;top:-5.649px;width:293.961px;height:129.9px;pointer-events:none;
-  background:url('assets/demo-so-bubble-v5.svg') 0 0/100% 100% no-repeat;
+.demo-backdrop[data-screen="signup"] .demo-so__go:disabled{background:#cbcbcb;color:#fff;cursor:not-allowed}
+.demo-backdrop[data-screen="signup"] .demo-so__go:focus-visible{outline:2px solid #2b7ffd;outline-offset:2px}
+/* The terms line (2957:3265): Inter 10.143, #787888, centred in 245px, on the node's "auto"
+   lines, broken after "our"; the two links #2b7ffd, not underlined, as drawn. */
+.demo-backdrop[data-screen="signup"] .demo-so__terms{
+  position:absolute;left:45.4px;top:503.4px;width:245px;margin:0;
+  font-family:'Inter',sans-serif;font-size:10.143px;font-weight:400;line-height:12.283px;color:#787888;text-align:center;
 }
-.demo-backdrop[data-screen="signup"] .demo-so__who{
-  position:absolute;left:22.331px;top:13.72px;width:108.495px;height:13.288px;margin:0;
-  font-size:11.306px;font-weight:400;line-height:13.288px;color:var(--navy);text-align:left;white-space:nowrap;
-}
-.demo-backdrop[data-screen="signup"] .demo-so__who b{font-size:13.399px;font-weight:700}
-.demo-backdrop[data-screen="signup"] :is(.demo-cm__stars,.demo-cm__score){transform:rotate(-.148deg);transform-origin:0 0}
-.demo-backdrop[data-screen="signup"] .demo-cm__stars{position:absolute;left:139.03px;top:10.476px;display:flex}
-.demo-backdrop[data-screen="signup"] .demo-cm__stars span{
-  width:16.972px;height:17.898px;background:url('assets/demo-m-star-lg.svg') .416px 0/16.141px 16.189px no-repeat;
-}
-.demo-backdrop[data-screen="signup"] .demo-cm__score{
-  position:absolute;left:225.201px;top:14.084px;width:35.437px;height:13.288px;margin:0;font-size:13.399px;font-weight:700;line-height:13.288px;color:var(--navy);text-align:center;white-space:nowrap;
-}
-.demo-backdrop[data-screen="signup"] .demo-cm__quote{
-  position:absolute;left:14.113px;top:34.3px;width:250.62px;margin:0;font-size:12.248px;font-style:italic;font-weight:400;line-height:15px;color:var(--navy);text-align:center;
+.demo-backdrop[data-screen="signup"] .demo-so__terms a{color:#2b7ffd;text-decoration:none}
+.demo-backdrop[data-screen="signup"] .demo-so__terms a:focus-visible{outline:2px solid #2b7ffd;outline-offset:1px;border-radius:2px}
+/* The rating (2955:3236): the node's one drawing, 226x74.146, centred at 55.4/539.4. */
+.demo-backdrop[data-screen="signup"] .demo-so__quote{
+  position:absolute;left:55.4px;top:539.4px;width:226px;height:74.146px;pointer-events:none;
+  background:url('assets/demo-so-quote.svg') 0 0/100% 100% no-repeat;
 }

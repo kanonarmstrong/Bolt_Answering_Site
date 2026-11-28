@@ -1,12 +1,16 @@
 // AFMBP-2567 — the card-only ad landing pages (/start/<trade>.html, Figma 2142:11370).
 // For each page, in headless Chrome at the node's phone size (402 wide) with an Android in-app UA:
 //   - the card, the wordmark and the close sit where the node puts them;
-//   - the button reads "Start your free trial", goes to the app's sign-up page, and attribution.js
-//     decorates it with the visitor id and the ad tags;
+//   - AFMBP-2714, the email card (Figma 2955:2387 / 2957:3273, contract v1 in AFMBP-2712): the pitch,
+//     the trial line and the terms line say the node's words; the field and Continue sit where the
+//     node puts them; Continue is grey and disabled until something is typed, then blue; a tap logs
+//     trial_link_clicked {placement: signup_offer, form: email} and goes to the app's sign-up page
+//     with entry=card_email, the visitor id and the ad tags attribution.js adds, and the address in
+//     the fragment, never the query; signup_offer_email_typed once; no event carries the address;
 //   - the page logs what the trade pages' card logs, so the ad funnel reads it the same way:
-//     site_landed, signup_offer_opened (trigger quick_landing) once, trial_link_clicked with
-//     placement "signup_offer" on the button, and Meta's StartTrialClick from that tap (the ad
-//     sets' optimization event, "Landing page: Start now tap");
+//     site_landed, signup_offer_opened (trigger quick_landing) once, trial_link_clicked as above, and
+//     Meta's StartTrialClick from that tap (the ad sets' optimization event, "Landing page: Start
+//     now tap");
 //   - the close goes to the home page and logs demo_closed {step: signup_offer};
 //   - the page is noindex and is not in the sitemap;
 //   - at 320 and 300 wide both cards (the sign-up card and the landing A/B's demo card) zoom and
@@ -38,7 +42,13 @@ const UA = 'Mozilla/5.0 (Linux; Android 14; SM-A146U; wv) AppleWebKit/537.36 (KH
 
 // Negative controls: break the served copy one way each; the run must then fail.
 const MUTATE = {
-  placement: (p, s) => s.replace('class="signup_offer ql-card ql-card--c"', 'class="ql-card ql-card--c"'),
+  placement: (p, s) => s.replace("{ placement: 'signup_offer', form: 'email', trade: TRADE }", "{ form: 'email', trade: TRADE }"),
+  // AFMBP-2714: the address in the query string, Continue on while the field is empty, the typing
+  // event on every keystroke, the app not told where the visitor came from.
+  query_email: (p, s) => s.replace("href += '#email=' + encodeURIComponent(v);", "href += '&email=' + encodeURIComponent(v);"),
+  empty_on: (p, s) => s.replace('go.disabled = !v;', 'go.disabled = false;'),
+  typed_every: (p, s) => s.replace('if (byHand && v && !typed) {', 'if (byHand && v) {'),
+  entry: (p, s) => s.replace("href = 'https://app.boltanswering.com/signup?entry=card_email';", "href = 'https://app.boltanswering.com/signup';"),
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
   opened: (p, s) => s.replace("A.track(T ? 'demo_card_opened' : 'signup_offer_opened'", "A.track(T ? 'demo_card_opened' : 'signup_offer_seen'"),
   trade: (p, s) => s.replace("{ trigger: 'quick_landing', trade: TRADE }", "{ trigger: 'quick_landing' }"),
@@ -124,7 +134,14 @@ try {
   ws.onmessage = (m) => { const msg = JSON.parse(m.data); if (msg.id && pending.has(msg.id)) { const p = pending.get(msg.id); pending.delete(msg.id); msg.error ? p.rej(new Error(JSON.stringify(msg.error))) : p.res(msg.result); } };
   const send = (method, params = {}) => new Promise((res, rej) => { const i = ++id; pending.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params })); });
   const ev = async (e) => (await send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true })).result.value;
+  // The app's sign-up page is not loaded (the tab stays on the card): Continue's departure is kept,
+  // with its fragment (a browser sends none: the request carries it apart).
+  const navs = [];
+  ws.addEventListener('message', (m) => { const msg = JSON.parse(m.data); if (msg.method !== 'Fetch.requestPaused') return;
+    const { requestId, request } = msg.params; navs.push(request.url + (request.urlFragment || ''));
+    send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }).catch(() => {}); });
   await send('Page.enable'); await send('Runtime.enable');
+  await send('Fetch.enable', { patterns: [{ urlPattern: 'https://app.boltanswering.com/*', resourceType: 'Document' }] });
   await send('Network.setUserAgentOverride', { userAgent: UA });
   await send('Emulation.setDeviceMetricsOverride', { width: 402, height: 749, deviceScaleFactor: 1, mobile: true });
   await send('Page.addScriptToEvaluateOnNewDocument', { source: STUB });
@@ -138,17 +155,29 @@ try {
     await send('Storage.clearDataForOrigin', { origin: BASE, storageTypes: 'all' });
     await load(url);
     const g = await ev(`(() => { const r = (s) => { const e = document.querySelector(s); return e ? e.getBoundingClientRect().toJSON() : null; };
-      const cta = document.querySelector('.ql-cta'), x = document.querySelector('.ql-close');
-      return { card: r('.ql-card'), logo: r('.ql-logo'), close: r('.ql-close'), ctaBox: r('.ql-cta'),
-        ctaText: cta && cta.textContent.trim(), ctaHref: cta && cta.href, closeHref: x && x.getAttribute('href'),
+      const go = document.querySelector('.ql-go'), f = document.querySelector('.ql-email'), x = document.querySelector('.ql-close');
+      const words = (s) => { const e = document.querySelector(s); return e ? e.innerText.replace(/\\s+/g, ' ').trim() : null; };
+      return { card: r('.ql-card'), logo: r('.ql-logo'), close: r('.ql-close'), goBox: r('.ql-go'), fieldBox: r('.ql-email'),
+        goText: go && go.textContent.trim(), goOff: go && go.disabled, goBg: go && getComputedStyle(go).backgroundColor,
+        field: f && [f.type, f.getAttribute('autocomplete'), f.getAttribute('enterkeyhint'), f.placeholder, f.labels.length && f.labels[0].textContent, f.value].join('|'),
+        pitch: words('.ql-sub'), trial: words('.ql-free'), terms: words('.ql-terms'),
+        links: [...document.querySelectorAll('.ql-terms a')].map((a) => [a.getAttribute('href'), a.target, a.rel].join('|')),
+        quote: [...document.querySelectorAll('.ql-quote .ql-vh')].map((p) => p.textContent),
+        oldCta: !!document.querySelector('.ql-cta'), closeHref: x && x.getAttribute('href'),
         robots: (document.querySelector('meta[name=robots]') || {}).content || null,
         events: window.__events.map((e) => e.type) }; })()`);
     check('card at 31,70, 337x629 (node 2142:11418)', g.card && near(g.card.left, 31) && near(g.card.top, 70) && near(g.card.width, 337) && near(g.card.height, 629), g.card);
     check('wordmark at 26.3,10, 70.7x29.3 (node 2142:11451)', g.logo && near(g.logo.left, 26.33) && near(g.logo.top, 10) && near(g.logo.width, 70.67), g.logo);
     check('close: a 44px target centred on the node\'s cross (336.5, 101.5)', g.close && near(g.close.left + 22, 336.5) && near(g.close.top + 22, 101.5) && g.close.width === 44, g.close);
-    check('button at 70,482 (node 2142:11445), 252x49', g.ctaBox && near(g.ctaBox.left, 70) && near(g.ctaBox.top, 482) && near(g.ctaBox.width, 252), g.ctaBox);
-    check('button reads "Start your free trial"', g.ctaText === 'Start your free trial', g.ctaText);
-    check('button goes to the app sign-up page, decorated with the visitor id and the ad tags', /^https:\/\/app\.boltanswering\.com\/signup\?bvid=[0-9a-f-]{36}&.*utm_campaign=signup_offer.*fbclid=QLCHECK1/.test(g.ctaHref || ''), g.ctaHref);
+    // AFMBP-2714: the email card's pieces, where the node (2955:2387) puts them on the card.
+    check('the pitch, the trial line and the terms line: the node\'s words', g.pitch === 'Bolt is your professional, 24/7 receptionist that answers calls, books customers and more for less than $4 a day.' && g.trial === 'Create an account to start your FREE 30-day trial now.' && g.terms === 'By tapping “Continue”, you agree to our Privacy Policy and Terms.', [g.pitch, g.trial, g.terms]);
+    check('the terms links: /privacy/ and /terms/, in a new tab', JSON.stringify(g.links) === JSON.stringify(['/privacy/|_blank|noopener', '/terms/|_blank|noopener']), g.links);
+    check('the rating: its words for screen readers', JSON.stringify(g.quote) === JSON.stringify(['Brent B., Indiana', '4.9/5', '“Bolt booked a job and paid for itself in a day.”']), g.quote);
+    check('the old card is gone (no "Start your free trial" link)', g.oldCta === false);
+    check('field at 62,458, 275x48 (node 2955:3249)', g.fieldBox && near(g.fieldBox.left, 62, 0.05) && near(g.fieldBox.top, 458, 0.05) && near(g.fieldBox.width, 275, 0.05) && near(g.fieldBox.height, 48, 0.05), g.fieldBox);
+    check('the field: an email field labelled "Email", empty, the Go key', g.field === 'email|email|go|Email|Email|', g.field);
+    check('Continue at 62,517, 275x48 (node 2956:3261)', g.goBox && near(g.goBox.left, 62, 0.05) && near(g.goBox.top, 517, 0.05) && near(g.goBox.width, 275, 0.05) && near(g.goBox.height, 48, 0.05), g.goBox);
+    check('Continue reads "Continue", grey and disabled while the field is empty', g.goText === 'Continue' && g.goOff === true && g.goBg === 'rgb(203, 203, 203)', [g.goText, g.goOff, g.goBg]);
     check('close goes to the home page', g.closeHref === '/', g.closeHref);
     check('noindex', g.robots === 'noindex', g.robots);
     check('not in the sitemap', !sitemap.includes(`/${page}`));
@@ -161,12 +190,28 @@ try {
     check('signup_offer_opened: trigger quick_landing, on this page', opened && opened.trigger === 'quick_landing' && opened.page === `/${page}`, opened);
     check(`signup_offer_opened carries the card's trade (${TRADE[page]})`, opened && opened.trade === TRADE[page], opened && opened.trade);
 
-    // The button: trial_link_clicked with the card's placement, and Meta's StartTrialClick from it.
-    await ev(`(() => { const a = document.querySelector('.ql-cta'); a.addEventListener('click', (e) => e.preventDefault()); a.click(); })()`);
-    await sleep(300);
+    // AFMBP-2714: an address typed, then Continue: trial_link_clicked with the card's placement and the
+    // form, Meta's StartTrialClick from it, and the app's sign-up page with the address in the fragment.
+    navs.length = 0;
+    await ev(`document.querySelector('.ql-email').focus(), 1`);
+    await send('Input.insertText', { text: ' qa-land' });
+    await send('Input.insertText', { text: 'ing@example.com ' });
+    await sleep(200);
+    const on = await ev(`(() => { const b = document.querySelector('.ql-go'); return [b.disabled, getComputedStyle(b).backgroundColor]; })()`);
+    check('typed: Continue turns blue and enabled', on[0] === false && on[1] === 'rgb(43, 127, 253)', on);
+    const typedEv = await ev(`window.__events.filter((e) => e.type === 'signup_offer_email_typed').map((e) => e.data)`);
+    check(`typed: signup_offer_email_typed once, with the card's trade (${TRADE[page]})`, typedEv.length === 1 && typedEv[0].trade === TRADE[page], typedEv);
+    const vid = await ev(`window.boltAttr.visitorId()`);
+    await ev(`document.querySelector('.ql-go').click(), 1`);
+    for (let i = 0; i < 20 && !navs.length; i++) await sleep(100);
     const tap = await ev(`({ e: window.__events.filter((e) => e.type === 'trial_link_clicked').map((e) => e.data), f: window.__fbq.filter((c) => c[1] === 'StartTrialClick') })`);
-    check('button tap: one trial_link_clicked, placement "signup_offer"', tap.e.length === 1 && tap.e[0].placement === 'signup_offer', tap.e);
-    check('button tap: Meta StartTrialClick from "signup_offer"', tap.f.length === 1 && tap.f[0][2] && tap.f[0][2].from === 'signup_offer', tap.f);
+    check('Continue: one trial_link_clicked, placement "signup_offer", form "email", the card\'s trade', tap.e.length === 1 && tap.e[0].placement === 'signup_offer' && tap.e[0].form === 'email' && tap.e[0].trade === TRADE[page], tap.e);
+    check('Continue: Meta StartTrialClick from "signup_offer"', tap.f.length === 1 && tap.f[0][2] && tap.f[0][2].from === 'signup_offer', tap.f);
+    let nav = null; try { nav = new URL(navs[0]); } catch {}
+    check('Continue goes to the app\'s sign-up page: entry=card_email, the visitor id and the ad tags, the trimmed address in the fragment', !!nav && nav.origin + nav.pathname === 'https://app.boltanswering.com/signup' && nav.searchParams.get('entry') === 'card_email' && nav.searchParams.get('bvid') === vid && nav.searchParams.get('utm_campaign') === 'signup_offer' && nav.searchParams.get('fbclid') === 'QLCHECK1' && nav.hash === '#email=qa-landing%40example.com', navs);
+    check('privacy: the address is not in the query string', !!nav && !/qa-landing/.test(nav.search) && !nav.searchParams.has('email'), nav && nav.search);
+    const sent = await ev(`JSON.stringify(window.__events)`);
+    check('privacy: no event carries the address', !/qa-landing/.test(sent));
 
     // The close: demo_closed for the card, then the home page.
     await ev(`(() => { const a = document.querySelector('.ql-close'); a.addEventListener('click', (e) => e.preventDefault()); a.click(); })()`);
