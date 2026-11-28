@@ -14,11 +14,14 @@
  * bakes is exactly what pricing.test.mjs pins and what the page shows once the
  * script runs.
  *
+ * AFMBP-2720 adds a fifth: the per-day figure, "less than $N a day", in the four
+ * live lines PER_DAY_LINES lists, worked out from the standard price (perDay()).
+ *
  * SAFE BY CONSTRUCTION
  *   - It rewrites only what pricing.js itself rewrites at runtime — the hooks
  *     (.mchev__amt, .js-pm, .js-pm-unit, .js-pm-verb, .js-td, .js-retail, the
- *     fine print, the chevron's aria-label) and the structured data. Never any
- *     other copy.
+ *     fine print, the chevron's aria-label) and the structured data — plus the
+ *     figure inside the PER_DAY_LINES lines. Never any other copy.
  *   - It renders the CURRENT fallback first and requires every chevron page to
  *     carry that render. A page that no longer matches what pricing.js renders
  *     stops the sync before anything is written (exit 1): fix the page, don't
@@ -29,6 +32,7 @@
  * USAGE
  *   node tools/pricing-sync.mjs                 check only: exit 0 in sync, 3 = would change
  *   node tools/pricing-sync.mjs --write         rewrite the files (exit 0)
+ *   node tools/pricing-sync.mjs --check-drawn   exit 1 once the drawn "less than $4 a day" is untrue (reads pricing.js)
  *   --root <dir>                                the site checkout (default: this repo)
  *   --feed-file <path>                          read the feed from a file instead of the URL (tests)
  *
@@ -46,6 +50,57 @@ const WHOLE = new Set(['promoMonths', 'trialDays', 'minutesIncluded', 'messagesI
 const LD_OFFER = /(<script type="application\/ld\+json" class="js-ld-offer">)([\s\S]*?)(<\/script>)/;
 const LD_FAQ = /(<script type="application\/ld\+json" class="js-ld-faq">)([\s\S]*?)(<\/script>)/;
 const FALLBACK_BLOCK = /var FALLBACK = \{[\s\S]*?\};/;
+
+/*
+ * AFMBP-2720 — the per-day figure, "less than $N a day".
+ * Owner, 2026-11-24: "We must automate this calculation when a pricing change takes place. The figure
+ * should be based on the standard pricing and should be presented as a flat number, no cents."
+ * Owner, 2026-11-28: "this figure needs to be a whole number, so must always round up for the statement
+ * to be true." (The sign-up card's nodes carry it as {n}: Figma 2955:2387 and 2955:2770.)
+ */
+
+/**
+ * N in "less than $N a day": the smallest whole dollar amount above the standard monthly price spread
+ * over a year, floor(retail × 12 / 365) + 1. $79 a month is $2.60 a day, so 3. It always rounds up, and
+ * an exact whole-dollar day rate goes one higher, because "less than $3" is false at exactly $3.00.
+ * Worked in whole cents with integer division, so no float rounding can decide it.
+ */
+export function perDay(p) {
+  const year = Math.round(p.retailPriceUsd * 100) * 12;
+  return (year - (year % 36500)) / 36500 + 1;
+}
+
+/** The words around each figure, as the owner's nodes give them. The page checks compare against these too. */
+export const PER_DAY_TEXT = {
+  // The sign-up card (2955:2387 / 2955:2770), after "Bolt is your professional, 24/7 receptionist that ".
+  card: (n) => `answers calls, books customers and more for less than $${n} a day.`,
+  // The demo's success screen.
+  success: (n) => `For less than $${n} per day, skip the cost of a receptionist without missing a single lead.`,
+  // The About page's list.
+  about: (n) => `Less than $${n} a day after your free trial.`,
+};
+
+/**
+ * Where those words live. Each line must be in its file exactly once with the CURRENT figure,
+ * perDay(FALLBACK), or the sync stops before writing anything, like a drifted chevron page. The copies
+ * generated from these files follow them: the workflow rebuilds demo.min.js (tools/demo-min.mjs) and the
+ * /start/ pages (tools/quick-landing-build.mjs) after a rewrite.
+ * Not here, by design (owner, 2026-11-24: "leave those at $4/day"): the two drawn cards and their
+ * screen-reader lines. DRAWN_PER_DAY guards those instead.
+ */
+export const PER_DAY_LINES = [
+  { file: 'demo.js', what: "the sign-up card's pitch", line: (n) => `text: '${PER_DAY_TEXT.card(n)}'` },
+  { file: 'demo.js', what: "the demo's success screen", line: (n) => `text: '${PER_DAY_TEXT.success(n)}'` },
+  { file: 'tools/quick-landing-build.mjs', what: "the /start/ card's pitch", line: (n) => `<span class="ql-big">${PER_DAY_TEXT.card(n)}</span>` },
+  { file: 'about/index.html', what: "the About page's price line", line: (n) => `<strong>Priced for a growing business.</strong> ${PER_DAY_TEXT.about(n)}` },
+];
+
+/**
+ * The figure drawn into the two cards' art and read out by their screen-reader lines ("less than $4 a
+ * day"). It stays true while perDay(FALLBACK) <= 4, i.e. under $121.67 a month; --check-drawn fails the
+ * workflow above that, because only a redraw can fix it.
+ */
+export const DRAWN_PER_DAY = 4;
 
 export class SyncError extends Error {
   constructor(message, code) {
@@ -143,6 +198,11 @@ function loadPricing(root) {
   return require(path);
 }
 
+/** The per-day figure the checkout at `root` carries now: perDay(pricing.js FALLBACK). The page checks use it. */
+export function perDayAt(root) {
+  return perDay(loadPricing(root).FALLBACK);
+}
+
 /**
  * Plan (and with write=true, apply) the rewrite for `next`. Returns the files
  * that change. Throws SyncError(1) when a page has drifted from what pricing.js
@@ -208,6 +268,17 @@ export function syncSite(root, next, { write = false } = {}) {
   const nextJs = js.replace(FALLBACK_BLOCK, () => fallbackBlock(next));
   if (nextJs !== js) changes.set(join(root, 'pricing.js'), nextJs);
 
+  // AFMBP-2720: every per-day line carries perDay(FALLBACK) now; a new standard price moves it to perDay(next).
+  const dayWas = perDay(prev);
+  const dayNow = perDay(next);
+  for (const L of PER_DAY_LINES) {
+    const path = join(root, L.file);
+    const src = changes.get(path) ?? readFileSync(path, 'utf8');
+    const n = count(src, L.line(dayWas));
+    if (n !== 1) throw new SyncError(`${L.file}: ${L.what} no longer reads "${L.line(dayWas)}" exactly once (found ${n}) — fix it, then re-run`, 1);
+    if (dayNow !== dayWas) changes.set(path, replaceAll(src, L.line(dayWas), L.line(dayNow)));
+  }
+
   if (same && changes.size) throw new SyncError('the feed equals FALLBACK but the pages would still change — a page drifted', 1);
 
   if (write) for (const [f, content] of changes) writeFileSync(f, content);
@@ -237,15 +308,36 @@ async function main(argv) {
   };
   const write = argv.includes('--write');
   const root = arg('--root') ?? join(dirname(fileURLToPath(import.meta.url)), '..');
+  if (argv.includes('--check-drawn')) return checkDrawn(root);
   const next = offerFromFeed(await readFeed(arg('--feed-file')));
   const r = syncSite(root, next, { write });
   const diff = KEYS.filter((k) => r.prev[k] !== r.next[k]).map((k) => `${k} ${r.prev[k]}→${r.next[k]}`);
+  if (perDay(r.prev) !== perDay(r.next)) diff.push(`per day $${perDay(r.prev)}→$${perDay(r.next)}`);
   if (!r.changed.length) {
     console.log('[pricing-sync] in sync with the published price — nothing to change.');
     return 0;
   }
   console.log(`[pricing-sync] ${write ? 'rewrote' : 'would rewrite'} ${r.changed.length} file(s) for ${diff.join(', ')}:\n  ${r.changed.join('\n  ')}`);
+  if (write && r.changed.some((f) => f === 'demo.js' || f === 'tools/quick-landing-build.mjs')) {
+    console.log('[pricing-sync] now rebuild the generated copies: node tools/demo-min.mjs && node tools/quick-landing-build.mjs (the workflow does)');
+  }
   return write ? 0 : 3;
+}
+
+/** --check-drawn: exit 1 once the standard price makes the drawn "less than $4 a day" untrue (it reads pricing.js, not the feed). */
+function checkDrawn(root) {
+  const fb = loadPricing(root).FALLBACK;
+  // Four places, so a day rate just over a dollar line never prints as that line ($121.67 a month is $4.0001).
+  const day = ((fb.retailPriceUsd * 12) / 365).toFixed(4);
+  if (perDay(fb) > DRAWN_PER_DAY) {
+    console.error(
+      `[pricing-sync] STOPPED: $${fb.retailPriceUsd} a month is $${day} a day, so the two drawn cards' "less than $${DRAWN_PER_DAY} a day" is no longer true. ` +
+        'Their art needs redrawing, then their screen-reader lines (demo.js "She takes your phone calls…", tools/quick-landing-build.mjs "Meet Sierra…") and DRAWN_PER_DAY follow.',
+    );
+    return 1;
+  }
+  console.log(`[pricing-sync] the drawn "less than $${DRAWN_PER_DAY} a day" holds: $${fb.retailPriceUsd} a month is $${day} a day (the live lines say $${perDay(fb)}).`);
+  return 0;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

@@ -40,9 +40,13 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize, resolve } from 'node:path';
+import { PER_DAY_TEXT, perDayAt } from './pricing-sync.mjs';
 
 // Absolute, so a relative root ('.') still matches the NC's '/<file>' suffix below and the mutation is served.
 const ROOT = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
+// AFMBP-2720: the per-day figure follows the standard price; tools/pricing-sync.mjs writes it and
+// these checks expect what it would write for the served checkout's pricing.js.
+const DAY = perDayAt(ROOT);
 const NC = process.env.NC || '';
 const PORT = 20000 + Math.floor(Math.random() * 10000), DBG = 30000 + Math.floor(Math.random() * 10000);
 const ORIGIN = `http://127.0.0.1:${PORT}`;
@@ -85,6 +89,8 @@ const MUTATE = {
   autofocus: ['demo.js', (s) => cut(s, "    ], 'signup');\n  }", "    ], 'signup');\n    setTimeout(function () { field.focus(); }, 0);\n  }")],
   // The pitch keeps the old card's words.
   old_pitch: ['demo.js', (s) => cut(s, "'is your professional, 24/7 receptionist that '", "'is your 24/7 receptionist that '")],
+  // AFMBP-2720: the pitch keeps a per-day figure the standard price no longer gives.
+  old_figure: ['demo.js', (s) => cut(s, `text: '${PER_DAY_TEXT.card(DAY)}'`, `text: '${PER_DAY_TEXT.card(DAY + 1)}'`)],
   // The terms links open in this tab (what was typed would be lost).
   same_tab: ['demo.js', (s) => cut(s, "h('a', { href: '/privacy/', target: '_blank', rel: 'noopener' }, ['Privacy Policy'])", "h('a', { href: '/privacy/' }, ['Privacy Policy'])")],
   // The card's art (the paper and the headline) is not drawn.
@@ -307,7 +313,7 @@ try {
   const isGo = (f) => /^button\.demo-so__go "Continue"/.test(f.desc);
   const isLink = (name) => (f) => f.desc === `a ${JSON.stringify(name)}`;
   const HEAD = 'New jobs are calling';
-  const PITCH = 'Bolt is your professional, 24/7 receptionist that answers calls, books customers and more for less than $4 a day.';
+  const PITCH = `Bolt is your professional, 24/7 receptionist that ${PER_DAY_TEXT.card(DAY)}`;
   const TRIAL = 'Create an account to start your FREE 30-day trial now.';
   const TERMS = 'By tapping “Continue”, you agree to our Privacy Policy and Terms.';
   const near = (a, b, tol) => Math.abs(a - b) <= tol;

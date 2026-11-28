@@ -373,7 +373,7 @@ ${GTAG}
       <div class="ql-body">
         <div class="ql-cm">
           <h1 class="ql-vh" id="ql-h">New jobs are calling</h1>
-          <p class="ql-sub"><span class="ql-bolt"><span class="ql-vh">Bolt </span></span>is your professional, 24/7 receptionist that <span class="ql-big">answers calls, books customers and more for less than $4 a day.</span></p>
+          <p class="ql-sub"><span class="ql-bolt"><span class="ql-vh">Bolt </span></span>is your professional, 24/7 receptionist that <span class="ql-big">answers calls, books customers and more for less than $3 a day.</span></p>
           <p class="ql-free">Create an account to start your <b>FREE</b> 30-day trial now.</p>
         </div>
         <span class="ql-secure" aria-hidden="true"></span>

@@ -31,8 +31,12 @@ import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { staleCopies } from './demo-min.mjs';
+import { PER_DAY_TEXT, perDayAt } from './pricing-sync.mjs';
 
 const ROOT = resolve(process.argv[2] || '.');
+// AFMBP-2720: the per-day figure follows the standard price; tools/pricing-sync.mjs writes it and
+// these checks expect what it would write for the served checkout's pricing.js.
+const DAY = perDayAt(ROOT);
 const NC = process.env.NC || '';
 const PAGES = ['start/handyman.html', 'start/plumbing.html', 'start/general-contractor.html'];
 // The trade each page's card events carry, as demo.js's TRADE names it on the trade pages.
@@ -47,6 +51,8 @@ const MUTATE = {
   // event on every keystroke, the app not told where the visitor came from.
   query_email: (p, s) => s.replace("href += '#email=' + encodeURIComponent(v);", "href += '&email=' + encodeURIComponent(v);"),
   empty_on: (p, s) => s.replace('go.disabled = !v;', 'go.disabled = false;'),
+  // AFMBP-2720: the pitch keeps a per-day figure the standard price no longer gives.
+  old_figure: (p, s) => s.replace(PER_DAY_TEXT.card(DAY), PER_DAY_TEXT.card(DAY + 1)),
   typed_every: (p, s) => s.replace('if (byHand && v && !typed) {', 'if (byHand && v) {'),
   entry: (p, s) => s.replace("href = 'https://app.boltanswering.com/signup?entry=card_email';", "href = 'https://app.boltanswering.com/signup';"),
   close: (p, s) => s.replace('<a class="ql-close" href="/"', '<a class="ql-close" href="/handyman.html"'),
@@ -170,7 +176,7 @@ try {
     check('wordmark at 26.3,10, 70.7x29.3 (node 2142:11451)', g.logo && near(g.logo.left, 26.33) && near(g.logo.top, 10) && near(g.logo.width, 70.67), g.logo);
     check('close: a 44px target centred on the node\'s cross (336.5, 101.5)', g.close && near(g.close.left + 22, 336.5) && near(g.close.top + 22, 101.5) && g.close.width === 44, g.close);
     // AFMBP-2714: the email card's pieces, where the node (2955:2387) puts them on the card.
-    check('the pitch, the trial line and the terms line: the node\'s words', g.pitch === 'Bolt is your professional, 24/7 receptionist that answers calls, books customers and more for less than $4 a day.' && g.trial === 'Create an account to start your FREE 30-day trial now.' && g.terms === 'By tapping “Continue”, you agree to our Privacy Policy and Terms.', [g.pitch, g.trial, g.terms]);
+    check('the pitch, the trial line and the terms line: the node\'s words', g.pitch === `Bolt is your professional, 24/7 receptionist that ${PER_DAY_TEXT.card(DAY)}` && g.trial === 'Create an account to start your FREE 30-day trial now.' && g.terms === 'By tapping “Continue”, you agree to our Privacy Policy and Terms.', [g.pitch, g.trial, g.terms]);
     check('the terms links: /privacy/ and /terms/, in a new tab', JSON.stringify(g.links) === JSON.stringify(['/privacy/|_blank|noopener', '/terms/|_blank|noopener']), g.links);
     check('the rating: its words for screen readers', JSON.stringify(g.quote) === JSON.stringify(['Brent B., Indiana', '4.9/5', '“Bolt booked a job and paid for itself in a day.”']), g.quote);
     check('the old card is gone (no "Start your free trial" link)', g.oldCta === false);

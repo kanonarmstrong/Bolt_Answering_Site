@@ -36,9 +36,44 @@ runs `pricing.test.mjs`, commits to `main` and asks Pages to publish.
   renders for the current `FALLBACK`. Fix the page, then re-run.
 - An unreachable or malformed feed changes nothing (exit 2).
 
-It touches only the hooks below and the structured data, never other copy. Copy
-that states a price or a promo length in plain text is not data-driven and is
-the owner's to change.
+It touches only the hooks below, the structured data and the per-day figure (next
+section), never other copy. Copy that states a price or a promo length in plain
+text is not data-driven and is the owner's to change.
+
+## The per-day figure follows the standard price (AFMBP-2720)
+
+"Less than $N a day" is worked out from the standard monthly price (the feed's
+`retailPriceUsd`, not the promo): N = floor(standard × 12 / 365) + 1. It always
+rounds up, so the statement stays true, and at an exact whole-dollar day rate it
+goes one higher, because "less than $3" is false at exactly $3.00. $79 a month
+gives "$3". The owner set this on 2026-11-24 and 2026-11-28; the sign-up card's
+nodes carry it as `{n}` (Figma 2955:2387 and 2955:2770).
+
+`tools/pricing-sync.mjs` writes N into the four lines `PER_DAY_LINES` lists:
+
+| Where | Words (`PER_DAY_TEXT`) |
+|---|---|
+| `demo.js`, the sign-up card | "…answers calls, books customers and more for less than $N a day." |
+| `tools/quick-landing-build.mjs`, the /start/ card | the same |
+| `demo.js`, the demo's success screen | "For less than $N per day, skip the cost of a receptionist…" |
+| `about/index.html` | "Less than $N a day after your free trial." |
+
+After a rewrite the workflow rebuilds what is generated from them: `demo.min.js`
+(`node tools/demo-min.mjs`) and the /start/ pages (`node tools/quick-landing-build.mjs`).
+It does not bump `demo.js?v=`: Pages serves every file with `max-age=600`, so a
+returning visitor has the new figure within 10 minutes.
+
+- **Rewording one of these lines?** Change its words in `PER_DAY_TEXT` in the same
+  PR. A line that no longer reads exactly as listed stops the sync (exit 1)
+  before anything is written, and the workflow's tests run on any PR that
+  touches `demo.js`, `about/index.html` or `tools/quick-landing-build.mjs`. The
+  page checks (`signup-offer-check`, `quick-landing-check`, `demo-mobile-check`)
+  compare the pages against the same words.
+- **Not these:** the two drawn cards ("less than $4 a day" is in their art) and
+  their screen-reader lines stay "$4" (owner, 2026-11-24). `DRAWN_PER_DAY` holds
+  that figure. Once the standard price reaches $121.67 a month the drawing is
+  untrue, and the workflow's last step (`node tools/pricing-sync.mjs --check-drawn`)
+  fails every run until the art is redrawn. The price itself still syncs first.
 
 ## Where the numbers come from now
 
